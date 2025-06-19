@@ -140,31 +140,79 @@ int main(int argc, const char **argv) {
 // If they become complex, they might get their own options.h/c module.
 
 void create_default_options(options_t *def) {
-    // Implement your default options here based on your original code
-    def->evol = 0; // Example default
-    def->drift = 0;
-    def->growth = 0;
-    def->twopop = 0;
-    def->ffrag = 0;
-    def->ufrag = 0;
-    def->input = 1; // Assuming default is generating initial profile
-    def->tStep = 1.0; // Example
-    def->ngrid = 100; // Example
+    // Ezek az alapértelmezett értékek, ha nem adunk meg semmilyen kapcsolót.
+    // Fontos, hogy ezeket az eredeti kódod alapértelmezett beállításaival egyeztesd!
+    def->evol = 0;       // -e
+    def->drift = 0;      // -d
+    def->growth = 0;     // -g
+    def->twopop = 0;     // -t
+    def->ffrag = 0;      // -f
+    def->ufrag = 0;      // -u
+    def->input = 1;      // -i (0-ha fájlból, 1-ha generált)
+    def->tStep = 0.0;    // -s (simulation time step)
+    def->ngrid = 100;    // -n (NGRID, ha input=1)
+    // Ha vannak további opcióid, add hozzá itt is az alapértelmezett értéküket.
 }
 
 int parse_options(int argc, const char **argv, options_t *def) {
-    // Implement your option parsing logic here based on your original code
-    // This part involves parsing argc, argv and setting values in def
-    // Return 0 on success, non-zero on error
-
-    // Example of a simple loop, replace with your actual getopt/parsing logic
+    // Iterálunk a parancssori argumentumokon. Az első (argv[0]) a program neve,
+    // ezért 1-től indulunk.
     for (int i = 1; i < argc; i++) {
+        // -e: Gas evolution
         if (strcmp(argv[i], "-e") == 0 && i + 1 < argc) {
             def->evol = atoi(argv[++i]);
-        } else if (strcmp(argv[i], "-d") == 0 && i + 1 < argc) {
+        }
+        // -d: Particle drift
+        else if (strcmp(argv[i], "-d") == 0 && i + 1 < argc) {
             def->drift = atoi(argv[++i]);
         }
-        // ... add more parsing for other options ...
+        // -g: Particle growth
+        else if (strcmp(argv[i], "-g") == 0 && i + 1 < argc) {
+            def->growth = atoi(argv[++i]);
+        }
+        // -t: Two-population model
+        else if (strcmp(argv[i], "-t") == 0 && i + 1 < argc) {
+            def->twopop = atoi(argv[++i]);
+        }
+        // -f: Fragmentation flag
+        else if (strcmp(argv[i], "-f") == 0 && i + 1 < argc) {
+            def->ffrag = atoi(argv[++i]);
+        }
+        // -u: Fragmentation update flag
+        else if (strcmp(argv[i], "-u") == 0 && i + 1 < argc) {
+            def->ufrag = atoi(argv[++i]);
+        }
+        // -i: Input sigma file option (0 for file, 1 for generated)
+        // Ha ezt 0-ra állítjuk, akkor a következő argumentum a fájlnév lesz.
+        // Ezt a fájlnevet külön kell majd kezelni, valószínűleg a globális filenev2-be kell másolni.
+        else if (strcmp(argv[i], "-i") == 0 && i + 1 < argc) {
+            def->input = atoi(argv[++i]);
+            if (def->input == 0) {
+                // Ha az input 0, akkor a következő argumentum a fájlnév.
+                // Ezt a globális filenev2-be másoljuk át a config.h-ból.
+                // A parse_options függvényből közvetlenül globális változókat írni elfogadható.
+                if (i + 1 < argc) {
+                    strncpy(filenev2, argv[++i], sizeof(filenev2) - 1);
+                    filenev2[sizeof(filenev2) - 1] = '\0'; // Null-terminátor biztosítása
+                } else {
+                    fprintf(stderr, "Error: -i option requires a filename when set to 0.\n");
+                    return 1; // Hiba kód
+                }
+            }
+        }
+        // -s: Time step (DT)
+        else if (strcmp(argv[i], "-s") == 0 && i + 1 < argc) {
+            def->tStep = atof(argv[++i]);
+        }
+        // -n: NGRID (if inputsig is 1, i.e., generated profile)
+        else if (strcmp(argv[i], "-n") == 0 && i + 1 < argc) {
+            def->ngrid = atoi(argv[++i]);
+        }
+        // Kezeletlen vagy érvénytelen opció
+        else {
+            fprintf(stderr, "Warning: Unknown or incomplete option '%s'\n", argv[i]);
+            // return 1; // Dönthetünk úgy, hogy hiba esetén kilépünk, vagy csak figyelmeztetünk.
+        }
     }
-    return 0; // Success
+    return 0; // Siker
 }
