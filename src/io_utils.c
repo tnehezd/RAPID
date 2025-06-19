@@ -18,13 +18,6 @@ int find_num_zero(double *rvec, double *dpressvec);
 double find_zero(int i, double *rvec, double *dpressvec);
 
 /*	A nyomasi maximum korul 1H tavolsagban jeloli ki a korgyurut	*/
-Correct the Definition in src/io_utils.c:
-You've provided this code. The key is to replace rin with rin_val and rout with rout_val inside the function, because those are the names of the parameters you're passing.
-
-C
-// src/io_utils.c
-
-/*	A nyomasi maximum korul 1H tavolsagban jeloli ki a korgyurut	*/
 void find_r_annulus(double *rvec, double rin_val, int *ind_ii, int *ind_io, double rout_val, int *ind_oi, int *ind_oo) {
 
     int i;
