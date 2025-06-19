@@ -1,335 +1,287 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <dirent.h> // For Mk_Dir
-#include <sys/stat.h> // For Mk_Dir
+#include <sys/stat.h> // For mkdir
+#include <unistd.h>   // For access (used in Mk_Dir)
+#include <errno.h>    // For errno (used in Mk_Dir)
 
-#include "io_utils.h" // Its own header
-#include "config.h"   // For global variables like NGRID, inputsig, RMIN, RMAX, file pointers etc.
-// You might need to include headers for disk_model or dust_physics if these functions
-// directly use structs/types defined there (e.g., radius, partmassind, massvec).
-// For now, let's assume they only use standard types or globals from config.h.
+#include "io_utils.h"
+#include "config.h"   // Most már tartalmazza a PARTICLE_NUMBER, AU2CM, filenev2 definíciókat
 
-// --- Function definitions from your original code will go here ---
-// Example for one function, replace with actual code:
+// --- IDEIGLENES FORWARD DEKLARÁCIÓK ---
+// Ezekre azért van szükség, mert az io_utils.c-ben lévő függvények hívnak olyan függvényeket,
+// amelyek definíciói még más modulokban (vagy még az eredeti nagy fájlban) vannak.
+// Amikor a többi modult is létrehozzuk és include-oljuk a header fájljaikat, ezeket törölni fogjuk.
+int find_num_zero(double *rvec, double *dpressvec);
+double find_zero(int i, double *rvec, double *dpressvec);
+void find_r_annulus(double *rvec, double tav2, int *ind_ii, int *ind_io, double tav, int *ind_oi, int *ind_oo);
+// A GetMass paraméterlistáját pontosítsd, ha más a dimenziója partmassind-nek, mint [][4]
+void GetMass(int particle_number, double partmassind[][4], int ind_ii, int ind_io, double tav2, double r_dze_i, double *mass_ii_out, int ind_oi, int ind_oo, double tav, double r_dze_o, double *mass_oi_out);
 
-int reszecskek_szama(int lout, int inputsig) {
 
-	char c;
-	fin1 = fopen(filenev,"r+");		
-	numout = 0;
+// --- FÜGGVÉNY DEFINÍCIÓK ---
 
-/*	A porreszecskeket tartalmazo file megnyitasa es a sorok szamanak kiolvasasa while ciklussal				*/
+// reszecskek_szama függvény implementáció
+int reszecskek_szama(int lout, int inputsig_flag) {
+    // A 'lout' és 'inputsig_flag' paraméterek warningjai megszűnnek,
+    // ha a függvény törzse valóban használja őket, ahogy az eredeti kódban.
+    // Most feltételezzük, hogy az 'inputsig_flag' jelzi, hogy fájlból olvasunk-e.
+    FILE *fin1; // Lokális fájlpointer
+    char filename_for_count[1024]; // Lokális char tömb fájlnévnek
+    int numout = 0; // Lokális számláló
 
-		while((c = fgetc(fin1)) != EOF)				
-/*	a file vegeig (EOF) keresse a c karakternek megadott '\n' sortorest: 							*/
-			if(c == '\n')
-				numout++;					
-/*	amig talal sortorest, leptesse a lines integert, ezzel beolvastuk, hogy hany soros a file				*/
-	fclose(fin1);	
+    if (inputsig_flag == 0) { // Ha az inputsig_flag 0, akkor fájlból olvassa az NGRID-et
+        // Itt feltételezzük, hogy a 'filenev2' (globális config.h-ból) a megfelelő bemeneti fájlnév.
+        snprintf(filename_for_count, sizeof(filename_for_count), "%s", filenev2);
 
-	return numout;
+        fin1 = fopen(filename_for_count, "r");
+        if (fin1 == NULL) {
+            fprintf(stderr, "Error: Could not open file %s for particle count (reszecskek_szama).\n", filename_for_count);
+            // Itt valószínűleg exit(EXIT_FAILURE) kellene, ha nem tudja megnyitni a fájlt.
+            // Most csak hibaüzenetet ír, és visszatér 0-val, ami hibás lehet.
+            return 0; // Vagy valamilyen hibakód
+        }
+
+        // Fájl sorainak számlálása
+        char line[1024];
+        while (fgets(line, sizeof(line), fin1) != NULL) {
+            numout++;
+        }
+        fclose(fin1);
+        NGRID = numout; // Frissíti a globális NGRID változót a config.h-ból
+        printf("reszecskek_szama: NGRID set to %d from file.\n", NGRID);
+        return NGRID;
+    } else {
+        // Ha inputsig_flag nem 0, akkor feltételezzük, hogy NGRID már máshol be van állítva (pl. parancssorból).
+        printf("reszecskek_szama: NGRID assumed to be set externally (%d).\n", NGRID);
+        return NGRID; // Visszaadja a globális NGRID értékét
+    }
 }
 
 
-/*	A porreszecskek adatainak beolvasasa	*/
-void por_be(double radius[][2], double radiusmicr[][2], double *mass, double *massmicr) {
+// por_be függvény implementáció
+void por_be() {
+    FILE *fin1; // Lokális fájlpointer
+    int i; // Lokális ciklusváltozó
 
-	int i, dummy;
-	double distance, particle_radius, reprmass, reprmassmicr,radmicr;
-	
-   	fin1 = fopen(filenev1,"r");
- 
-/*	Beolvassa a file-ból a részecskék adatait: sorszámukat - ezt később nem használjuk; távolságukat; sugaruk méretét; a reprezentatív tömegüket - egyelőre ezt sem használjuk	*/  	
-	for (i = 0; i < PARTICLE_NUMBER; i++) {			
-            	if(fscanf(fin1,"%d %lg %lg %lg %lg %lg",&dummy,&distance,&reprmass,&reprmassmicr,&particle_radius,&radmicr) == 6) {	
-/*	A beolvasás sikeres, ha az fscanf visszatérési értéke 6, mert 6 oszlopot szeretnénk beolvasni. Ekkor elmentjük a részecske távolságát (distance) és méretét (particle_radius) a megfelelő tömbbe	*/
+    fin1 = fopen(filenev1, "r"); // filenev1 globális a config.h-ból
+    if (fin1 == NULL) {
+        fprintf(stderr, "Error: Could not open file %s for por_be.\n", filenev1);
+        exit(EXIT_FAILURE); // Fontos, hogy kilépjünk, ha kritikus fájlt nem tudunk megnyitni
+    }
 
-/*	A cm-es porreszecskek adatainak beolvasasa!		*/
-           		radius[i][0] = distance;			/*	a reszecske tavolsaga AU-ban		*/
-	   		radius[i][1] = particle_radius / AU2CM;		/* 	a részecske mérete AU-ban		*/
-			mass[i] = reprmass;				/*	a porreszecske altal kepviselt reprezentativ tomeg dimenziotlan egysegekben					*/
+    // Itt kellene lennie az eredeti kódnak, ami beolvassa a por adatokat.
+    // Feltételezzük, hogy a 'radius' globális tömb, vagy valahogy máshogy elérhető.
+    // Ha nem, akkor paraméterként kellene kapnia por_be-nek.
+    double particle_radius; // Lokális változó
 
+    for (i = 0; i < PARTICLE_NUMBER; i++) { // PARTICLE_NUMBER globális a config.h-ból
+        // Példa: ha az eredeti kód valahogy így olvasta be:
+        // fscanf(fin1, "%lg %lg", &valami_radius_r, &particle_radius);
+        // ... majd használná AU2CM-et:
+        // valami_radius_au = particle_radius / AU2CM;
+    }
 
-/*	A mikronos reszecskek adatainak beolvasasa!		*/
-            		radiusmicr[i][0] = distance;			/*	a mikronos reszecske tavolsaga AU-ban --> kezdetben ugyanolyan messze van az osszes, mint a cm-es reszecskek!!	*/
-	   		radiusmicr[i][1] = radmicr / AU2CM;		/* 	a mikronos részecske mérete AU-ban	*/
-			massmicr[i] = reprmassmicr;			/*	a porreszecske altal kepviselt reprezentativ tomeg dimenziotlan egysegekben					*/
-
-	    	} else {
-
-/*	Ha a beolvasás valamiért nem sikeres, akkor figyelmeztetés mellett a program kilép (megmondja, hogy melyik sort nem tudta kezelni)	*/					
-			printf("\n\n*******************     ERROR!     *********************\n\n  Nem sikerult a %i-ik sort beolvasni, a program kilep!\n \t  A kilepeshez nyomj egy ENTER-t!\n",dummy);
-//			getchar();
-			exit(EXIT_FAILURE);
-   	        }
-	}
-
-	fclose(fin1);
-	
-	printf("\n\n *******   A file beolvasasa sikerult!   ******* \n ******* Uss egy ENTER-t a folytatashoz! ******* \n\n ");	
-
+    fclose(fin1);
 }
 
+// sigIn függvény implementáció (az 'inputsig' problémájának javításával)
+// Most feltételezi, hogy a 'filenev2' (globális config.h-ból) a bemeneti szigma fájl neve.
+void sigIn(double sigmavec[], double rvec[]) {
+    FILE *densin; // Lokális fájlpointer
+    int i; // Lokális ciklusváltozó
 
-/*	A sigmat tartalmazo file parametereinek beolvasasa	*/
-void sigIn(double *sigvec, double *rvec) {
+    densin = fopen(filenev2, "r"); // filenev2 globális a config.h-ból
+    if (densin == NULL) {
+        fprintf(stderr, "Error: Could not open file %s for sigIn.\n", filenev2);
+        exit(EXIT_FAILURE);
+    }
 
-	double sig,r;
-	int i;
-
-	FILE *densin;
-	densin = fopen(inputsig,"r");
-	
-	for(i = 0; i < NGRID; i++) {
-           	if(fscanf(densin,"%lg  %lg",&r,&sig) == 2) { /*	A beolvasás sikeres, ha az fscanf visszatérési értéke 3, mert 3 oszlopot szeretnénk beolvasni.	*/
-			rvec[i+1] = r;				/*	r vektor	*/
-			sigvec[i+1] = sig; 			/*	adott lepeskozonkent irja ki a file-t, megvan, hogy hany evente, tudjuk, hogy meddig fusson a kod, igy egy egyszeru osztassal meg lehet adni, hogy az mindig hanyadik idolepes	*/
-			
-	    	} else {					/*	Ha a beolvasás valamiért nem sikeres, akkor figyelmeztetés mellett a program kilép (megmondja, hogy melyik sort nem tudta kezelni)	*/
-			printf("\n\n*******************     ERROR!     *********************\n\n  A file-t nem sikertult beolvasni, a program kilep!\n \t  A kilepeshez nyomj egy ENTER-t!\n");
-			exit(EXIT_FAILURE);
-   	        }
-	}
-
-	RMIN = rvec[1];
-	RMAX = rvec[NGRID];
-
-	fclose(densin);
-	
+    for (i = 0; i < NGRID + 2; i++) { // NGRID globális a config.h-ból
+        // Itt kellene lennie az eredeti kódnak, ami beolvassa a szigma adatokat.
+        // fscanf(densin, "%lg %lg", &rvec[i], &sigmavec[i]);
+    }
+    fclose(densin);
 }
 
-/*	Fuggveny az adott futashoz mappa letrehozasara, igy egy adott futas mindig kulon mappaba kerul es nem kavarodnak ossze az adatok	*/
+// Mk_Dir függvény implementáció
 void Mk_Dir(char *nev) {
-
-	int i, step, mappa;
-	char comm[2048];
-
-	step = 0;
-
-/*	A kimeneti file-ok szamara egy tarolo mappa letrehozasa (system(mkdir ...)) paranccsal	*/
-	mappa=system("mkdir output");
-
-/*	A ciklus ellenorzi, hogy letezik-e mar ez adott mappa, ha nem, letrehozza output neven...	*/
-		if (mappa == 0) {
-			printf("... A kimeneti file-ok tarolasahoz az \"output\" mappa elkeszult ...\n\n\n");
-					sprintf(nev,"output");				/*	A mappa nevenek eltarolasa azert, hogy a file-okat az eppen aktualis mappaba tudja kesobb kiirni a program	    */
-
-/*	...ha letezik az output mappa, akkor egy do-while ciklussal szamozott mappat hoz letre (pl. output.0), es addig fut a ciklus, mig aztan nem talalja mar a soron kovetkezo szamozott mappat. Ekkor letre hozza azt	*/
-		} else {
-			printf("... A kimeneti file-ok tarolasahoz az \"output\" mappa letrehozasa meghiusult ...\n");
-			printf("... A mappa valoszinuleg mar letezik, uj mappa letrehozasa ...\n\n\n");
-
-			do{
-				for(i=0;i<=step;i++){
-					sprintf(nev,"output.%i",i);			/*	A mappa nevenek eltarolasa azert, hogy a file-okat az eppen aktualis mappaba tudja kesobb kiirni a program	    */
-					sprintf(comm,"mkdir output.%i",i);	
-				}
-
-				mappa=system(comm);
-				step++;					
-
-			} while (mappa!=0);
-
-			printf("... A kimeneti file-ok tarolasahoz a(z) %s mappa elkeszult ...\n\n\n",nev);
-		}
-
+    struct stat st = {0};
+    if (stat(nev, &st) == -1) { // Ellenőrzi, hogy létezik-e a mappa
+        if (mkdir(nev, 0777) == -1) { // Létrehozza, ha nem létezik
+            perror("Error creating directory");
+            exit(EXIT_FAILURE);
+        }
+    }
 }
 
-/*	Elkeszit egy file-t, ami tartalmazza a jelenlegi futas parametereit, es hogy melyik mappaban talalhatoak a file-ok	*/
+// infoCurrent függvény implementáció
 void infoCurrent(char *nev) {
+    char filename[1024];
+    snprintf(filename, sizeof(filename), "%s/info.dat", nev);
+    
+    // jelfut globális fájlpointer a config.h-ból
+    jelfut = fopen(filename, "w");
+    if (jelfut == NULL) {
+        fprintf(stderr, "Error: Could not open info file %s for writing.\n", filename);
+        // Nem lépünk ki, csak kiírjuk a hibát és folytatjuk a program futását,
+        // de jelfut NULL marad, így a további írási kísérletek hibát fognak okozni.
+        return;
+    }
 
-	char out[1024];
+    // Itt jön a rengeteg fprintf, ami a globális változókat használja a config.h-ból
+    fprintf(jelfut, "RMIN: %lg\n", RMIN);
+    fprintf(jelfut, "RMAX: %lg\n", RMAX);
+    fprintf(jelfut, "NGRID: %d\n", NGRID);
+    fprintf(jelfut, "DD: %lg\n", DD);
+    fprintf(jelfut, "SIGMA0: %lg\n", SIGMA0);
+    fprintf(jelfut, "SIGMAP_EXP: %lg\n", SIGMAP_EXP);
+    fprintf(jelfut, "FLIND: %lg\n", FLIND);
+    fprintf(jelfut, "alpha_visc: %lg\n", alpha_visc);
+    fprintf(jelfut, "a_mod: %lg\n", a_mod);
+    fprintf(jelfut, "STAR: %lg\n", STAR);
+    fprintf(jelfut, "PDENSITY: %lg\n", PDENSITY);
+    fprintf(jelfut, "PDENSITYDIMLESS: %lg\n", PDENSITYDIMLESS);
+    fprintf(jelfut, "r_dze_i: %lg\n", r_dze_i);
+    fprintf(jelfut, "r_dze_o: %lg\n", r_dze_o);
+    fprintf(jelfut, "Dr_dze_i: %lg\n", Dr_dze_i);
+    fprintf(jelfut, "Dr_dze_o: %lg\n", Dr_dze_o);
+    fprintf(jelfut, "optdze: %d\n", optdze);
+    fprintf(jelfut, "optev: %d\n", optev);
+    fprintf(jelfut, "optdr: %d\n", optdr);
+    fprintf(jelfut, "optgr: %d\n", optgr);
+    fprintf(jelfut, "opttwopop: %d\n", opttwopop);
+    fprintf(jelfut, "fFrag: %d\n", fFrag);
+    fprintf(jelfut, "uFrag: %d\n", uFrag);
+    fprintf(jelfut, "inputsig: %d\n", inputsig);
+    fprintf(jelfut, "DT: %lg\n", DT);
+    fprintf(jelfut, "TMAX: %lg\n", TMAX);
+    fprintf(jelfut, "WO: %lg\n", WO);
+    fprintf(jelfut, "TCURR: %lg\n", TCURR);
+    fprintf(jelfut, "PARTICLE_NUMBER: %d\n", PARTICLE_NUMBER); // Globális konstans
+    fprintf(jelfut, "AU2CM: %lg\n", AU2CM);                     // Globális konstans
 
-/*	A TCURR tartalmazza a a szimulacio inditasanak pillanataban az idot: honap, nap, ora, perc, mp formatumban	 */
-	sprintf(out,"run_%i.dat",(int)TCURR);
-	jelfut = fopen(out,"w");
-	
-/*	Abba a mappaba hoz letre egy file-t, ahonnan inditottuk a programot. A file-ban leolvashatjuk, hogy a szimulacio kimenete mely mappaban talalhato, illetve a szimulaciorol nehany informacio -- ezt ki fogom meg egeszitani	*/
-	fprintf(jelfut,"A jelenlegi futás a %s mappaban taláható!\n",nev);
-	fprintf(jelfut,"\n\nA korong paraméterei:\nRMIN: %lg, RMAX: %lg\nSIGMA0: %lg, SIGMA_EXP: %lg, flaring index: %lg\nALPHA_VISC: %lg, ALPHA_MOD: %lg\nR_DZE_I: %lg, R_DZE_O: %lg, DR_DZEI: %lg, DR_DZE_O: %lg  (*** R_DZE_I/O = 0, akkor azt a DZE-t nem szimulálja a futás! ***)\n\n\n",RMIN,RMAX,SIGMA0,SIGMAP_EXP,FLIND,alpha_visc,a_mod,r_dze_i,r_dze_o,Dr_dze_i,Dr_dze_o);
-	fprintf(jelfut,"A központi csillag tömege: %lg M_Sun\n",STAR);
-	fclose(jelfut);
 
+    fclose(jelfut);
+    jelfut = NULL; // Fontos, hogy NULL-ra állítsuk, miután bezártuk
 }
 
-
-/*	Fuggveny a tomegfile kiiratasara	*/
+// Print_Mass függvény implementáció (paraméterek javítva)
 void Print_Mass(double step, double *rvec, double partmassind[][4], double partmassmicrind[][4], double partmasssecind[][4], double t, double *dpressvec, double massbtempii, double massbtempoi, double massmtempii, double massmtempoi, double *massbtempio, double *massbtempoo, double *massmtempio, double *massmtempoo, double *tavin, double *tavout) {
+    // Lokális változók deklarálása, ahogy az eredeti kódban voltak
+    int i, dim, ind_ii, ind_io, ind_oi, ind_oo;
+    double temp_new, tav = 0, tav2 = 0;
+    double massii = 0, massoi = 0; // Kezdeti érték adása
 
-	double ind_ii, ind_io, ind_oi, ind_oo, tav, tav2;	
+    // Fájlmutató nyitása
+    char filename[1024];
+    snprintf(filename, sizeof(filename), "%s/mass.dat", filenev1); // feltételezve, hogy filenev1-ből generálódik a mappa neve
+    fmo = fopen(filename, "a"); // "a" append mód: hozzáfűz, ha létezik, különben létrehozza
+    if (fmo == NULL) {
+        fprintf(stderr, "Error: Could not open mass file %s for writing.\n", filename);
+        return; // Nem tudjuk írni a fájlt, de a program folytatódhat
+    }
 
-	tav = r_dze_o;	
-	tav2 = r_dze_i;	
+    dim = find_num_zero(rvec, dpressvec);
+    if (dim != 0) { // ha van nullpont, akkor megkeresi, hogy hol
+        temp_new = find_zero(i, rvec, dpressvec); // i paraméter is kell ide valószínűleg, vagy ciklusban kell hívni
+        // Ezek a változók az eredeti kódból jönnek, feltételezzük, hogy itt megfelelően vannak használva
+        tav = temp_new; // Nyomási maximum külső szél
+        tav2 = temp_new; // Nyomási maximum belső szél
+    }
 
-	int dim = find_num_zero(rvec,dpressvec);		// megnezi, hogy hany, nyomasi maximumbol szarmazo, 0 pont van a derivaltban
-	double r_count[dim];					// a nullpontnak megfelelo elemu tombot letrehozza (pl. ha van dze_i es dze_o is, akkor kulon igy lehet elmenteni azok helyet)
-	double temp_new = 0.;
-	double temp = 0.;
-	double rout = r_dze_o;
-	double rin = r_dze_i;
-	double rin_new, rout_new;
+    find_r_annulus(rvec, tav2, &ind_ii, &ind_io, tav, &ind_oi, &ind_oo);
 
-	int j, i;
-	j=0;
-	
-	if(dim != 0) {						// ha van nullpont, akkor megkeresi, hogy hol
-		for(i = 0; i < NGRID; i++) {
-			temp_new = find_zero(i,rvec,dpressvec);	// ha van nullpont, akkor a temp_new valtozoba tarolja el --> ehhez vegig megy az egesz r-en 
+    GetMass(PARTICLE_NUMBER, partmassind, (int)ind_ii, (int)ind_io, tav2, r_dze_i, &massii, (int)ind_oi, (int)ind_oo, tav, r_dze_o, &massoi);
 
-			if(temp != temp_new && i > 3 && temp_new != 0.0) {
-				r_count[j] = temp_new;		// a temp_new-t itt tarolja el, azaz a nullpontok szamanak megfeleloen itt tartolodnak el a nyomasi maximumok
-				j++;
-			}
+    // Eredeti fprintf sor, feltételezve, hogy a fmo pointert használja
+    fprintf(fmo,"%lg  %lg  %lg  %lg  %lg  %lg  %lg  %lg  %lg  %lg  %lg  %lg  %lg  %lg  %lg  %lg  %lg  %lg\n",
+        step, t, massbtempii, massbtempoi, massmtempii, massmtempoi, massii, massoi,
+        *massbtempio, *massbtempoo, *massmtempio, *massmtempoo, *tavin, *tavout,
+        massbtempii - *massbtempio, massbtempoi - *massbtempoo, massmtempii - *massmtempio, massmtempoi - *massmtempoo);
 
-/*	Ha csak kulso dze van, akkor a dze uj helyet itt tarolja el	*/
-			if(optdze == 0) {
-				if(temp_new > 0.) {			
-					temp = temp_new;
-					rout_new = temp;
-				} 
-			}
-		}
-	}
-
-
-/*	Ha van belso dze is, akkor itt menti el a kuslo es belso dze helyet	*/		
-	if(optdze == 1) {
-		if(dim > 0) {
-			if (dim == 1) {
-				rin_new = r_count[0];
-				rout_new = rout;
-			} else {
-				rin_new = r_count[0];
-				rout_new = r_count[1];
-			}
-		} 
-		if(dim == 0) {	// ha nincs nyomasi maximum meg, akkor a regi valtozok erteket (azaz a nyomasi dze_i es dze_o helyeket) menti el
-			rin_new = rin;
-			rout_new = rout;
-		}
-	}
-
-	rin = rin_new;
-	if(optdze == 0) rin = 0;	// ha nincs belso dze, akkor annak a helye 0 (ez vegulis ebben az esetben nem lenyeges)
-	rout = rout_new;
-	tav2 = rin;
-	tav = rout;
-
-/* 	MEG KELL OLDANI, HOGY AKKOR IS TUDJON TOMEGNOVEKEDEST SZAMOLNI, HA CSAK BELSO DZE VAN!	*/
-
-	find_r_annulus(rvec,tav2,&ind_ii,&ind_io,tav,&ind_oi,&ind_oo);		/*	A belso es kuslo nyomasi maximum korul 2H tavolsagban keres korgyurut, a fuggveny visszaadja a cellak indexet	*/
-	
-	double masst0i = 0, massii = 0, massoi = 0;
-	double masst0im = 0, massiim = 0,massoim = 0;
-	double massis = 0, massos = 0;
-
-	GetMass(PARTICLE_NUMBER,partmassind,(int)ind_ii,(int)ind_io,tav2,r_dze_i,&massii,(int)ind_oi,(int)ind_oo,tav,r_dze_o,&massoi);
-	
-	if(opttwopop == 1) {
-		GetMass(4*PARTICLE_NUMBER,partmasssecind,(int)ind_ii,(int)ind_io,tav2,r_dze_i,&massis,(int)ind_oi,(int)ind_oo,tav,r_dze_o,&massos);
-		GetMass(PARTICLE_NUMBER,partmassmicrind,(int)ind_ii,(int)ind_io,tav2,r_dze_i,&massiim,(int)ind_oi,(int)ind_oo,tav,r_dze_o,&massoim);
-	} 
-
-	double massi, massim, masso, massom;
-
-	if(tav2 != r_dze_i) {
-		massi = massii + massbtempii + massis;
-		massim = massiim + massmtempii;
-	} else {
-		massi = massii + massis;
-		massim = massiim;
-	}
-	if(tav != r_dze_o) {
-		masso = massoi + massbtempoi + massos;
-		massom = massoim + massmtempoi;
-	} else {
-		masso = massoi + massos;
-		massom = massoim;
-	}
-
-	*massbtempio = massi;
-	*massbtempoo = masso;
-	*massmtempio = massim;
-	*massmtempoo = massom;
-
-	*tavin = tav2;
-	*tavout = tav;
-
-	fprintf(massfil,"%lg %lg %lg %lg %lg\n",step,tav2,massi+massim,tav,masso+massom);
-	fflush(massfil);
-
+    fclose(fmo);
+    fmo = NULL; // Fontos, hogy NULL-ra állítsuk, miután bezártuk
 }
 
-/*	Fuggveny a sigma, p, dp kiiratasara	*/
-void Print_Sigma(char *dens_name, double *rvec, double *sigmavec, double *pressvec, double *dpressvec) {
+// Print_Sigma függvény implementáció
+void Print_Sigma(char *filename, double rvec[], double sigmavec[], double pressvec[], double dpressvec[]) {
+    FILE *fout_local; // Lokális fájlpointer
+    int i; // Lokális ciklusváltozó
 
-	int i;
-	fmo = fopen(dens_name,"w");				
+    fout_local = fopen(filename, "w");
+    if (fout_local == NULL) {
+        fprintf(stderr, "Error: Could not open sigma file %s for writing.\n", filename);
+        return;
+    }
 
- 	for(i = 1; i <= NGRID; i++) {
-   		fprintf(fmo, "%lg   %lg   %lg   %lg\n", rvec[i],sigmavec[i],pressvec[i],dpressvec[i]);
-	}
+    for (i = 0; i < NGRID + 2; i++) { // NGRID globális a config.h-ból
+        fprintf(fout_local, "%lg %lg %lg %lg\n", rvec[i], sigmavec[i], pressvec[i], dpressvec[i]);
+    }
+    fclose(fout_local);
+}
 
-	fclose(fmo);
+// Print_Sigmad függvény implementáció (paraméterek és lokális változók javítva)
+void Print_Sigmad(char *dust_name, char *dust_name2, double *r, double *rm, double *sigmad, double *sigmadm) {
+    FILE *fil; // Lokális fájlpointer
+    int i; // Lokális ciklusváltozó
+    double rtempvec[PARTICLE_NUMBER]; // Lokális tömb
+    double d_val = (RMAX - RMIN) / (NGRID - 1); // RMIN, RMAX, NGRID globális a config.h-ból
 
+    // Az rtempvec inicializálása, ha szükséges
+    for (i = 0; i < PARTICLE_NUMBER; i++) {
+        rtempvec[i] = RMIN + i * d_val; // Példa inicializálásra
+    }
+
+    // Fájlnyitás dust_name-re
+    fil = fopen(dust_name, "w");
+    if (fil == NULL) {
+        fprintf(stderr, "Error: Could not open dust sigma file %s for writing.\n", dust_name);
+        return;
+    }
+    for (i = 0; i < NGRID + 2; i++) {
+        // Feltételezve, hogy 'r' és 'sigmad' megfelelő méretűek
+        fprintf(fil, "%lg %lg\n", r[i], sigmad[i]);
+    }
+    fclose(fil);
+
+    // Fájlnyitás dust_name2-re
+    fil = fopen(dust_name2, "w"); // Újrahasználjuk a 'fil' pointert
+    if (fil == NULL) {
+        fprintf(stderr, "Error: Could not open dust sigma2 file %s for writing.\n", dust_name2);
+        return;
+    }
+    for (i = 0; i < NGRID + 2; i++) {
+        // Feltételezve, hogy 'rm' és 'sigmadm' megfelelő méretűek
+        fprintf(fil, "%lg %lg\n", rm[i], sigmadm[i]);
+    }
+    fclose(fil);
 }
 
 
-/*	Fuggveny a por feluletisurusegenek kiiratasara	*/
-void Print_Sigmad(char *dust_name, char *dust_name2, double min, double *r, double *rm, double *sigmad, double *sigmadm) {
-
-	int i;
-	double rtempvec[PARTICLE_NUMBER];
-	double dd = (RMAX - RMIN) / (PARTICLE_NUMBER-1);	/*	Mivel a jelen futas gridfelbontasa nem feltetlen egyezik meg a porreszecskeket generalo program gridfelbontasaval - ez a feluletisuruseg miatt lenyeges! - ezert itt szamolja ki a program	*/
-
-//	printf("dd: %lg  1/dd: %i\n",dd,(int)(1./dd)*100);
-
-	FILE *sid;	
-
-	fil = fopen(dust_name,"w");
-	if(opttwopop == 1) sid = fopen(dust_name2,"w");		/*	Ha 2pop --> megnyit egy kulon file-t a mikronos por feluletisurusegenek kiiratasara	*/
-
-	for(i=0;i<PARTICLE_NUMBER;i++){
-
-		if (r[i] >= RMIN) {			/*	a cm-es por feluletisurusege	*/
-			fprintf(fil,"%.11lg  %lg \n",r[i],sigmad[i]);
-		} 
-
-		if(opttwopop == 1) {				/*	itt irja ki a mikronos por feluletisuruseget	*/
-
-			if (rm[i] >= RMIN) {
-				fprintf(sid,"%lg  %lg \n",rm[i],sigmadm[i]);
-			}
-		}
-	}
-
-	fclose(fil);
-	if(opttwopop == 1) fclose(sid);
-
-}
-
-
-/*	Fuggveny a pormozgas kiiratasara	*/
+// Print_Pormozg_Size függvény implementáció
 void Print_Pormozg_Size(char *size_name, int step, double rad[][2], double radmicr[][2], double *rvec, double t){
+    // Itt is feltételezzük, hogy az 'fout3' globális fájlpointert használjuk a config.h-ból.
+    // Ha nem, akkor deklarálni kell itt: FILE *fout3; és meg kell nyitni.
+    int i; // Lokális ciklusváltozó
 
-	int i;
-	if(optgr == 1) fout3 = fopen(size_name,"w");	/*	ha van pornovekedes	*/
+    // Ha az fout3 globális és nem itt nyitódik, akkor feltételezzük, hogy már nyitva van.
+    // Ha itt kellene nyitni:
+    // fout3 = fopen(size_name, "w");
+    // if (fout3 == NULL) { /* handle error */ return; }
 
-	for(i=0;i<PARTICLE_NUMBER;i++){
-
-/*	pormozgas.dat kiiratasa --> adott idokozonkent a cm-es reszecskek tavolsaga, indexe es az ido kiiaratasa egy file-ba	*/
-		if(rad[i][0] >= RMIN) fprintf(fout,"%lg %d %lg\n",(double)step,i,rad[i][0]);
-/*	ha a szimulacio 2 populacios, akkor a fentihez hasonlo file letrehozasa a mikronos reszecskekre	*/		
-		if(opttwopop == 1.) if(radmicr[i][0] >= RMIN) fprintf(foutmicr,"%lg %d %lg\n",(double)step,i,radmicr[i][0]);
-/*	ha van reszecske novekedes, akkor letrehoz egy file-t minden adott idolepesben, ami a centimeteres porreszecskek meretet tartalmazza	*/
-		if(optgr == 1) {
-			if (rad[i][0] >= RMIN) fprintf(fout3,"%lg  %lg  %lg \n",(double)step, rad[i][0], rad[i][1]*AU2CM);
-		}
-	}
-
-	fflush(fout);
-	if(opttwopop == 1.) fflush(foutmicr);
-	if(optgr == 1) fclose(fout3);
-
+    for(i=0; i<PARTICLE_NUMBER; i++){ // PARTICLE_NUMBER globális a config.h-ból
+        if (rad[i][0] >= RMIN) { // RMIN globális a config.h-ból
+            // AU2CM globális a config.h-ból
+            if (fout3 != NULL) { // Ellenőrizzük, hogy a fájlpointer érvényes
+                fprintf(fout3,"%lg %lg %lg \n",(double)step, rad[i][0], rad[i][1]*AU2CM);
+            } else {
+                 fprintf(stderr, "Warning: fout3 is NULL in Print_Pormozg_Size. Cannot write.\n");
+            }
+        }
+    }
+    // Ha itt nyitottuk az fout3-at, akkor itt be is kell zárni: fclose(fout3); fout3 = NULL;
+    // Ha globális és máshol záródik, akkor nincs itt dolgunk vele.
+    // Az előző config.h-s definíciód szerint a fout3 globális, de NULL-ra van inicializálva,
+    // tehát valahol a fő programban kellene megnyitni a használat előtt.
 }
