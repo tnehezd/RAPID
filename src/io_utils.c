@@ -354,3 +354,29 @@ void Print_Pormozg_Size(char *size_name, int step, double rad[][2], double radmi
     // Az előző config.h-s definíciód szerint a fout3 globális, de NULL-ra van inicializálva,
     // tehát valahol a fő programban kellene megnyitni a használat előtt.
 }
+
+
+
+
+/*	Az idot tartalmazo file parametereinek beolvasasa	*/
+void timePar(double *tMax, double *step, double *current) {
+
+	double tmax,stepping,curr;
+
+	fin2 = fopen(filenev3,"r");
+
+           	if(fscanf(fin2,"%lg  %lg %lg",&tmax,&stepping,&curr) == 3) { /*	A beolvasás sikeres, ha az fscanf visszatérési értéke 3, mert 3 oszlopot szeretnénk beolvasni.	*/
+ 			printf("\n\n *********** A korong parameterei sikeresen beolvasva!  *********** \n                  tmax: %lg, a program %lg evenkent irja ki a file-okat\n\n\n",tmax,stepping);  
+			*tMax = tmax;				/*	meddig fusson a program	*/
+			stepping = tmax/stepping;
+			*step = stepping; 			/*	adott lepeskozonkent irja ki a file-t, megvan, hogy hany evente, tudjuk, hogy meddig fusson a kod, igy egy egyszeru osztassal meg lehet adni, hogy az mindig hanyadik idolepes	*/
+			*current = curr;			/*	beolvassa, hogy mennyi volt az ido eppen a futas inditasanak pillanataban -- ez a kiiratasnal lenyeges	*/
+			
+	    	} else {					/*	Ha a beolvasás valamiért nem sikeres, akkor figyelmeztetés mellett a program kilép (megmondja, hogy melyik sort nem tudta kezelni)	*/
+			printf("\n\n*******************     ERROR!     *********************\n\n  A file-t nem sikertult beolvasni, a program kilep!\n \t  A kilepeshez nyomj egy ENTER-t!\n");
+			exit(EXIT_FAILURE);
+   	        }
+
+	fclose(fin2);
+	
+}
