@@ -4,13 +4,13 @@
 #define CONFIG_H
 
 #include <stdio.h> // For FILE* and other standard definitions
-#include <math.h>  // M_PI definition, if not implicitly defined elsewhere
+#include <math.h>  // For tanh, sqrt, pow, and potentially M_PI
 
-// --- Fixed Physical Constants (defined directly in header for global access) ---
-#define G2 39.47841760435743     // Gravitational constant 4pi^2 AU^3 M_sun^-1 yr^-2
+// --- Fixed Physical Constants (defined directly for immediate access) ---
+#define G_GRAV_CONST 1.0     // Gravitational constant G = 1 in your unit system
 #define M_PI 3.14159265358979323846 // Pi (standard math constant)
 
-// --- General Constants (defined directly in header) ---
+// --- General Constants ---
 const double AU2CM = 1.495978707e13; // Astronomical Unit in centimeters
 const double SUN2GR = 1.989e33;     // Solar Mass in grams
 
@@ -19,19 +19,19 @@ const double SUN2GR = 1.989e33;     // Solar Mass in grams
 extern double RMIN;
 extern double RMAX;
 extern int NGRID;
-extern double DD; // Derived from RMIN, RMAX, NGRID, usually calculated in config.c
+extern double DD; // Derived from RMIN, RMAX, NGRID
 extern double SIGMA0;
 extern double SIGMAP_EXP;
 extern double FLIND;      // Flaring index (gamma from disk_param_be)
+extern double HASP;       // Scale height constant (H/R at 1 AU)
+extern double STAR;       // Mass of the central star in solar masses
 extern double alpha_visc; // alpha viscosity measure
 extern double a_mod;      // viscosity reduction measure
-extern double STAR;       // Mass of the central star in solar masses (used in dust_physics)
-extern double HASP;       // Scale height constant (used in dust_physics)
 
 // Dust parameters
-extern double PDENSITY;      // Particle density (cgs)
-extern double PDENSITYDIMLESS; // Dimensionless particle density (calculated in disk_param_be)
-extern int PARTICLE_NUMBER;  // Changed to extern, as it might be read from input
+extern double PDENSITY;      // Particle density
+extern double PDENSITYDIMLESS; // Dimensionless particle density
+extern int PARTICLE_NUMBER;  // Total number of particles
 
 // Dead Zone parameters
 extern double r_dze_i;      // Inner dead zone radius
@@ -63,8 +63,8 @@ extern FILE *fout3;
 extern FILE *foutmicr;
 extern FILE *massfil;
 extern FILE *jelfut;
-extern FILE *fin1;
-extern FILE *fin2;
+extern FILE *fin1; 
+extern FILE *fin2; 
 
 // --- Global Filenames ---
 extern char filenev1[1024];
