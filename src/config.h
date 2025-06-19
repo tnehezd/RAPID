@@ -55,6 +55,8 @@ extern FILE *fout3;
 extern FILE *foutmicr;
 extern FILE *massfil;
 extern FILE *jelfut;
+extern FILE *fin1; 
+extern FILE *fin2; 
 
 // --- Global Filenames (if they are used across multiple files) ---
 extern char filenev1[1024]; // General purpose filename (e.g., for disk_param_be input)
