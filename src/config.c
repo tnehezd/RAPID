@@ -65,7 +65,3 @@ void initialize_derived_config_variables() {
 }
 
 
-// Function to initialize derived global variables
-void initialize_derived_config_variables() {
-    DD = (RMAX - RMIN) / NGRID;
-}
