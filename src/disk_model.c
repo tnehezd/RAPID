@@ -120,3 +120,17 @@ void Initial_Ugas(double *sigmavec, double *rvec, double *ug){		/*	initial profi
 	u_gas(sigmavec,rvec,ug);
   	Perem(ug);
 }
+
+
+/*	A peremen parabolat illeszt	*/
+void Perem(double *vec) {					/*	boundary condition for sigma, p, dp...	*/
+
+	double a, b, c; 
+
+	Parabola(vec, 1, 2, 3, &a, &b, &c, DD);
+	vec[0] =  a * (RMIN - DD) * (RMIN - DD) + b * (RMIN - DD) + c;
+
+	Parabola(vec, NGRID - 2, NGRID - 1, NGRID, &a, &b, &c, DD);
+	vec[NGRID+1] = a * (RMAX + DD) * (RMAX + DD) + b * (RMAX + DD) + c;
+
+}
