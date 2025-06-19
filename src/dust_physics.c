@@ -4,6 +4,44 @@
 #include <stdio.h>
 #include <math.h>
 
+/*	local scale height	*/
+double scale_height(double r) {
+
+	return pow(r,1.+FLIND) * HASP;
+
+}
+
+
+/*	lokális kepleri sebesség	*/
+double v_kep(double r) {
+
+	return sqrt(G2 * STAR / r);
+	
+}
+
+
+/*	lokalis kepleri korfrekvencia	*/
+double kep_freq(double r) {
+
+	return sqrt(G2 * STAR / r / r / r);			/*	v_kepler in AU / (yr/2pi)	*/
+
+}
+
+
+/*	local sound speed		*/
+double c_sound(double r) {
+
+	return kep_freq(r) * scale_height(r);
+
+}
+
+/*	Suruseg a midplane-ben	*/
+double rho_mp(double sigma, double r) {
+
+	return 1. / sqrt(2.0 * M_PI) * sigma / scale_height(r);
+
+}
+
 /* 	local pressure of the gas p = rho_gas * cs * cs kepletbol!!	*/
 double press(double sigma, double r) {
 
@@ -29,6 +67,14 @@ void dpress(double *dp, double *p) {
 	}
 
 }	
+
+/*	u_gas kiszamolasahoz eltarolt koefficiens	*/
+double Coeff_3(double sigma, double r){
+
+	return -1.0 * (3.0 / (sigma * sqrt(r)));
+
+}
+
 
 /*	u_gas = -3/(Sigma*R^0.5)*(d/dR)(nu*Sigma*R^0.5) kiszamolasa	*/
 void u_gas(double *sigmavec, double *rvec, double *ug) {
