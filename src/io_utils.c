@@ -14,7 +14,79 @@
 // Amikor a többi modult is létrehozzuk és include-oljuk a header fájljaikat, ezeket törölni fogjuk.
 int find_num_zero(double *rvec, double *dpressvec);
 double find_zero(int i, double *rvec, double *dpressvec);
-void find_r_annulus(double *rvec, double tav2, int *ind_ii, int *ind_io, double tav, int *ind_oi, int *ind_oo);
+
+/*	A nyomasi maximum korul 1H tavolsagban jeloli ki a korgyurut	*/
+void find_r_annulus(double *rvec, double rin, double *ind_ii, double *ind_io, double rout, double *ind_oi, double *ind_oo) {
+
+	int i;
+	double rmid, rtemp;
+	double roimH;
+	double roipH;
+	double roomH;
+	double roopH;
+	double riimH;
+	double riipH;
+	double riomH;
+	double riopH;
+
+	if(optdze == 0) {
+	
+		*ind_ii = 0;
+		*ind_io = 0;
+	
+	}
+
+	riimH = (rin - scale_height(rin)) - DD / 2.0;		/*	A nyomasi maximum az rout pontban van, ettol rout - 1/2H - DD / 2 es rout + 1*2H -DD / 2 kozott van a korgyuru belso hatara (azert DD/2, hogy biztosan 1 cellat tudjunk kijelolni, ne pedig egy tartomanyt)	*/
+	riipH = (rin - scale_height(rin)) + DD / 2.0;		
+	riomH = (rin + scale_height(rin)) - DD / 2.0;		/*	Az alabbi ketto pedig a kulso hatarat adja meg a korgyurunek	*/
+	riopH = (rin + scale_height(rin)) + DD / 2.0;
+
+	roimH = (rout - scale_height(rout)) - DD / 2.0;		/*	A nyomasi maximum az rout pontban van, ettol rout - 1/2H - DD / 2 es rout + 1*2H -DD / 2 kozott van a korgyuru belso hatara (azert DD/2, hogy biztosan 1 cellat tudjunk kijelolni, ne pedig egy tartomanyt)	*/
+	roipH = (rout - scale_height(rout)) + DD / 2.0;		
+	roomH = (rout + scale_height(rout)) - DD / 2.0;		/*	Az alabbi ketto pedig a kulso hatarat adja meg a korgyurunek	*/
+	roopH = (rout + scale_height(rout)) + DD / 2.0;
+
+	for(i = 1; i <= NGRID; i++) {
+
+		if(optdze == 1) { 
+/*	Ha az r tavolsag a kijelolt hatarok kozott van, akkor az adott valtozo visszakapja r erteket	*/
+			if(rvec[i] > riimH && rvec[i] < riipH) {
+			    	rmid = (rvec[i] - RMIN)/ DD;     						/* 	The integer part of this gives at which index is the body	*/
+				rtemp = (int) floor(rmid + 0.5);						/*	Rounding up (>.5) or down (<.5)					*/
+				*ind_ii = rtemp;
+			}
+				
+/*	Ha az r tavolsag a kijelolt hatarok kozott van, akkor az adott valtozo visszakapja r erteket	*/
+			if(rvec[i] > riomH && rvec[i] < riopH) {
+			    	rmid = (rvec[i] - RMIN)/ DD;     						/* 	The integer part of this gives at which index is the body	*/
+				rtemp = (int) floor(rmid + 0.5);						/*	Rounding up (>.5) or down (<.5)					*/
+				*ind_io = rtemp;
+			}
+		}
+
+
+/*	Ha az r tavolsag a kijelolt hatarok kozott van, akkor az adott valtozo visszakapja r erteket	*/
+		if(rvec[i] > roimH && rvec[i] < roipH) {
+		    	rmid = (rvec[i] - RMIN)/ DD;     						/* 	The integer part of this gives at which index is the body	*/
+			rtemp = (int) floor(rmid + 0.5);						/*	Rounding up (>.5) or down (<.5)					*/
+			*ind_oi = rtemp;
+		}
+				
+/*	Ha az r tavolsag a kijelolt hatarok kozott van, akkor az adott valtozo visszakapja r erteket	*/
+		if(rvec[i] > roomH && rvec[i] < roopH) {
+		    	rmid = (rvec[i] - RMIN)/ DD;     						/* 	The integer part of this gives at which index is the body	*/
+			rtemp = (int) floor(rmid + 0.5);						/*	Rounding up (>.5) or down (<.5)					*/
+			*ind_oo = rtemp;
+		}
+
+		if(rvec[i] > roopH) break;
+
+	}
+
+}
+
+
+
 // A GetMass paraméterlistáját pontosítsd, ha más a dimenziója partmassind-nek, mint [][4]
 void GetMass(int particle_number, double partmassind[][4], int ind_ii, int ind_io, double tav2, double r_dze_i, double *mass_ii_out, int ind_oi, int ind_oo, double tav, double r_dze_o, double *mass_oi_out);
 
