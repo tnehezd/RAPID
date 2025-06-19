@@ -10,6 +10,10 @@
 // NYILVÁNOS FÜGGVÉNYEK (Más modulok is hívhatják őket)
 // -----------------------------------------------------------------------------
 
+// pressure scale-height
+double scale_height(double r);
+
+
 // Korongnyomás számítása
 double press(double sigma, double r);
 
