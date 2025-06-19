@@ -1,57 +1,74 @@
-#include "config.h"
+// src/config.h
 
-// --- Global Variable Definitions and Initializations ---
+#ifndef CONFIG_H
+#define CONFIG_H
+
+#include <stdio.h> // For FILE* and other standard definitions
+#include <math.h>  // For tanh, sqrt, pow, and where M_PI is typically defined
+
+// --- Fixed Physical Constants (defined directly for immediate access) ---
+#define G_GRAV_CONST 1.0     // Gravitational constant G = 1 in your unit system
+// REMOVED: #define M_PI 3.14159265358979323846 // M_PI is already in math.h
+
+// --- General Constants ---
+const double AU2CM = 1.495978707e13; // Astronomical Unit in centimeters
+const double SUN2GR = 1.989e33; // Solar Mass in grams (Ensure no stray chars here)
+
+// --- Global Variables (declared as extern here, defined and initialized in config.c) ---
 // Disk parameters
-double RMIN = 0.1;
-double RMAX = 100.0;
-int NGRID = 100;
-double DD = (RMAX - RMIN) / NGRID;
-double SIGMA0 = 1.0;
-double SIGMAP_EXP = -1.5;
-double FLIND = -0.5;
-double alpha_visc = 1e-4;
-double a_mod = 0.1;
-double STAR = 1.0;
-double HASP = 0.05;
-
+extern double RMIN;
+extern double RMAX;
+extern int NGRID;
+extern double DD; // DD will be calculated in config.c's init function
+extern double SIGMA0;
+extern double SIGMAP_EXP;
+extern double FLIND;      // Flaring index (gamma from disk_param_be)
+extern double HASP;       // Scale height constant (H/R at 1 AU)
+extern double STAR;       // Mass of the central star in solar masses
+extern double alpha_visc; // alpha viscosity measure
+extern double a_mod;      // viscosity reduction measure
 
 // Dust parameters
-double PDENSITY = 0.0;
-double PDENSITYDIMLESS = 0.0;
-
+extern double PDENSITY; // Particle density (Ensure no stray chars here)
+extern double PDENSITYDIMLESS; // Dimensionless particle density
+extern int PARTICLE_NUMBER;  // Total number of particles
 
 // Dead Zone parameters
-double r_dze_i = 0.0;
-double r_dze_o = 0.0;
-double Dr_dze_i = 0.0;
-double Dr_dze_o = 0.0;
-int optdze = 0;
+extern double r_dze_i; // Inner dead zone radius (Ensure no stray chars here)
+extern double r_dze_o; // Outer dead zone radius
+extern double Dr_dze_i; // Inner dead zone width
+extern double Dr_dze_o; // Outer dead zone width
+extern int optdze; // Option for dead zone simulation (Ensure no stray chars here)
 
 // Simulation control options
-int optev = 0;
-int optdr = 0;
-int optgr = 0;
-int opttwopop = 0;
-int fFrag = 0;
-int uFrag = 0;
-int inputsig = 0;
+extern int optev; // Evolution option (Ensure no stray chars here)
+extern int optdr; // Drift option
+extern int optgr; // Growth option
+extern int opttwopop; // Two-population model option
+extern int fFrag; // Fragmentation flag
+extern int uFrag; // Fragmentation update flag
+extern int inputsig; // Input sigma file option
 
 // Time parameters
-double DT = 0.0;
-double TMAX = 0.0;
-double WO = 0.0;
-double TCURR = 0.0;
+extern double DT; // Time step (Ensure no stray chars here)
+extern double TMAX; // Maximum simulation time
+extern double WO; // Output frequency parameter
+extern double TCURR; // Current simulation time
 
-// --- Global File Pointer Definitions ---
-FILE *fmo = NULL;
-FILE *fout = NULL;
-FILE *fout2 = NULL;
-FILE *fout3 = NULL;
-FILE *foutmicr = NULL;
-FILE *massfil = NULL;
-FILE *jelfut = NULL;
+// --- Global File Pointers ---
+extern FILE *fmo;
+extern FILE *fout;
+extern FILE *fout2;
+extern FILE *fout3;
+extern FILE *foutmicr;
+extern FILE *massfil;
+extern FILE *jelfut;
+extern FILE *fin1; // (Ensure no stray chars here)
+extern FILE *fin2; // (Ensure no stray chars here)
 
-// --- Global Filename Definitions ---
-char filenev1[1024] = "param.dat"; // Example default, adjust as needed
-char filenev2[1024] = "sigma.dat"; // Example default, adjust as needed
-char filenev3[1024] = "time.dat";  // Example default, adjust as needed
+// --- Global Filenames ---
+extern char filenev1[1024];
+extern char filenev2[1024];
+extern char filenev3[1024];
+
+#endif // CONFIG_H
