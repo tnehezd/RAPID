@@ -86,11 +86,6 @@ void find_r_annulus(double *rvec, double rin, double *ind_ii, double *ind_io, do
 }
 
 
-
-// A GetMass paraméterlistáját pontosítsd, ha más a dimenziója partmassind-nek, mint [][4]
-void GetMass(int particle_number, double partmassind[][4], int ind_ii, int ind_io, double tav2, double r_dze_i, double *mass_ii_out, int ind_oi, int ind_oo, double tav, double r_dze_o, double *mass_oi_out);
-
-
 // --- FÜGGVÉNY DEFINÍCIÓK ---
 
 // reszecskek_szama függvény implementáció
