@@ -236,42 +236,112 @@ void infoCurrent(char *nev) {
     jelfut = NULL; // Fontos, hogy NULL-ra állítsuk, miután bezártuk
 }
 
-// Print_Mass függvény implementáció (paraméterek javítva)
+/*	Fuggveny a tomegfile kiiratasara	*/
 void Print_Mass(double step, double *rvec, double partmassind[][4], double partmassmicrind[][4], double partmasssecind[][4], double t, double *dpressvec, double massbtempii, double massbtempoi, double massmtempii, double massmtempoi, double *massbtempio, double *massbtempoo, double *massmtempio, double *massmtempoo, double *tavin, double *tavout) {
-    // Lokális változók deklarálása, ahogy az eredeti kódban voltak
-    int i, dim, ind_ii, ind_io, ind_oi, ind_oo;
-    double temp_new, tav = 0, tav2 = 0;
-    double massii = 0, massoi = 0; // Kezdeti érték adása
 
-    // Fájlmutató nyitása
-    char filename[1024];
-    snprintf(filename, sizeof(filename), "%s/mass.dat", filenev1); // feltételezve, hogy filenev1-ből generálódik a mappa neve
-    fmo = fopen(filename, "a"); // "a" append mód: hozzáfűz, ha létezik, különben létrehozza
-    if (fmo == NULL) {
-        fprintf(stderr, "Error: Could not open mass file %s for writing.\n", filename);
-        return; // Nem tudjuk írni a fájlt, de a program folytatódhat
-    }
+	double ind_ii, ind_io, ind_oi, ind_oo, tav, tav2;	
 
-    dim = find_num_zero(rvec, dpressvec);
-    if (dim != 0) { // ha van nullpont, akkor megkeresi, hogy hol
-        temp_new = find_zero(i, rvec, dpressvec); // i paraméter is kell ide valószínűleg, vagy ciklusban kell hívni
-        // Ezek a változók az eredeti kódból jönnek, feltételezzük, hogy itt megfelelően vannak használva
-        tav = temp_new; // Nyomási maximum külső szél
-        tav2 = temp_new; // Nyomási maximum belső szél
-    }
+	tav = r_dze_o;	
+	tav2 = r_dze_i;	
 
-    find_r_annulus(rvec, tav2, &ind_ii, &ind_io, tav, &ind_oi, &ind_oo);
+	int dim = find_num_zero(rvec,dpressvec);		// megnezi, hogy hany, nyomasi maximumbol szarmazo, 0 pont van a derivaltban
+	double r_count[dim];					// a nullpontnak megfelelo elemu tombot letrehozza (pl. ha van dze_i es dze_o is, akkor kulon igy lehet elmenteni azok helyet)
+	double temp_new = 0.;
+	double temp = 0.;
+	double rout = r_dze_o;
+	double rin = r_dze_i;
+	double rin_new, rout_new;
 
-    GetMass(PARTICLE_NUMBER, partmassind, (int)ind_ii, (int)ind_io, tav2, r_dze_i, &massii, (int)ind_oi, (int)ind_oo, tav, r_dze_o, &massoi);
+	int j, i;
+	j=0;
+	i=0;
+	
+	if(dim != 0) {						// ha van nullpont, akkor megkeresi, hogy hol
+		for(i = 0; i < NGRID; i++) {
+			temp_new = find_zero(i,rvec,dpressvec);	// ha van nullpont, akkor a temp_new valtozoba tarolja el --> ehhez vegig megy az egesz r-en 
 
-    // Eredeti fprintf sor, feltételezve, hogy a fmo pointert használja
-    fprintf(fmo,"%lg  %lg  %lg  %lg  %lg  %lg  %lg  %lg  %lg  %lg  %lg  %lg  %lg  %lg  %lg  %lg  %lg  %lg\n",
-        step, t, massbtempii, massbtempoi, massmtempii, massmtempoi, massii, massoi,
-        *massbtempio, *massbtempoo, *massmtempio, *massmtempoo, *tavin, *tavout,
-        massbtempii - *massbtempio, massbtempoi - *massbtempoo, massmtempii - *massmtempio, massmtempoi - *massmtempoo);
+			if(temp != temp_new && i > 3 && temp_new != 0.0) {
+				r_count[j] = temp_new;		// a temp_new-t itt tarolja el, azaz a nullpontok szamanak megfeleloen itt tartolodnak el a nyomasi maximumok
+				j++;
+			}
 
-    fclose(fmo);
-    fmo = NULL; // Fontos, hogy NULL-ra állítsuk, miután bezártuk
+/*	Ha csak kulso dze van, akkor a dze uj helyet itt tarolja el	*/
+			if(optdze == 0) {
+				if(temp_new > 0.) {			
+					temp = temp_new;
+					rout_new = temp;
+				} 
+			}
+		}
+	}
+
+
+/*	Ha van belso dze is, akkor itt menti el a kuslo es belso dze helyet	*/		
+	if(optdze == 1) {
+		if(dim > 0) {
+			if (dim == 1) {
+				rin_new = r_count[0];
+				rout_new = rout;
+			} else {
+				rin_new = r_count[0];
+				rout_new = r_count[1];
+			}
+		} 
+		if(dim == 0) {	// ha nincs nyomasi maximum meg, akkor a regi valtozok erteket (azaz a nyomasi dze_i es dze_o helyeket) menti el
+			rin_new = rin;
+			rout_new = rout;
+		}
+	}
+
+	rin = rin_new;
+	if(optdze == 0) rin = 0;	// ha nincs belso dze, akkor annak a helye 0 (ez vegulis ebben az esetben nem lenyeges)
+	rout = rout_new;
+	tav2 = rin;
+	tav = rout;
+
+/* 	MEG KELL OLDANI, HOGY AKKOR IS TUDJON TOMEGNOVEKEDEST SZAMOLNI, HA CSAK BELSO DZE VAN!	*/
+
+	find_r_annulus(rvec,tav2,&ind_ii,&ind_io,tav,&ind_oi,&ind_oo);		/*	A belso es kuslo nyomasi maximum korul 2H tavolsagban keres korgyurut, a fuggveny visszaadja a cellak indexet	*/
+	
+	double masst0i = 0, massii = 0, massoi = 0;
+	double masst0im = 0, massiim = 0,massoim = 0;
+	double massis = 0, massos = 0;
+
+	GetMass(PARTICLE_NUMBER,partmassind,(int)ind_ii,(int)ind_io,tav2,r_dze_i,&massii,(int)ind_oi,(int)ind_oo,tav,r_dze_o,&massoi);
+	
+	if(opttwopop == 1) {
+		GetMass(4*PARTICLE_NUMBER,partmasssecind,(int)ind_ii,(int)ind_io,tav2,r_dze_i,&massis,(int)ind_oi,(int)ind_oo,tav,r_dze_o,&massos);
+		GetMass(PARTICLE_NUMBER,partmassmicrind,(int)ind_ii,(int)ind_io,tav2,r_dze_i,&massiim,(int)ind_oi,(int)ind_oo,tav,r_dze_o,&massoim);
+	} 
+
+	double massi, massim, masso, massom;
+
+	if(tav2 != r_dze_i) {
+		massi = massii + massbtempii + massis;
+		massim = massiim + massmtempii;
+	} else {
+		massi = massii + massis;
+		massim = massiim;
+	}
+	if(tav != r_dze_o) {
+		masso = massoi + massbtempoi + massos;
+		massom = massoim + massmtempoi;
+	} else {
+		masso = massoi + massos;
+		massom = massoim;
+	}
+
+	*massbtempio = massi;
+	*massbtempoo = masso;
+	*massmtempio = massim;
+	*massmtempoo = massom;
+
+	*tavin = tav2;
+	*tavout = tav;
+
+	fprintf(massfil,"%lg %lg %lg %lg %lg\n",step,tav2,massi+massim,tav,masso+massom);
+	fflush(massfil);
+
 }
 
 // Print_Sigma függvény implementáció
