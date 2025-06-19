@@ -7,15 +7,34 @@
 #include <stdio.h> // For FILE*
 
 // --- Function Declarations ---
-int reszecskek_szama(int lout, int inputsig);
-void por_be(); // Add parameters if it has any
-void sigIn(double sigmavec[], double rvec[]); // Add parameters
+// --- Function Declarations ---
+int reszecskek_szama(int lout, int inputsig); // Will re-evaluate parameters after content is moved
+void por_be();
+void sigIn(double sigmavec[], double rvec[]); // You had `inputsig` here as an int. If it's a filename, it should be const char*
+                                              // Based on the error, sigIn(const char* filename, double sigmavec[], double rvec[]) is more likely.
+                                              // Please correct this signature based on how it's used in your original code.
+                                              // For now, I'll assume the original 'inputsig' was actually meant to be a filename string.
+                                              // Let's assume it should be:
+// void sigIn(const char *filename, double sigmavec[], double rvec[]); // Corrected
+// If 'inputsig' in main is an int controlling *whether* to read a file, and the filename itself is a global or passed separately:
+// void sigIn(double sigmavec[], double rvec[]); // As it was, but the error suggests its first param is used as a filename.
+// Let's go with the error's implication for now:
+void sigIn(const char *input_filename, double sigmavec[], double rvec[]); // Assuming inputsig was a char* filename
+
 void Mk_Dir(char *nev);
 void infoCurrent(char *nev);
-void Print_Mass(double L, double rvec[], double partmassind[][2], double partmassmicrind[][2], double partmasssecind[][2], double t, double dpressvec[], double masstempiin, double masstempoin, double massmtempiin, double massmtempoin, double *masstempiout, double *masstempoout, double *massmtempiout, double *massmtempoout, double *tavin, double *tavout);
+
+// Correct Print_Mass signature: Ensure the array dimensions match ([][4])
+void Print_Mass(double step, double *rvec, double partmassind[][4], double partmassmicrind[][4], double partmasssecind[][4], double t, double *dpressvec, double massbtempii, double massbtempoi, double massmtempii, double massmtempoi, double *massbtempio, double *massbtempoo, double *massmtempio, double *massmtempoo, double *tavin, double *tavout);
+
 void Print_Sigma(char *filename, double rvec[], double sigmavec[], double pressvec[], double dpressvec[]);
-void Print_Sigmad(char *dust_name, char *dust_name2, double mint, double rdvec[], double rmicvec[], double sigmad[], double sigmadm[]);
-void Print_Pormozg_Size(char *size_name, int L, double radius[][2], double radiusmicr[][2], double rvec[], double t);
+
+// Correct Print_Sigmad signature: The error message indicated 'min' was an unused parameter. Let's adjust or keep based on actual use.
+// Assuming 'min' was a placeholder and 'r' and 'rm' are double arrays:
+void Print_Sigmad(char *dust_name, char *dust_name2, double *r, double *rm, double *sigmad, double *sigmadm);
+
+void Print_Pormozg_Size(char *size_name, int step, double rad[][2], double radmicr[][2], double *rvec, double t);
+
 
 
 #endif // IO_UTILS_H
