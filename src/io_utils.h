@@ -34,6 +34,7 @@ void Print_Sigmad(char *dust_name, char *dust_name2, double *r, double *rm, doub
 
 void Print_Pormozg_Size(char *size_name, int step, double rad[][2], double radmicr[][2], double *rvec, double t);
 
+void timePar(double *tMax, double *step, double *current);
 
 
 #endif // IO_UTILS_H
