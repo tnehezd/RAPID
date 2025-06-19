@@ -4,6 +4,34 @@
 #include <stdio.h>
 #include <math.h>
 
+/*	alpha turbulens paraméter kiszámolása --> alfa csökkentése alpha_r-rel	*/
+double alpha_turb(double r) {
+
+	double alpha_r;
+	alpha_r = 1.0 - 0.5 * (1.0 - a_mod) * (tanh((r - r_dze_i) / Dr_dze_i) + tanh((r_dze_o - r) / Dr_dze_o));
+   	return alpha_r * alpha_visc;
+
+}
+
+
+/*	Lokalis viszkozitas erteke	*/
+double visc(double r){
+ 
+  	double nu, alpha_r;
+	double cs, H;
+	
+	H = scale_height(r);
+	cs = c_sound(r);
+
+/*	alpha_r: a redukcio merteke	*/
+ 	alpha_r = alpha_turb(r);
+
+    	nu = alpha_r * cs * H;
+  
+  	return nu;
+  
+}
+
 /*	local scale height	*/
 double scale_height(double r) {
 
