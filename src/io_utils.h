@@ -29,8 +29,7 @@ void Print_Mass(double step, double *rvec, double partmassind[][4], double partm
 void Print_Sigma(char *filename, double rvec[], double sigmavec[], double pressvec[], double dpressvec[]);
 
 // Correct Print_Sigmad signature: The error message indicated 'min' was an unused parameter. Let's adjust or keep based on actual use.
-// Assuming 'min' was a placeholder and 'r' and 'rm' are double arrays:
-void Print_Sigmad(char *dust_name, char *dust_name2, double *r, double *rm, double *sigmad, double *sigmadm);
+void Print_Sigmad(char *dust_name, char *dust_name2, double min, double *r, double *rm, double *sigmad, double *sigmadm);
 
 void Print_Pormozg_Size(char *size_name, int step, double rad[][2], double radmicr[][2], double *rvec, double t);
 
