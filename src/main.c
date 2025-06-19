@@ -9,7 +9,7 @@
 // #include "disk_model.h"  // Will be included later
 // #include "dust_physics.h" // Will be included later
 // #include "simulation_core.h" // Will be included later
-// #include "utils.h"         // Will be included later
+#include "utils.h"         // Will be included later
 
 // Forward declaration of the options_t struct and parsing functions
 // This will eventually go into a separate 'options' module if it gets complex enough,
@@ -34,55 +34,104 @@ int parse_options(int argc, const char **argv, options_t *def);
 // and replace direct function calls with calls to our new modules.
 
 int main(int argc, const char **argv) {
-    options_t def;
-    create_default_options(&def);
-    int retCode = parse_options(argc, argv, &def);
+   
+	options_t def;				/*	A letrehozott struktura elemeire .def-el lehet majd hivatkozni	*/
+	create_default_options(&def);		/*	A struktura elemeinek feltoltese alapertelmezett parameterekkel	*/
+/*	A terminalbol keresi a kapcsolok segitsegevel a struktura elemeire vonatkozo adatokat. A beolvasas kimenetet eltarolja egy integerbe	*/
+	int retCode = parse_options(argc, argv, &def);
+/*	Ha a parameterek beolvasasa sikertelen volt, akkor a program kilep	*/	
+	if (0 != retCode) {
+		exit(retCode);
+	}
 
-    if (0 != retCode) {
-        exit(retCode);
-    }
+/*	A globalis valtozok feltoltese a parameterek ertekevel	*/
+	optev = def.evol;
+	optdr = def.drift;
+	optgr = def.growth;
+	opttwopop = def.twopop;
+	fFrag = def.ffrag;
+	uFrag = def.ufrag;
+	inputsig = def.input;
+	DT = def.tStep;
 
-    // Assign parsed options to global variables defined in config.c
-    // These require 'config.h' to be included
-    optev = def.evol;
-    optdr = def.drift;
-    optgr = def.growth;
-    opttwopop = def.twopop;
-    fFrag = def.ffrag;
-    uFrag = def.ufrag;
-    inputsig = def.input; // This is 'input' in options_t, 'inputsig' globally
-    DT = def.tStep;
+	if(optinp == 0) {
 
-    // The rest of the main function's logic will come here,
-    // calling functions from other modules.
+		int lout, nout;
+		lout = 0, nout = 0;
 
-    // Example of calling functions from other modules (will be uncommented/added later)
-    // if(inputsig == 0) {
-    //     int lout = 0;
-    //     NGRID = reszecskek_szama(lout, inputsig);
-    // } else {
-    //     NGRID = def.ngrid;
-    // }
+/*	A sigmat tartalmazo file sorainak szama elmentve egy integerbe	*/
+		nout = reszecskek_szama(lout,inputsig); 
+		NGRID = nout;
 
-    // double sigmavec[NGRID+2], rvec[NGRID+2], pressvec[NGRID+2], dpressvec[NGRID+2], ugvec[NGRID+2];
-    // char dens_name[1024], nev[1024], mv[1024];
+	} else {
 
-    // disk_param_be(&SIGMA0, &SIGMAP_EXP, &RMIN, &RMAX, &r_dze_i, &r_dze_o, &Dr_dze_i, &Dr_dze_o, &a_mod, &PDENSITY, &PDENSITYDIMLESS, &alpha_visc, &STAR, &FLIND);
-    // DD = (RMAX - RMIN) / (NGRID - 1);
+		NGRID = def.ngrid;
 
-    // // ... rest of the main function logic ...
-    // Mk_Dir(nev);
-    // infoCurrent(nev);
+	}
 
-    // if(optev == 0. && optdr == 0.) {
-    //     printf("According to the given options, neither sigma nor drift are calculated, so the program exits!\n\nInitial files can be found in the %s folder!\n", nev);
-    //     snprintf(dens_name, 1024, "%s/surface.dat", nev);
-    //     Print_Sigma(dens_name, rvec, sigmavec, pressvec, dpressvec);
-    // } else {
-    //     tIntegrate(nev, rvec, sigmavec, pressvec, dpressvec, ugvec);
-    // }
+   	double sigmavec[NGRID+2], rvec[NGRID+2], pressvec[NGRID+2], dpressvec[NGRID+2], ugvec[NGRID+2];
+	char dens_name[1024], nev[1024], mv[1024];
 
-    return 0;
+/*	A korong parametereinek beolvassa				*/
+	disk_param_be(&SIGMA0, &SIGMAP_EXP, &RMIN, &RMAX, &r_dze_i, &r_dze_o, &Dr_dze_i, &Dr_dze_o, &a_mod, &PDENSITY, &PDENSITYDIMLESS, &alpha_visc,&STAR,&FLIND);
+	DD = (RMAX - RMIN) / (NGRID - 1);						/*	rácsfelbontás	*/
+
+/*	Ha _van_ bemeneti sigma file	*/
+	if(optinp == 0) {
+
+		sigIn(sigmavec,rvec);
+		Perem(rvec);
+		Perem(sigmavec);
+		
+	} else {
+
+/*	Kezdeti profilok betoltese a megadott vektorokba	*/
+		load_R(rvec);
+		Initial_Profile(sigmavec,rvec);
+
+	}
+
+	Initial_Press(pressvec,sigmavec,rvec);
+	Initial_dPress(dpressvec,pressvec);
+	Initial_Ugas(sigmavec,rvec,ugvec);
+
+	timePar(&TMAX,&WO,&TCURR);
+
+/*	az optdze globalis valtozo ertekenek megadasa: ha van belso nyomasi maximum is, akkor az erteke 1, egyebkent nulla. Ennek a tomegnovekedes szamolasanak szempontjabol van lenyege	*/ 
+	optdze = 0;
+	if(r_dze_i != 0) optdze = 1.;
+
+/*	Mappa letrehozasa az adatok eltarolasahoz	*/
+	Mk_Dir(nev);								
+
+/*	Az aktualis mappaba a kezdeti adatokat tartalmazo file-ok atmasolasa - kesobb ezek az adatok visszanezhetok igy		*/
+	int dummy;
+	sprintf(mv,"cp %s %s/",filenev2,nev);
+	dummy = system(mv);	
+	sprintf(mv,"cp %s %s/",filenev3,nev);
+	dummy = system(mv);
+
+/*	Sigma file beolvasasa, ha szukseges	*/
+	if(optinp == 0) {
+		sprintf(mv,"cp %s %s/",inputsig,nev);
+		dummy = system(mv);
+	}
+
+/*	Abban a mappaban, ahol a futast inditottuk, egy file letrehozasa, amely az aktualis futasrol infokat ir ki (hol talalhatoak a kimeneti file-ok, es milyen parameterei vannak pl. a korongnak az adott futas eseten	*/
+	infoCurrent(nev);
+
+/*	Ha nincs sigma fejlodes es drift, akkor a kezdeti profilt kiirja egy file-ba es kilep "figyelmeztetes" mellett	*/
+	if(optev == 0. && optdr == 0.) {
+		printf("A megadott opciok szerint nem szamol sem sigmat, sem driftet, ezert a progam kilep!\n\nA kezdeti file-ok a %s mappaban talalhatoak!\n",nev);
+/*	t=0-ban kiirja a sigma-t, a nyomast es a nyomasderivaltjat	*/
+		snprintf(dens_name,1024,"%s/surface.dat",nev);
+		Print_Sigma(dens_name,rvec,sigmavec,pressvec,dpressvec);
+	} else {
+		tIntegrate(nev,rvec,sigmavec,pressvec,dpressvec,ugvec);
+	}
+
+	return 0;
+
 }
 
 
