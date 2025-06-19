@@ -11,13 +11,6 @@ double alpha_turb(double r) {
 	return alpha_r * alpha_visc;
 }
 
-/*	local scale height	*/
-double scale_height(double r) {
-
-	return pow(r,1.+FLIND) * HASP;
-
-}
-
 /*	Lokalis viszkozitas erteke	*/
 double visc(double r){
 	double nu;
