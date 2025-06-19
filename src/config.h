@@ -57,6 +57,13 @@ extern FILE *jelfut;
 extern FILE *fin1;
 extern FILE *fin2;
 
+
+
+// --- Physical Constants (Add these if they are not already there) ---
+#define SUN2GR 1.989e33  // Solar Mass in grams (M_solar -> g) - ELLENŐRIZD AZ ÉRTÉKET!
+#define AU2CM  1.496e13  // Astronomical Unit in centimeters (AU -> cm) - ELLENŐRIZD AZ ÉRTÉKET!
+
+
 // --- Global Filename Declarations (extern) ---
 extern char filenev1[1024];
 extern char filenev2[1024];
