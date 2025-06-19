@@ -1,6 +1,9 @@
-#include disk_model.h
-#include config.h
-
+#include "disk_model.h" // Saját header fájlokat idézőjelek közé
+#include "config.h"     // Saját header fájlokat idézőjelek közé
+#include <stdio.h>      // Standard I/O (fopen, fclose, fscanf, printf)
+#include <stdlib.h>     // Standard Library (exit, EXIT_FAILURE)
+#include <math.h>       // Matematikai függvények (pow, sqrt)
+#include <string.h>     // String műveletekhez (strcmp) - ha használja a disk_param_be
 /*	A korong parametereinek beolvasasa	*/
 void disk_param_be(double *sigma0, double *sdexp, double *Rmin, double *Rmax, double *r_dzei, double *r_dzeo, double *dr_dzei, double *dr_dzeo, double *alph_mod, double *rho_p, double *rho_p_dimless, double *alphav, double *mStar, double *gamma) {
 
