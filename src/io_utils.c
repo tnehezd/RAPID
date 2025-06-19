@@ -7,6 +7,8 @@
 
 #include "io_utils.h"
 #include "config.h"   // Most már tartalmazza a PARTICLE_NUMBER, AU2CM, filenev2 definíciókat
+#include "dust_physics.h" // Add this if not already present
+
 
 // --- IDEIGLENES FORWARD DEKLARÁCIÓK ---
 // Ezekre azért van szükség, mert az io_utils.c-ben lévő függvények hívnak olyan függvényeket,
