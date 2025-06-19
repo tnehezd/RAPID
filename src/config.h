@@ -15,10 +15,13 @@ extern double FLIND;
 extern double alpha_visc;
 extern double a_mod;
 extern double STAR; // Mass of the central star in solar masses
+extern const double AU2CM;         // Declare it as a const double
+
 
 // Dust parameters
 extern double PDENSITY;      // Particle density
 extern double PDENSITYDIMLESS; // Dimensionless particle density
+extern const int PARTICLE_NUMBER; // Declare it as a const int
 
 // Dead Zone parameters
 extern double r_dze_i;      // Inner dead zone radius
