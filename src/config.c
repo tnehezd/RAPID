@@ -12,10 +12,14 @@ double FLIND = 0.0;
 double alpha_visc = 0.0;
 double a_mod = 0.0;
 double STAR = 0.0;
+const double AU2CM = 1.496e13;      // Astronomical Unit to Centimeter, replace with your actual value
+
 
 // Dust parameters
 double PDENSITY = 0.0;
 double PDENSITYDIMLESS = 0.0;
+const int PARTICLE_NUMBER = 100000; // Replace with your actual value
+
 
 // Dead Zone parameters
 double r_dze_i = 0.0;
