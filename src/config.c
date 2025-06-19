@@ -63,3 +63,9 @@ char filenev3[1024] = "time.dat";
 void initialize_derived_config_variables() {
     DD = (RMAX - RMIN) / NGRID;
 }
+
+
+// Function to initialize derived global variables
+void initialize_derived_config_variables() {
+    DD = (RMAX - RMIN) / NGRID;
+}
