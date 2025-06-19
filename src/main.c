@@ -6,9 +6,9 @@
 
 #include "config.h"       // For global variables
 #include "io_utils.h"    // Will be included when we move IO functions
-// #include "disk_model.h"  // Will be included later
-// #include "dust_physics.h" // Will be included later
-// #include "simulation_core.h" // Will be included later
+#include "disk_model.h"  // Will be included later
+#include "dust_physics.h" // Will be included later
+#include "simulation_core.h" // Will be included later
 #include "utils.h"         // Will be included later
 
 // Forward declaration of the options_t struct and parsing functions
@@ -23,7 +23,7 @@ typedef struct {
     int ufrag;
     int input;
     double tStep;
-    int ngrid; // Assuming ngrid is part of options for optinp == 1
+    int ngrid; // Assuming ngrid is part of options for inputsig == 1
 } options_t;
 
 void create_default_options(options_t *def);
@@ -54,7 +54,7 @@ int main(int argc, const char **argv) {
 	inputsig = def.input;
 	DT = def.tStep;
 
-	if(optinp == 0) {
+	if(inputsig == 0) {
 
 		int lout, nout;
 		lout = 0, nout = 0;
@@ -77,7 +77,7 @@ int main(int argc, const char **argv) {
 	DD = (RMAX - RMIN) / (NGRID - 1);						/*	rácsfelbontás	*/
 
 /*	Ha _van_ bemeneti sigma file	*/
-	if(optinp == 0) {
+	if(inputsig == 0) {
 
 		sigIn(sigmavec,rvec);
 		Perem(rvec);
@@ -112,8 +112,8 @@ int main(int argc, const char **argv) {
 	dummy = system(mv);
 
 /*	Sigma file beolvasasa, ha szukseges	*/
-	if(optinp == 0) {
-		sprintf(mv,"cp %s %s/",inputsig,nev);
+	if(inputsig == 0) {
+ 	   	snprintf(mv, sizeof(mv), "cp %s %s/", filenev2, nev); // Itt a filenev2-t használjuk
 		dummy = system(mv);
 	}
 
