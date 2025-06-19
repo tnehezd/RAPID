@@ -15,13 +15,19 @@ extern double FLIND;
 extern double alpha_visc;
 extern double a_mod;
 extern double STAR; // Mass of the central star in solar masses
-extern const double AU2CM;         // Declare it as a const double
 
+
+// Globális konstansok (definiálva is itt)
+const double AU2CM = 1.495978707e13; // Csillagászati egység centiméterben
+const double SUN2GR = 1.989e33;     // Nap tömege grammban (ha ezt is használod)
 
 // Dust parameters
 extern double PDENSITY;      // Particle density
 extern double PDENSITYDIMLESS; // Dimensionless particle density
-extern const int PARTICLE_NUMBER; // Declare it as a const int
+const int PARTICLE_NUMBER = 1000;  // Példa érték, állítsd be a valódit!
+                                   // Ha ez a szám az input fájlból jön, akkor NE legyen const,
+                                   // hanem maradjon extern int, és a config.c-ben inicializáld 0-ra,
+                                   // majd olvasd be valahonnan.
 
 // Dead Zone parameters
 extern double r_dze_i;      // Inner dead zone radius
