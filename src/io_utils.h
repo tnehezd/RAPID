@@ -8,7 +8,7 @@
 
 // --- Function Declarations ---
 void find_r_annulus(double *rvec, double rin_val, int *ind_ii, int *ind_io, double rout_val, int *ind_oi, int *ind_oo);
-int reszecskek_szama(int lout, int inputsig); // Will re-evaluate parameters after content is moved
+int reszecskek_szama(int lout, char *filename); // THIS IS THE CORRECTED PROTOTYPE
 void por_be();
 void sigIn(double sigmavec[], double rvec[]); // You had `inputsig` here as an int. If it's a filename, it should be const char*
                                               // Based on the error, sigIn(const char* filename, double sigmavec[], double rvec[]) is more likely.
