@@ -19,7 +19,6 @@ void sigIn(double sigmavec[], double rvec[]); // You had `inputsig` here as an i
 // If 'inputsig' in main is an int controlling *whether* to read a file, and the filename itself is a global or passed separately:
 // void sigIn(double sigmavec[], double rvec[]); // As it was, but the error suggests its first param is used as a filename.
 // Let's go with the error's implication for now:
-void sigIn(const char *input_filename, double sigmavec[], double rvec[]); // Assuming inputsig was a char* filename
 
 void Mk_Dir(char *nev);
 void infoCurrent(char *nev);
