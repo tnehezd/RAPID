@@ -71,4 +71,8 @@ extern char filenev1[1024];
 extern char filenev2[1024];
 extern char filenev3[1024];
 
+
+// Function to initialize derived global variables (like DD)
+void initialize_derived_config_variables();
+
 #endif // CONFIG_H
