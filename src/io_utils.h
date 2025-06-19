@@ -7,7 +7,7 @@
 #include <stdio.h> // For FILE*
 
 // --- Function Declarations ---
-// --- Function Declarations ---
+void find_r_annulus(double *rvec, double rin, double *ind_ii, double *ind_io, double rout, double *ind_oi, double *ind_oo);
 int reszecskek_szama(int lout, int inputsig); // Will re-evaluate parameters after content is moved
 void por_be();
 void sigIn(double sigmavec[], double rvec[]); // You had `inputsig` here as an int. If it's a filename, it should be const char*
