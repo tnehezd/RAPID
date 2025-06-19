@@ -2,16 +2,17 @@
 
 // --- Global Variable Definitions and Initializations ---
 // Disk parameters
-double RMIN = 0.0;
-double RMAX = 0.0;
-int NGRID = 0;
-double DD = 0.0;
-double SIGMA0 = 0.0;
-double SIGMAP_EXP = 0.0;
-double FLIND = 0.0;
-double alpha_visc = 0.0;
-double a_mod = 0.0;
-double STAR = 0.0;
+double RMIN = 0.1;
+double RMAX = 100.0;
+int NGRID = 100;
+double DD = (RMAX - RMIN) / NGRID;
+double SIGMA0 = 1.0;
+double SIGMAP_EXP = -1.5;
+double FLIND = -0.5;
+double alpha_visc = 1e-4;
+double a_mod = 0.1;
+double STAR = 1.0;
+double HASP = 0.05;
 
 
 // Dust parameters
