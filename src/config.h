@@ -62,6 +62,7 @@ extern FILE *fin2;
 // --- Physical Constants (Add these if they are not already there) ---
 #define SUN2GR 1.989e33  // Solar Mass in grams (M_solar -> g) - ELLENŐRIZD AZ ÉRTÉKET!
 #define AU2CM  1.496e13  // Astronomical Unit in centimeters (AU -> cm) - ELLENŐRIZD AZ ÉRTÉKET!
+#define G_GRAV_CONST 1
 
 
 // --- Global Filename Declarations (extern) ---
