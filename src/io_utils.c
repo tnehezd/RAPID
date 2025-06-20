@@ -8,78 +8,9 @@
 #include "io_utils.h"
 #include "config.h"   // Most már tartalmazza a PARTICLE_NUMBER, AU2CM, filenev2 definíciókat
 #include "dust_physics.h" // Add this if not already present
+#include "utils.h"
 
 
-
-/*	A nyomasi maximum korul 1H tavolsagban jeloli ki a korgyurut	*/
-void find_r_annulus(double *rvec, double rin, double *ind_ii, double *ind_io, double rout, double *ind_oi, double *ind_oo) {
-
-	int i;
-	double rmid, rtemp;
-	double roimH;
-	double roipH;
-	double roomH;
-	double roopH;
-	double riimH;
-	double riipH;
-	double riomH;
-	double riopH;
-
-	if(optdze == 0) {
-	
-		*ind_ii = 0;
-		*ind_io = 0;
-	
-	}
-
-	riimH = (rin - scale_height(rin)) - DD / 2.0;		/*	A nyomasi maximum az rout pontban van, ettol rout - 1/2H - DD / 2 es rout + 1*2H -DD / 2 kozott van a korgyuru belso hatara (azert DD/2, hogy biztosan 1 cellat tudjunk kijelolni, ne pedig egy tartomanyt)	*/
-	riipH = (rin - scale_height(rin)) + DD / 2.0;		
-	riomH = (rin + scale_height(rin)) - DD / 2.0;		/*	Az alabbi ketto pedig a kulso hatarat adja meg a korgyurunek	*/
-	riopH = (rin + scale_height(rin)) + DD / 2.0;
-
-	roimH = (rout - scale_height(rout)) - DD / 2.0;		/*	A nyomasi maximum az rout pontban van, ettol rout - 1/2H - DD / 2 es rout + 1*2H -DD / 2 kozott van a korgyuru belso hatara (azert DD/2, hogy biztosan 1 cellat tudjunk kijelolni, ne pedig egy tartomanyt)	*/
-	roipH = (rout - scale_height(rout)) + DD / 2.0;		
-	roomH = (rout + scale_height(rout)) - DD / 2.0;		/*	Az alabbi ketto pedig a kulso hatarat adja meg a korgyurunek	*/
-	roopH = (rout + scale_height(rout)) + DD / 2.0;
-
-	for(i = 1; i <= NGRID; i++) {
-
-		if(optdze == 1) { 
-/*	Ha az r tavolsag a kijelolt hatarok kozott van, akkor az adott valtozo visszakapja r erteket	*/
-			if(rvec[i] > riimH && rvec[i] < riipH) {
-			    	rmid = (rvec[i] - RMIN)/ DD;     						/* 	The integer part of this gives at which index is the body	*/
-				rtemp = (int) floor(rmid + 0.5);						/*	Rounding up (>.5) or down (<.5)					*/
-				*ind_ii = rtemp;
-			}
-				
-/*	Ha az r tavolsag a kijelolt hatarok kozott van, akkor az adott valtozo visszakapja r erteket	*/
-			if(rvec[i] > riomH && rvec[i] < riopH) {
-			    	rmid = (rvec[i] - RMIN)/ DD;     						/* 	The integer part of this gives at which index is the body	*/
-				rtemp = (int) floor(rmid + 0.5);						/*	Rounding up (>.5) or down (<.5)					*/
-				*ind_io = rtemp;
-			}
-		}
-
-
-/*	Ha az r tavolsag a kijelolt hatarok kozott van, akkor az adott valtozo visszakapja r erteket	*/
-		if(rvec[i] > roimH && rvec[i] < roipH) {
-		    	rmid = (rvec[i] - RMIN)/ DD;     						/* 	The integer part of this gives at which index is the body	*/
-			rtemp = (int) floor(rmid + 0.5);						/*	Rounding up (>.5) or down (<.5)					*/
-			*ind_oi = rtemp;
-		}
-				
-/*	Ha az r tavolsag a kijelolt hatarok kozott van, akkor az adott valtozo visszakapja r erteket	*/
-		if(rvec[i] > roomH && rvec[i] < roopH) {
-		    	rmid = (rvec[i] - RMIN)/ DD;     						/* 	The integer part of this gives at which index is the body	*/
-			rtemp = (int) floor(rmid + 0.5);						/*	Rounding up (>.5) or down (<.5)					*/
-			*ind_oo = rtemp;
-		}
-
-		if(rvec[i] > roopH) break;
-
-	}
-
-}
 
 
 // --- FÜGGVÉNY DEFINÍCIÓK ---
@@ -105,7 +36,7 @@ int reszecskek_szama(int numout, const char *filenev){
 }
 
 
-/*	A porreszecskek adatainak beolvasasa	*/
+//*	A porreszecskek adatainak beolvasasa	*/
 void por_be(double radius[][2], double radiusmicr[][2], double *mass, double *massmicr) {
 
 	int i, dummy;
@@ -145,6 +76,7 @@ void por_be(double radius[][2], double radiusmicr[][2], double *mass, double *ma
 }
 
 
+
 /*	A sigmat tartalmazo file parametereinek beolvasasa	*/
 void sigIn(double *sigvec, double *rvec) {
 
@@ -171,6 +103,7 @@ void sigIn(double *sigvec, double *rvec) {
 	fclose(densin);
 	
 }
+
 
 
 /*	Fuggveny az adott futashoz mappa letrehozasara, igy egy adott futas mindig kulon mappaba kerul es nem kavarodnak ossze az adatok	*/
@@ -230,7 +163,7 @@ void infoCurrent(char *nev) {
 
 
 /*	Fuggveny a tomegfile kiiratasara	*/
-void Print_Mass(double step, double *rvec, double partmassind[][4], double partmassmicrind[][4], double partmasssecind[][4], double t, double *dpressvec, double massbtempii, double massbtempoi, double massmtempii, double massmtempoi, double *massbtempio, double *massbtempoo, double *massmtempio, double *massmtempoo, double *tavin, double *tavout) {
+void Print_Mass(double step, double *rvec, double partmassind[][4], double partmassmicrind[][4], double partmasssecind[][4], double *dpressvec, double massbtempii, double massbtempoi, double massmtempii, double massmtempoi, double *massbtempio, double *massbtempoo, double *massmtempio, double *massmtempoo, double *tavin, double *tavout) {
 
 	double ind_ii, ind_io, ind_oi, ind_oo, tav, tav2;	
 
@@ -297,8 +230,8 @@ void Print_Mass(double step, double *rvec, double partmassind[][4], double partm
 
 	find_r_annulus(rvec,tav2,&ind_ii,&ind_io,tav,&ind_oi,&ind_oo);		/*	A belso es kuslo nyomasi maximum korul 2H tavolsagban keres korgyurut, a fuggveny visszaadja a cellak indexet	*/
 	
-	double masst0i = 0, massii = 0, massoi = 0;
-	double masst0im = 0, massiim = 0,massoim = 0;
+	double massii = 0, massoi = 0;
+	double massiim = 0,massoim = 0;
 	double massis = 0, massos = 0;
 
 	GetMass(PARTICLE_NUMBER,partmassind,(int)ind_ii,(int)ind_io,tav2,r_dze_i,&massii,(int)ind_oi,(int)ind_oo,tav,r_dze_o,&massoi);
@@ -354,38 +287,56 @@ void Print_Sigma(char *dens_name, double *rvec, double *sigmavec, double *pressv
 
 
 /*	Fuggveny a por feluletisurusegenek kiiratasara	*/
-void Print_Sigmad(char *dust_name, char *dust_name2, double min, double *r, double *rm, double *sigmad, double *sigmadm) {
+void Print_Sigmad(char *dust_name, char *dust_name2, double *r, double *rm, double *sigmad, double *sigmadm) {
 
 	int i;
-	double rtempvec[PARTICLE_NUMBER];
 
-	FILE *sid;	
+	FILE *fil = NULL; // Érdemes ezt is inicializálni
+	FILE *sid = NULL; // Ezt már inicializáltad, ez így jó
 
 	fil = fopen(dust_name,"w");
-	if(opttwopop == 1) sid = fopen(dust_name2,"w");		/*	Ha 2pop --> megnyit egy kulon file-t a mikronos por feluletisurusegenek kiiratasara	*/
+    // MINDIG ellenőrizd az fopen sikerességét!
+    if (fil == NULL) {
+        perror("Hiba a dust_name fájl megnyitásakor írásra");
+        return; // Kilépés a függvényből, ha nem tudja megnyitni az első fájlt
+    }
+	
+	// Csak akkor próbáld megnyitni a sid fájlt, ha opttwopop == 1
+	if(opttwopop == 1) {
+		sid = fopen(dust_name2,"w");
+        // Ha opttwopop == 1, de a sid fájlt mégsem tudja megnyitni, kezeld ezt!
+        if (sid == NULL) {
+            perror("Hiba a dust_name2 fájl megnyitásakor írásra (mikronos por)");
+            fclose(fil); // Zárjuk be az első fájlt, ha a második nem megy
+            return; // Kilépés a függvényből
+        }
+	}
 
 	for(i=0;i<PARTICLE_NUMBER;i++){
 
 		if (r[i] >= RMIN) {			/*	a cm-es por feluletisurusege	*/
-			fprintf(fil,"%.11lg  %lg \n",r[i],sigmad[i]);
-		} 
+			fprintf(fil,"%.11lg  %lg \n",r[i],sigmad[i]);
+		}
 
-		if(opttwopop == 1) {				/*	itt irja ki a mikronos por feluletisuruseget	*/
-
+		if(opttwopop == 1 && sid != NULL) { // Ide már bekerült a sid != NULL ellenőrzés is
+                                            // Bár a fenti logikával ez már felesleges lehet,
+                                            // de extra biztonságot ad.
 			if (rm[i] >= RMIN) {
-				fprintf(sid,"%lg  %lg \n",rm[i],sigmadm[i]);
+				fprintf(sid,"%lg  %lg \n",rm[i],sigmadm[i]);
 			}
 		}
 	}
 
 	fclose(fil);
-	if(opttwopop == 1) fclose(sid);
-
+	// Csak akkor zárd be a sid fájlt, ha sikeresen meg lett nyitva (azaz nem NULL)
+	if(opttwopop == 1 && sid != NULL) { // Fontos ellenőrizni, hogy meg van-e nyitva!
+        fclose(sid);
+    }
 }
 
 
 /*	Fuggveny a pormozgas kiiratasara	*/
-void Print_Pormozg_Size(char *size_name, int step, double rad[][2], double radmicr[][2], double *rvec, double t){
+void Print_Pormozg_Size(char *size_name, int step, double rad[][2], double radmicr[][2]){
 
 	int i;
 	if(optgr == 1) fout3 = fopen(size_name,"w");	/*	ha van pornovekedes	*/

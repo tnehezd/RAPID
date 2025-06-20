@@ -11,10 +11,6 @@ extern FILE *fin1, *fin2, *fmo, *fout, *foutmicr, *fout3, *massfil, *jelfut;
 
 // --- FÜGGVÉNY DEKLARÁCIÓK ---
 
-/* A nyomasi maximum korul 1H tavolsagban jeloli ki a korgyurut */
-// Feltehetően a disk_model.h tartalmazza a scale_height deklarációját.
-void find_r_annulus(double *rvec, double rin_val, double *ind_ii, double *ind_io, double rout_val, double *ind_oi, double *ind_oo);
-
 /* reszecskek_szama függvény deklaráció */
 // Az numout-ot már nem adjuk át referenciával, hanem visszatérési érték.
 // A const char *filenev javasolt, ha nem módosítod a stringet.
@@ -38,16 +34,16 @@ void infoCurrent(char *nev);
 // A massbtempio, massbtempoo, massmtempio, massmtempoo, tavin, tavout most már mutatók,
 // ezért a függvénydeklarációban is annak kell lenniük (ahogy a .c fájlban is láttam).
 // In src/io_utils.h:
-void Print_Mass(double step, double *rvec, double partmassind[][4], double partmassmicrind[][4], double partmasssecind[][4], double t, double *dpressvec, double massbtempii, double massbtempoi, double massmtempii, double massmtempoi, double *massbtempio, double *massbtempoo, double *massmtempio, double *massmtempoo, double *tavin, double *tavout);
+void Print_Mass(double step, double *rvec, double partmassind[][4], double partmassmicrind[][4], double partmasssecind[][4], double *dpressvec, double massbtempii, double massbtempoi, double massmtempii, double massmtempoi, double *massbtempio, double *massbtempoo, double *massmtempio, double *massmtempoo, double *tavin, double *tavout);
 /* Fuggveny a sigma, p, dp kiiratasara */
 void Print_Sigma(char *dens_name, double *rvec, double *sigmavec, double *pressvec, double *dpressvec);
 
 /* Fuggveny a por feluletisurusegenek kiiratasara */
 
-void Print_Sigmad(char *dust_name, char *dust_name2, double min, double *r, double *rm, double *sigmad, double *sigmadm);
+void Print_Sigmad(char *dust_name, char *dust_name2, double *r, double *rm, double *sigmad, double *sigmadm);
 
 /* Fuggveny a pormozgas kiiratasara */
-void Print_Pormozg_Size(char *size_name, int step, double rad[][2], double radmicr[][2], double *rvec, double t){
+void Print_Pormozg_Size(char *size_name, int step, double rad[][2], double radmicr[][2]);
 
 
 /* Az idot tartalmazo file parametereinek beolvasasa */

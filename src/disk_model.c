@@ -4,10 +4,14 @@
 #include "config.h"       // Globális változók és konstansok
 #include "dust_physics.h" // press, dpress, u_gas függvények deklarációi
 #include "io_utils.h"     // sigIn és egyéb I/O függvények deklarációi (ha használja)
+#include "utils.h" // Hogy a disk_model.c lássa a Parabola prototípusát
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+
+
 
 
 /*	A korong parametereinek beolvasasa	*/
@@ -47,30 +51,6 @@ void disk_param_be(double *sigma0, double *sdexp, double *Rmin, double *Rmax, do
 }
 
 
-/*	Parabola illesztés a peremen	*/
-void Parabola(double *vec, int i1, int i2, int i3, double *a, double *b, double *c, double dd) {
-
-	double x1, x2, x3;	/*	meghatározott x pontok, ahol illesztünk					*/
-	double y1, y2, y3;	/*	amit illesztünk a meghatározott pontokban				*/
-	double av, bv, cv;	/*	illesztéshez szükséges együtthatók --> ezt adja vissza a függvény	*/
-
-	x1 = RMIN + (i1-1) * dd;
-	x2 = RMIN + (i2-1) * dd;
-	x3 = RMIN + (i3-1) * dd;
- 
-	y1 = vec[i1];
-	y2 = vec[i2];
-	y3 = vec[i3];
-
-	av = ((y1 - y3) / (x1 - x3) - (y1 - y2) / (x1 - x2)) / (x3 - x2);
-	bv = (y1 - y2) / (x1 - x2) - av * (x1 + x2);
-	cv = y1 - av * x1 * x1 - bv * x1;
-
-	*a = av;
-	*b = bv;
-	*c = cv;
-
-}
 
 /*	r vektor (gridcellák) inicializálása	*/
 void load_R(double *rvec) {
@@ -122,15 +102,28 @@ void Initial_Ugas(double *sigmavec, double *rvec, double *ug){		/*	initial profi
 }
 
 
-/*	A peremen parabolat illeszt	*/
-void Perem(double *vec) {					/*	boundary condition for sigma, p, dp...	*/
 
-	double a, b, c; 
+void loadSigDust(double radin[][2], double *massin, double out[][3], double dd, int n) {
 
-	Parabola(vec, 1, 2, 3, &a, &b, &c, DD);
-	vec[0] =  a * (RMIN - DD) * (RMIN - DD) + b * (RMIN - DD) + c;
+	int i;
 
-	Parabola(vec, NGRID - 2, NGRID - 1, NGRID, &a, &b, &c, DD);
-	vec[NGRID+1] = a * (RMAX + DD) * (RMAX + DD) + b * (RMAX + DD) + c;
+	for(i=0;i<n;i++){
 
+/*	cm-es por feluletisurusegenek kiszamolasa	*/
+/*	ha a reszecske tavolsaga nagyobb, mint RMIN, azaz a szamolas tartomanyan belul van, a feluletisuruseget az altala kepviselt tomegbol szamolja vissza a program	*/
+		if((radin[i][0] >= RMIN)) {
+			out[i][0] = massin[i] / (2. * (radin[i][0]-dd/2.) * M_PI * dd);	// sigma = m /(2 * r * pi * dr) --> itt a dr az a tavolsag, ami porreszecske "generalo" programban az eredeti gridfelbontas
+			out[i][1] = radin[i][0];					// elmenti a reszecske tavolsagat is
+
+  			double rmid = (radin[i][0] - RMIN) / dd;     						/* 	The integer part of this gives at which index is the body			*/
+			int rindex = (int) floor(rmid);							/* 	Ez az rmid egesz resze --> floor egeszreszre kerekit lefele, a +0.5-el elerheto, hogy .5 felett felfele, .5 alatt lefele kerekitsen						*/
+			out[i][2] = (double) rindex;
+
+/*	ha a reszecske RMIN-en belul van, akkor az o "tavolsagaban" a feluletisuruseg 0		*/	
+		} else {
+			out[i][0] = 0;
+			out[i][1] = 0;					// r = 0, mert ha RMIN-en belulre kerult a reszecske, akkor a program automatikusan kinullazza a reszecske tavolsagat. Itt tehat a sigdtemp[i][1] = 0 lesz!
+			out[i][2] = 0;
+		}
+	}
 }

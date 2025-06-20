@@ -82,7 +82,7 @@ int main(int argc, const char **argv) {
 	}
 
    	double sigmavec[NGRID+2], rvec[NGRID+2], pressvec[NGRID+2], dpressvec[NGRID+2], ugvec[NGRID+2];
-	char dens_name[1024], nev[1024], mv[1024];
+	char dens_name[4096], nev[4096], mv[4096]; // Using 4096 (common power-of-2) to be surface
 
 /*	A korong parametereinek beolvassa				*/
 	disk_param_be(&SIGMA0, &SIGMAP_EXP, &RMIN, &RMAX, &r_dze_i, &r_dze_o, &Dr_dze_i, &Dr_dze_o, &a_mod, &PDENSITY, &PDENSITYDIMLESS, &alpha_visc,&STAR,&FLIND);
@@ -116,17 +116,20 @@ int main(int argc, const char **argv) {
 /*	Mappa letrehozasa az adatok eltarolasahoz	*/
 	Mk_Dir(nev);								
 
-/*	Az aktualis mappaba a kezdeti adatokat tartalmazo file-ok atmasolasa - kesobb ezek az adatok visszanezhetok igy		*/
 	int dummy;
-	snprintf(mv,"cp %s %s/",filenev2,nev);
+/*	Az aktualis mappaba a kezdeti adatokat tartalmazo file-ok atmasolasa - kesobb ezek az adatok visszanezhetok igy		*/
+	snprintf(mv, sizeof(mv), "cp %s %s/", filenev2, nev); // Helyesen: mv puffer mérete
 	dummy = system(mv);	
-	snprintf(mv,"cp %s %s/",filenev3,nev);
+	(void)dummy;
+	snprintf(mv, sizeof(mv), "cp %s %s/", filenev3, nev); // Helyesen: mv puffer mérete
 	dummy = system(mv);
+	(void)dummy;
 
 /*	Sigma file beolvasasa, ha szukseges	*/
 	if(inputsig == 0) {
  	   	snprintf(mv, sizeof(mv), "cp %s %s/", filenev2, nev); // Itt a filenev2-t használjuk
 		dummy = system(mv);
+		(void)dummy;
 	}
 
 /*	Abban a mappaban, ahol a futast inditottuk, egy file letrehozasa, amely az aktualis futasrol infokat ir ki (hol talalhatoak a kimeneti file-ok, es milyen parameterei vannak pl. a korongnak az adott futas eseten	*/

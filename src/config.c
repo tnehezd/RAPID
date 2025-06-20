@@ -45,13 +45,13 @@ FILE *jelfut = NULL;
 FILE *fin1 = NULL;
 FILE *fin2 = NULL;
 FILE *fil = NULL;
-char *inputsig = NULL;
+const char *inputsig = NULL;
 
 // --- Global Filename Definitions ---
 char filenev1[1024] = "param.dat";
 char filenev2[1024] = "sigma.dat";
 char filenev3[1024] = "time.dat";
-double KEREK = 100.
+
 
 // opt parsing things
 double optev, optdr, optgr, opttwopop, optdze, optinp; // Inicializáld őket 0.0-ra vagy 1.0-ra ha szükséges
@@ -61,7 +61,6 @@ double fFrag, uFrag;
 // Function to initialize derived global variables
 void initialize_derived_config_variables() {
     DD = (RMAX - RMIN) / NGRID;
-    G2 = G_GRAV_CONST * G_GRAV_CONST
 }
 
 

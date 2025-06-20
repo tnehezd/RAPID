@@ -28,6 +28,7 @@ all: $(TARGET)
 
 # Rule to build the executable
 $(TARGET): $(OBJS)
+	@mkdir -p $(BIN_DIR) # Ensure the bin directory exists before linking
 	$(CC) $(CFLAGS) $(OBJS) -o $@
 	@echo "Build successful! Executable in $(TARGET)"
 

@@ -50,9 +50,8 @@ extern FILE *fil;
 
 
 // --- Physical Constants (Macros) ---
-// Renamed G_GRAV_CONST to G for brevity and consistency with G2 (G*G)
-#define G           1.0
-#define G2          (G * G) // G*G as requested
+#define G_GRAV_CONST           1.0
+#define G_GRAV_CONST2         (G_GRAV_CONST* G_GRAV_CONST) // G*G as requested
 
 // Removed duplicate SUN2GR. Keep one, and ensure its value is correct.
 #define SUN2GR      1.989e33  // Solar Mass in grams (M_solar -> g) - PLEASE VERIFY THIS VALUE!
@@ -60,6 +59,8 @@ extern FILE *fil;
 #define TWOPI       (2.0 * M_PI) // Added parentheses for safety with expressions
 #define SDCONV      1.12521e-7
 #define CMPSECTOAUPYRP2PI 3.35725e-07
+
+#define KEREK 1.0 // Make sure this value is correct for your physics model!
 
 
 // --- Global Filename Declarations (extern) ---
@@ -69,7 +70,7 @@ extern char filenev3[1024];
 
 // Parameter controls
 extern double optev, optdr, optgr, opttwopop, optdze, optinp; // variables to control different parts of the code
-extern char *inputsig; // Or const char *inputsig; - typically const char* for string literals
+extern const char *inputsig; // Or const char *inputsig; - typically const char* for string literals
 
 // Part. physics
 extern double fFrag, uFrag;
