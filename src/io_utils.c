@@ -207,7 +207,7 @@ void infoCurrent(char *nev) {
     fprintf(jelfut, "opttwopop: %d\n", opttwopop);
     fprintf(jelfut, "fFrag: %d\n", fFrag);
     fprintf(jelfut, "uFrag: %d\n", uFrag);
-    fprintf(jelfut, "inputsig: %d\n", inputsig);
+    fprintf(jelfut, "inputsig: %s\n", inputsig);
     fprintf(jelfut, "DT: %lg\n", DT);
     fprintf(jelfut, "TMAX: %lg\n", TMAX);
     fprintf(jelfut, "WO: %lg\n", WO);
@@ -223,7 +223,7 @@ void infoCurrent(char *nev) {
 /*	Fuggveny a tomegfile kiiratasara	*/
 void Print_Mass(double step, double *rvec, double partmassind[][4], double partmassmicrind[][4], double partmasssecind[][4], double t, double *dpressvec, double massbtempii, double massbtempoi, double massmtempii, double massmtempoi, double *massbtempio, double *massbtempoo, double *massmtempio, double *massmtempoo, double *tavin, double *tavout) {
 
-	double ind_ii, ind_io, ind_oi, ind_oo, tav, tav2;	
+	int ind_ii, ind_io, ind_oi, ind_oo, tav, tav2;	
 
 	tav = r_dze_o;	
 	tav2 = r_dze_i;	
@@ -234,7 +234,8 @@ void Print_Mass(double step, double *rvec, double partmassind[][4], double partm
 	double temp = 0.;
 	double rout = r_dze_o;
 	double rin = r_dze_i;
-	double rin_new, rout_new;
+	double rin_new = 0.0;
+	double rout_new = 0.0;
 
 	int j, i;
 	j=0;
@@ -354,7 +355,7 @@ void Print_Sigmad(char *dust_name, char *dust_name2, double min, double *r, doub
 
 //	printf("dd: %lg  1/dd: %i\n",dd,(int)(1./dd)*100);
 
-	FILE *sid;	
+	FILE *sid = NULL;	
 
 	fil = fopen(dust_name,"w");
 	if(opttwopop == 1) sid = fopen(dust_name2,"w");		/*	Ha 2pop --> megnyit egy kulon file-t a mikronos por feluletisurusegenek kiiratasara	*/
