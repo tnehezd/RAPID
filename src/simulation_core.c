@@ -28,7 +28,7 @@ void tIntegrate(char *nev, double *rvec, double *sigmavec, double *pressvec, dou
 		PARTICLE_NUMBER = 0;
 	}
 
-	char mv[1024], dens_name[1024],size_name[1024], porout[1024], poroutmicr[1024], massout[1024], dust_name[1024], dust_name2[1024];
+	char mv[2048], dens_name[1024],size_name[1024], porout[1024], poroutmicr[1024], massout[1024], dust_name[1024], dust_name2[1024];
    	double radius[PARTICLE_NUMBER][2],radiusmicr[PARTICLE_NUMBER][2],radiussec[4*PARTICLE_NUMBER][2],radius_rec[PARTICLE_NUMBER][2];
 	double massvec[PARTICLE_NUMBER], massmicrvec[PARTICLE_NUMBER], masssecvec[4*PARTICLE_NUMBER];
 	double max, min, max2, min2;
