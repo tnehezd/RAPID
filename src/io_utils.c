@@ -10,12 +10,6 @@
 #include "dust_physics.h" // Add this if not already present
 
 
-// --- IDEIGLENES FORWARD DEKLARÁCIÓK ---
-// Ezekre azért van szükség, mert az io_utils.c-ben lévő függvények hívnak olyan függvényeket,
-// amelyek definíciói még más modulokban (vagy még az eredeti nagy fájlban) vannak.
-// Amikor a többi modult is létrehozzuk és include-oljuk a header fájljaikat, ezeket törölni fogjuk.
-int find_num_zero(double *rvec, double *dpressvec);
-double find_zero(int i, double *rvec, double *dpressvec);
 
 /*	A nyomasi maximum korul 1H tavolsagban jeloli ki a korgyurut	*/
 void find_r_annulus(double *rvec, double rin_val, int *ind_ii, int *ind_io, double rout_val, int *ind_oi, int *ind_oo) {
