@@ -26,15 +26,6 @@ double r_dze_i = 0.0;
 double r_dze_o = 0.0;
 double Dr_dze_i = 0.0;
 double Dr_dze_o = 0.0;
-int optdze = 0;
-
-// Simulation control options
-int optev = 0;
-int optdr = 0;
-int optgr = 0;
-int opttwopop = 0;
-int fFrag = 0;
-int uFrag = 0;
 
 
 // Time parameters
