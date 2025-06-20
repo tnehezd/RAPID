@@ -56,6 +56,7 @@ extern FILE *massfil;
 extern FILE *jelfut;
 extern FILE *fin1;
 extern FILE *fin2;
+extern FILE *fil;
 
 
 
