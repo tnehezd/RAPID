@@ -48,7 +48,7 @@ void Print_Sigma(char *dens_name, double *rvec, double *sigmavec, double *pressv
 // A 'min' paramétert eltávolítottam, mert unused warning volt, ha kell, tedd vissza.
 // A 'r', 'rm', 'sigmad', 'sigmadm' típusát pontosítottam double * -ra
 // a .c fájlban látott tömbös használat miatt (azaz mutatók).
-void Print_Sigmad(char *dust_name, char *dust_name2, double *r, double *rm, double *sigmad, double *sigmadm);
+void Print_Sigmad(char *dust_name, char *dust_name2, double min, double *r, double *rm, double *sigmad, double *sigmadm);
 
 /* Fuggveny a pormozgas kiiratasara */
 // A 'size_name', 'radmicr', 'rvec', 't' paramétereket eltávolítottam, mert unused warningok voltak.
