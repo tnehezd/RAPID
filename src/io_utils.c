@@ -234,12 +234,12 @@ void infoCurrent(char *nev) {
 /*	Fuggveny a tomegfile kiiratasara	*/
 void Print_Mass(double step, double *rvec, double partmassind[][4], double partmassmicrind[][4], double partmasssecind[][4], double t, double *dpressvec, double massbtempii, double massbtempoi, double massmtempii, double massmtempoi, double *massbtempio, double *massbtempoo, double *massmtempio, double *massmtempoo, double *tavin, double *tavout) {
 
-	int ind_ii, ind_io, ind_oi, ind_oo, tav, tav2;	
+	double ind_ii, ind_io, ind_oi, ind_oo, tav, tav2;	
 
 	tav = r_dze_o;	
 	tav2 = r_dze_i;	
 
-	int dim = find_num_zero(rvec,dpressvec);		// megnezi, hogy hany, nyomasi maximumbol szarmazo, 0 pont van a derivaltban
+	int dim = find_num_zero(dpressvec);			// megnezi, hogy hany, nyomasi maximumbol szarmazo, 0 pont van a derivaltban
 	double r_count[dim];					// a nullpontnak megfelelo elemu tombot letrehozza (pl. ha van dze_i es dze_o is, akkor kulon igy lehet elmenteni azok helyet)
 	double temp_new = 0.;
 	double temp = 0.;
@@ -360,9 +360,6 @@ void Print_Sigmad(char *dust_name, char *dust_name2, double min, double *r, doub
 
 	int i;
 	double rtempvec[PARTICLE_NUMBER];
-	double dd = (RMAX - RMIN) / (PARTICLE_NUMBER-1);	/*	Mivel a jelen futas gridfelbontasa nem feltetlen egyezik meg a porreszecskeket generalo program gridfelbontasaval - ez a feluletisuruseg miatt lenyeges! - ezert itt szamolja ki a program	*/
-
-//	printf("dd: %lg  1/dd: %i\n",dd,(int)(1./dd)*100);
 
 	FILE *sid;	
 
