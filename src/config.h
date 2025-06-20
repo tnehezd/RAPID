@@ -71,6 +71,11 @@ extern char filenev1[1024];
 extern char filenev2[1024];
 extern char filenev3[1024];
 
+
+extern double optev, optdr, optgr, opttwopop, optdze, optinp; // változók a kódok kül. részeinek futtatására
+extern double fFrag, uFrag;
+
+
 // Function Declaration
 void initialize_derived_config_variables();
 
