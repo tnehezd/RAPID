@@ -28,7 +28,7 @@ void GetMass(int n, double partmassind[][4], int indii, int indio, double tavi, 
              double *massiout, int indoi, int indoo, double tavo, double dzeo, double *massoout);
 
 // Nulla pontok számolása a nyomás gradiensében (általában nyomás maximumok)
-int find_num_zero(double *rvec, double *dp);
+int find_num_zero(double *dp);
 
 // Nulla pont meghatározása lineáris interpolációval
 double find_zero(int i, double *rvec, double *dp);
