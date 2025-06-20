@@ -106,9 +106,9 @@ int main(int argc, const char **argv) {
 
 /*	Az aktualis mappaba a kezdeti adatokat tartalmazo file-ok atmasolasa - kesobb ezek az adatok visszanezhetok igy		*/
 	int dummy;
-	sprintf(mv,"cp %s %s/",filenev2,nev);
+	snprintf(mv,"cp %s %s/",filenev2,nev);
 	dummy = system(mv);	
-	sprintf(mv,"cp %s %s/",filenev3,nev);
+	snprintf(mv,"cp %s %s/",filenev3,nev);
 	dummy = system(mv);
 
 /*	Sigma file beolvasasa, ha szukseges	*/
