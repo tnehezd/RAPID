@@ -29,16 +29,6 @@ extern double r_dze_i;
 extern double r_dze_o;
 extern double Dr_dze_i;
 extern double Dr_dze_o;
-extern int optdze;
-
-// Simulation control options
-extern int optev;
-extern int optdr;
-extern int optgr;
-extern int opttwopop;
-extern int fFrag;
-extern int uFrag;
-extern char *inputsig; // Or const char *inputsig;
 
 // Time parameters
 extern double DT;
@@ -71,8 +61,11 @@ extern char filenev1[1024];
 extern char filenev2[1024];
 extern char filenev3[1024];
 
-
+// Parameter controls
 extern double optev, optdr, optgr, opttwopop, optdze, optinp; // változók a kódok kül. részeinek futtatására
+extern char *inputsig; // Or const char *inputsig;
+
+// part. physics
 extern double fFrag, uFrag;
 
 
