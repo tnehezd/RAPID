@@ -13,7 +13,7 @@ extern FILE *fin1, *fin2, *fmo, *fout, *foutmicr, *fout3, *massfil, *jelfut;
 
 /* A nyomasi maximum korul 1H tavolsagban jeloli ki a korgyurut */
 // Feltehetően a disk_model.h tartalmazza a scale_height deklarációját.
-void find_r_annulus(double *rvec, double rin_val, int *ind_ii, int *ind_io, double rout_val, int *ind_oi, int *ind_oo);
+void find_r_annulus(double *rvec, double rin_val, double *ind_ii, double *ind_io, double rout_val, double *ind_oi, double *ind_oo);
 
 /* reszecskek_szama függvény deklaráció */
 // Az numout-ot már nem adjuk át referenciával, hanem visszatérési érték.
