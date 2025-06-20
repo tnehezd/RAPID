@@ -39,8 +39,8 @@ void infoCurrent(char *nev);
 // A "t" paramétert töröltem, mert unused warning volt, ha kell, tedd vissza.
 // A massbtempio, massbtempoo, massmtempio, massmtempoo, tavin, tavout most már mutatók,
 // ezért a függvénydeklarációban is annak kell lenniük (ahogy a .c fájlban is láttam).
-void Print_Mass(double step, double *rvec, double partmassind[][4], double partmassmicrind[][4], double partmasssecind[][4], double *dpressvec, double massbtempii, double massbtempoi, double massmtempii, double massmtempoi, double *massbtempio, double *massbtempoo, double *massmtempio, double *massmtempoo, double *tavin, double *tavout);
-
+// In src/io_utils.h:
+void Print_Mass(double step, double *rvec, double partmassind[][4], double partmassmicrind[][4], double partmasssecind[][4], double t, double *dpressvec, double massbtempii, double massbtempoi, double massmtempii, double massmtempoi, double *massbtempio, double *massbtempoo, double *massmtempio, double *massmtempoo, double *tavin, double *tavout);
 /* Fuggveny a sigma, p, dp kiiratasara */
 void Print_Sigma(char *dens_name, double *rvec, double *sigmavec, double *pressvec, double *dpressvec);
 
