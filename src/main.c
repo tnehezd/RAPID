@@ -14,16 +14,28 @@
 // Forward declaration of the options_t struct and parsing functions
 // This will eventually go into a separate 'options' module if it gets complex enough,
 // or remain here if the parsing logic is tightly coupled to main.
-typedef struct {
-    int evol;
-    int drift;
-    int growth;
-    int twopop;
-    int ffrag;
-    int ufrag;
-    int input;
-    double tStep;
-    int ngrid; // Assuming ngrid is part of options for inputsig == 1
+/*	A futasok soran valtoztathato opciok letrehozasa egy strukturaval	*/
+typedef struct options {
+
+	// Option for dust drift
+	double drift;
+	// Option for dust growth
+	double growth;
+	// Option for solving the duffusion equation of the surface density
+	double evol;
+	// Option fot two population model
+	double twopop;
+	// Fragmentation barrier in cm/s
+	double ufrag;
+	// Fragmentation barrier constant
+	double ffrag;
+	// Number of grid cells
+	int ngrid;
+	// Input sigma file
+	const char *input; 
+	// Option for time stepping
+	double tStep;
+
 } options_t;
 
 void create_default_options(options_t *def);
@@ -135,84 +147,73 @@ int main(int argc, const char **argv) {
 }
 
 
-// --- Placeholder for create_default_options and parse_options ---
-// These will be moved from your original large .c file here for now.
-// If they become complex, they might get their own options.h/c module.
 
-void create_default_options(options_t *def) {
-    // Ezek az alapértelmezett értékek, ha nem adunk meg semmilyen kapcsolót.
-    // Fontos, hogy ezeket az eredeti kódod alapértelmezett beállításaival egyeztesd!
-    def->evol = 0;       // -e
-    def->drift = 0;      // -d
-    def->growth = 0;     // -g
-    def->twopop = 0;     // -t
-    def->ffrag = 0;      // -f
-    def->ufrag = 0;      // -u
-    def->input = 1;      // -i (0-ha fájlból, 1-ha generált)
-    def->tStep = 0.0;    // -s (simulation time step)
-    def->ngrid = 100;    // -n (NGRID, ha input=1)
-    // Ha vannak további opcióid, add hozzá itt is az alapértelmezett értéküket.
+/*	A struktura elemeinek feltoltese alapertelmezett ertekekkel	*/
+void create_default_options(options_t *opt) {
+
+	opt->drift		 = 1.;		//Dust drift is included
+	opt->growth		 = 1.;		//Particle growth is included
+	opt->evol		 = 1.;		//The evolution of surface density is included
+	opt->twopop		 = 1.;		//Two population simulation is included
+	opt->ufrag		 = 1000.0;	//Fragmentation velocity in CGS -- Birnstiel et al 2012
+	opt->ffrag		 = 0.37;	//?
+	opt->ngrid		 = 2000;	//Number of the grid cells
+	opt->input		 = "";
+	opt->tStep		 = 0.;
+	
 }
 
-int parse_options(int argc, const char **argv, options_t *def) {
-    // Iterálunk a parancssori argumentumokon. Az első (argv[0]) a program neve,
-    // ezért 1-től indulunk.
-    for (int i = 1; i < argc; i++) {
-        // -e: Gas evolution
-        if (strcmp(argv[i], "-e") == 0 && i + 1 < argc) {
-            def->evol = atoi(argv[++i]);
-        }
-        // -d: Particle drift
-        else if (strcmp(argv[i], "-d") == 0 && i + 1 < argc) {
-            def->drift = atoi(argv[++i]);
-        }
-        // -g: Particle growth
-        else if (strcmp(argv[i], "-g") == 0 && i + 1 < argc) {
-            def->growth = atoi(argv[++i]);
-        }
-        // -t: Two-population model
-        else if (strcmp(argv[i], "-t") == 0 && i + 1 < argc) {
-            def->twopop = atoi(argv[++i]);
-        }
-        // -f: Fragmentation flag
-        else if (strcmp(argv[i], "-f") == 0 && i + 1 < argc) {
-            def->ffrag = atoi(argv[++i]);
-        }
-        // -u: Fragmentation update flag
-        else if (strcmp(argv[i], "-u") == 0 && i + 1 < argc) {
-            def->ufrag = atoi(argv[++i]);
-        }
-        // -i: Input sigma file option (0 for file, 1 for generated)
-        // Ha ezt 0-ra állítjuk, akkor a következő argumentum a fájlnév lesz.
-        // Ezt a fájlnevet külön kell majd kezelni, valószínűleg a globális filenev2-be kell másolni.
-        else if (strcmp(argv[i], "-i") == 0 && i + 1 < argc) {
-            def->input = atoi(argv[++i]);
-            if (def->input == 0) {
-                // Ha az input 0, akkor a következő argumentum a fájlnév.
-                // Ezt a globális filenev2-be másoljuk át a config.h-ból.
-                // A parse_options függvényből közvetlenül globális változókat írni elfogadható.
-                if (i + 1 < argc) {
-                    strncpy(filenev2, argv[++i], sizeof(filenev2) - 1);
-                    filenev2[sizeof(filenev2) - 1] = '\0'; // Null-terminátor biztosítása
-                } else {
-                    fprintf(stderr, "Error: -i option requires a filename when set to 0.\n");
-                    return 1; // Hiba kód
-                }
-            }
-        }
-        // -s: Time step (DT)
-        else if (strcmp(argv[i], "-s") == 0 && i + 1 < argc) {
-            def->tStep = atof(argv[++i]);
-        }
-        // -n: NGRID (if inputsig is 1, i.e., generated profile)
-        else if (strcmp(argv[i], "-n") == 0 && i + 1 < argc) {
-            def->ngrid = atoi(argv[++i]);
-        }
-        // Kezeletlen vagy érvénytelen opció
-        else {
-            fprintf(stderr, "Warning: Unknown or incomplete option '%s'\n", argv[i]);
-            // return 1; // Dönthetünk úgy, hogy hiba esetén kilépünk, vagy csak figyelmeztetünk.
-        }
-    }
-    return 0; // Siker
+
+/*	A valtoztathato parameterek beolvasa terminalbol	*/
+int parse_options(int argc, const char **argv, options_t *opt){
+	int i = 1;
+	double temp = 1;
+
+	while (i < argc) {
+		char *p = malloc(sizeof(argv[i]));	/*	Ahhoz, hogy "szoveget" (char, mert a C nem tud stringet kezelni) tudjunk beolvasni, es ossze tudjuk vetni a lentebb megadott kapcsolokkal (pl. -drift), le kell foglalni a memoriateruletet p-nek. Ennek viszont elore nem tudjuk a meretet, ezert dinamikusan foglaljuk le azt	*/
+   		strcpy(p, argv[i]);			/*	A p-be elmentjuk az adott argumentumot az strcpy paranccsal	*/	
+
+		if(strcmp(p, "-drift") == 0) {		/*	Az strcmp parancs kepes osszevetni a karaktersorozatunkat egy masikkal: ha azok megegyeznek, akkor a kovetkezo beolvasott argumentumot elmenti a megadott struktura elembe	*/
+			strcpy(p, argv[i]);
+			i++;
+			opt->drift = atof(argv[i]);
+		}
+		else if (strcmp(p, "-growth") == 0) {
+			i++;
+			opt->growth = atof(argv[i]);
+		}
+		else if (strcmp(p, "-evol") == 0) {
+			i++;
+			opt->evol = atof(argv[i]);
+		}
+		else if (strcmp(p, "-twopop") == 0) {
+			i++;
+			opt->twopop = atof(argv[i]);
+		}
+		else if (strcmp(p, "-tStep") == 0) {
+			i++;
+			opt->tStep = atof(argv[i]);
+		}
+		else if (strcmp(p, "-n") == 0) {
+			i++;
+			opt->ngrid = atoi(argv[i]);
+		}
+		else if (strcmp(p, "-i") == 0) {
+			i++;
+			opt->input = argv[i];
+			temp = 0;
+		}
+		else {				/*	ha nem sikerul a parancssorbol a beolvasas, akkor a program kilep es feldobja, hogy mely kapcsolo nem volt jo, helyette mit probaljon meg	*/
+			printf("\n\n**** Invalid switch on command-line: %s! ****\n\n\n",p);
+			printf("**** Try following parameters: ****\n\n-drift\nif set to 0: dust drift is not included, if set to 1: dust drift is included (default)\n\n-growth\nif set to 0: partcle growth is not included, if set to 1: particle growth is included (default)\n\n-evol\nif set to 0: the evolution of the surface density is not included, if set to 1: evolution of the surface density is included (default)\n\n-n\nnumber of grid cells (2000 by default)\n");
+			return 1;
+		}
+		i++;
+		free(p);			/*	memoria foglalas miatt fel is kell szabaditanunk a memoria teruletet	*/
+	}
+
+	optinp = temp;
+	
+	return 0;
 }
+
