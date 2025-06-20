@@ -1,8 +1,8 @@
-// src/config.h
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#include <stdio.h> // Required for FILE* type
+#include <stdio.h>  // Required for FILE* type
+#include <math.h>   // Required for M_PI (for TWOPI macro)
 
 // --- Global Variable Declarations (extern) ---
 // Disk parameters
@@ -49,17 +49,17 @@ extern FILE *fin2;
 extern FILE *fil;
 
 
+// --- Physical Constants (Macros) ---
+// Renamed G_GRAV_CONST to G for brevity and consistency with G2 (G*G)
+#define G           1.0
+#define G2          (G * G) // G*G as requested
 
-// --- Physical Constants (Add these if they are not already there) ---
-#define SUN2GR             1.989e33  // Solar Mass in grams (M_solar -> g) - ELLENŐRIZD AZ ÉRTÉKET!
-#define AU2CM              1.496e13  // Astronomical Unit in centimeters (AU -> cm) - ELLENŐRIZD AZ ÉRTÉKET!
-#define G_GRAV_CONST       1.0
-#define TWOPI              2.0 * M_PI
-#define G_GRAV_CONST2      G_GRAV_CONST*G_GRAV_CONST
-#define SUN2GR             1.989e33
-#define SDCONV             1.12521e-7
-#define CMPSECTOAUPYRP2PI  3.35725e-07
-    
+// Removed duplicate SUN2GR. Keep one, and ensure its value is correct.
+#define SUN2GR      1.989e33  // Solar Mass in grams (M_solar -> g) - PLEASE VERIFY THIS VALUE!
+#define AU2CM       1.496e13  // Astronomical Unit in centimeters (AU -> cm) - PLEASE VERIFY THIS VALUE!
+#define TWOPI       (2.0 * M_PI) // Added parentheses for safety with expressions
+#define SDCONV      1.12521e-7
+#define CMPSECTOAUPYRP2PI 3.35725e-07
 
 
 // --- Global Filename Declarations (extern) ---
@@ -68,14 +68,14 @@ extern char filenev2[1024];
 extern char filenev3[1024];
 
 // Parameter controls
-extern double optev, optdr, optgr, opttwopop, optdze, optinp; // változók a kódok kül. részeinek futtatására
-extern char *inputsig; // Or const char *inputsig;
+extern double optev, optdr, optgr, opttwopop, optdze, optinp; // variables to control different parts of the code
+extern char *inputsig; // Or const char *inputsig; - typically const char* for string literals
 
-// part. physics
+// Part. physics
 extern double fFrag, uFrag;
 
 
-// Function Declaration
+// Function Declaration (if this function is implemented in a .c file and used elsewhere)
 void initialize_derived_config_variables();
 
 #endif // CONFIG_H
