@@ -53,6 +53,7 @@ FILE *massfil = NULL;
 FILE *jelfut = NULL;
 FILE *fin1 = NULL;
 FILE *fin2 = NULL;
+FILE *fil = NULL;
 
 // --- Global Filename Definitions ---
 char filenev1[1024] = "param.dat";
