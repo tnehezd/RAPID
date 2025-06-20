@@ -144,7 +144,7 @@ void GetMass(int n, double partmassind[][4],int indii, int indio, double tavi, d
 }
 
 /*	counting the number of zero points of the pressure gradient function	*/
-int find_num_zero(double *rvec, double *dp) {
+int find_num_zero(double *dp) {
 	int i,count;
 	count = 0;
 
