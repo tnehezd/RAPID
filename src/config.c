@@ -51,13 +51,26 @@ char *inputsig = NULL;
 char filenev1[1024] = "param.dat";
 char filenev2[1024] = "sigma.dat";
 char filenev3[1024] = "time.dat";
+double KEREK = 100.
 
+// opt parsing things
 double optev, optdr, optgr, opttwopop, optdze, optinp; // Inicializáld őket 0.0-ra vagy 1.0-ra ha szükséges
 double fFrag, uFrag;
+
+// Inner constants
+double TWOPI = 2.0 * M_PI
+double G_GRAV_CONST = 1.0	
+double G_GRAV_CONST2
+double SUN2GR = 1.989e33
+double SDCONV = 1.12521e-7
+double CMPSECTOAUPYRP2PI = 3.35725e-07
+    
+
 
 // Function to initialize derived global variables
 void initialize_derived_config_variables() {
     DD = (RMAX - RMIN) / NGRID;
+    G2 = G_GRAV_CONST * G_GRAV_CONST
 }
 
 
