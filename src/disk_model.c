@@ -23,6 +23,17 @@ void disk_param_be(double *sigma0, double *sdexp, double *Rmin, double *Rmax, do
 
 	fin2 = fopen(filenev2,"r");
 
+	// *** FONTOS: Add hozzá ezt az ellenőrzést AZONNAL az fopen hívás után! ***
+	if (fin2 == NULL) {
+    	// Hibaüzenet kiírása stderr-re, hogy lásd a terminálban
+    	fprintf(stderr, "Hiba: Nem sikerült megnyitni a fájlt: %s\n", filenev2);
+    	fprintf(stderr, "Ellenőrizd, hogy a fájl létezik-e és elérhető-e a program számára.\n");
+
+    	// A program elegáns leállítása hiba esetén
+    	exit(EXIT_FAILURE); // Ehhez szükséged lehet #include <stdlib.h> a fájl elején
+	}
+
+
            	if(fscanf(fin2,"%lg  %lg %d %lg %lg %lg %lg %lg %lg %lg %lg %lg %lg %lg %lg",&rmin,&rmax,&dummy2,&exp,&sig0,&dummy,&rdzei,&rdzeo,&drdzei,&drdzeo,&amod,&rhop,&alpha,&mstar,&flind) == 15) { /*	A beolvasás sikeres, ha az fscanf visszatérési értéke 15, mert 15 oszlopot szeretnénk beolvasni.	*/
  			printf("\n\n *********** A korong parameterei sikeresen beolvasva!  *********** \n                  sigma0: %lg, sdexp: %lg\n\n\n", sig0,exp);  
 			*sigma0 = sig0;						/*	sigma az r=1AU tavolsagon		*/

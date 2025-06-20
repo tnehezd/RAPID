@@ -1,0 +1,9 @@
+cc1: fatal error: init_dust.ver.6.c: No such file or directory
+compilation terminated.
+cc1: fatal error: dustdrift1Dver16_rdf.c: No such file or directory
+compilation terminated.
+mv: rename drift0620210652 to run0620210652_on/drift0620210652: No such file or directory
+mv: rename init0620210652n to run0620210652_on/init0620210652n: No such file or directory
+indit_am.dze.sind.size.sh: line 28: cd: run0620210652_onn: No such file or directory
+indit_am.dze.sind.size.sh: line 29: ./init0620210652n: No such file or directory
+indit_am.dze.sind.size.sh: line 30: ./drift0620210652: No such file or directory
