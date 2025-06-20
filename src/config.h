@@ -38,7 +38,7 @@ extern int optgr;
 extern int opttwopop;
 extern int fFrag;
 extern int uFrag;
-extern int inputsig;
+extern char *inputsig; // Or const char *inputsig;
 
 // Time parameters
 extern double DT;
