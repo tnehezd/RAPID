@@ -92,41 +92,25 @@ void find_r_annulus(double *rvec, double rin_val, int *ind_ii, int *ind_io, doub
 // --- FÜGGVÉNY DEFINÍCIÓK ---
 
 // reszecskek_szama függvény implementáció
-int reszecskek_szama(int lout, int inputsig_flag) {
-    // A 'lout' és 'inputsig_flag' paraméterek warningjai megszűnnek,
-    // ha a függvény törzse valóban használja őket, ahogy az eredeti kódban.
-    // Most feltételezzük, hogy az 'inputsig_flag' jelzi, hogy fájlból olvasunk-e.
-    FILE *fin1; // Lokális fájlpointer
-    char filename_for_count[1024]; // Lokális char tömb fájlnévnek
-    int numout = 0; // Lokális számláló
+int reszecskek_szama(int numout, const char *filenev){
 
-    if (inputsig_flag == 0) { // Ha az inputsig_flag 0, akkor fájlból olvassa az NGRID-et
-        // Itt feltételezzük, hogy a 'filenev2' (globális config.h-ból) a megfelelő bemeneti fájlnév.
-        snprintf(filename_for_count, sizeof(filename_for_count), "%s", filenev2);
+	char c;
+	fin1 = fopen(filenev,"r+");		
+	numout = 0;
 
-        fin1 = fopen(filename_for_count, "r");
-        if (fin1 == NULL) {
-            fprintf(stderr, "Error: Could not open file %s for particle count (reszecskek_szama).\n", filename_for_count);
-            // Itt valószínűleg exit(EXIT_FAILURE) kellene, ha nem tudja megnyitni a fájlt.
-            // Most csak hibaüzenetet ír, és visszatér 0-val, ami hibás lehet.
-            return 0; // Vagy valamilyen hibakód
-        }
+/*	A porreszecskeket tartalmazo file megnyitasa es a sorok szamanak kiolvasasa while ciklussal				*/
 
-        // Fájl sorainak számlálása
-        char line[1024];
-        while (fgets(line, sizeof(line), fin1) != NULL) {
-            numout++;
-        }
-        fclose(fin1);
-        NGRID = numout; // Frissíti a globális NGRID változót a config.h-ból
-        printf("reszecskek_szama: NGRID set to %d from file.\n", NGRID);
-        return NGRID;
-    } else {
-        // Ha inputsig_flag nem 0, akkor feltételezzük, hogy NGRID már máshol be van állítva (pl. parancssorból).
-        printf("reszecskek_szama: NGRID assumed to be set externally (%d).\n", NGRID);
-        return NGRID; // Visszaadja a globális NGRID értékét
-    }
+		while((c = fgetc(fin1)) != EOF)				
+/*	a file vegeig (EOF) keresse a c karakternek megadott '\n' sortorest: 							*/
+			if(c == '\n')
+				numout++;					
+/*	amig talal sortorest, leptesse a lines integert, ezzel beolvastuk, hogy hany soros a file				*/
+	fclose(fin1);	
+
+	return numout;
+
 }
+
 
 
 // por_be függvény implementáció
