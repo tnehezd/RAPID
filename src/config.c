@@ -57,15 +57,6 @@ double KEREK = 100.
 double optev, optdr, optgr, opttwopop, optdze, optinp; // Inicializáld őket 0.0-ra vagy 1.0-ra ha szükséges
 double fFrag, uFrag;
 
-// Inner constants
-double TWOPI = 2.0 * M_PI
-double G_GRAV_CONST = 1.0	
-double G_GRAV_CONST2
-double SUN2GR = 1.989e33
-double SDCONV = 1.12521e-7
-double CMPSECTOAUPYRP2PI = 3.35725e-07
-    
-
 
 // Function to initialize derived global variables
 void initialize_derived_config_variables() {
