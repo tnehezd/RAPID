@@ -35,7 +35,7 @@ int optgr = 0;
 int opttwopop = 0;
 int fFrag = 0;
 int uFrag = 0;
-int inputsig = 0;
+
 
 // Time parameters
 double DT = 0.0;
@@ -54,6 +54,7 @@ FILE *jelfut = NULL;
 FILE *fin1 = NULL;
 FILE *fin2 = NULL;
 FILE *fil = NULL;
+char *inputsig = NULL;
 
 // --- Global Filename Definitions ---
 char filenev1[1024] = "param.dat";
