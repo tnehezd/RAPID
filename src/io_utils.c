@@ -345,41 +345,37 @@ void Print_Sigma(char *filename, double rvec[], double sigmavec[], double pressv
     fclose(fout_local);
 }
 
-// Print_Sigmad függvény implementáció (paraméterek és lokális változók javítva)
-void Print_Sigmad(char *dust_name, char *dust_name2, double *r, double *rm, double *sigmad, double *sigmadm) {
-    FILE *fil; // Lokális fájlpointer
-    int i; // Lokális ciklusváltozó
-    double rtempvec[PARTICLE_NUMBER]; // Lokális tömb
-    double d_val = (RMAX - RMIN) / (NGRID - 1); // RMIN, RMAX, NGRID globális a config.h-ból
+/*	Fuggveny a por feluletisurusegenek kiiratasara	*/
+void Print_Sigmad(char *dust_name, char *dust_name2, double min, double *r, double *rm, double *sigmad, double *sigmadm) {
 
-    // Az rtempvec inicializálása, ha szükséges
-    for (i = 0; i < PARTICLE_NUMBER; i++) {
-        rtempvec[i] = RMIN + i * d_val; // Példa inicializálásra
-    }
+	int i;
+	double rtempvec[PARTICLE_NUMBER];
+	double dd = (RMAX - RMIN) / (PARTICLE_NUMBER-1);	/*	Mivel a jelen futas gridfelbontasa nem feltetlen egyezik meg a porreszecskeket generalo program gridfelbontasaval - ez a feluletisuruseg miatt lenyeges! - ezert itt szamolja ki a program	*/
 
-    // Fájlnyitás dust_name-re
-    fil = fopen(dust_name, "w");
-    if (fil == NULL) {
-        fprintf(stderr, "Error: Could not open dust sigma file %s for writing.\n", dust_name);
-        return;
-    }
-    for (i = 0; i < NGRID + 2; i++) {
-        // Feltételezve, hogy 'r' és 'sigmad' megfelelő méretűek
-        fprintf(fil, "%lg %lg\n", r[i], sigmad[i]);
-    }
-    fclose(fil);
+//	printf("dd: %lg  1/dd: %i\n",dd,(int)(1./dd)*100);
 
-    // Fájlnyitás dust_name2-re
-    fil = fopen(dust_name2, "w"); // Újrahasználjuk a 'fil' pointert
-    if (fil == NULL) {
-        fprintf(stderr, "Error: Could not open dust sigma2 file %s for writing.\n", dust_name2);
-        return;
-    }
-    for (i = 0; i < NGRID + 2; i++) {
-        // Feltételezve, hogy 'rm' és 'sigmadm' megfelelő méretűek
-        fprintf(fil, "%lg %lg\n", rm[i], sigmadm[i]);
-    }
-    fclose(fil);
+	FILE *sid;	
+
+	fil = fopen(dust_name,"w");
+	if(opttwopop == 1) sid = fopen(dust_name2,"w");		/*	Ha 2pop --> megnyit egy kulon file-t a mikronos por feluletisurusegenek kiiratasara	*/
+
+	for(i=0;i<PARTICLE_NUMBER;i++){
+
+		if (r[i] >= RMIN) {			/*	a cm-es por feluletisurusege	*/
+			fprintf(fil,"%.11lg  %lg \n",r[i],sigmad[i]);
+		} 
+
+		if(opttwopop == 1) {				/*	itt irja ki a mikronos por feluletisuruseget	*/
+
+			if (rm[i] >= RMIN) {
+				fprintf(sid,"%lg  %lg \n",rm[i],sigmadm[i]);
+			}
+		}
+	}
+
+	fclose(fil);
+	if(opttwopop == 1) fclose(sid);
+
 }
 
 
