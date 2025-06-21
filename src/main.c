@@ -98,6 +98,45 @@ int main(int argc, const char **argv) {
            my_disk.r_dze_i, my_disk.r_dze_o, my_disk.Dr_dze_i, my_disk.Dr_dze_o, my_disk.a_mod);
 
 
+    // --- CRITICAL STEP: TRANSFER PARSED VALUES FROM STRUCTS TO GLOBAL VARIABLES ---
+    // This is the missing link that causes "optdr is OFF"
+    printf("DEBUG [main]: Transferring parsed values from structs to GLOBAL variables.\n");
+    optdr     = sim_opts.drift;
+    optgr     = sim_opts.growth;
+    optev     = sim_opts.evol;
+    opttwopop = sim_opts.twopop;
+
+    // Set optdze based on dead zone radii from my_disk
+    optdze = (my_disk.r_dze_i > 0.0 || my_disk.r_dze_o > 0.0) ? 1.0 : 0.0;
+    printf("DEBUG [main]: Global optdr set to %.2f (from sim_opts.drift).\n", optdr);
+    printf("DEBUG [main]: Global optgr set to %.2f (from sim_opts.growth).\n", optgr);
+    printf("DEBUG [main]: Global optev set to %.2f (from sim_opts.evol).\n", optev);
+    printf("DEBUG [main]: Global opttwopop set to %.2f (from sim_opts.twopop).\n", opttwopop);
+    printf("DEBUG [main]: Global optdze set to %.2f (based on my_disk.r_dze_i/o).\n", optdze);
+
+    // Also transfer other global disk parameters that are still used by legacy functions
+    RMIN = my_disk.RMIN;
+    RMAX = my_disk.RMAX;
+    NGRID = my_disk.NGRID;
+    SIGMA0 = my_disk.SIGMA0;
+    SIGMAP_EXP = my_disk.SIGMAP_EXP;
+    alpha_visc = my_disk.alpha_visc;
+    STAR = my_disk.STAR_MASS;
+    HASP = my_disk.HASP;
+    FLIND = my_disk.FLIND;
+    r_dze_i = my_disk.r_dze_i;
+    r_dze_o = my_disk.r_dze_o;
+    Dr_dze_i = my_disk.Dr_dze_i;
+    Dr_dze_o = my_disk.Dr_dze_o;
+    a_mod = my_disk.a_mod;
+    DD = my_disk.DD; // DD is calculated after NGRID is finalized
+
+    TMAX = sim_opts.TMAX;
+    WO = sim_opts.WO;
+    TCURR = sim_opts.TCURR;
+    // --- END OF CRITICAL GLOBAL UPDATES ---
+
+
     // --- Input file handling logic ---
     const char *current_inputsig_file = NULL;
 
@@ -119,6 +158,8 @@ int main(int argc, const char **argv) {
         } else {
             my_disk.DD = 0.0; // Or handle as an error if NGRID <= 1 is invalid for your simulation
         }
+        // Update global DD after recalculation
+        DD = my_disk.DD;
 
         printf("DEBUG [main]: NGRID set from input file: %d. DD calculated as %.4e.\n", my_disk.NGRID, my_disk.DD);
     } else {
@@ -129,8 +170,15 @@ int main(int argc, const char **argv) {
         } else {
             my_disk.DD = 0.0;
         }
+        // Update global DD after calculation
+        DD = my_disk.DD;
         printf("DEBUG [main]: NGRID set to default/command-line value: %d. DD calculated as %.4e.\n", my_disk.NGRID, my_disk.DD);
     }
+
+     // --- CRITICAL STEP: Ensure global PARTICLE_NUMBER matches my_disk.NGRID ---
+    PARTICLE_NUMBER = my_disk.NGRID;
+    printf("DEBUG [main]: Global PARTICLE_NUMBER set to %d (from my_disk.NGRID).\n", PARTICLE_NUMBER);
+
 
     // --- Dynamic Memory Allocation for Disk Arrays ---
     // Allocate NGRID+2 elements for boundary conditions
@@ -145,33 +193,6 @@ int main(int argc, const char **argv) {
         return 1; // Exit on memory allocation failure
     }
     printf("DEBUG [main]: Disk profile arrays dynamically allocated with size NGRID+2 = %d.\n", my_disk.NGRID + 2);
-
-    // --- TEMPORARY: Update global variables for functions that *still* rely on them ---
-    // This section is a compatibility layer. It should be removed once ALL functions
-    // (sigIn, Perem, Initial_Press, Initial_dPress, Initial_Ugas, Print_Sigma, tIntegrate, Mk_Dir, infoCurrent, etc.)
-    // are refactored to take `disk_t *` and `simulation_options_t *` etc.
-    printf("DEBUG [main]: Temporarily updating global disk and time parameters from structs for legacy functions.\n");
-    RMIN = my_disk.RMIN;
-    RMAX = my_disk.RMAX;
-    NGRID = my_disk.NGRID;
-    SIGMA0 = my_disk.SIGMA0;
-    SIGMAP_EXP = my_disk.SIGMAP_EXP;
-    alpha_visc = my_disk.alpha_visc;
-    STAR = my_disk.STAR_MASS;
-    HASP = my_disk.HASP;
-    FLIND = my_disk.FLIND;
-    r_dze_i = my_disk.r_dze_i;
-    r_dze_o = my_disk.r_dze_o;
-    Dr_dze_i = my_disk.Dr_dze_i;
-    Dr_dze_o = my_disk.Dr_dze_o;
-    a_mod = my_disk.a_mod;
-    DD = my_disk.DD;
-
-    TMAX = sim_opts.TMAX;
-    WO = sim_opts.WO;
-    TCURR = sim_opts.TCURR;
-    // --- END OF TEMPORARY GLOBAL UPDATES ---
-
 
     // Call disk_param_be to set PDENSITY and PDENSITYDIMLESS within my_disk
     // This function is already refactored to use `disk_t *`
@@ -208,7 +229,7 @@ int main(int argc, const char **argv) {
     // init_tool_params.disk_mass_dust = def.md_val; // If 'md_val' is a direct input for init_tool
     init_tool_params.dust_to_gas_ratio = def.eps_val;
     init_tool_params.two_pop_ratio = def.ratio_val;
-    init_tool_params.micro_size_cm = def.mic_val;
+    init_tool_params.micro_size_cm = def.mic_val; // Corrected from micro_size_cm
     init_tool_params.one_size_particle_cm = def.onesize_val;
     printf("DEBUG [main]: init_tool_options_t (init_tool_params) structure populated for profile generation.\n");
     printf("DEBUG [main]:   init_tool_params.n=%d, init_tool_params.ri=%.2f, init_tool_params.ro=%.2f, init_tool_params.sigma0=%.2e\n",
@@ -264,6 +285,9 @@ int main(int argc, const char **argv) {
 
     // Dead Zone option (optdze)
     // This should ideally be moved into sim_opts or disk_t.
+    // It's already handled in the "CRITICAL GLOBAL UPDATES" section above.
+    // Remove this duplicate logic here:
+    /*
     optdze = 0; // Default to inactive (global)
     if(my_disk.r_dze_i != 0.0 || my_disk.r_dze_o != 0.0) {
         optdze = 1.;
@@ -271,6 +295,9 @@ int main(int argc, const char **argv) {
     } else {
         printf("DEBUG [main]: Dead Zone inactive (both r_dze_i and r_dze_o are 0.0).\n");
     }
+    */
+    // The debug print for optdze is already done above.
+
 
     // Output directory handling
     printf("DEBUG [main]: Creating output directory: '%s'.\n", def.output_dir_name);

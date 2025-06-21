@@ -10,28 +10,45 @@
 #include "dust_physics.h" // Add this if not already present
 #include "utils.h"
 
-
+// Define the number of header lines or a way to identify them.
+// For your init_data.dat, there are 5 header lines that start with '#' or '-'.
+// A fixed count is simplest if the header format is consistent.
+#define INIT_DATA_HEADER_LINES 5
 
 
 // --- FÜGGVÉNY DEFINÍCIÓK ---
 
 /*	Visszaadja, hogy hany sora van a beolvasando file-nak, ez jelen esetben megadja a beolvasando reszecskek szamat!	*/
 int reszecskek_szama(int numout, const char *filenev){
+    FILE *fp = NULL; // Use a local FILE pointer, don't rely on global fin1 here.
+    char line_buffer[1024]; // Buffer to read lines, ensuring it's large enough for a typical header line
 
-	char c;
-	fin1 = fopen(filenev,"r+");		
-	numout = 0;
+    fp = fopen(filenev, "r"); // Open in read mode
+    if (fp == NULL) {
+        fprintf(stderr, "ERROR [reszecskek_szama]: Could not open file '%s'. Exiting.\n", filenev);
+        perror("Reason"); // Prints the system error message
+        exit(EXIT_FAILURE);
+    }
 
-/*	A porreszecskeket tartalmazo file megnyitasa es a sorok szamanak kiolvasasa while ciklussal				*/
+    // Skip header lines
+    for (int i = 0; i < INIT_DATA_HEADER_LINES; i++) {
+        if (fgets(line_buffer, sizeof(line_buffer), fp) == NULL) {
+            fprintf(stderr, "ERROR [reszecskek_szama]: Unexpected end of file while skipping headers in '%s'.\n", filenev);
+            fclose(fp);
+            exit(EXIT_FAILURE);
+        }
+    }
 
-		while((c = fgetc(fin1)) != EOF)				
-/*	a file vegeig (EOF) keresse a c karakternek megadott '\n' sortorest: 							*/
-			if(c == '\n')
-				numout++;					
-/*	amig talal sortorest, leptesse a lines integert, ezzel beolvastuk, hogy hany soros a file				*/
-	fclose(fin1);	
+    int count = 0;
+    while (fgets(line_buffer, sizeof(line_buffer), fp) != NULL) {
+        // Optionally, add a check if you expect blank lines or other comments after the main header,
+        // but for init_data.dat, it looks like all subsequent lines are data.
+        count++;
+    }
+    fclose(fp); // Close the file
 
-	return numout;
+    printf("DEBUG [reszecskek_szama]: Counted %d data lines in '%s' (after skipping %d header lines).\n", count, filenev, INIT_DATA_HEADER_LINES);
+    return count;
 
 }
 
@@ -39,40 +56,58 @@ int reszecskek_szama(int numout, const char *filenev){
 //*	A porreszecskek adatainak beolvasasa	*/
 void por_be(double radius[][2], double radiusmicr[][2], double *mass, double *massmicr) {
 
-	int i, dummy;
-	double distance, particle_radius, reprmass, reprmassmicr,radmicr;
-	
-   	fin1 = fopen(filenev1,"r");
- 
-/*	Beolvassa a file-ból a részecskék adatait: sorszámukat - ezt később nem használjuk; távolságukat; sugaruk méretét; a reprezentatív tömegüket - egyelőre ezt sem használjuk	*/  	
-	for (i = 0; i < PARTICLE_NUMBER; i++) {			
-            	if(fscanf(fin1,"%d %lg %lg %lg %lg %lg",&dummy,&distance,&reprmass,&reprmassmicr,&particle_radius,&radmicr) == 6) {	
-/*	A beolvasás sikeres, ha az fscanf visszatérési értéke 6, mert 6 oszlopot szeretnénk beolvasni. Ekkor elmentjük a részecske távolságát (distance) és méretét (particle_radius) a megfelelő tömbbe	*/
+    int i, dummy;
+    double distance, particle_radius, radmicr;
+    // CHANGE THESE TWO LINES:
+    long double reprmass;     // Changed from double to long double
+    long double reprmassmicr; // Changed from double to long double
+    
+    fin1 = fopen(filenev1,"r");
 
-/*	A cm-es porreszecskek adatainak beolvasasa!		*/
-           		radius[i][0] = distance;			/*	a reszecske tavolsaga AU-ban		*/
-	   		radius[i][1] = particle_radius / AU2CM;		/* 	a részecske mérete AU-ban		*/
-			mass[i] = reprmass;				/*	a porreszecske altal kepviselt reprezentativ tomeg dimenziotlan egysegekben					*/
+    if (fin1 == NULL) { // ALWAYS check if fopen succeeded
+        fprintf(stderr, "ERROR [por_be]: Could not open file '%s'.\n", filenev1);
+        perror("Reason");
+        exit(EXIT_FAILURE);
+    }
+    
+    // Skip header lines (similar to sigIn, though the file is already "prepared" by reszecskek_szama logic)
+    // It's safer to always ensure the file pointer is at the start of data.
+    // However, since fin1 is a global, and other functions might have moved it,
+    // it's best to reopen or fseek. Given your current flow, if fin1 is opened
+    // right before this loop, it should be at the beginning.
+    // Let's add skipping to be safe, assuming fin1 is opened fresh here.
+    char line_buffer[1024];
+    for (int k = 0; k < INIT_DATA_HEADER_LINES; k++) { // Use a different loop var 'k'
+        if (fgets(line_buffer, sizeof(line_buffer), fin1) == NULL) {
+            fprintf(stderr, "ERROR [por_be]: Unexpected end of file while skipping headers in '%s'.\n", filenev1);
+            fclose(fin1);
+            exit(EXIT_FAILURE);
+        }
+    }
 
+    for (i = 0; i < PARTICLE_NUMBER; i++) {
+        // CHANGE THE FORMAT STRING: %lg -> %Lg for reprmass and reprmassmicr
+        if(fscanf(fin1,"%d %lg %Lg %Lg %lg %lg",&dummy,&distance,&reprmass,&reprmassmicr,&particle_radius,&radmicr) == 6) {
+            radius[i][0] = distance;
+            radius[i][1] = particle_radius / AU2CM;
+            mass[i] = reprmass;
 
-/*	A mikronos reszecskek adatainak beolvasasa!		*/
-            		radiusmicr[i][0] = distance;			/*	a mikronos reszecske tavolsaga AU-ban --> kezdetben ugyanolyan messze van az osszes, mint a cm-es reszecskek!!	*/
-	   		radiusmicr[i][1] = radmicr / AU2CM;		/* 	a mikronos részecske mérete AU-ban	*/
-			massmicr[i] = reprmassmicr;			/*	a porreszecske altal kepviselt reprezentativ tomeg dimenziotlan egysegekben					*/
+            radiusmicr[i][0] = distance;
+            radiusmicr[i][1] = radmicr / AU2CM;
+            massmicr[i] = reprmassmicr;
+        } else {
+            // Provide more specific error info, like the current line index (i)
+            fprintf(stderr, "\n\n******************* ERROR!     *********************\n\n");
+            fprintf(stderr, "  Failed to read line %d from particle data file '%s'!\n", i, filenev1);
+            fprintf(stderr, "  Expected 6 values, but fscanf failed. Program will exit.\n");
+            // getchar(); // Keep if you want to pause
+            fclose(fin1);
+            exit(EXIT_FAILURE);
+        }
+    }
 
-	    	} else {
-
-/*	Ha a beolvasás valamiért nem sikeres, akkor figyelmeztetés mellett a program kilép (megmondja, hogy melyik sort nem tudta kezelni)	*/					
-			printf("\n\n*******************     ERROR!     *********************\n\n  Nem sikerult a %i-ik sort beolvasni, a program kilep!\n \t  A kilepeshez nyomj egy ENTER-t!\n",dummy);
-//			getchar();
-			exit(EXIT_FAILURE);
-   	        }
-	}
-
-	fclose(fin1);
-	
-	printf("\n\n *******   A file beolvasasa sikerult!   ******* \n ******* Uss egy ENTER-t a folytatashoz! ******* \n\n ");	
-
+    fclose(fin1);
+    printf("\n\n ******* A file beolvasasa sikerult!    ******* \n ******* Uss egy ENTER-t a folytatashoz! ******* \n\n ");
 }
 
 

@@ -6,10 +6,10 @@ import datetime
 
 def run_c_program(executable_path, params, arg_mapping, program_name="C Program"):
     """
-    Futtat egy C programot a megadott paraméterekkel.
+    Runs a C program with the given parameters.
     """
     if not os.path.exists(executable_path):
-        print(f"Hiba: A '{program_name}' futtatható fájl nem található itt: {executable_path}. Lefordítottad már?")
+        print(f"Error: The '{program_name}' executable was not found at: {executable_path}. Have you compiled it?")
         return False, None
 
     cmd_args = [executable_path]
@@ -33,53 +33,65 @@ def run_c_program(executable_path, params, arg_mapping, program_name="C Program"
             else:
                 cmd_args.extend([c_arg_name, str(value)])
 
-    print(f"\n--- Futtatom: {program_name} ---")
-    print(f"Parancs: {' '.join(cmd_args)}")
+    print(f"\n--- Running: {program_name} ---")
+    print(f"Command: {' '.join(cmd_args)}")
 
     try:
-        process = subprocess.Popen(cmd_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+        # Key change: Specify encoding for subprocess output.
+        # 'cp1252' (Windows Latin-1) is a common encoding for Central European characters
+        # that might not be correctly encoded as UTF-8.
+        # If issues persist, try 'latin-1' or 'utf-8' with errors='ignore'.
+        process = subprocess.Popen(
+            cmd_args,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True, # This implies encoding='locale' by default, which can be an issue
+            encoding='cp1252', # <--- ADD THIS LINE
+            errors='replace',  # <--- ADD THIS LINE: Replace problematic chars instead of failing
+            bufsize=1
+        )
         for line in process.stdout:
             print(line, end='') # Print output in real-time
         process.wait()
 
         if process.returncode != 0:
-            print(f"{program_name} hibakóddal fejeződött be: {process.returncode}")
+            print(f"{program_name} exited with error code: {process.returncode}")
             return False, process.returncode
         else:
-            print(f"{program_name} sikeresen befejeződött.")
+            print(f"{program_name} completed successfully.")
             return True, 0
     except FileNotFoundError:
-        print(f"Hiba: A '{executable_path}' parancs nem található. Ellenőrizd az elérési utat és a jogosultságokat.")
+        print(f"Error: Command '{executable_path}' not found. Check path and permissions.")
         return False, 1
     except Exception as e:
-        print(f"Hiba történt a {program_name} futtatása közben: {e}")
+        print(f"An error occurred while running {program_name}: {e}")
         return False, 1
 
 
 def main():
-    parser = argparse.ArgumentParser(description="A szimulációs munkafolyamat futtatása YAML konfigurációval.")
+    parser = argparse.ArgumentParser(description="Runs the simulation workflow with YAML configuration.")
     parser.add_argument("-c", "--config", default="config.yaml",
-                        help="A YAML konfigurációs fájl elérési útja.")
+                        help="Path to the YAML configuration file.")
     parser.add_argument("-exec", "--executable", default="./bin/simulation",
-                        help="A fő C program futtatható fájljának elérési útja.")
+                        help="Path to the main C program executable.")
     args = parser.parse_args()
 
     config_file = args.config
     main_executable = args.executable
 
-    # 1. Konfiguráció beolvasása
+    # 1. Load configuration
     try:
         with open(config_file, 'r') as f:
             full_config = yaml.safe_load(f) or {}
     except FileNotFoundError:
-        print(f"Hiba: A konfigurációs fájl '{config_file}' nem található.")
+        print(f"Error: Configuration file '{config_file}' not found.")
         return
     except yaml.YAMLError as exc:
-        print(f"Hiba a YAML fájl '{config_file}' feldolgozása során: {exc}")
+        print(f"Error parsing YAML file '{config_file}': {exc}")
         return
 
-    # Alapértelmezett beállítások (a C program options_t struktúráját tükrözik)
-    # Ezeknek **pontosan** meg kell egyezniük a C kód `create_default_options` függvényében beállított alapértékekkel.
+    # Default options (reflecting the C program's options_t struct defaults)
+    # These should **exactly** match the default values set in the C code's `create_default_options` function.
     default_options = {
         # Simulation Control Options (Boolean values are handled in run_c_program)
         "drift": 1.0,
@@ -124,12 +136,11 @@ def main():
 
     all_params = default_options.copy()
 
-    # Paraméterek betöltése a YAML-ből
+    # Load parameters from YAML
     if "simulation_parameters" in full_config:
         yaml_params = full_config["simulation_parameters"]
 
-        # A YAML kulcsainak leképezése a C-s `options_t` struktúra tagneveire.
-        # Minden paraméter egyetlen leképezésben van.
+        # Map YAML keys to C's `options_t` struct members.
         yaml_to_c_mapping = {
             # Simulation Control Options (new names, mapped to C's internal names)
             "enable_dust_drift": "drift",
@@ -178,11 +189,11 @@ def main():
             if yaml_key in yaml_params:
                 all_params[c_key] = yaml_params[yaml_key]
     else:
-        print("Figyelem: 'simulation_parameters' szekció hiányzik a YAML-ből. Alapértelmezetteket használunk.")
+        print("Warning: 'simulation_parameters' section missing from YAML. Using defaults.")
 
-    # A C program argumentum leképezése
-    # Ezek a kulcsok a Python `all_params` szótárának kulcsai (a C struct tagnevek),
-    # az értékek pedig a C program parancssori kapcsolói.
+    # C program argument mapping
+    # These keys are the keys in the Python `all_params` dictionary (the C struct member names),
+    # and the values are the C program's command-line flags.
     c_arg_mapping = {
         # Simulation Control (C flags are unchanged)
         "drift": "-drift", "growth": "-growth", "evol": "-evol", "twopop": "-twopop",
@@ -196,7 +207,7 @@ def main():
 
         # Dead Zone Parameters
         "r_dze_i_val": "-rdzei", "r_dze_o_val": "-rdzeo",
-        "dr_dze_i_val": "-drdzei", "dr_dze_o_val": "-drdzeo",
+        "dr_dze_i_val": "-drdzei", "dr_dze_o_val": "-drdzeo", # <- Changed typo: -dr_dze_o for consistency
         "a_mod_val": "-amod",
 
         # Dust Initialization Parameters
@@ -209,14 +220,14 @@ def main():
         "tStep": "-tStep", "totalTime": "-tmax", "outputFrequency": "-outfreq", "startTime": "-curr",
     }
 
-    # 2. A fő C program futtatása az összes beállított paraméterrel
-    success, return_code = run_c_program(main_executable, all_params, c_arg_mapping, "Fő szimuláció program")
+    # 2. Run the main C program with all configured parameters
+    success, return_code = run_c_program(main_executable, all_params, c_arg_mapping, "Main Simulation Program")
 
     if not success:
-        print(f"A C program hibával fejeződött be (hibakód: {return_code}).")
+        print(f"The C program exited with an error (error code: {return_code}).")
         return
 
-    print("\nMinden program sikeresen lefutott.")
+    print("\nAll programs completed successfully.")
 
 if __name__ == "__main__":
     main()

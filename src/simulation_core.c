@@ -316,7 +316,10 @@ void tIntegrate(const char *nev, const disk_t *disk_params) {
                 double time = t / 2.0 / M_PI;
 
                 if((fmod(time, (TMAX/WO)) < deltat || time == 0) && L-time < deltat){
+                    printf("\n--- Simulation Time: %.2e years (Internal time: %.2e, L: %.2e) ---\n", time, t, L);
+        
                     printf("DEBUG [tIntegrate]: Outputting data at time %.2e. L=%.2e\n", time, L);
+
 /*  Az adatok kiirasahoz szukseges file-ok neveinek elmentese   */
                     if (t==0) {
                         snprintf(dens_name,1024,"%s/surface.dat",nev);
@@ -422,7 +425,7 @@ void tIntegrate(const char *nev, const disk_t *disk_params) {
                 int optsize = 0;        // ezt ki lehetne siman valtani opttwopop-pal!
 /*  A cm-es reszecskek eseten az optsize erteke 0   */
 /*  Itt szamolja ki a program a cm-es reszecskek uj tavolsagat (es meretet, ha kell)    */
-                printf("DEBUG [tIntegrate]: Calling Get_Radius for CM particles (optsize=%d, PARTICLE_NUMBER=%d).\n", optsize, PARTICLE_NUMBER);
+//                printf("DEBUG [tIntegrate]: Calling Get_Radius for CM particles (optsize=%d, PARTICLE_NUMBER=%d).\n", optsize, PARTICLE_NUMBER);
                 // --- FIX: Pass disk_params members ---
                 Get_Radius(nev,optsize,radius,disk_params->pressvec,disk_params->dpressvec,disk_params->sigmavec,sigmad,rdvec,disk_params->rvec,disk_params->ugvec,deltat,t,PARTICLE_NUMBER);
                 printf("DEBUG [tIntegrate]: Get_Radius for CM particles completed.\n");
@@ -443,7 +446,7 @@ void tIntegrate(const char *nev, const disk_t *disk_params) {
                 }
 
                 t = t + deltat;                        /*   Idoleptetes */
-                // printf("DEBUG [tIntegrate]: Time advanced to t=%.2e.\n", t);
+                printf("DEBUG [tIntegrate]: Time advanced to t=%.2e.\n", t);
 
             } else {                /*  Ha a legmesszebbi reszecske tavolsaga mar nem nagyobb, vagy egyenlo, mint RMIN, vagy a legkisebb tavolsagra levo reszecske tavolsaga, akkor a program "figyelmezteto szoveg" mellett sikeresen kilep, nem fut "feleslegesen" tovabb.    */
                 printf("DEBUG [tIntegrate]: Simulation termination condition met (maxt < RMIN or mint == maxt).\n");
@@ -456,6 +459,8 @@ void tIntegrate(const char *nev, const disk_t *disk_params) {
             double time = t / 2.0 / M_PI;
 
             if((fmod(time, (TMAX/WO)) < deltat || time == 0) && L-time < deltat){    
+                printf("\n--- Simulation Time: %.2e years (Internal time: %.2e, L: %.2e) ---\n", time, t, L);
+
                 printf("DEBUG [tIntegrate]: Outputting data for gas-only simulation at time %.2e. L=%.2e\n", time, L);
                 if (t==0) {
                     snprintf(dens_name,1024,"%s/surface.dat",nev);
