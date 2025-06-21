@@ -1,46 +1,46 @@
-# Compiler to use
+# Makefile
 CC = gcc
+CFLAGS = -Wall -Wextra -std=c99 -g -O0 -lm # Add -O0 -g for easier debugging
 
-# Compiler flags:
-# -O2: Optimization level 2
-# -Wall: Enable all warnings
-# -Wextra: Enable extra warnings
-# -std=c11: Use C11 standard
-# -g: Include debugging information
-# -lm: Link with the math library
-CFLAGS = -O2 -Wall -Wextra -std=c11 -g -lm
-
-# Source files (all .c files in the src directory)
-SRCS = $(wildcard src/*.c)
-
-# Object files directory
-OBJ_DIR = obj
-
-# Object files (compiled .o files)
-OBJS = $(patsubst src/%.c, $(OBJ_DIR)/%.o, $(SRCS))
-
-# Executable name and directory
 BIN_DIR = bin
-TARGET = $(BIN_DIR)/simulation
+OBJ_DIR = obj
+SRC_DIR = src
+INC_DIR = include
 
-# Default target: builds the simulation executable
-all: $(TARGET)
+# C forrásfájlok listája (mostantól az init_tool is benne van)
+SRCS = $(SRC_DIR)/main.c \
+       $(SRC_DIR)/config.c \
+       $(SRC_DIR)/disk_model.c \
+       $(SRC_DIR)/dust_physics.c \
+       $(SRC_DIR)/io_utils.c \
+       $(SRC_DIR)/simulation_core.c \
+       $(SRC_DIR)/utils.c \
+       $(SRC_DIR)/init_tool_module.c # Új modul hozzáadása
 
-# Rule to build the executable
-$(TARGET): $(OBJS)
-	@mkdir -p $(BIN_DIR) # Ensure the bin directory exists before linking
+# Objektumfájlok listája
+OBJS = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRCS))
+
+# Header fájlok (csak a függőségekhez)
+HEADERS = $(wildcard $(INC_DIR)/*.h) $(SRC_DIR)/init_tool_module.h # Hozzáadjuk az új headert
+
+# Célok
+.PHONY: all clean run debug
+
+all: $(BIN_DIR)/simulation
+
+$(BIN_DIR)/simulation: $(OBJS)
+	@mkdir -p $(BIN_DIR)
 	$(CC) $(CFLAGS) $(OBJS) -o $@
-	@echo "Build successful! Executable in $(TARGET)"
 
-# Rule to compile each .c file into an .o file
-$(OBJ_DIR)/%.o: src/%.c
-	@mkdir -p $(OBJ_DIR) # Ensure the obj directory exists
-	$(CC) $(CFLAGS) -c $< -o $@
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(HEADERS)
+	@mkdir -p $(OBJ_DIR)
+	$(CC) $(CFLAGS) -I$(INC_DIR) -c $< -o $@
 
-# Clean up compiled files and directories
 clean:
 	@rm -rf $(OBJ_DIR) $(BIN_DIR)
-	@echo "Cleaned up build artifacts."
 
-# Phony targets to prevent conflicts with files of the same name
-.PHONY: all clean
+run: all
+	./$(BIN_DIR)/simulation
+
+debug: all
+	lldb ./$(BIN_DIR)/simulation

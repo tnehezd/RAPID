@@ -247,18 +247,43 @@ void sort(double *rv,int n) {
 		}
 	}
 }
-
+// If NGRID is not directly available, you might need to pass the array size
+// void histogram(double r, int *hist, double dd, int hist_size) {
 void histogram(double r, int *hist, double dd) {
+    int index;
+    double rmid; // hist_i is no longer needed as a separate variable
 
-	int index;
-	double rmid, hist_i;
-    	rmid = (r - RMIN) / dd;     						/* 	The integer part of this gives at which index is the body	*/
-   	index = (int) floor(rmid);					/* 	Ez az rmid egesz resze --> floor egeszreszre kerekit lefele, a +0.5-el elerheto, hogy .5 felett felfele, .5 alatt lefele kerekitsen						*/
-	hist_i = hist[index];
-    	hist[index] = hist_i + 1;       					/* 	The corresponding r, e.g rd[ind] < r < rd[ind+1]		*/
+    // 1. Clamp 'r' to ensure it's within the valid range [RMIN, RMAX]
+    // This prevents negative indices or indices that are too large.
+    if (r < RMIN) {
+        r = RMIN;
+    } else if (r > RMAX) {
+        r = RMAX;
+    }
 
+    // Calculate the potential index
+    rmid = (r - RMIN) / dd;
+    index = (int) floor(rmid);
+
+    // 2. Explicitly check and clamp the index to the array bounds
+    // Assuming 'hist' is an array of size NGRID, valid indices are 0 to NGRID - 1.
+    // Replace NGRID with PARTICLE_NUMBER if that's the actual array size used for hist.
+    if (index < 0) {
+        index = 0; // Ensure index is not negative
+        // Optionally, you could print a debug message if this happens unexpectedly:
+        // fprintf(stderr, "DEBUG WARNING: histogram index became negative. Clamped to 0. r=%.10f, RMIN=%.10f, dd=%.10e, rmid=%.10f\n", r, RMIN, dd, rmid);
+    }
+    // Make sure NGRID is the correct size of the array 'hist'
+    // If hist is int hist[PARTICLE_NUMBER], then upper bound is PARTICLE_NUMBER-1
+    if (index >= NGRID) { // NGRID should be defined and accessible here
+        index = NGRID - 1; // Ensure index does not exceed the array's upper bound
+        // Optionally print a debug message:
+        // fprintf(stderr, "DEBUG WARNING: histogram index exceeded NGRID. Clamped to NGRID-1. r=%.10f, RMAX=%.10f, dd=%.10e, rmid=%.10f\n", r, RMAX, dd, rmid);
+    }
+
+    // 3. Increment the counter directly (since hist is an int array)
+    hist[index]++;
 }
-
 
 /*	fuggveny egy tomb elemeinek sorbarendezesere --> ezt jelenleg nem hasznalja sehol a program	*/
 void sortarray(double rv[][3],int n) {

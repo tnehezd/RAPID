@@ -363,24 +363,28 @@ void Print_Pormozg_Size(char *size_name, int step, double rad[][2], double radmi
 
 
 /*	Az idot tartalmazo file parametereinek beolvasasa	*/
-void timePar(double *tMax, double *step, double *current) {
+// A függvény definícióját megváltoztatjuk, hogy ne FILE* mutatót várjon, hanem közvetlenül az értékeket.
+// Ezeket az értékeket majd a main.c fogja átadni a YAML-ból származó adatok alapján.
+void timePar(double tMax_val, double stepping_val, double current_val) { // A paramétereket érték szerint kapja
+    // Nincs szükség filenev3-ra és fin2-re, eltávolítjuk a fájlbeolvasást.
+    // Nincs szükség fscanf-re sem.
 
-	double tmax,stepping,curr;
+    // A printf és a változók beállítása megmarad, de most a kapott értékeket használjuk.
+    printf("\n\n *********** A korong parameterei sikeresen beolvasva!  *********** \n        tmax: %lg, a program %lg evenkent irja ki a file-okat\n\n\n", tMax_val, stepping_val);
 
-	fin2 = fopen(filenev3,"r");
+    // Globális változók feltöltése (feltételezve, hogy TMAX, WO, TCURR globálisak és ezek a tényleges változónevek)
+    // A C kódodból vettem át őket, kérlek ellenőrizd, hogy ezek a helyes globális változónevek
+    // és hogy elérhetők az io_utils.c-ből (pl. "config.h" include-olásával).
+    extern double TMAX, WO, TCURR; // Deklaráljuk, hogy globális változókat használunk
 
-           	if(fscanf(fin2,"%lg  %lg %lg",&tmax,&stepping,&curr) == 3) { /*	A beolvasás sikeres, ha az fscanf visszatérési értéke 3, mert 3 oszlopot szeretnénk beolvasni.	*/
- 			printf("\n\n *********** A korong parameterei sikeresen beolvasva!  *********** \n                  tmax: %lg, a program %lg evenkent irja ki a file-okat\n\n\n",tmax,stepping);  
-			*tMax = tmax;				/*	meddig fusson a program	*/
-			stepping = tmax/stepping;
-			*step = stepping; 			/*	adott lepeskozonkent irja ki a file-t, megvan, hogy hany evente, tudjuk, hogy meddig fusson a kod, igy egy egyszeru osztassal meg lehet adni, hogy az mindig hanyadik idolepes	*/
-			*current = curr;			/*	beolvassa, hogy mennyi volt az ido eppen a futas inditasanak pillanataban -- ez a kiiratasnal lenyeges	*/
-			
-	    	} else {					/*	Ha a beolvasás valamiért nem sikeres, akkor figyelmeztetés mellett a program kilép (megmondja, hogy melyik sort nem tudta kezelni)	*/
-			printf("\n\n*******************     ERROR!     *********************\n\n  A file-t nem sikertult beolvasni, a program kilep!\n \t  A kilepeshez nyomj egy ENTER-t!\n");
-			exit(EXIT_FAILURE);
-   	        }
+    TMAX = tMax_val;
+    // Az eredeti kódodban a 'stepping' azzal volt egyenlő, hogy tmax/stepping.
+    // Most már a Python adja át a kívánt 'lépésköz' értéket, tehát nem kell újraosztani.
+    // Vagy ha az a cél, hogy WO az 'output frequency' legyen, akkor az osztás marad:
+    WO = tMax_val / stepping_val; // 'stepping_val' mostantól az output frequency a YAML-ból
 
-	fclose(fin2);
-	
+    TCURR = current_val; // Az aktuális idő, amit majd a Python ad át
+
+    // Nincs exit(EXIT_FAILURE), mert a fájlbeolvasási hibát kivettük.
+    // Nincs fclose(fin2), mert nincs fin2.
 }

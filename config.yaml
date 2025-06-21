@@ -1,0 +1,37 @@
+# config.yaml
+
+# Paraméterek a fő szimulációs programhoz (main.c)
+simulation_options:
+  drift: 1.0
+  growth: 1.0
+  evol: 1.0
+  twopop: 0.0
+  ngrid: 5000
+  tStep: 1.0e6 # Ez a DT
+
+  # Új időparaméterek
+  totalTime: 5.0e7 # TMAX - a teljes szimulációs idő
+  outputFrequency: 10000.0 # WO - hány évente írjon ki fájlt
+  # current: Ezt a Python fogja generálni és átadni a C-nek
+
+# Paraméterek az inicializáló programhoz (init_tool.c)
+initialization_options:
+  n: 5000
+  ri: 0.1
+  ro: 5.0
+  sigma0: 0.0001
+  index: 0.5
+  rdzei: 0.0
+  rdzeo: 0.0
+  drdzei: 0.0
+  drdzeo: 0.0
+  alpha: 0.01
+  amod: 0.01
+  h: 0.05
+  flind: 0.0
+  m0: 1.0
+  md: 0.01
+  eps: 0.01
+  ratio: 0.85
+  mic: 1.0e-4
+  onesize: 1.0

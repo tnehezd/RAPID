@@ -1,0 +1,11 @@
+A jelenlegi futás a output.10 mappaban taláható!
+
+
+A korong paraméterei:
+RMIN: 0, RMAX: 0.00264305
+SIGMA0: 1, SIGMA_EXP: 1, flaring index: 0.5
+ALPHA_VISC: 0.01, ALPHA_MOD: 0
+R_DZE_I: 0, R_DZE_O: 0, DR_DZEI: 0, DR_DZE_O: 0  (*** R_DZE_I/O = 0, akkor azt a DZE-t nem szimulálja a futás! ***)
+
+
+A központi csillag tömege: 1 M_Sun

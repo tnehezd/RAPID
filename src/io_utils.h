@@ -47,6 +47,5 @@ void Print_Pormozg_Size(char *size_name, int step, double rad[][2], double radmi
 
 
 /* Az idot tartalmazo file parametereinek beolvasasa */
-void timePar(double *tMax, double *step, double *current);
-
+void timePar(double tMax_val, double stepping_val, double current_val); // Ez kell az io_utils.h-ba
 #endif // IO_UTILS_H
