@@ -57,7 +57,6 @@ typedef struct options {
     double startTime;         // TCURR in sim_opts
 
     // Init tool specific options needed for profile generation
-    double md_val;
     long double eps_val;
     long double ratio_val;
     long double mic_val;
@@ -96,9 +95,9 @@ int main(int argc, const char **argv) {
     printf("DEBUG [main]: Default options created.\n");
 
     // Local structure to store init_tool parameters
-    init_tool_options_t init_def;
+    init_tool_options_t init_tool_params; // A member to hold init_tool specific options
     // Set default values for init_tool
-    create_default_init_tool_options(&init_def);
+create_default_init_tool_options(&init_tool_params);
     printf("DEBUG [main]: Default init_tool options created.\n");
 
     // Parse command-line options and populate the 'def' structure
@@ -253,30 +252,30 @@ int main(int argc, const char **argv) {
     // --- Populate init_tool_options_t from 'my_disk' values ---
     // (since these are the finalized parameters for profile generation)
     // Also ensuring that NGRID used by init_tool matches my_disk.NGRID.
-    init_def.n = my_disk.NGRID;
-    init_def.ri = my_disk.RMIN;
-    init_def.ro = my_disk.RMAX;
-    init_def.sigma0 = my_disk.SIGMA0;
-    init_def.sigma0cgs = my_disk.SIGMA0 / SDCONV; // SDCONV needs to be a constant/macro or part of sim_opts
-    init_def.index = my_disk.SIGMAP_EXP;
-    init_def.rdze_i = my_disk.r_dze_i;
-    init_def.rdze_o = my_disk.r_dze_o;
-    init_def.drdze_i = my_disk.Dr_dze_i;
-    init_def.drdze_o = my_disk.Dr_dze_o;
-    init_def.alphaParam = my_disk.alpha_visc;
-    init_def.amod = my_disk.a_mod;
-    init_def.h = my_disk.HASP;
-    init_def.flind = my_disk.FLIND;
-    init_def.m0 = my_disk.STAR_MASS;
+    init_tool_params.n_grid_points = my_disk.NGRID;
+    init_tool_params.r_inner= my_disk.RMIN;
+    init_tool_params.r_outer = my_disk.RMAX;
+    init_tool_params.sigma0_gas_au = my_disk.SIGMA0;
+    //init_tool_params.sigma0cgs = my_disk.SIGMA0 / SDCONV; // SDCONV needs to be a constant/macro or part of sim_opts
+    init_tool_params.sigma_exponent = my_disk.SIGMAP_EXP;
+    init_tool_params.deadzone_r_inner = my_disk.r_dze_i;
+    init_tool_params.deadzone_r_outer = my_disk.r_dze_o;
+    init_tool_params.deadzone_dr_inner = my_disk.Dr_dze_i;
+    init_tool_params.deadzone_dr_outer = my_disk.Dr_dze_o;
+    init_tool_params.alpha_viscosity = my_disk.alpha_visc;
+    init_tool_params.deadzone_alpha_mod = my_disk.a_mod;
+    init_tool_params.aspect_ratio = my_disk.HASP;
+    init_tool_params.flaring_index = my_disk.FLIND;
+    init_tool_params.disk_mass_dust = my_disk.DISK_MASS;
+    init_tool_params.star_mass = my_disk.STAR_MASS;
     // The following init_tool specific options come from 'def' (command line)
-    init_def.md = def.md_val;
-    init_def.eps = def.eps_val;
-    init_def.ratio = def.ratio_val;
-    init_def.mic = def.mic_val;
-    init_def.onesize = def.onesize_val;
-    printf("DEBUG [main]: init_tool_options_t (init_def) structure populated for profile generation.\n");
-    printf("DEBUG [main]:   init_def.n=%d, init_def.ri=%.2f, init_def.ro=%.2f, init_def.sigma0=%.2e\n",
-           init_def.n, init_def.ri, init_def.ro, init_def.sigma0);
+    init_tool_params.dust_to_gas_ratio = def.eps_val;
+    init_tool_params.two_pop_ratio = def.ratio_val;
+    init_tool_params.micro_size_cm = def.mic_val;
+    init_tool_params.one_size_particle_cm = def.onesize_val;
+    printf("DEBUG [main]: init_tool_options_t (init_tool_params) structure populated for profile generation.\n");
+    printf("DEBUG [main]:   init_tool_params.n=%d, init_tool_params.ri=%.2f, init_tool_params.ro=%.2f, init_tool_params.sigma0=%.2e\n",
+           init_tool_params.n_grid_points, init_tool_params.r_inner, init_tool_params.r_outer, init_tool_params.sigma0_gas_au);
 
 
     // Time parameters: No need to call timePar if it just updates globals.
@@ -299,17 +298,17 @@ int main(int argc, const char **argv) {
         printf("DEBUG [main]: Perem calls completed for initial profile.\n");
     } else {
         printf("DEBUG [main]: current_inputsig_file is NULL. Generating initial profile with init_tool...\n");
-        printf("DEBUG [main]: Calling run_init_tool(&init_def)...\n");
-        run_init_tool(&init_def); // This is refactored.
+        printf("DEBUG [main]: Calling run_init_tool(&init_tool_params)...\n");
+        run_init_tool(&init_tool_params); // This is refactored.
         printf("DEBUG [main]: run_init_tool completed.\n");
 
         current_inputsig_file = "init_data.dat"; // This is the default output of init_tool
         printf("DEBUG [main]: Generated profile will be loaded from '%s'.\n", current_inputsig_file);
 
-        // NGRID might have been reset or confirmed by init_tool and init_def.n.
+        // NGRID might have been reset or confirmed by init_tool and init_tool_params.n.
         // If init_tool could change NGRID in a way that wasn't already updated in my_disk.NGRID
         // you would need to recalculate my_disk.DD here and potentially realloc.
-        // For now, assuming init_def.n directly controls my_disk.NGRID.
+        // For now, assuming init_tool_params.n directly controls my_disk.NGRID.
         printf("DEBUG [main]: Calling sigIn(my_disk.sigmavec, my_disk.rvec, &my_disk, '%s') for generated profile...\n", current_inputsig_file);
         sigIn(my_disk.sigmavec, my_disk.rvec, &my_disk, current_inputsig_file); // sigIn must be refactored to take filename
         printf("DEBUG [main]: sigIn completed for generated profile. Calling Perem...\n");
@@ -457,7 +456,6 @@ void create_default_options(options_t *opt) {
     opt->startTime       = 0.0;
 
     // Init tool specific parameters' defaults
-    opt->md_val = 0.01;
     opt->eps_val = 0.01;
     opt->ratio_val = 0.85;
     opt->mic_val = 1e-4;
@@ -556,7 +554,6 @@ int parse_options(int argc, const char **argv, options_t *opt){
         else if (strcmp(argv[i], "-h_init") == 0) { i++; if (i < argc) opt->hasp_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -h_init.\n"); return 1; } printf("DEBUG [parse_options]:   -h_init set to %.2f\n", opt->hasp_val); }
         else if (strcmp(argv[i], "-flind_init") == 0) { i++; if (i < argc) opt->flind_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -flind_init.\n"); return 1; } printf("DEBUG [parse_options]:   -flind_init set to %.2f\n", opt->flind_val); }
         else if (strcmp(argv[i], "-m0_init") == 0) { i++; if (i < argc) opt->star_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -m0_init.\n"); return 1; } printf("DEBUG [parse_options]:   -m0_init set to %.2f\n", opt->star_val); }
-        else if (strcmp(argv[i], "-md_init") == 0) { i++; if (i < argc) opt->md_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -md_init.\n"); return 1; } printf("DEBUG [parse_options]:   -md_init set to %.2e\n", opt->md_val); }
         else if (strcmp(argv[i], "-eps_init") == 0) { i++; if (i < argc) opt->eps_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -eps_init.\n"); return 1; } printf("DEBUG [parse_options]:   -eps_init set to %Le\n", opt->eps_val); }
         else if (strcmp(argv[i], "-ratio_init") == 0) { i++; if (i < argc) opt->ratio_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -ratio_init.\n"); return 1; } printf("DEBUG [parse_options]:   -ratio_init set to %Le\n", opt->ratio_val); }
         else if (strcmp(argv[i], "-onesize_init") == 0) { i++; if (i < argc) opt->onesize_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -onesize_init.\n"); return 1; } printf("DEBUG [parse_options]:   -onesize_init set to %Le\n", opt->onesize_val); }

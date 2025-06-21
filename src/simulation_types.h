@@ -40,6 +40,7 @@ typedef struct disk_t {
     double SIGMAP_EXP; // Sűrűség profil kitevő
     double alpha_visc; // Alfa viszkozitás
     double STAR_MASS; // Központi csillag tömege
+    double DISK_MASS;
     double HASP; // H/R arány (diszk magasság)
     double FLIND; // Fáklyázási index
 

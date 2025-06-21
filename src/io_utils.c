@@ -77,54 +77,75 @@ void por_be(double radius[][2], double radiusmicr[][2], double *mass, double *ma
 
 
 
-/*	A sigmat tartalmazo file parametereinek beolvasasa	*/
 void sigIn(double *sigma_arr, double *r_arr, const disk_t *disk_params, const char *filename) {
-    // ideiglenesen a globális filenev1-et használjuk, amíg azt is refaktoráljuk
-    const char *input_filename = filenev1; // filenev1 a config.h-ból jön
+    // Használd a `filename` paramétert, ne a globális `filenev1`-et, ha lehet,
+    // így tisztább és jobban tesztelhető a függvény!
+    const char *input_filename = filename; // Ez a helyes módja, ha átadod paraméterben
 
     FILE *fp = fopen(input_filename, "r");
     if (fp == NULL) {
         fprintf(stderr, "ERROR [sigIn]: Could not open input file '%s'.\n", input_filename);
-        perror("Reason"); // Kiírja a rendszerhiba üzenetet
+        perror("Reason");
         exit(EXIT_FAILURE);
     }
 
-    // Most jön a beolvasás logikája. Ügyelj a formátumra és az indexelésre!
-    // Az init_tool kimenete: i, r, prad, reppmass
+    char line[512]; // Növeltem a puffer méretét, biztos, ami biztos
+    
+    // Fejléc sorok átugrása
+    // Addig olvasunk sorokat, amíg `#` karakterrel kezdődnek.
+    while (fgets(line, sizeof(line), fp) != NULL) {
+        if (line[0] == '#') {
+            continue; // Ugrás a következő sorra
+        } else {
+            // Ez már nem komment sor, valószínűleg az első adatsor.
+            // Visszatekerjük a fájlmutatót az aktuális sor elejére,
+            // hogy az fscanf be tudja olvasni.
+            fseek(fp, -strlen(line), SEEK_CUR);
+            break; // Kilépünk a fejléc olvasó ciklusból
+        }
+    }
+
+    // Ellenőrizzük, hogy sikerült-e valamilyen adatot találni a fájlban
+    if (feof(fp) && line[0] == '#') { // Ha a fájl vége van és az utolsó is komment volt
+        fprintf(stderr, "ERROR [sigIn]: File '%s' is empty or only contains comments.\n", input_filename);
+        fclose(fp);
+        exit(EXIT_FAILURE);
+    }
+
+    // Most jön a beolvasás logikája.
     int i_read;
-    double r_read, prad_read, reppmass_read;
+    double r_read;
+    long double repmass_pop1_read; // long double, mert .12Lg formátum
+    long double repmass_pop2_read; // long double, mert .12Lg formátum
+    double max_part_size_read;
+    double micro_size_read;
 
-    // Feltételezve, hogy a fájl elején van egy fejlécsor, amit át kell ugrani, ha van
-    // (ha nincs, akkor ezt a sort ki kell hagyni)
-    char line[256];
-    if (fgets(line, sizeof(line), fp) == NULL) {
-        fprintf(stderr, "ERROR [sigIn]: Failed to read header line or empty file: %s\n", input_filename);
-        fclose(fp);
-        exit(EXIT_FAILURE);
-    }
-    // Ha van Press ENTER to continue! sor:
-    if (fgets(line, sizeof(line), fp) == NULL) {
-        fprintf(stderr, "ERROR [sigIn]: Failed to read second header line or empty file: %s\n", input_filename);
-        fclose(fp);
-        exit(EXIT_FAILURE);
-    }
-    // ... és így tovább, ahány fejléc sor van.
-
-    // Valószínűleg 1-től NGRID-ig indexeljük, de a tömb NGRID+2 méretű
-    // és a 0 és NGRID+1 indexek a peremfeltételekre vannak fenntartva.
-    // Ezt ellenőrizd!
-    for (int i = 1; i <= disk_params->NGRID; i++) { // Feltételezve, hogy a belső pontok NGRID számúak
-        if (fscanf(fp, "%d %lf %lf %lf", &i_read, &r_read, &prad_read, &reppmass_read) != 4) {
-            fprintf(stderr, "ERROR [sigIn]: Failed to read data for particle %d from file '%s'.\n", i, input_filename);
+    // A disk_params->NGRID a belső rácspontok száma.
+    // A tömbjeid (sigma_arr, r_arr) NGRID+2 méretűek, a 0 és NGRID+1 indexek a peremfeltételekre.
+    // Ezért a beolvasott adatokat (melyek 0-tól NGRID-1-ig indexelődnek az init_data.dat-ban)
+    // az 1-től NGRID-ig terjedő indexekre kell illeszteni.
+    for (int i = 0; i < disk_params->NGRID; i++) { // Az init_data.dat 0-tól indexel
+        // Az fscanf formátum stringjének pontosan illeszkednie kell a kiírt adatokhoz:
+        // Index (int), Radius_AU (double), RepMass_Pop1 (long double), RepMass_Pop2 (long double), MaxPartSize (double), MicroSize (double)
+        if (fscanf(fp, "%d %lf %Lg %Lg %lf %lf",
+                   &i_read, &r_read, &repmass_pop1_read, &repmass_pop2_read,
+                   &max_part_size_read, &micro_size_read) != 6) {
+            fprintf(stderr, "ERROR [sigIn]: Failed to read data for particle %d from file '%s'. Expected 6 values.\n", i, input_filename);
             fclose(fp);
             exit(EXIT_FAILURE);
         }
-        // Ellenőrizd, hogy az r_arr és sigma_arr indexelése helyes-e
-        // Például ha az i_read 0-tól indul, de te 1-től tárolsz:
-        r_arr[i] = r_read; // Vagy r_arr[i_read+1] ha i_read 0-tól van
-        sigma_arr[i] = reppmass_read; // Vagy sigma_arr[i_read+1]
-        // Lehet, hogy a sigma_arr-ba valamilyen gáz sűrűség érték kell, nem a reppmass_read?
-        // Ezt tisztázni kell az init_tool és sigIn közötti konvenciókból.
+
+        // Adatok tárolása a tömbökbe. Mivel a fájlban i_read 0-tól indul,
+        // de a tömbökben az 1-es indexű elem az első tényleges adat,
+        // így i_read + 1 az offset.
+        if ((i_read + 1) >= 0 && (i_read + 1) <= disk_params->NGRID) { // Bounds check, biztonság kedvéért
+             r_arr[i_read + 1] = r_read;
+             // A sigma_arr-ba valószínűleg a teljes por felületi sűrűség kell.
+             // Ez a két reprezentatív tömeg összege.
+             sigma_arr[i_read + 1] = repmass_pop1_read + repmass_pop2_read;
+        } else {
+            fprintf(stderr, "WARNING [sigIn]: Skipping data for out-of-bounds index %d.\n", i_read);
+        }
     }
 
     fclose(fp);

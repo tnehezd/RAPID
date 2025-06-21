@@ -1,36 +1,42 @@
-// src/init_tool_module.h
-
 #ifndef INIT_TOOL_MODULE_H
 #define INIT_TOOL_MODULE_H
 
-// Struktúra az init_tool paramétereihez
+// Required includes if not already present globally
+#include <stdbool.h> // For 'true'/'false'
+
+// Structure to hold initialization options
 typedef struct init_tool_options {
-    int n;
-    double ri;
-    double ro;
-    double sigma0;
-    double sigma0cgs;
-    double index;
-    double rdze_i;
-    double rdze_o;
-    double drdze_i;
-    double drdze_o;
-    double alphaParam;
-    double amod;
-    double h;
-    double flind;
-    double m0;
-    double md;
-    double eps;
-    long double ratio;
-    long double mic;
-    long double onesize;
-    // int run_init; // EZT A TAGOT TÖRÖLD! Már nincs rá szükség.
+    // Grid and Physical Parameters
+    int     n_grid_points;
+    double  r_inner;
+    double  r_outer;
+    double  sigma0_gas_au;      // Gas surface density at 1 AU [M_Sun/AU^2]
+    double  sigma_exponent;     // Positive exponent for surface density profile (Sigma ~ r^(-index))
+    double  alpha_viscosity;    // Alpha viscosity parameter
+    double  star_mass;          // Central star mass [M_Sun]
+    double  aspect_ratio;       // Disk aspect ratio (H/r)
+    double  flaring_index;      // Flaring index for disk height (H ~ r^(1+flind))
+
+    // Dead Zone Parameters
+    double  deadzone_r_inner;
+    double  deadzone_r_outer;
+    double  deadzone_dr_inner;  // Transition width multiplier (e.g., in units of H)
+    double  deadzone_dr_outer;  // Transition width multiplier
+    double  deadzone_alpha_mod; // Alpha reduction factor in dead zone (e.g., 0.01 for 1% of original alpha)
+
+    // Dust Parameters
+    double  dust_to_gas_ratio;      // Initial dust-to-gas ratio (epsilon)
+    double  disk_mass_dust;         // Total dust disk mass [M_Sun] - if > 0, Sigma0 is calculated from this
+    double  one_size_particle_cm;   // If > 0, particles are fixed to this size, overrides two_pop_ratio
+    double  two_pop_ratio;          // Ratio of mass in larger particles for two-population model (0.0 - 1.0)
+    double  micro_size_cm;          // Size of micron-sized particles for two-population model
+    double  f_drift;                // Factor for drift-limited size (default value, adjust as needed)
+    double  f_frag;                 // Factor for fragmentation-limited size (default value, adjust as needed)
+
 } init_tool_options_t;
 
-// Függvény deklarációk
+// Function prototypes
 void create_default_init_tool_options(init_tool_options_t *opt);
-
 int run_init_tool(init_tool_options_t *init_opts);
 
 #endif // INIT_TOOL_MODULE_H

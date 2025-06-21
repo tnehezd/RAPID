@@ -2,85 +2,112 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h> // For 'true'/'false'
 
 #include "init_tool_module.h"
-#include "config.h"
+#include "config.h" // For SDCONV, G_GRAV_CONST, SNOWLINE, ICEFACTOR, CMPSECTOAUPYRP2PI
 
-// Alapértelmezett opciók beállítása
+// --- Helper Functions (Static for internal use) ---
+
+// Sets default options for the initialization tool.
 void create_default_init_tool_options(init_tool_options_t *opt) {
-    opt->n               = 1000;
-    opt->ri              = 0.1;
-    opt->ro              = 5.0;
-    opt->sigma0          = 0.0001;
-    opt->sigma0cgs       = 0.0001 / SDCONV; // Feltételezve, hogy SDCONV elérhető itt
-    opt->index           = 0.5; // Ez az alapértelmezett pozitív érték
-    opt->rdze_i          = 0.0;
-    opt->rdze_o          = 0.0;
-    opt->drdze_i         = 0.0; // Ez a szorzó, nem a kiszámolt vastagság
-    opt->drdze_o         = 0.0; // Ez a szorzó, nem a kiszámolt vastagság
-    opt->alphaParam      = 1.0e-2;
-    opt->amod            = 0.01;
-    opt->h               = 5.0e-2;
-    opt->flind           = 0.0;
-    opt->m0              = 1.0;
-    opt->md              = 0.01; // Az eredeti kód alapértelmezett MD értéke
-    opt->eps             = 0.01;
-    opt->ratio           = 0.85;
-    opt->mic             = 1e-4;
-    opt->onesize         = 1.0;
+    // Grid and Physical Parameters
+    opt->n_grid_points   = 1000;
+    opt->r_inner         = 0.1;
+    opt->r_outer         = 5.0;
+    // JAVÍTVA: Megnövelt sigma0 alapértelmezett érték
+    opt->sigma0_gas_au   = 0.01; // Gas surface density at 1 AU [M_Sun/AU^2] (increased from 0.0001)
+    opt->sigma_exponent  = 0.5;    // Positive exponent for surface density profile (Sigma ~ r^(-index))
+    opt->alpha_viscosity = 1.0e-2; // Alpha viscosity parameter
+    opt->star_mass       = 1.0;    // Central star mass [M_Sun]
+    opt->aspect_ratio    = 5.0e-2; // Disk aspect ratio (H/r)
+    opt->flaring_index   = 0.0;    // Flaring index for disk height (H ~ r^(1+flind))
+
+    // Dead Zone Parameters (0.0 implies inactive)
+    opt->deadzone_r_inner    = 0.0;
+    opt->deadzone_r_outer    = 0.0;
+    opt->deadzone_dr_inner   = 0.0; // Transition width multiplier
+    opt->deadzone_dr_outer   = 0.0; // Transition width multiplier
+    opt->deadzone_alpha_mod  = 0.01; // Alpha reduction factor in dead zone
+
+    // Dust Parameters
+    opt->dust_to_gas_ratio = 0.01; // Initial dust-to-gas ratio (epsilon)
+    opt->disk_mass_dust    = 0.01; // Total dust disk mass [M_Sun]
+    opt->one_size_particle_cm = 1.0; // If > 0, particles are fixed to this size
+    opt->two_pop_ratio     = 0.85; // Ratio of mass in larger particles for two-population model
+    opt->micro_size_cm     = 1e-4; // Size of micron-sized particles for two-population model
+    opt->f_drift           = 1.0;  // Factor for drift-limited size (default value, adjust as needed)
+    opt->f_frag            = 1.0;  // Factor for fragmentation-limited size (default value, adjust as needed)
 }
 
-// alpha turbulens paraméter kiszámolása --> alfa csökkentése alpha_r-rel
-// Ezek a függvények mostantól közvetlenül az `init_opts` paramétereit használják.
-static double alpha_turb_it(double r, init_tool_options_t *init_opts) {
-    // drdze_i és drdze_o számítása a hívó függvényben történik, és átadódik az init_opts-ban
-    // Az eredeti kód logikája alapján itt újra kiszámoljuk, ha a fő függvény nem tette meg
-    // Fontos, hogy a drdze_i/o ne legyen 0 a nevezőben, ezért a 1e-6 biztonsági érték.
-    double drdze_i_val = pow(init_opts->rdze_i, 1.0 + init_opts->flind) * init_opts->h * ((init_opts->drdze_i == 0.0) ? 1e-6 : init_opts->drdze_i);
-    double drdze_o_val = pow(init_opts->rdze_o, 1.0 + init_opts->flind) * init_opts->h * ((init_opts->drdze_o == 0.0) ? 1e-6 : init_opts->drdze_o);
+// Calculates the turbulent alpha parameter, considering dead zones.
+// Uses parameters directly from init_opts.
+static double calculate_turbulent_alpha(double r_au, init_tool_options_t *init_opts) {
+    // Calculate effective transition widths, ensuring non-zero denominator for tanh.
+    // If drdze_i/o is 0, use a small default to prevent division by zero in tanh argument.
+    // The original code used 1e-6; a more physically based non-zero default might be init_opts->h * r_au
+    // or a fixed small fraction of the grid cell size, but for now we retain 1e-6.
+    double drdze_inner_eff = pow(init_opts->deadzone_r_inner, 1.0 + init_opts->flaring_index) * init_opts->aspect_ratio *
+                             ((init_opts->deadzone_dr_inner == 0.0) ? 1e-6 : init_opts->deadzone_dr_inner);
+    double drdze_outer_eff = pow(init_opts->deadzone_r_outer, 1.0 + init_opts->flaring_index) * init_opts->aspect_ratio *
+                             ((init_opts->deadzone_dr_outer == 0.0) ? 1e-6 : init_opts->deadzone_dr_outer);
 
-    double alpha_r = 1.0 - 0.5 * (1.0 - init_opts->amod) *
-                     (tanh((r - init_opts->rdze_i) / drdze_i_val) +
-                      tanh((init_opts->rdze_o - r) / drdze_o_val));
-    return alpha_r * init_opts->alphaParam;
+    double alpha_reduction_factor = 1.0 - 0.5 * (1.0 - init_opts->deadzone_alpha_mod) *
+                                   (tanh((r_au - init_opts->deadzone_r_inner) / drdze_inner_eff) +
+                                    tanh((init_opts->deadzone_r_outer - r_au) / drdze_outer_eff));
+
+    return alpha_reduction_factor * init_opts->alpha_viscosity;
 }
 
-// sigma0 kiszámolása (illetve megadása) M_NAP / AU / AU-ban
-static double sigma_null_it(init_tool_options_t *init_opts) {
-    // Az eredeti `SIGMAP_EXP` az `index` paraméter negáltja volt.
-    // Itt `(-init_opts->index)`-et használunk, mert az `init_opts->index` pozitív, ahogy bejön.
-    double alpha2 = (-init_opts->index) + 2;
-    double denominator = pow(init_opts->ro, alpha2) - pow(init_opts->ri, alpha2);
+// Calculates the gas surface density normalization constant (Sigma0)
+// based on total dust disk mass (Md), in M_Sun / AU / AU.
+static long double calculate_sigma0_from_disk_mass(init_tool_options_t *init_opts) {
+    // Sigma ~ r^(-index), so integral is r^(2-index)
+    double exponent_for_integral = -init_opts->sigma_exponent + 2.0;
+
+    double denominator;
+    if (fabs(exponent_for_integral) < 1e-9) { // Handle case where exponent is close to 0 (logarithmic integral)
+        // This case implies Sigma ~ r^(-2), integral is ln(r)
+        denominator = log(init_opts->r_outer) - log(init_opts->r_inner);
+    } else {
+        denominator = (pow(init_opts->r_outer, exponent_for_integral) - pow(init_opts->r_inner, exponent_for_integral)) / exponent_for_integral;
+    }
+
     if (fabs(denominator) < 1e-12) {
-        fprintf(stderr, "Error: Denominator is zero or too small in Sigma0 calculation! Check RMAX, RMIN, and SIGMAP_EXP values.\n");
+        fprintf(stderr, "Error: Denominator is zero or too small in Sigma0 calculation! Check RMAX, RMIN, and SIGMA_EXP values.\n");
         return 0.0;
     }
-    return (alpha2 / (2.0 * M_PI)) * init_opts->md / denominator;
+    // Md = 2 * PI * Sigma0 * epsilon * Integral(r^(1-index) dr) from Ri to Ro
+    // So, Sigma0 = Md / (2 * PI * epsilon * Integral(...))
+    // Integral(r^(1-index) dr) = [r^(2-index)] / (2-index) from Ri to Ro
+    // = (Ro^(2-index) - Ri^(2-index)) / (2-index)
+    // Hence, Sigma0 = Md / (2 * PI * epsilon * (Ro^(2-index) - Ri^(2-index)) / (2-index))
+    // Or rewritten: Sigma0 = Md * (2-index) / (2 * PI * epsilon * (Ro^(2-index) - Ri^(2-index)))
+    return (long double)init_opts->disk_mass_dust /
+           (2.0 * M_PI * init_opts->dust_to_gas_ratio * denominator);
 }
 
-// sigma kiszámolása r helyen M_NAP / AU / AU-ban
-static double sigma_gas_it(double r, init_tool_options_t *init_opts, long double current_sigma0) {
-    // Az eredeti kód `pow(r, SIGMAP_EXP)`-et használt, ahol `SIGMAP_EXP` már negálva volt.
-    // Itt az `init_opts->index` pozitív, ezért `-init_opts->index`-et használunk.
-    return current_sigma0 * pow(r, -init_opts->index);
+// Calculates gas surface density at radial position r [M_Sun / AU / AU].
+static long double calculate_gas_surface_density(double r_au, init_tool_options_t *init_opts, long double current_sigma0) {
+    return current_sigma0 * pow(r_au, -init_opts->sigma_exponent);
 }
 
-// a por feluletisurusegenek kiszamitasa, a hohatar figyelembevetelevel M_SUN / AU / AU-ban
-static long double sigma_dust_it(double r, init_tool_options_t *init_opts, long double current_sigma0) {
-    long double sig_dust;
-    // Az eredeti kód `pow(r, SIGMAP_EXP)`-et használt, ahol `SIGMAP_EXP` már negálva volt.
-    // Itt az `init_opts->index` pozitív, ezért `-init_opts->index`-et használunk.
-    sig_dust = current_sigma0 * pow(r, -init_opts->index) * init_opts->eps;
+// Calculates dust surface density at radial position r [M_Sun / AU / AU].
+// Includes handling for snowline/ice factor if enabled (currently commented out as in original).
+static long double calculate_dust_surface_density(double r_au, init_tool_options_t *init_opts, long double current_sigma0) {
+    long double sigma_dust = calculate_gas_surface_density(r_au, init_opts, current_sigma0) * init_opts->dust_to_gas_ratio;
 
-    // IDE JÖHETNE AZ ICEFACTOR ÉS SNOWLINE KEZELÉS, HA SZÜKSÉGES:
-    // if (r >= SNOWLINE) {
-    //     sig_dust *= ICEFACTOR;
+    // --- Snowline and Ice Factor Handling (Uncomment and adjust if needed) ---
+    // if (r_au >= SNOWLINE) {
+    //      sigma_dust *= ICEFACTOR;
     // }
-    return sig_dust;
+    // ---------------------------------------------------------------------
+
+    return sigma_dust;
 }
 
-// minimum megkeresese harom elem kozul
-static double find_min_it(double s1, double s2, double s3) {
+// Finds the minimum of three double values.
+static double find_minimum_double(double s1, double s2, double s3) {
     double min_val = s1;
     if (s2 < min_val) {
         min_val = s2;
@@ -91,160 +118,219 @@ static double find_min_it(double s1, double s2, double s3) {
     return min_val;
 }
 
-// Az init_tool "main" függvénye, átnevezve és paraméterezve
+// --- Main Init Tool Function ---
+
 int run_init_tool(init_tool_options_t *init_opts) {
-    FILE *fout = NULL;
-    FILE *fout2 = NULL;
+    FILE *fout_data = NULL;
+    FILE *fout_params = NULL;
 
-    double r, DD;
-    long double current_sigma0; // Lokális változó a kiszámolt/átvett sigma0 számára
+    long double current_sigma0_gas; // Local variable for the determined gas sigma0
 
-    // A drdze_i és drdze_o kiszámítása, ahogy az eredeti `main` függvényben volt.
-    // Ezeket az értékeket fogjuk kiírni a disk_param.dat fájlba.
-    double drdze_i_calculated = pow(init_opts->rdze_i, 1.0 + init_opts->flind) * init_opts->h *
-                               ((init_opts->drdze_i == 0.0) ? 1e-6 : init_opts->drdze_i);
-    double drdze_o_calculated = pow(init_opts->rdze_o, 1.0 + init_opts->flind) * init_opts->h *
-                               ((init_opts->drdze_o == 0.0) ? 1e-6 : init_opts->drdze_o);
+    // Calculated dead zone transition widths (for output in disk_param.dat)
+    double drdze_inner_calculated = pow(init_opts->deadzone_r_inner, 1.0 + init_opts->flaring_index) * init_opts->aspect_ratio *
+                                    ((init_opts->deadzone_dr_inner == 0.0) ? 1e-6 : init_opts->deadzone_dr_inner);
+    double drdze_outer_calculated = pow(init_opts->deadzone_r_outer, 1.0 + init_opts->flaring_index) * init_opts->aspect_ratio *
+                                    ((init_opts->deadzone_dr_outer == 0.0) ? 1e-6 : init_opts->deadzone_dr_outer);
 
-
-    // Döntés sigma0 számításáról: az eredeti kód szerint, ha az `md` paramétert megadták (az alapértelmezett 0.01-től eltér),
-    // akkor abból számolunk, egyébként a direkt `sigma0` értéket használjuk.
-    // Az `fabs(init_opts->md - 0.01) > 1e-9` ellenőrzés arra szolgál, hogy megnézzük, az `md` eltér-e az alapértelmezettől.
-    if (fabs(init_opts->md - 0.01) > 1e-9) {
-        current_sigma0 = sigma_null_it(init_opts);
-        printf("Sigma0 calculated from Disk Mass (Md): %Lg M_Sun/AU^2\n", current_sigma0);
+    // Determine current_sigma0_gas: if disk_mass_dust is explicitly set (i.e., not default 0.01),
+    // calculate Sigma0 from it. Otherwise, use the explicit sigma0_gas_au value.
+    const double DEFAULT_DISK_MASS_DUST = 0.01; // Define this as a constant if not already
+    
+    // JAVÍTVA: pontosabb kiírás a sigma0 értékének forrásáról
+    if (fabs(init_opts->disk_mass_dust - DEFAULT_DISK_MASS_DUST) > 1e-9) {
+        current_sigma0_gas = calculate_sigma0_from_disk_mass(init_opts);
+        printf("Sigma0 calculated from total dust disk mass (Md): %Lg M_Sun/AU^2\n", current_sigma0_gas);
     } else {
-        current_sigma0 = init_opts->sigma0;
-        printf("Using explicit Sigma0: %Lg M_Sun/AU^2\n", current_sigma0);
+        current_sigma0_gas = init_opts->sigma0_gas_au;
+        printf("Using explicit Sigma0 (gas surface density at 1 AU): %Lg M_Sun/AU^2\n", current_sigma0_gas);
     }
 
-    // Az eredeti kód az `onesize` paraméter megléte esetén felülírta a `ratio`-t 1.0-ra.
-    // `init_opts->onesize != 1.0` azt jelenti, hogy a felhasználó valamilyen értékkel beállította, ami nem az alapértelmezett 1.0.
-    if (init_opts->onesize != 1.0) {
-        init_opts->ratio = 1.0;
+    // If one_size_particle_cm is set (i.e., not default 1.0), override two_pop_ratio to 1.0 (single population).
+    const double DEFAULT_ONE_SIZE = 1.0; // Define this as a constant if not already
+    if (fabs(init_opts->one_size_particle_cm - DEFAULT_ONE_SIZE) > 1e-9) {
+        init_opts->two_pop_ratio = 1.0;
     }
 
-    printf("Surface density exponent (index): %lg\n", -init_opts->index); // Kiíratáskor negált formában, ahogy a képletekben használjuk
+    printf("Surface density profile exponent: %lg\n", -init_opts->sigma_exponent);
 
-    fout = fopen("init_data.dat", "w");
-    if (fout == NULL) {
+    // --- Open Output Files ---
+    fout_data = fopen("init_data.dat", "w");
+    if (fout_data == NULL) {
         perror("Error opening init_data.dat in init_tool_module");
         return 1;
     }
 
-    DD = (init_opts->ro - init_opts->ri) / (init_opts->n - 1.0);
-
-    printf("\n--- Simulation Parameters ---\n");
-    printf("Disk mass (Solar Mass): %lg\n", init_opts->md);
-    printf("Inner disk edge (AU): %lg\n", init_opts->ri);
-    printf("Outer disk edge (AU): %lg\n", init_opts->ro);
-    printf("Surface density profile exponent: %lg\n", -init_opts->index);
-    printf("Snowline position (AU): %lg\n", SNOWLINE);
-    printf("Ice factor beyond snowline: %lg\n", ICEFACTOR);
-    printf("Gas surface density at 1 AU (Solar Mass/AU^2): %Lg\n", current_sigma0);
-    printf("Dust to gas ratio: %lg\n", init_opts->eps);
-    printf("Number of representative particles: %d\n", (int)init_opts->n);
-    printf("------------------------------\n\n");
-
-    double f_drift = 0.55;
-    double f_frag = 0.37;
-
-    double rho_p = 1.6; // Por sűrűsége (g/cm^3), ez fix
-    double u_frag = 1000.0; // Ütközési sebesség (cm/s)
-    u_frag = u_frag * CMPSECTOAUPYRP2PI; // Konverzió AU / (yr/2pi) egységbe
-    double u_frag2 = u_frag * u_frag;
-
-    for (int i = 0; i < init_opts->n; i++) {
-        r = init_opts->ri + i * DD;
-        double reval = r + DD / 2.0; // A cella középpontja
-        double reval2 = reval * reval;
-
-        long double reppmass = 2.0 * M_PI * r * DD * sigma_dust_it(reval, init_opts, current_sigma0);
-
-        double s_max;
-        if (init_opts->onesize != 1.0) {
-            s_max = init_opts->onesize; // Ha explicit méret van megadva, használja azt
-        } else {
-            double H = pow(reval, 1.0 + init_opts->flind) * init_opts->h;
-            double v_kep = sqrt(G_GRAV_CONST2 * init_opts->m0 / reval);
-            double omega = v_kep / reval;
-
-            double c_s = omega * H;
-            double v_kep2 = v_kep * v_kep;
-            double c_s2 = c_s * c_s;
-
-            double Sigma = sigma_gas_it(reval, init_opts, current_sigma0);
-            double Sigma_cgs = Sigma / SDCONV;
-            long double Sigmad_cgs = sigma_dust_it(reval, init_opts, current_sigma0) / SDCONV;
-
-            double rho_mp = 1.0 / sqrt(2.0 * M_PI) * Sigma / H;
-            double P = rho_mp * c_s * c_s;
-
-            // A dPdr számításához `current_sigma0`-t és `init_opts`-ot használunk
-            // Az eredeti képletben `SIGMAP_EXP` volt, ami már negatív volt.
-            // Itt `-init_opts->index`-et használunk, mert `init_opts->index` pozitív.
-            double dPdr = (init_opts->flind + (-init_opts->index) - 2.0) * pow(reval, (init_opts->flind + (-init_opts->index) - 3.0)) * init_opts->h * G_GRAV_CONST2 * init_opts->m0 * current_sigma0 / sqrt(2.0 * M_PI);
-
-            double dlnPdlnr;
-            if (P == 0.0) {
-                fprintf(stderr, "Error: P is zero in dlnPdlnr calculation at r = %lg. Check input parameters.\n", reval);
-                dlnPdlnr = 0.0;
-            } else {
-                dlnPdlnr = reval / P * dPdr;
-            }
-
-            double s_drift = f_drift * 2.0 / M_PI * Sigmad_cgs / rho_p * v_kep2 / c_s2 * fabs(1.0 / dlnPdlnr);
-            double s_frag = f_frag * 2.0 / (3.0 * M_PI) * Sigma_cgs / (rho_p * alpha_turb_it(reval, init_opts)) * u_frag2 / c_s2;
-
-            double dlnPdlnr_abs_cs2_half = fabs(dlnPdlnr * c_s2 * 0.5);
-            double s_df;
-            if (dlnPdlnr_abs_cs2_half == 0.0) {
-                fprintf(stderr, "Error: Denominator is zero in s_df calculation at r = %lg. Check dlnPdlnr value.\n", reval);
-                s_df = 1e99; // Nagyon nagy érték, hogy ne ez legyen a minimum
-            } else {
-                s_df = u_frag * v_kep / dlnPdlnr_abs_cs2_half * 2.0 * Sigma_cgs / (M_PI * rho_p);
-            }
-
-            s_max = find_min_it(s_drift, s_frag, s_df);
-        }
-
-        if (s_max <= 0) {
-            fprintf(stderr, "Warning: s_max <= 0 at r = %lg. This might indicate problematic physical parameters. Setting to a small positive value.\n", reval);
-            s_max = 1e-10; // Biztosítsuk, hogy pozitív legyen
-        }
-
-        // Kiírás az init_data.dat fájlba
-        // reppmass * init_opts->ratio az első populáció tömege
-        // reppmass * (1.0 - init_opts->ratio) a második populáció tömege
-        // s_max a maximális részecskeméret
-        // init_opts->mic a mikroméretű részecskék mérete (ha a TWOPOP modell van használva)
-        fprintf(fout, "%d %lg  %Lg %Lg %lg %Lg\n", i, reval,
-                reppmass * init_opts->ratio, reppmass * (1.0 - init_opts->ratio),
-                s_max, init_opts->mic);
-    }
-
-    fclose(fout);
-
-    printf("Particle data file created (init_data.dat). Writing disk parameters file!\n\nFile content:\n i (particle index), r (distance from star), prad (particle size in cm), reppmass (representative particle mass)\n");
-    printf("Press ENTER to continue!\n");
-    // getchar(); // Kikommentelve, hogy a program ne álljon meg a felhasználói bevitelre várva
-
-    fout2 = fopen("disk_param.dat", "w");
-    if (fout2 == NULL) {
+    fout_params = fopen("disk_param.dat", "w");
+    if (fout_params == NULL) {
         perror("Error opening disk_param.dat in init_tool_module");
+        fclose(fout_data); // Close already opened file
         return 1;
     }
 
-    // Paraméterek kiírása a disk_param.dat fájlba
-    fprintf(fout2, "%lg %lg %d %lg %Lg %lg %lg %lg %lg %lg %lg %lg %lg %lg %lg\n",
-            init_opts->ri, init_opts->ro, (int)init_opts->n, init_opts->index, current_sigma0,
-            G_GRAV_CONST, init_opts->rdze_i, init_opts->rdze_o,
-            drdze_i_calculated, drdze_o_calculated, // Kiszámolt Dr_dze értékek
-            init_opts->amod, rho_p, init_opts->alphaParam, init_opts->m0, init_opts->flind);
+    // Calculate grid spacing (delta R for linear grid)
+    double delta_r_grid = (init_opts->r_outer - init_opts->r_inner) / ((double)init_opts->n_grid_points - 1.0); // N grid points means N-1 intervals
 
-    fclose(fout2);
+    // --- Print Simulation Parameters to Console ---
+    printf("\n--- Simulation Parameters ---\n");
+    printf("Total dust disk mass (Solar Mass): %lg\n", init_opts->disk_mass_dust);
+    printf("Inner disk edge (AU): %lg\n", init_opts->r_inner);
+    printf("Outer disk edge (AU): %lg\n", init_opts->r_outer);
+    printf("Surface density profile exponent: %lg\n", -init_opts->sigma_exponent);
+    printf("Snowline position (AU): %lg\n", SNOWLINE); // Assuming SNOWLINE is a global constant
+    printf("Ice factor beyond snowline: %lg\n", ICEFACTOR); // Assuming ICEFACTOR is a global constant
+    printf("Gas surface density at 1 AU (Solar Mass/AU^2): %Lg\n", current_sigma0_gas);
+    printf("Dust to gas ratio: %lg\n", init_opts->dust_to_gas_ratio);
+    printf("Number of representative particles: %d\n", init_opts->n_grid_points);
+    printf("------------------------------\n\n");
 
-    printf("Disk parameters file created (disk_param.dat).\n\nFile content:\n RMIN, RMAX, NGRID (number of particles), profile exponent (SIGMAP_EXP), and sigma0 (M_Sun / AU / AU) - sigma at r=1AU, G (gravitational constant), inner deadzone edge (AU), transition width (AU), outer deadzone edge (AU), transition width (AU), viscosity reduction factor, average particle density, alpha, and central star mass!\n\n");
+    // --- Write Header to init_data.dat ---
+    fprintf(fout_data, "# Initial Particle Data\n");
+    fprintf(fout_data, "# Generated by init_tool_module (Date: %s %s)\n", __DATE__, __TIME__);
+    fprintf(fout_data, "#--------------------------------------------------------------------------\n");
+    fprintf(fout_data, "# %-5s %-15s %-20s %-20s %-15s %-15s\n",
+              "Index", "Radius_AU", "RepMass_Pop1_Msun", "RepMass_Pop2_Msun", "MaxPartSize_cm", "MicroSize_cm");
+    fprintf(fout_data, "#--------------------------------------------------------------------------\n");
+
+    // --- Physical Constants (often defined globally or in a separate constants file) ---
+    double dust_particle_density_g_cm3 = 1.6; // Por sűrűsége (g/cm^3)
+    double u_frag_cm_s = 1000.0;             // Ütközési sebesség (cm/s)
+    double u_frag_au_yr2pi = u_frag_cm_s * CMPSECTOAUPYRP2PI; // Convert to AU / (yr/2pi)
+    double u_frag_sq_au_yr2pi_sq = u_frag_au_yr2pi * u_frag_au_yr2pi;
+
+    // --- Loop through grid points to calculate and write particle data ---
+    for (int i = 0; i < init_opts->n_grid_points; i++) {
+        // Calculate radial position at cell center.
+        double r_cell_center_au = init_opts->r_inner + i * delta_r_grid + delta_r_grid / 2.0;
+        double r_cell_center_sq_au = r_cell_center_au * r_cell_center_au;
+
+        // Representative particle mass for the current cell
+        long double representative_mass = 2.0 * M_PI * r_cell_center_au * delta_r_grid *
+                                         calculate_dust_surface_density(r_cell_center_au, init_opts, current_sigma0_gas);
+
+        double s_max_cm; // Maximum particle size in cm
+
+        // Handle one_size particle case
+        if (fabs(init_opts->one_size_particle_cm - DEFAULT_ONE_SIZE) > 1e-9) { // Check if one_size is explicitly set
+            s_max_cm = init_opts->one_size_particle_cm;
+        } else {
+            // Calculate disk height (H) and Keplerian velocity (v_kep)
+            double H_au = pow(r_cell_center_au, 1.0 + init_opts->flaring_index) * init_opts->aspect_ratio;
+            double v_kep_au_yr2pi = sqrt(G_GRAV_CONST * init_opts->star_mass / r_cell_center_au); // G_GRAV_CONST should be in AU^3 / (M_Sun * (yr/2pi)^2)
+            double omega_yr2pi = v_kep_au_yr2pi / r_cell_center_au; // Omega = v_kep / r
+
+            double sound_speed_au_yr2pi = omega_yr2pi * H_au;
+            double sound_speed_sq = sound_speed_au_yr2pi * sound_speed_au_yr2pi;
+
+            // Gas surface density and convert to CGS
+            long double sigma_gas_local = calculate_gas_surface_density(r_cell_center_au, init_opts, current_sigma0_gas);
+            double sigma_gas_local_cgs = (double)sigma_gas_local / SDCONV;
+
+            // Dust surface density and convert to CGS
+            long double sigma_dust_local = calculate_dust_surface_density(r_cell_center_au, init_opts, current_sigma0_gas);
+            long double sigma_dust_local_cgs = sigma_dust_local / SDCONV;
+
+            // Midplane gas density and pressure
+            double rho_midplane_gas_local = 1.0 / sqrt(2.0 * M_PI) * sigma_gas_local / H_au;
+            double pressure_local = rho_midplane_gas_local * sound_speed_sq;
+
+            // Calculate dP/dr (radial pressure gradient)
+            // This assumes P ~ r^(flind - index - 2) as in the original code's dPdr.
+            // Original: (FLIND + SIGMAP_EXP - 2) * pow(reval,(FLIND + SIGMAP_EXP - 3.0)) * HASP * G2 * STAR * SIGMA0 / sqrt(2.0 * M_PI);
+            // Where SIGMAP_EXP is negative. In modern code, sigma_exponent is positive, so -sigma_exponent.
+            // P ~ rho * cs^2 ~ (Sigma/H) * (Omega * H)^2 ~ Sigma * Omega^2 * H
+            // Sigma ~ r^(-sigma_exponent)
+            // H ~ r^(1+flaring_index)
+            // Omega^2 ~ r^(-3)
+            // P ~ r^(-sigma_exponent) * r^(-3) * r^(1+flaring_index) = r^(-sigma_exponent - 2 + flaring_index)
+            // Derivative of r^N is N * r^(N-1)
+            double exponent_for_pressure = -init_opts->sigma_exponent + init_opts->flaring_index - 2.0;
+
+            // Reconstructing dPdr based on P ~ r^(exponent_for_pressure)
+            // P = C * r^(exponent_for_pressure) where C is the constant part
+            // C = (1.0 / sqrt(2.0 * M_PI)) * current_sigma0_gas * G_GRAV_CONST * init_opts->star_mass * init_opts->aspect_ratio;
+            // The original dPdr expression has G2, HASP, SIGMA0 in it, suggesting it's derived from a direct formula for pressure.
+            // Let's stick to the modern code's pressure calculation (rho_mp * sound_speed_sq) for consistency,
+            // and use numerical differentiation if analytic derivation is complex, or
+            // directly use the original's structure for dPdr, ensuring consistent exponents.
+            // Original dPdr term: (FLIND + SIGMAP_EXP - 2)
+            // SIGMAP_EXP in original code is already negative.
+            // In init_tool_options_t, sigma_exponent is POSITIVE. So we use -init_opts->sigma_exponent.
+            // (init_opts->flaring_index + (-init_opts->sigma_exponent) - 2.0)
+            double dPdr_local = (init_opts->flaring_index - init_opts->sigma_exponent - 2.0) *
+                                 pow(r_cell_center_au, (init_opts->flaring_index - init_opts->sigma_exponent - 3.0)) *
+                                 init_opts->aspect_ratio * G_GRAV_CONST * init_opts->star_mass * current_sigma0_gas / sqrt(2.0 * M_PI);
+
+
+            double dlnPdlnr_local;
+            if (fabs(pressure_local) < 1e-12) { // Check for near-zero pressure
+                fprintf(stderr, "Error: Pressure is near zero in dlnPdlnr calculation at r = %lg. Check input parameters. Setting dlnPdlnr = 0.\n", r_cell_center_au);
+                dlnPdlnr_local = 0.0;
+            } else {
+                dlnPdlnr_local = r_cell_center_au / pressure_local * dPdr_local;
+            }
+
+            // Calculate limiting particle sizes based on physics
+            // NOW USING init_opts->f_drift and init_opts->f_frag
+            double s_drift = init_opts->f_drift * 2.0 / M_PI * sigma_dust_local_cgs / dust_particle_density_g_cm3 *
+                             (v_kep_au_yr2pi * v_kep_au_yr2pi) / sound_speed_sq * fabs(1.0 / dlnPdlnr_local);
+            
+            // Replaced alpha_turb_it with direct call to calculate_turbulent_alpha
+            double s_frag = init_opts->f_frag * 2.0 / (3.0 * M_PI) * sigma_gas_local_cgs /
+                            (dust_particle_density_g_cm3 * calculate_turbulent_alpha(r_cell_center_au, init_opts)) *
+                            u_frag_sq_au_yr2pi_sq / sound_speed_sq;
+
+            double dlnPdlnr_abs_cs2_half = fabs(dlnPdlnr_local * sound_speed_sq * 0.5);
+            double s_df; // Shear fragmentation (or related) size
+            if (dlnPdlnr_abs_cs2_half < 1e-12) {
+                fprintf(stderr, "Error: Denominator is near zero in s_df calculation at r = %lg. Check dlnPdlnr value. Setting s_df to a large value.\n", r_cell_center_au);
+                s_df = 1e99; // Set to a very large value so it doesn't limit s_max
+            } else {
+                s_df = u_frag_au_yr2pi * v_kep_au_yr2pi / dlnPdlnr_abs_cs2_half * 2.0 * sigma_gas_local_cgs / (M_PI * dust_particle_density_g_cm3);
+            }
+
+            s_max_cm = find_minimum_double(s_drift, s_frag, s_df);
+        }
+
+        // Ensure s_max_cm is positive
+        if (s_max_cm <= 0) {
+            fprintf(stderr, "Warning: s_max_cm <= 0 at r = %lg. This might indicate problematic physical parameters. Setting to a small positive value.\n", r_cell_center_au);
+            s_max_cm = 1e-10;
+        }
+
+        // Write data to init_data.dat
+        fprintf(fout_data, "%-5d %-15.6e %-20.12Lg %-20.12Lg %-15.6e %-15.6e\n",
+                i, r_cell_center_au,
+                representative_mass * init_opts->two_pop_ratio,
+                representative_mass * (1.0 - init_opts->two_pop_ratio),
+                s_max_cm, init_opts->micro_size_cm);
+    }
+
+    fclose(fout_data);
+
+    printf("Particle data file created (init_data.dat). Writing disk parameters file!\n\n");
+    // Removed getchar(); to allow non-interactive runs
+
+    // --- Write Header to disk_param.dat ---
+    fprintf(fout_params, "# Disk Parameters\n");
+    fprintf(fout_params, "# Generated by init_tool_module (Date: %s %s)\n", __DATE__, __TIME__);
+    fprintf(fout_params, "#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
+    fprintf(fout_params, "# %-15s %-15s %-10s %-15s %-20s %-15s %-15s %-15s %-20s %-20s %-15s %-15s %-15s %-15s %-15s\n",
+              "R_Min_AU", "R_Max_AU", "N_Grid", "SigmaExp_Neg", "Sigma0_gas_Msun_AU2",
+              "G_GravConst", "DzR_Inner_AU", "DzR_Outer_AU", "DzDr_Inner_Calc_AU", "DzDr_Outer_Calc_AU",
+              "DzAlphaMod", "DustDensity_g_cm3", "AlphaViscosity", "StarMass_Msun", "FlaringIndex");
+    fprintf(fout_params, "#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
+
+
+    // Write parameters to disk_param.dat
+    fprintf(fout_params, "%-15.6e %-15.6e %-10d %-15.6e %-20.12Lg %-15.6e %-15.6e %-15.6e %-20.12e %-20.12e %-15.6e %-15.6e %-15.6e %-15.6e %-15.6e\n",
+              init_opts->r_inner, init_opts->r_outer, init_opts->n_grid_points, -init_opts->sigma_exponent, current_sigma0_gas,
+              G_GRAV_CONST, init_opts->deadzone_r_inner, init_opts->deadzone_r_outer,
+              drdze_inner_calculated, drdze_outer_calculated,
+              init_opts->deadzone_alpha_mod, dust_particle_density_g_cm3, init_opts->alpha_viscosity, init_opts->star_mass, init_opts->flaring_index);
+
+    fclose(fout_params);
+
+    printf("Disk parameters file created (disk_param.dat).\n\n");
 
     return 0;
 }

@@ -11,7 +11,7 @@ simulation_options:
 
   # Új időparaméterek
   totalTime: 5.0e7 # TMAX - a teljes szimulációs idő
-  outputFrequency: 10000.0 # WO - hány évente írjon ki fájlt
+  outputFrequency: 10.0 # WO - hány évente írjon ki fájlt
   # current: Ezt a Python fogja generálni és átadni a C-nek
 
 # Paraméterek az inicializáló programhoz (init_tool.c)
