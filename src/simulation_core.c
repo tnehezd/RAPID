@@ -147,17 +147,25 @@ void int_step(double time, double prad, double *pressvec, double *dpressvec, dou
 
 
 /*	Itt vegzi el az integralast, ha szukseg van ra	*/
-void tIntegrate(char *nev, double *rvec, double *sigmavec, double *pressvec, double *dpressvec, double *ugvec) {
+void tIntegrate(const char *nev, const disk_t *disk_params) {
     printf("DEBUG [tIntegrate]: Starting main integration loop.\n");
+
+    // Access disk parameters using disk_params->
+    const double *rvec = disk_params->rvec;
+    double *sigmavec = disk_params->sigmavec;
+    double *pressvec = disk_params->pressvec;
+    double *dpressvec = disk_params->dpressvec;
+    double *ugvec = disk_params->ugvec;
+    int NGRID = disk_params->NGRID; // Assuming N is the number of grid points
 
     int linesout;
     PARTICLE_NUMBER = 0; // Re-initialize, as it might have been set by init_tool
     linesout = 0;
 
-/*	A reszecskek adatait tartalmazo file sorainak szama (azaz a reszecskek szama) elmentve egy integerbe, amennyiben a futas soran szamol a program driftet	*/
+/*  A reszecskek adatait tartalmazo file sorainak szama (azaz a reszecskek szama) elmentve egy integerbe, amennyiben a futas soran szamol a program driftet */
     if(optdr == 1.) {
         printf("DEBUG [tIntegrate]: Particle drift is ON. Counting particles from %s.\n", filenev1);
-        PARTICLE_NUMBER = reszecskek_szama(linesout,filenev1);         
+        PARTICLE_NUMBER = reszecskek_szama(linesout,filenev1);          
         printf("DEBUG [tIntegrate]: PARTICLE_NUMBER set to %d.\n", PARTICLE_NUMBER);
     } else {
         printf("DEBUG [tIntegrate]: Particle drift is OFF. PARTICLE_NUMBER set to 0.\n");
@@ -166,7 +174,8 @@ void tIntegrate(char *nev, double *rvec, double *sigmavec, double *pressvec, dou
 
     char mv[2048], dens_name[1024],size_name[1024], porout[1024], poroutmicr[1024], massout[1024], dust_name[1024], dust_name2[1024];
     // Dynamic allocation might be safer for very large NGRID, but static arrays work for fixed sizes
-    // These arrays are large, ensure stack size is sufficient if NGRID is huge.
+    // These arrays are large, ensure stack size is sufficient if PARTICLE_NUMBER is huge.
+    // NOTE: These particle arrays are NOT part of disk_t yet. They are local to tIntegrate.
     double radius[PARTICLE_NUMBER][2],radiusmicr[PARTICLE_NUMBER][2],radiussec[4*PARTICLE_NUMBER][2],radius_rec[PARTICLE_NUMBER][2];
     double massvec[PARTICLE_NUMBER], massmicrvec[PARTICLE_NUMBER], masssecvec[4*PARTICLE_NUMBER];
     double max = 0.0, min = 0.0, max2 = 0.0, min2 = 0.0;
@@ -174,21 +183,21 @@ void tIntegrate(char *nev, double *rvec, double *sigmavec, double *pressvec, dou
 
     printf("DEBUG [tIntegrate]: Declared particle arrays. Size based on PARTICLE_NUMBER: %d\n", PARTICLE_NUMBER);
 
-/*	A reszecskek adatainak beolvasasa file-bol, ha az optdr erteke 1, egyebkent nem szamol a program driftet		*/
+/*  A reszecskek adatainak beolvasasa file-bol, ha az optdr erteke 1, egyebkent nem szamol a program driftet        */
     if(optdr == 1.) {
         printf("DEBUG [tIntegrate]: Reading particle data from file.\n");
-        por_be(radius,radiusmicr,massvec,massmicrvec);            /*	porreszecskek adatainak beolvasasa	*/    
+        por_be(radius,radiusmicr,massvec,massmicrvec);           /* porreszecskek adatainak beolvasasa  */    
         int dummy;
-        sprintf(mv,"cp %s %s/",filenev1,nev);                /*	az adott helyre, ahova eppen menti a futast eredmenyeit a program, a porreszecskek adatait tartalmazo file atmasolasa, igy kesobb is visszanezheto, hogy mik voltak a kezdeti adatok	*/
-        dummy = system(mv);                        /*	itt masolja at a file-t			*/    
+        sprintf(mv,"cp %s %s/",filenev1,nev);                  /*   az adott helyre, ahova eppen menti a futast eredmenyeit a program, a porreszecskek adatait tartalmazo file atmasolasa, igy kesobb is visszanezheto, hogy mik voltak a kezdeti adatok    */
+        dummy = system(mv);                        /*   itt masolja at a file-t         */    
         (void)dummy;
         printf("DEBUG [tIntegrate]: Copied %s to %s/\n", filenev1, nev);
 
-/*	az aktualis mappaban a pormozgas.dat file letrehozasa: ebbe kerul be a porreszecske tavolsaga es indexe, valamint az adott idolepes	*/
-        snprintf(porout,1024,"%s/pormozgas.dat",nev);            
-/*	ha 2 populacios a futas, akkor a mikronos pornak is letrehoz egy pormozgas file-t, ebbe kerul be a tavolsag, index es az ido */
+/*  az aktualis mappaban a pormozgas.dat file letrehozasa: ebbe kerul be a porreszecske tavolsaga es indexe, valamint az adott idolepes */
+        snprintf(porout,1024,"%s/pormozgas.dat",nev);             
+/*  ha 2 populacios a futas, akkor a mikronos pornak is letrehoz egy pormozgas file-t, ebbe kerul be a tavolsag, index es az ido */
         if(opttwopop == 1.) snprintf(poroutmicr,1024,"%s/pormozgasmic.dat",nev);
-/*	tomegnovekedesi file letrehozasa az aktualis mappaba - ez lehet, hogy egy kulon opcio lesz a kimeneti adatok meretenek csokkentesere	*/
+/*  tomegnovekedesi file letrehozasa az aktualis mappaba - ez lehet, hogy egy kulon opcio lesz a kimeneti adatok meretenek csokkentesere    */
         snprintf(massout,1024,"%s/mass.dat",nev);
         printf("DEBUG [tIntegrate]: Opening output files: %s, %s (if 2pop), %s\n", porout, poroutmicr, massout);
         fout = fopen(porout,"w");
@@ -202,8 +211,8 @@ void tIntegrate(char *nev, double *rvec, double *sigmavec, double *pressvec, dou
     }
 
     double t = 0.0;
-    double t_integration = TMAX * 2.0 * M_PI;                         /*	numerikus integralas idotartama		*/
-    double deltat = time_step(rvec)/5.;                            /*	idolepes	*/
+    double t_integration = TMAX * 2.0 * M_PI;                      /*   numerikus integralas idotartama     */
+    double deltat = time_step(rvec)/5.;                          /* idolepes    */
     printf("DEBUG [tIntegrate]: Initial t_integration=%.2e, deltat=%.2e\n", t_integration, deltat);
 
     if(DT <= deltat && DT != 0) {
@@ -249,7 +258,7 @@ void tIntegrate(char *nev, double *rvec, double *sigmavec, double *pressvec, dou
     do {
         // printf("DEBUG [tIntegrate]: Loop iteration. Current time t=%.2e\n", t);
 
-/*	Ha van drift:	*/	
+/*  Ha van drift:   */  
         if(optdr == 1.) {
             // printf("DEBUG [tIntegrate]: optdr is ON.\n");
 
@@ -258,7 +267,7 @@ void tIntegrate(char *nev, double *rvec, double *sigmavec, double *pressvec, dou
                 secondaryGrowth(radius,radiusmicr,radiussec,partmassmicrind,partmasssecind,massmicrvec,masssecvec);
                 printf("DEBUG [tIntegrate]: secondaryGrowth completed.\n");
             }
-/*	A minimum kereseshez letrehozza a cm-es reszecskek tavolsaganak reciprokat	*/
+/*  A minimum kereseshez letrehozza a cm-es reszecskek tavolsaganak reciprokat  */
             for (i=0; i < PARTICLE_NUMBER; i++) {
                 if (radius[i][0] > 0. && radius[i][0] > RMIN) {
                     radius_rec[i][0] = 1. / radius[i][0];
@@ -266,15 +275,15 @@ void tIntegrate(char *nev, double *rvec, double *sigmavec, double *pressvec, dou
                     radius_rec[i][0] = 0.;
                 }
             }
-        
-            max = find_max(radius,PARTICLE_NUMBER);					/*	Megkeresi, hogy melyik a legtavolabbi cm-es reszecske a kozponti csillagtol	*/
-            min = find_max(radius_rec,PARTICLE_NUMBER);				/*	Megkeresi a tavolsag reciprokanak maximumat, azaz a legkisebb tavolsagra levo cm-es reszecsket	*/
+            
+            max = find_max(radius,PARTICLE_NUMBER);                    /*   Megkeresi, hogy melyik a legtavolabbi cm-es reszecske a kozponti csillagtol */
+            min = find_max(radius_rec,PARTICLE_NUMBER);                /*   Megkeresi a tavolsag reciprokanak maximumat, azaz a legkisebb tavolsagra levo cm-es reszecsket  */
             min = 1. / min;
             // printf("DEBUG [tIntegrate]: CM particles: max=%.2e, min=%.2e\n", max, min);
 
             double mint, maxt;
 
-/*	ha 2 populacios a szimulacio, a fentihez hasonloan megkeresi a legnagyobb es a legkisebb tavolsagra levo mikronos reszecsket	*/
+/*  ha 2 populacios a szimulacio, a fentihez hasonloan megkeresi a legnagyobb es a legkisebb tavolsagra levo mikronos reszecsket    */
             if(opttwopop == 1) {
                 // printf("DEBUG [tIntegrate]: Two-population is ON. Finding min/max for micron particles.\n");
                 for (i=0; i < PARTICLE_NUMBER; i++) {
@@ -285,12 +294,12 @@ void tIntegrate(char *nev, double *rvec, double *sigmavec, double *pressvec, dou
                     }
                 }
 
-                max2 = find_max(radiusmicr,PARTICLE_NUMBER);					/*	Megkeresi, hogy melyik a legtavolabbi reszecske a kozponti csillagtol	*/
+                max2 = find_max(radiusmicr,PARTICLE_NUMBER);                    /*  Megkeresi, hogy melyik a legtavolabbi reszecske a kozponti csillagtol   */
                 min2 = find_max(radius_rec,PARTICLE_NUMBER);
                 min2 = 1. / min2;
                 // printf("DEBUG [tIntegrate]: Micron particles: max2=%.2e, min2=%.2e\n", max2, min2);
 
-/*	megnezi, hogy mely reszecske van a legkozelebb, illetve legtavolabb (mikronos, vagy cm-es)	*/
+/*  megnezi, hogy mely reszecske van a legkozelebb, illetve legtavolabb (mikronos, vagy cm-es)  */
                 mint = find_min(min,min2,HUGE_VAL);
                 maxt = find_min(1. / max, 1./max2,HUGE_VAL);
                 maxt =  1./ maxt;
@@ -301,14 +310,14 @@ void tIntegrate(char *nev, double *rvec, double *sigmavec, double *pressvec, dou
                 // printf("DEBUG [tIntegrate]: Single population: min_t=%.2e, max_t=%.2e\n", mint, maxt);
             }
 
-/*	Ha a legtavolabbi reszecske tavolsaga nagyobb, mint RMIN (azaz meg a szimulacio tartomanyaban van), es a min es a max nem egyenlo (azaz nem gyult pl. ossze az osszes porreszecske 1 helyen), akkor a program tovabb szamol, egyebkent a futas leall	-- ez persze 1 dze eseten mukodik, meg kell oldani, hogy 2 dze eseten is lealljon akkor, ha az osszes por osszegyult a nyomasi maximumokban - meg kell persze csinalni, hogy ez is opcionalis legyen	*/
+/*  Ha a legtavolabbi reszecske tavolsaga nagyobb, mint RMIN (azaz meg a szimulacio tartomanyaban van), es a min es a max nem egyenlo (azaz nem gyult pl. ossze az osszes porreszecske 1 helyen), akkor a program tovabb szamol, egyebkent a futas leall    -- ez persze 1 dze eseten mukodik, meg kell oldani, hogy 2 dze eseten is lealljon akkor, ha az osszes por osszegyult a nyomasi maximumokban - meg kell persze csinalni, hogy ez is opcionalis legyen    */
             if(maxt >= RMIN && mint != maxt) {
                 // printf("DEBUG [tIntegrate]: Particles are within simulation range and not all gathered.\n");
                 double time = t / 2.0 / M_PI;
 
                 if((fmod(time, (TMAX/WO)) < deltat || time == 0) && L-time < deltat){
                     printf("DEBUG [tIntegrate]: Outputting data at time %.2e. L=%.2e\n", time, L);
-/*	Az adatok kiirasahoz szukseges file-ok neveinek elmentese	*/
+/*  Az adatok kiirasahoz szukseges file-ok neveinek elmentese   */
                     if (t==0) {
                         snprintf(dens_name,1024,"%s/surface.dat",nev);
                         printf("DEBUG [tIntegrate]: Outputting surface.dat for t=0.\n");
@@ -323,44 +332,46 @@ void tIntegrate(char *nev, double *rvec, double *sigmavec, double *pressvec, dou
                     snprintf(dust_name2,1024,"%s/dustmic.%i.dat",nev,(int)L);
                     snprintf(size_name,1024,"%s/size.%d.dat",nev,(int)L);
                     printf("DEBUG [tIntegrate]: Output file names set: dust.dat, dustmic.dat, size.dat.\n");
-    
+            
                     if(t==0) {
                         printf("DEBUG [tIntegrate]: Initializing mass for t=0.\n");
-/*	A reszecskek tomeget tartalmazo tomb inicializalasa		*/
+/*  A reszecskek tomeget tartalmazo tomb inicializalasa     */
                         Count_Mass(radius,partmassind,massvec,t,PARTICLE_NUMBER);
                         if(opttwopop==1) Count_Mass(radiusmicr,partmassmicrind,massmicrvec,t,PARTICLE_NUMBER);
                         if(opttwopop==1) Count_Mass(radiussec,partmasssecind,masssecvec,t,4*PARTICLE_NUMBER);
                         printf("DEBUG [tIntegrate]: Count_Mass completed for t=0.\n");
 
-/*	Ha van tomegnovekedes, akkor a por feluletisurusegenek kiszamolasa itt tortenik	*/
-                        if(optgr == 1.) {			
+/*  Ha van tomegnovekedes, akkor a por feluletisurusegenek kiszamolasa itt tortenik */
+                        if(optgr == 1.) {            
                             printf("DEBUG [tIntegrate]: optgr is ON. Calling Get_Sigmad for t=0.\n");
                             Get_Sigmad(L,max,min,radius,radiusmicr,radiussec,sigmad,sigmadm,sigmads,massvec,massmicrvec,masssecvec,rdvec,rmicvec,rsvec);
                             printf("DEBUG [tIntegrate]: Get_Sigmad completed for t=0.\n");
                         }
                     }
-        
-/*	A sigma, p, dp kiirasa egy file-ba	*/
+            
+/*  A sigma, p, dp kiirasa egy file-ba  */
                     if(optev == 1 || time == 0) {
                         printf("DEBUG [tIntegrate]: Calling Print_Sigma.\n");
-                        Print_Sigma(dens_name, rvec, sigmavec, pressvec, dpressvec);
+                        // --- FIX: Pass disk_params->rvec, disk_params->sigmavec etc. ---
+                        Print_Sigma(dens_name, disk_params->rvec, disk_params->sigmavec, disk_params->pressvec, disk_params->dpressvec);
                         printf("DEBUG [tIntegrate]: Print_Sigma completed.\n");
                     }
 
-/*	Ha szamol a futas driftet, itt irja ki a reszecskek tavolsagat es meretet	*/
+/*  Ha szamol a futas driftet, itt irja ki a reszecskek tavolsagat es meretet   */
                     if(optdr == 1) {
                         printf("DEBUG [tIntegrate]: optdr is ON. Calling Print_Pormozg_Size.\n");
                         Print_Pormozg_Size(size_name,(int)L,radius,radiusmicr);
                         printf("DEBUG [tIntegrate]: Print_Pormozg_Size completed.\n");
                     }
 
-/*	A tomegnovekedesi file-ba az adatok kiirasa	*/
+/*  A tomegnovekedesi file-ba az adatok kiirasa */
                     masstempiout = 0; 
                     massmtempiout = 0;
                     masstempoout = 0;
                     massmtempoout = 0;
                     printf("DEBUG [tIntegrate]: Calling Print_Mass.\n");
-                    Print_Mass(L,rvec,partmassind,partmassmicrind,partmasssecind,dpressvec,masstempiin,masstempoin,massmtempiin,massmtempoin,&masstempiout,&masstempoout,&massmtempiout,&massmtempoout,&tavin,&tavout);
+                    // --- FIX: Pass disk_params->rvec and disk_params->dpressvec ---
+                    Print_Mass(L,disk_params->rvec,partmassind,partmassmicrind,partmasssecind,disk_params->dpressvec,masstempiin,masstempoin,massmtempiin,massmtempoin,&masstempiout,&masstempoout,&massmtempiout,&massmtempoout,&tavin,&tavout);
                     printf("DEBUG [tIntegrate]: Print_Mass completed. Outputs: masstempiout=%.2e, massmtempiout=%.2e\n", masstempiout, massmtempiout);
 
                     if(r_dze_i != tavin) {
@@ -374,7 +385,7 @@ void tIntegrate(char *nev, double *rvec, double *sigmavec, double *pressvec, dou
                         printf("DEBUG [tIntegrate]: r_dze_o (%.2f) != tavout (%.2f). Updating masstempoin/massmtempoin.\n", r_dze_o, tavout);
                     }
 
-/*	Ha van pornovekedes, kiirja a por felultisuruseget egy file-ba --> a pornovekedeshez szukseges egyaltalan ezt kiszamolni!	*/
+/*  Ha van pornovekedes, kiirja a por felultisuruseget egy file-ba --> a pornovekedeshez szukseges egyaltalan ezt kiszamolni!   */
                     if(optgr == 1.) {
                         printf("DEBUG [tIntegrate]: optgr is ON. Calling Print_Sigmad.\n");
                         Print_Sigmad(dust_name,dust_name2,rdvec,rmicvec,sigmad,sigmadm);
@@ -386,61 +397,65 @@ void tIntegrate(char *nev, double *rvec, double *sigmavec, double *pressvec, dou
 
                 }
 
-/*	Ha az optev erteke 1, akkor megoldja minden lepesben a sigmara vonatkozo diffuzios egyenletet	*/
+/*  Ha az optev erteke 1, akkor megoldja minden lepesben a sigmara vonatkozo diffuzios egyenletet   */
                 if(optev == 1.) {
                     printf("DEBUG [tIntegrate]: optev is ON. Calling Get_Sigma_P_dP.\n");
-                    Get_Sigma_P_dP(rvec, sigmavec, pressvec, dpressvec, deltat);
+                    // --- FIX: Pass disk_params->rvec, disk_params->sigmavec etc. ---
+                    Get_Sigma_P_dP(disk_params->rvec, disk_params->sigmavec, disk_params->pressvec, disk_params->dpressvec, deltat);
                     printf("DEBUG [tIntegrate]: Get_Sigma_P_dP completed.\n");
-                } 
+                }    
 
-/*	A reszecskek tomeget tartalmazo tomb adatainak frissitese	*/
+/*  A reszecskek tomeget tartalmazo tomb adatainak frissitese   */
                 printf("DEBUG [tIntegrate]: Calling Count_Mass (refreshing).\n");
                 Count_Mass(radius,partmassind,massvec,t,PARTICLE_NUMBER);
                 if(opttwopop==1) Count_Mass(radiusmicr,partmassmicrind,massmicrvec,t,PARTICLE_NUMBER);
                 if(opttwopop==1) Count_Mass(radiussec,partmasssecind,masssecvec,t,4*PARTICLE_NUMBER);
                 printf("DEBUG [tIntegrate]: Count_Mass (refreshing) completed.\n");
 
-/*	Ha van reszecskenovekedes, akkor kiszamolja a por feluletisuruseget	*/
+/*  Ha van reszecskenovekedes, akkor kiszamolja a por feluletisuruseget */
                 if(optgr == 1.) {
                     printf("DEBUG [tIntegrate]: optgr is ON. Calling Get_Sigmad (refreshing).\n");
                     Get_Sigmad(L,max,min,radius,radiusmicr,radiussec,sigmad,sigmadm,sigmads,massvec,massmicrvec,masssecvec,rdvec,rmicvec,rsvec);
                     printf("DEBUG [tIntegrate]: Get_Sigmad (refreshing) completed.\n");
                 }
 
-                int optsize = 0;		// ezt ki lehetne siman valtani opttwopop-pal!
-/*	A cm-es reszecskek eseten az optsize erteke 0	*/
-/*	Itt szamolja ki a program a cm-es reszecskek uj tavolsagat (es meretet, ha kell)	*/
+                int optsize = 0;        // ezt ki lehetne siman valtani opttwopop-pal!
+/*  A cm-es reszecskek eseten az optsize erteke 0   */
+/*  Itt szamolja ki a program a cm-es reszecskek uj tavolsagat (es meretet, ha kell)    */
                 printf("DEBUG [tIntegrate]: Calling Get_Radius for CM particles (optsize=%d, PARTICLE_NUMBER=%d).\n", optsize, PARTICLE_NUMBER);
-                Get_Radius(nev,optsize,radius,pressvec,dpressvec,sigmavec,sigmad,rdvec,rvec,ugvec,deltat,t,PARTICLE_NUMBER);
+                // --- FIX: Pass disk_params members ---
+                Get_Radius(nev,optsize,radius,disk_params->pressvec,disk_params->dpressvec,disk_params->sigmavec,sigmad,rdvec,disk_params->rvec,disk_params->ugvec,deltat,t,PARTICLE_NUMBER);
                 printf("DEBUG [tIntegrate]: Get_Radius for CM particles completed.\n");
- 
-/*	Ha a futas 2 populacios, akkor az optsize erteke 1	*/
-/*	Itt szamolja ki a program a mikoronos reszecskek uj tavolsagat	*/
+    
+/*  Ha a futas 2 populacios, akkor az optsize erteke 1  */
+/*  Itt szamolja ki a program a mikoronos reszecskek uj tavolsagat  */
                 if(opttwopop == 1.) {
                     optsize = 1;
                     printf("DEBUG [tIntegrate]: opttwopop is ON. Calling Get_Radius for Micron particles (optsize=%d, PARTICLE_NUMBER=%d).\n", optsize, PARTICLE_NUMBER);
-                    Get_Radius(nev,optsize,radiusmicr,pressvec,dpressvec,sigmavec,sigmad,rdvec,rvec,ugvec,deltat,t,PARTICLE_NUMBER); 
+                    // --- FIX: Pass disk_params members ---
+                    Get_Radius(nev,optsize,radiusmicr,disk_params->pressvec,disk_params->dpressvec,disk_params->sigmavec,sigmad,rdvec,disk_params->rvec,disk_params->ugvec,deltat,t,PARTICLE_NUMBER);    
                     printf("DEBUG [tIntegrate]: Get_Radius for Micron particles completed.\n");
                     optsize = 2;
                     printf("DEBUG [tIntegrate]: Calling Get_Radius for Secondary particles (optsize=%d, PARTICLE_NUMBER=%d).\n", optsize, 4 * PARTICLE_NUMBER);
-                    Get_Radius(nev,optsize,radiussec,pressvec,dpressvec,sigmavec,sigmad,rdvec,rvec,ugvec,deltat,t,4*PARTICLE_NUMBER); 
+                    // --- FIX: Pass disk_params members ---
+                    Get_Radius(nev,optsize,radiussec,disk_params->pressvec,disk_params->dpressvec,disk_params->sigmavec,sigmad,rdvec,disk_params->rvec,disk_params->ugvec,deltat,t,4*PARTICLE_NUMBER);    
                     printf("DEBUG [tIntegrate]: Get_Radius for Secondary particles completed.\n");
                 }
 
-                t = t + deltat;						/*	Idoleptetes	*/
+                t = t + deltat;                        /*   Idoleptetes */
                 // printf("DEBUG [tIntegrate]: Time advanced to t=%.2e.\n", t);
 
-            } else {				/*	Ha a legmesszebbi reszecske tavolsaga mar nem nagyobb, vagy egyenlo, mint RMIN, vagy a legkisebb tavolsagra levo reszecske tavolsaga, akkor a program "figyelmezteto szoveg" mellett sikeresen kilep, nem fut "feleslegesen" tovabb.	*/
+            } else {                /*  Ha a legmesszebbi reszecske tavolsaga mar nem nagyobb, vagy egyenlo, mint RMIN, vagy a legkisebb tavolsagra levo reszecske tavolsaga, akkor a program "figyelmezteto szoveg" mellett sikeresen kilep, nem fut "feleslegesen" tovabb.    */
                 printf("DEBUG [tIntegrate]: Simulation termination condition met (maxt < RMIN or mint == maxt).\n");
                 printf("A program sikeresen lefutott az integralasi ido vege elott (t: %lg). \n\nNyomj ENTER-t a kilepeshez!\n",L);
                 exit(EXIT_SUCCESS);
-            }	
+            }    
     
-        } else {	/*	Ez az az eset, ha a program nem szamol driftet, azaz csak a gaz feluletisurusegenek fejlodesere vagyunk kivancsiak	*/
+        } else {    /*  Ez az az eset, ha a program nem szamol driftet, azaz csak a gaz feluletisurusegenek fejlodesere vagyunk kivancsiak  */
             printf("DEBUG [tIntegrate]: optdr is OFF. Only gas surface density evolution.\n");
             double time = t / 2.0 / M_PI;
 
-            if((fmod(time, (TMAX/WO)) < deltat || time == 0) && L-time < deltat){	
+            if((fmod(time, (TMAX/WO)) < deltat || time == 0) && L-time < deltat){    
                 printf("DEBUG [tIntegrate]: Outputting data for gas-only simulation at time %.2e. L=%.2e\n", time, L);
                 if (t==0) {
                     snprintf(dens_name,1024,"%s/surface.dat",nev);
@@ -449,8 +464,9 @@ void tIntegrate(char *nev, double *rvec, double *sigmavec, double *pressvec, dou
                     snprintf(dens_name,1024,"%s/dens.%d.dat",nev,(int)L);
                     printf("DEBUG [tIntegrate]: Outputting dens.%d.dat.\n", (int)L);
                 }
-    
-                Print_Sigma(dens_name, rvec, sigmavec, pressvec, dpressvec);
+        
+                // --- FIX: Pass disk_params->rvec, disk_params->sigmavec etc. ---
+                Print_Sigma(dens_name, disk_params->rvec, disk_params->sigmavec, disk_params->pressvec, disk_params->dpressvec);
                 printf("DEBUG [tIntegrate]: Print_Sigma completed.\n");
 
                 L = L+(double)(TMAX/WO);
@@ -458,16 +474,17 @@ void tIntegrate(char *nev, double *rvec, double *sigmavec, double *pressvec, dou
             }
 
             printf("DEBUG [tIntegrate]: Calling Get_Sigma_P_dP for gas-only evolution.\n");
-            Get_Sigma_P_dP(rvec, sigmavec, pressvec, dpressvec, deltat);
+            // --- FIX: Pass disk_params->rvec, disk_params->sigmavec etc. ---
+            Get_Sigma_P_dP(disk_params->rvec, disk_params->sigmavec, disk_params->pressvec, disk_params->dpressvec, deltat);
             printf("DEBUG [tIntegrate]: Get_Sigma_P_dP completed.\n");
-            t = t + deltat;						/*	Idoleptetes		*/
+            t = t + deltat;                        /*   Idoleptetes     */
             printf("DEBUG [tIntegrate]: Time advanced to t=%.2e.\n", t);
         }
 
     } while (t <= t_integration);
-      
+    
 
-/*	Az idoleptetes leteltevel a program sikeresen kilep	*/
+/*  Az idoleptetes leteltevel a program sikeresen kilep */
     printf("\n\nDEBUG [tIntegrate]: Main simulation loop finished (t > t_integration).\n");
     printf("A program sikeresen lefutott, azonban elkepzelheto, hogy az integralasi ido nem volt elegendo. A legtavolabbi reszecske %lg CsE tavolsagra van a kozponti csillagtol. \n\nNyomj ENTER-t a kilepeshez!\n",max);    
 }

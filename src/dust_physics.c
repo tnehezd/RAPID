@@ -1,6 +1,8 @@
 // src/dust_physics.c
 #include "dust_physics.h" // A saját headerjét mindig includolni kell
 #include "config.h"       // Szükséges lehet a globális konstansokhoz
+#include "simulation_types.h"
+
 #include "simulation_core.h"
 #include "utils.h"
 #include <stdio.h>

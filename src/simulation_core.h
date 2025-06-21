@@ -28,7 +28,7 @@ void int_step(double time, double prad, double *pressvec, double *dpressvec, dou
 double time_step(double *rvec);
 
 // Function Declarations
-void tIntegrate(char *nev, double *rvec, double *sigmavec, double *pressvec, double *dpressvec, double *ugvec);
+void tIntegrate(const char *nev, const disk_t *disk_params);
 
 void secondaryGrowth(double rad[][2], double radmicr[][2], double radsec[][2], double partmicind[][4], double partsecind[][4], double *massmicvec, double *masssecvec);
 

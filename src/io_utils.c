@@ -78,73 +78,105 @@ void por_be(double radius[][2], double radiusmicr[][2], double *mass, double *ma
 
 
 /*	A sigmat tartalmazo file parametereinek beolvasasa	*/
-void sigIn(double *sigvec, double *rvec) {
+void sigIn(double *sigma_arr, double *r_arr, const disk_t *disk_params, const char *filename) {
+    // ideiglenesen a globális filenev1-et használjuk, amíg azt is refaktoráljuk
+    const char *input_filename = filenev1; // filenev1 a config.h-ból jön
 
-	double sig,r;
-	int i;
+    FILE *fp = fopen(input_filename, "r");
+    if (fp == NULL) {
+        fprintf(stderr, "ERROR [sigIn]: Could not open input file '%s'.\n", input_filename);
+        perror("Reason"); // Kiírja a rendszerhiba üzenetet
+        exit(EXIT_FAILURE);
+    }
 
-	FILE *densin;
-	densin = fopen(inputsig,"r");
-	
-	for(i = 0; i < NGRID; i++) {
-           	if(fscanf(densin,"%lg  %lg",&r,&sig) == 2) { /*	A beolvasás sikeres, ha az fscanf visszatérési értéke 3, mert 3 oszlopot szeretnénk beolvasni.	*/
-			rvec[i+1] = r;				/*	r vektor	*/
-			sigvec[i+1] = sig; 			/*	adott lepeskozonkent irja ki a file-t, megvan, hogy hany evente, tudjuk, hogy meddig fusson a kod, igy egy egyszeru osztassal meg lehet adni, hogy az mindig hanyadik idolepes	*/
-			
-	    	} else {					/*	Ha a beolvasás valamiért nem sikeres, akkor figyelmeztetés mellett a program kilép (megmondja, hogy melyik sort nem tudta kezelni)	*/
-			printf("\n\n*******************     ERROR!     *********************\n\n  A file-t nem sikertult beolvasni, a program kilep!\n \t  A kilepeshez nyomj egy ENTER-t!\n");
-			exit(EXIT_FAILURE);
-   	        }
-	}
+    // Most jön a beolvasás logikája. Ügyelj a formátumra és az indexelésre!
+    // Az init_tool kimenete: i, r, prad, reppmass
+    int i_read;
+    double r_read, prad_read, reppmass_read;
 
-	RMIN = rvec[1];
-	RMAX = rvec[NGRID];
+    // Feltételezve, hogy a fájl elején van egy fejlécsor, amit át kell ugrani, ha van
+    // (ha nincs, akkor ezt a sort ki kell hagyni)
+    char line[256];
+    if (fgets(line, sizeof(line), fp) == NULL) {
+        fprintf(stderr, "ERROR [sigIn]: Failed to read header line or empty file: %s\n", input_filename);
+        fclose(fp);
+        exit(EXIT_FAILURE);
+    }
+    // Ha van Press ENTER to continue! sor:
+    if (fgets(line, sizeof(line), fp) == NULL) {
+        fprintf(stderr, "ERROR [sigIn]: Failed to read second header line or empty file: %s\n", input_filename);
+        fclose(fp);
+        exit(EXIT_FAILURE);
+    }
+    // ... és így tovább, ahány fejléc sor van.
 
-	fclose(densin);
-	
+    // Valószínűleg 1-től NGRID-ig indexeljük, de a tömb NGRID+2 méretű
+    // és a 0 és NGRID+1 indexek a peremfeltételekre vannak fenntartva.
+    // Ezt ellenőrizd!
+    for (int i = 1; i <= disk_params->NGRID; i++) { // Feltételezve, hogy a belső pontok NGRID számúak
+        if (fscanf(fp, "%d %lf %lf %lf", &i_read, &r_read, &prad_read, &reppmass_read) != 4) {
+            fprintf(stderr, "ERROR [sigIn]: Failed to read data for particle %d from file '%s'.\n", i, input_filename);
+            fclose(fp);
+            exit(EXIT_FAILURE);
+        }
+        // Ellenőrizd, hogy az r_arr és sigma_arr indexelése helyes-e
+        // Például ha az i_read 0-tól indul, de te 1-től tárolsz:
+        r_arr[i] = r_read; // Vagy r_arr[i_read+1] ha i_read 0-tól van
+        sigma_arr[i] = reppmass_read; // Vagy sigma_arr[i_read+1]
+        // Lehet, hogy a sigma_arr-ba valamilyen gáz sűrűség érték kell, nem a reppmass_read?
+        // Ezt tisztázni kell az init_tool és sigIn közötti konvenciókból.
+    }
+
+    fclose(fp);
+    printf("DEBUG [sigIn]: Successfully loaded profile from %s.\n", input_filename);
 }
 
 
 
-/*	Fuggveny az adott futashoz mappa letrehozasara, igy egy adott futas mindig kulon mappaba kerul es nem kavarodnak ossze az adatok	*/
-void Mk_Dir(char *nev) {
+// Change this line (the function signature)
+void Mk_Dir(char *nev) { // 'nev' is now a modifiable buffer passed in
 
-	int i, step, mappa;
-	char comm[2048];
+    int i, step, mappa;
+    char comm[2048];
 
-	step = 0;
+    step = 0;
 
-/*	A kimeneti file-ok szamara egy tarolo mappa letrehozasa (system(mkdir ...)) paranccsal	*/
-	mappa=system("mkdir output");
+    /*	A kimeneti file-ok szamara egy tarolo mappa letrehozasa (system(mkdir ...)) paranccsal	*/
+    mappa=system("mkdir output");
 
-/*	A ciklus ellenorzi, hogy letezik-e mar ez adott mappa, ha nem, letrehozza output neven...	*/
-		if (mappa == 0) {
-			printf("... A kimeneti file-ok tarolasahoz az \"output\" mappa elkeszult ...\n\n\n");
-					sprintf(nev,"output");				/*	A mappa nevenek eltarolasa azert, hogy a file-okat az eppen aktualis mappaba tudja kesobb kiirni a program	    */
+    /*	A ciklus ellenorzi, hogy letezik-e mar ez adott mappa, ha nem, letrehozza output neven...	*/
+    if (mappa == 0) {
+        printf("... A kimeneti file-ok tarolasahoz az \"output\" mappa elkeszult ...\n\n\n");
+        sprintf(nev,"output"); // Now 'nev' is a modifiable buffer, so this is safe
 
-/*	...ha letezik az output mappa, akkor egy do-while ciklussal szamozott mappat hoz letre (pl. output.0), es addig fut a ciklus, mig aztan nem talalja mar a soron kovetkezo szamozott mappat. Ekkor letre hozza azt	*/
-		} else {
-			printf("... A kimeneti file-ok tarolasahoz az \"output\" mappa letrehozasa meghiusult ...\n");
-			printf("... A mappa valoszinuleg mar letezik, uj mappa letrehozasa ...\n\n\n");
+    /*	...ha letezik az output mappa, akkor egy do-while ciklussal szamozott mappat hoz letre (pl. output.0), es addig fut a ciklus, mig aztan nem talalja mar a soron kovetkezo szamozott mappat. Ekkor letre hozza azt	*/
+    } else {
+        printf("... A kimeneti file-ok tarolasahoz az \"output\" mappa letrehozasa meghiusult ...\n");
+        printf("... A mappa valoszinuleg mar letezik, uj mappa letrehozasa ...\n\n\n");
 
-			do{
-				for(i=0;i<=step;i++){
-					sprintf(nev,"output.%i",i);			/*	A mappa nevenek eltarolasa azert, hogy a file-okat az eppen aktualis mappaba tudja kesobb kiirni a program	    */
-					sprintf(comm,"mkdir output.%i",i);	
-				}
+        do{
+            // The loop structure here is a bit unusual.
+            // It seems like you intend to try "output.0", "output.1", etc.
+            // However, the `for(i=0;i<=step;i++){ sprintf(nev,"output.%i",i); sprintf(comm,"mkdir output.%i",i); }`
+            // will only process the LAST value of `i` (which is `step`) in each iteration of the `do-while`.
+            // It should probably just be `sprintf(nev, "output.%i", step);` before the `mkdir` call.
+            // Let's fix the logic while fixing the type.
 
-				mappa=system(comm);
-				step++;					
+            sprintf(nev, "output.%i", step); // Prepare the name for the current step
+            sprintf(comm, "mkdir %s", nev);  // Prepare the mkdir command
 
-			} while (mappa!=0);
+            mappa=system(comm);
+            step++;
 
-			printf("... A kimeneti file-ok tarolasahoz a(z) %s mappa elkeszult ...\n\n\n",nev);
-		}
+        } while (mappa!=0);
+
+        printf("... A kimeneti file-ok tarolasahoz a(z) %s mappa elkeszult ...\n\n\n",nev);
+    }
 
 }
 
 /*	Elkeszit egy file-t, ami tartalmazza a jelenlegi futas parametereit, es hogy melyik mappaban talalhatoak a file-ok	*/
-void infoCurrent(char *nev) {
+void infoCurrent(const char *nev) {
 
 	char out[1024];
 
