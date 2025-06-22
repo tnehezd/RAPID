@@ -457,7 +457,7 @@ void tIntegrate(const char *nev, const disk_t *disk_params) {
             }    
     
         } else {    /*  Ez az az eset, ha a program nem szamol driftet, azaz csak a gaz feluletisurusegenek fejlodesere vagyunk kivancsiak  */
-            printf("DEBUG [tIntegrate]: optdr is OFF. Only gas surface density evolution.\n");
+//            printf("DEBUG [tIntegrate]: optdr is OFF. Only gas surface density evolution.\n");
             double time = t / 2.0 / M_PI;
 
             if((fmod(time, (TMAX/WO)) < deltat || time == 0) && L-time < deltat){    

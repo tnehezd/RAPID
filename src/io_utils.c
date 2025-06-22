@@ -47,7 +47,7 @@ int reszecskek_szama(int numout, const char *filenev){
     }
     fclose(fp); // Close the file
 
-    printf("DEBUG [reszecskek_szama]: Counted %d data lines in '%s' (after skipping %d header lines).\n", count, filenev, INIT_DATA_HEADER_LINES);
+    fprintf(stderr, "DEBUG [reszecskek_szama]: Counted %d data lines in '%s' (after skipping %d header lines).\n", count, filenev, INIT_DATA_HEADER_LINES);
     return count;
 
 }
@@ -184,7 +184,7 @@ void sigIn(double *sigma_arr, double *r_arr, const disk_t *disk_params, const ch
     }
 
     fclose(fp);
-    printf("DEBUG [sigIn]: Successfully loaded profile from %s.\n", input_filename);
+    fprintf(stderr, "DEBUG [sigIn]: Successfully loaded profile from %s.\n", input_filename);
 }
 
 

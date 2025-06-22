@@ -47,7 +47,7 @@ void disk_param_be(disk_t *disk_params) {
         exit(EXIT_FAILURE);
     }
 
-    printf("DEBUG [disk_param_be]: Calculating derived disk parameters and writing to output file.\n");
+    fprintf(stderr, "DEBUG [disk_param_be]: Calculating derived disk parameters and writing to output file.\n");
 
     // <<< FONTOS VÁLTOZTATÁS: Nincs fájlbeolvasás (fopen, fscanf) itt! >>>
     // A függvény most már feltételezi, hogy a `disk_params` struktúra már tartalmazza az összes
@@ -65,7 +65,7 @@ void disk_param_be(disk_t *disk_params) {
     // Kérlek, ellenőrizd, melyik a helyes dimenziómentesítés a te modellben!
     // A fenti verziót használtam, mert az tűnik konzisztensebbnek azzal, ahogy a G_CGS-t is használtad.
 
-    printf("DEBUG [disk_param_be]: Calculated PDENSITY = %.2e, PDENSITYDIMLESS = %.2e.\n",
+    fprintf(stderr, "DEBUG [disk_param_be]: Calculated PDENSITY = %.2e, PDENSITYDIMLESS = %.2e.\n",
            disk_params->PDENSITY, disk_params->PDENSITYDIMLESS);
 
     // Fájlba írás: Most már az aktuális, disk_params-ban lévő értékeket írjuk ki.
@@ -99,7 +99,7 @@ void disk_param_be(disk_t *disk_params) {
     fprintf(fout, "PDENSITYDIMLESS %e\n", disk_params->PDENSITYDIMLESS);
 
     fclose(fout);
-    printf("DEBUG [disk_param_be]: Disk parameters written to %s.\n", output_filename);
+    fprintf(stderr, "DEBUG [disk_param_be]: Disk parameters written to %s.\n", output_filename);
 }
 
 
