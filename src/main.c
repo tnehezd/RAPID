@@ -312,13 +312,10 @@ int main(int argc, const char **argv) {
     // Copy config and time files to the output directory
     printf("DEBUG [main]: Copying config and time files to output directory.\n");
     char cmd_buffer[4096];
-    // filenev2 ("disk_param.dat") and filenev3 ("time.dat") are still global.
+    // filenev2 ("disk_param.dat") is still global.
     // These need to be refactored into 'output_files_t' or passed as string literals.
     snprintf(cmd_buffer, sizeof(cmd_buffer), "cp %s %s/", filenev2, def.output_dir_name);
     dummy_sys_ret = system(cmd_buffer); (void)dummy_sys_ret; // Cast to void to suppress unused result warning
-    snprintf(cmd_buffer, sizeof(cmd_buffer), "cp %s %s/", filenev3, def.output_dir_name);
-    dummy_sys_ret = system(cmd_buffer); (void)dummy_sys_ret;
-    printf("DEBUG [main]: disk_param.dat and time.dat copied.\n");
 
     // Copy input profile file to the output directory
     if(def.input_file != NULL && strcmp(def.input_file, "") != 0) {

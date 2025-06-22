@@ -7,6 +7,8 @@
 #include "utils.h"
 #include <stdio.h>
 #include <math.h>
+#include <omp.h> 
+
 
 /*	alpha turbulens paraméter kiszámolása --> alfa csökkentése alpha_r-rel	*/
 double alpha_turb(double r) {
@@ -276,7 +278,7 @@ double getSize(double prad, double pdens, double sigma, double sigmad, double y,
 
 void Get_Sigmad(double L, double max, double min, double rad[][2], double radmicr[][2], double radsec[][2], double *sigma_d, double *sigma_dm, double *sigma_ds, double *massvec, double *massmicrvec, double *masssecvec, double *rd, double *rmic, double *rs) {
 
-	double dd = (RMAX - RMIN) / (PARTICLE_NUMBER-1);	/*	Mivel a jelen futas gridfelbontasa nem feltetlen egyezik meg a porreszecskeket generalo program gridfelbontasaval - ez a feluletisuruseg miatt lenyeges! - ezert itt szamolja ki a program	*/
+	double dd = (RMAX - RMIN) / (PARTICLE_NUMBER-1);
 	int i,j,k;
 	double sigdtemp[PARTICLE_NUMBER][3], sigdmicrtemp[PARTICLE_NUMBER][3], sigdsectemp[4*PARTICLE_NUMBER][3], rtempvec[PARTICLE_NUMBER][2], sigtempvec[PARTICLE_NUMBER];
 	double radtemp[PARTICLE_NUMBER], sdtemp[PARTICLE_NUMBER], radmicrtemp[PARTICLE_NUMBER], sdmicrtemp[PARTICLE_NUMBER], radsectemp[4*PARTICLE_NUMBER], sdsectemp[4*PARTICLE_NUMBER];
@@ -284,8 +286,9 @@ void Get_Sigmad(double L, double max, double min, double rad[][2], double radmic
 	double rtemp[PARTICLE_NUMBER];
 	int rtempi[PARTICLE_NUMBER];
 
+    // Első inicializáló ciklus: Ez jól párhuzamosítható.
+    #pragma omp parallel for
 	for(i=0;i<PARTICLE_NUMBER;i++){
-
 		rtempvec[i][0] = RMIN + i * dd;
 		rtempvec[i][0] = rtempvec[i][0] + dd / 2.0;
 		rtempvec[i][1] = i;
@@ -302,30 +305,30 @@ void Get_Sigmad(double L, double max, double min, double rad[][2], double radmic
 		sigtempvec[i] = 0;
 	}
 
-
+    // loadSigDust és contract függvények hívásai:
+    // Ezeket a függvényeket is meg kell vizsgálni. Ha bennük van belső for ciklus,
+    // azokat is lehet párhuzamosítani, hasonlóan a Get_Radius-hoz.
+    // Ha a `loadSigDust` és `contract` függvények egymástól függetlenül dolgoznak
+    // a `sigdtemp` és `sigdmicrtemp` tömbökön, akkor a hívásokat nem kell egy critical szekcióba tenni.
+    // Jelenleg feltételezzük, hogy ezek a függvények belsőleg nincsenek párhuzamosítva, és csak egy szál hívja őket.
 	loadSigDust(rad,massvec,sigdtemp,dd,PARTICLE_NUMBER);
 	if(opttwopop == 1) {
 		loadSigDust(radmicr,massmicrvec,sigdmicrtemp,dd,PARTICLE_NUMBER);
 	}
-
-
-//	for(i=0; i<PARTICLE_NUMBER;i++) printf("r: %lg  sd: %lg\n",rad[i][0],sigdtemp[i][0]);
-
 
 	contract(L,sigdtemp,dd,PARTICLE_NUMBER);
 	if(opttwopop == 1) {
 		contract(L,sigdmicrtemp,dd,PARTICLE_NUMBER);
 	}
 
-
+    // Utolsó másoló ciklus: Ez is jól párhuzamosítható.
+    #pragma omp parallel for
 	for(i=0; i < PARTICLE_NUMBER; i++) {
 		rd[i] = sigdtemp[i][1];
 		rmic[i] = 0;
 		sigma_d[i] = sigdtemp[i][0];
 		sigma_dm[i] = 0;
 	}
-
-
 }
 
 
@@ -335,93 +338,99 @@ void Get_Sigma_P_dP(double *rvec, double *sigmavec, double *pressvec, double *dp
 	double u, u_bi, u_fi, sigma_temp[NGRID+2], uvec[NGRID+2];
 	int i;
 
+    // Ezeket valószínűleg nem érdemes párhuzamosítani, mert csak a határértékeket állítják be, és kevés iteráció.
 	sigma_temp[0] = sigmavec[0];
 	sigma_temp[NGRID+1] = sigmavec[NGRID+1];
 	uvec[0] = sigmavec[0] * visc(rvec[0]);
 	uvec[NGRID+1] = sigmavec[NGRID+1] * visc(rvec[NGRID+1]);
 
-	for(i = 1; i <= NGRID; i++) {					/* 	solving d(sigma*nu)/dt = 3*nu*d2(sigma*nu)/dr2 + 9*nu/(2*r)*dsigma/dr	*/
-		u = sigmavec[i] * visc(rvec[i]);			/*	az elozo lepesbol szarmazo sigma*nu elmentese	*/
+	// **EZ A CIKLUS KRITIKUS!**
+	// Itt van függőség (stencil computation). Az `i` függ `i-1` és `i+1`-től.
+	// Az OpenMP ezt nem tudja magától kezelni egyszerű `parallel for`-ral.
+	// Ha mégis megpróbálnád így, hibás eredményeket kaphatsz.
+	// Ehhez vagy egy fejlettebb párhuzamosítási minta kell (pl. wave-front vagy Red-Black),
+	// vagy ha a NGRID nem extrém nagy, akkor szekvenciálisan hagyjuk, mert a túlfejlett
+	// párhuzamosítási overhead többet árthat, mint segít.
+	for(i = 1; i <= NGRID; i++) {
+		u = sigmavec[i] * visc(rvec[i]);
 		u_bi = sigmavec[i-1] * visc(rvec[i-1]);
 		u_fi = sigmavec[i+1] * visc(rvec[i+1]);
 		uvec[i] = u;
-/*	az adott idolepesben az uj sigma*nu kiszamolasa a diffuzios egyenletbol	*/
 		double temp = Coeff_1(rvec[i]) * (u_fi - 2.0 * u + u_bi) / (DD * DD) + Coeff_2(rvec[i]) * (u_fi - u_bi) / (2.0 * DD);
-		sigma_temp[i] = uvec[i] + deltat * temp;		/*	regi + dt*uj	*/
-
-    
+		sigma_temp[i] = uvec[i] + deltat * temp;
 	}
 
+    // Ez a ciklus már párhuzamosítható, mivel az `i`-edik iteráció csak az `i`-edik elemet módosítja.
+    #pragma omp parallel for
 	for(i = 1; i <= NGRID; i++) {
-		sigmavec[i] = sigma_temp[i]/visc(rvec[i]);		/*	nekunk sigma kell, nem sigma*nu		*/
-		pressvec[i] = press(sigmavec[i],rvec[i]);		/*	nyomas kiszamolasa az uj sigmaval	*/
+		sigmavec[i] = sigma_temp[i]/visc(rvec[i]);
+		pressvec[i] = press(sigmavec[i],rvec[i]);
 	}
 
-	Perem(sigmavec);						/*	loading boundary condition in each timestep		*/
-	dpress(dpressvec,pressvec);					/*	loading boundary condition in each timestep		*/
-	Perem(pressvec);						/*	loading boundary condition in each timestep		*/
-	Perem(dpressvec);						/*	loading boundary condition in each timestep		*/
-	
+    // Ezek a hívások valószínűleg szekvenciálisak maradnak, hacsak nem OpenMP aware a Perem függvény.
+	Perem(sigmavec);
+	dpress(dpressvec,pressvec);
+	Perem(pressvec);
+	Perem(dpressvec);
 }
 
 /*	Fuggveny a porszemcsek uj tavolsaganak elraktarozasara		*/
-void Get_Radius(char *nev, int opt, double radius[][2], double *pressvec, double *dpressvec, double *sigmavec, double *sigmad, double *rdvec, double *rvec, double *ugvec, double deltat, double t, int n) {		/*	a bemenet dimenziótlan egységekben van!!!	*/
+void Get_Radius(char *nev, int opt, double radius[][2], double *pressvec, double *dpressvec, double *sigmavec, double *sigmad, double *rdvec, double *rvec, double *ugvec, double deltat, double t, int n) {
+    int i;
+    double y, y_out, prad_new, particle_radius;
+    char scout[1024];
 
-	int i;
-	double y, y_out, prad_new, particle_radius;
-	char scout[1024];
+    // Fájlkezelés t==0 esetén: ez valószínűleg egyszer történik meg a szimuláció elején,
+    // még mielőtt az igazi párhuzamosítás elkezdődne a fő ciklusban.
+    // Ha mégis aggódnál, egy #pragma omp master vagy #pragma omp single direktívával
+    // biztosítható, hogy csak egy szál végezze el.
+    if (t == 0) {
+        sprintf(scout, "%s/timescale.dat", nev);
+        fout2 = fopen(scout, "w");
+    }
 
-/*	A futas kezdeten kiirja egy file-ba a drift idoskalajat!	*/
-	if(t==0) {
-		sprintf(scout,"%s/timescale.dat",nev);
-		fout2 = fopen(scout,"w");
-	}
+    // **ITT A PÁRHUZAMOSÍTÁS!**
+    // Az `i` ciklus független iterációkkal rendelkezik, minden szál a saját `radius[i]` elemen dolgozik.
+    #pragma omp parallel for private(y, y_out, prad_new, particle_radius) // drdt nincs itt, az oké
+    for (i = 0; i < n; i++) {
+        if (radius[i][0] > RMIN && radius[i][0] < RMAX) {
+            y = radius[i][0];
+            particle_radius = radius[i][1];
 
-	for (i = 0; i < n; i++) {	
+            int_step(t, particle_radius, pressvec, dpressvec, sigmavec, sigmad, rdvec, rvec, ugvec, deltat, y, &y_out, &prad_new);
 
-		double drdt[n];
+            // A `fprintf` hívás problémás lehet, ha több szál egyszerre próbál írni.
+            // Mivel ez csak `t==0`-nál fut le, és a `tIntegrate` debug üzenetek alapján
+            // a t=0-s inicializáció még szekvenciálisnak tűnik, valószínűleg nem ütközik.
+            // Ha mégis, akkor kell ide egy `#pragma omp critical`.
+            if (t == 0) {
+                if (opt == 0) {
+                    double current_drdt_val = (fabs(y_out - y) / (deltat));
+                    // Azért kell a critical szekció, mert az fout2 fájlba írunk.
+                    #pragma omp critical
+                    {
+                        fprintf(fout2, "%lg %lg\n", radius[i][0], (radius[i][0] / current_drdt_val) / 2.0 / M_PI);
+                    }
+                }
+            }
 
-		if (radius[i][0] > RMIN && radius[i][0] < RMAX) { 
+            if (opt != 1) {
+                radius[i][1] = prad_new;
+                radius[i][0] = y_out;
+            }
 
-			y = radius[i][0];					// a reszecske tavolsaga
-     			particle_radius = radius[i][1]; 			// a reszecske merete	
+            if (opt == 1) {
+                radius[i][0] = y_out;
+            }
+        } else {
+            radius[i][0] = 0.0;
+        }
+    }
 
-/*	a reszecske tavolsaganak kiszamolasa	*/	
-     			int_step(t,particle_radius,pressvec,dpressvec,sigmavec,sigmad,rdvec,rvec,ugvec,deltat,y,&y_out,&prad_new);
-
-/*	itt az opt a 2 populacios modellre utal, ha az 1, akkor a mikronos reszecskekre szamol - ehelyett egyebkent valoszinu lehetne az opttwopop-ot is hasznalni	*/
-			if(t == 0) {
-				if(opt == 0) {
-					drdt[i] = (fabs(y_out - y)/(deltat));	/*	csak a cm-es esetben irja ki a drift idoskalajat	*/
-						
-/*	timescale.dat, ez tartalmazza a reszecskek bearamlasanak idoskalajat (evben)				*/
-/*	A timescale.dat-hoz a t_drift = r / v(r,peak) kepletet a kovetkezo modon oldja meg a program:		*/
-/*	Kiszamolja, hogy a kovetkezo idopillanatban hol lenne minden reszecske, majd az uj koordinatabol (x(1))	*/
-/*	a regit (x(0)) levonva, majd az egeszet elosztva dt-vel megkapjuk a bearamlas sebesseget (drdt)		*/
-/*	ez utan kiszamolhato az eredeti t_drift keplet, ezt iratom ki a file-ba evben (ezert osztok le 2PI-vel	*/
-
-					fprintf(fout2,"%lg %lg\n",radius[i][0], (radius[i][0] / drdt[i])/2.0/M_PI);
-				}
-
-			}
-	
-/*	cm-es porokra az uj meret es pozicio elmentese				*/
-			if (opt != 1){
-				radius[i][1] = prad_new;
-		     		radius[i][0] = y_out;
-			} 
-
-/*	mikronos esetben a az uj pozicio elmentese, azonban nincs novekedes	*/	
-			if (opt == 1){
-		     		radius[i][0] = y_out;
-			}
-
-/*	ha a reszecske RMIN-en belulre kerul, akkor a tavolsaga 0 lesz	*/		
-		} else {
-			radius[i][0] = 0.0;
-		}
-	}
-
-	if(t==0) fclose(fout2);
+    // A fájl bezárása ismételten egy szál által kell, hogy történjen.
+    // Ha a t=0 blokkban nyitottad meg, akkor itt zárd be.
+    if (t == 0) {
+        fclose(fout2);
+    }
 }
 

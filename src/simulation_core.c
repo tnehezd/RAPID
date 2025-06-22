@@ -6,6 +6,8 @@
 #include <math.h>     // For M_PI, fmod, HUGE_VAL (and pow if used by other functions)
 #include <string.h>   // For snprintf, sprintf
 
+#include <omp.h>
+
 // Your Project Header Includes
 #include "config.h"       // For PARTICLE_NUMBER, TMAX, WO, RMIN, DT, optdr, opttwopop, optgr, optev, r_dze_i, r_dze_o
 #include "io_utils.h"     // For timePar (though not called in tIntegrate, it's io-related), reszecskek_szama, por_be, Print_Sigma, Print_Pormozg_Size, Print_Mass, Print_Sigmad. Also for globals: filenev1, filenev3, fout, foutmicr, massfil
@@ -523,6 +525,9 @@ void secondaryGrowth(double rad[][2], double radmicr[][2], double radsec[][2], d
     printf("DEBUG [secondaryGrowth]: Initial step (count of existing secondary particles) = %d.\n", step);
 
     printf("DEBUG [secondaryGrowth]: Initializing temp, tempmic, rtempvec, hist, histmic, temp2chX arrays.\n");
+
+    #pragma omp parallel for
+
     for(i=0; i < PARTICLE_NUMBER; i++) {
         temp[i] = rad[i][0];				// cm-es porszemcsek tavolsaga
         tempmic[i] = radmicr[i][0];			// mikoronos porszemcsek tavolsaga
@@ -601,6 +606,8 @@ void secondaryGrowth(double rad[][2], double radmicr[][2], double radsec[][2], d
     printf("DEBUG [secondaryGrowth]: Sort completed.\n");
 
     printf("DEBUG [secondaryGrowth]: Processing sorted temptemp to radsec.\n");
+
+    #pragma omp parallel for
     for(i=0; i < 4*PARTICLE_NUMBER-step; i++) {
         if((temptemp[i] != 0)) {
             radsec[i][0] = -1. * temptemp[i];
@@ -614,6 +621,9 @@ void secondaryGrowth(double rad[][2], double radmicr[][2], double radsec[][2], d
     printf("DEBUG [secondaryGrowth]: First pass of radsec population completed.\n");
 
     printf("DEBUG [secondaryGrowth]: Copying radsec to temptemp and re-sorting.\n");
+
+    #pragma omp parallel for
+
     for(i=0; i < 4*PARTICLE_NUMBER; i++) {
         temptemp[i] = radsec[i][0];
         radsec[i][0] = 0;

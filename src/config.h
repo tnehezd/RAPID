@@ -72,7 +72,6 @@ extern FILE *fil;
 // --- Global Filename Declarations (extern) ---
 extern char filenev1[1024]; // "init_data.dat"
 extern char filenev2[1024]; // "disk_param.dat"
-extern char filenev3[1024]; // "time.dat"
 
 
 // Parameter controls

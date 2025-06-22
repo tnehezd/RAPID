@@ -1,6 +1,7 @@
 # Makefile
 CC = gcc
-CFLAGS = -Wall -Wextra -std=c99 -g -O0 -lm # Add -O0 -g for easier debugging
+CFLAGS = -Wall -Wextra -std=c99 -g -O0 -fopenmp 	# Add -O0 -g for easier debugging
+LDFLAGS = -lm -fopenmp             		# Add -fopenmp here
 
 BIN_DIR = bin
 OBJ_DIR = obj

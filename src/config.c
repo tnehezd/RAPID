@@ -50,7 +50,6 @@ const char *inputsig = NULL;
 // --- Global Filename Definitions ---
 char filenev1[1024] = "init_data.dat";
 char filenev2[1024] = "disk_param.dat";
-char filenev3[1024] = "time.dat";
 
 
 // opt parsing things
