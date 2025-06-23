@@ -53,6 +53,9 @@ double Coeff_2(double r, const disk_t *disk_params){
 
 double time_step(const disk_t *disk_params) { // Add const here too
     printf("DEBUG [time_step]: Calculating minimum time step.\n");
+    fprintf(stderr, "DEBUG [time_step]: Entry. disk_params address=%p, FLIND=%.2f, HASP=%.2f\n",
+            (void*)disk_params, disk_params->FLIND, disk_params->HASP);
+    
     double A_max, stepping;
     int i;
 

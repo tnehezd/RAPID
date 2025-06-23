@@ -110,7 +110,7 @@ double find_min(double s1, double s2, double s3) {
 
 
 /*	counting the number of zero points of the pressure gradient function	*/
-int find_num_zero(disk_t *disk_params) {
+int find_num_zero(const disk_t *disk_params) {
 
 	int i,count;
 	count = 0;
@@ -160,71 +160,84 @@ double find_zero(int i, const double *rvec, const double *dp) {
 /*	A nyomasi maximum korul 1H tavolsagban jeloli ki a korgyurut	*/
 void find_r_annulus(const double *rvec, double rin, double *ind_ii, double *ind_io, double rout, double *ind_oi, double *ind_oo, const simulation_options_t *sim_opts, const disk_t *disk_params) {
 
-	int i;
-	double rmid, rtemp;
-	double roimH;
-	double roipH;
-	double roomH;
-	double roopH;
-	double riimH;
-	double riipH;
-	double riomH;
-	double riopH;
+    // Debug kiírás a függvény belépéskor, hogy ellenőrizzük a disk_params érvényességét
+    fprintf(stderr, "DEBUG [find_r_annulus]: Belépés. disk_params címe=%p, FLIND=%.2f, HASP=%.2f\n",
+            (void*)disk_params, disk_params->FLIND, disk_params->HASP);
 
-	if(sim_opts->dzone == 0) {
-	
-		*ind_ii = 0;
-		*ind_io = 0;
-	
-	}
+    int i;
+    double rmid, rtemp;
+    double roimH;
+    double roipH;
+    double roomH;
+    double roopH;
+    double riimH;
+    double riipH;
+    double riomH;
+    double riopH;
 
-	riimH = (rin - scale_height(rin)) - disk_params->DD / 2.0;		/*	A nyomasi maximum az rout pontban van, ettol rout - 1/2H - DD / 2 es rout + 1*2H -DD / 2 kozott van a korgyuru belso hatara (azert DD/2, hogy biztosan 1 cellat tudjunk kijelolni, ne pedig egy tartomanyt)	*/
-	riipH = (rin - scale_height(rin)) + disk_params->DD / 2.0;		
-	riomH = (rin + scale_height(rin)) - disk_params->DD / 2.0;		/*	Az alabbi ketto pedig a kulso hatarat adja meg a korgyurunek	*/
-	riopH = (rin + scale_height(rin)) + disk_params->DD / 2.0;
+    if(sim_opts->dzone == 0) {
+        *ind_ii = 0;
+        *ind_io = 0;
+    }
 
-	roimH = (rout - scale_height(rout)) - disk_params->DD / 2.0;		/*	A nyomasi maximum az rout pontban van, ettol rout - 1/2H - DD / 2 es rout + 1*2H -DD / 2 kozott van a korgyuru belso hatara (azert DD/2, hogy biztosan 1 cellat tudjunk kijelolni, ne pedig egy tartomanyt)	*/
-	roipH = (rout - scale_height(rout)) + disk_params->DD / 2.0;		
-	roomH = (rout + scale_height(rout)) - disk_params->DD / 2.0;		/*	Az alabbi ketto pedig a kulso hatarat adja meg a korgyurunek	*/
-	roopH = (rout + scale_height(rout)) + disk_params->DD / 2.0;
+    // --- KRITIKUS JAVÍTÁS: Add hozzá a disk_params-t a scale_height hívásokhoz ---
+    riimH = (rin - scale_height(rin, disk_params)) - disk_params->DD / 2.0;
+    riipH = (rin - scale_height(rin, disk_params)) + disk_params->DD / 2.0;
+    riomH = (rin + scale_height(rin, disk_params)) - disk_params->DD / 2.0;
+    riopH = (rin + scale_height(rin, disk_params)) + disk_params->DD / 2.0;
 
-	for(i = 1; i <= disk_params->NGRID; i++) {
+    roimH = (rout - scale_height(rout, disk_params)) - disk_params->DD / 2.0;
+    roipH = (rout - scale_height(rout, disk_params)) + disk_params->DD / 2.0;
+    roomH = (rout + scale_height(rout, disk_params)) - disk_params->DD / 2.0;
+    roopH = (rout + scale_height(rout, disk_params)) + disk_params->DD / 2.0;
+    // --- KRITIKUS JAVÍTÁS VÉGE ---
 
-		if(sim_opts->dzone == 1) { 
-/*	Ha az r tavolsag a kijelolt hatarok kozott van, akkor az adott valtozo visszakapja r erteket	*/
-			if(rvec[i] > riimH && rvec[i] < riipH) {
-			    	rmid = (disk_params->rvec[i] - disk_params->RMIN)/ disk_params->DD;     						/* 	The integer part of this gives at which index is the body	*/
-				rtemp = (int) floor(rmid + 0.5);						/*	Rounding up (>.5) or down (<.5)					*/
-				*ind_ii = rtemp;
-			}
-				
-/*	Ha az r tavolsag a kijelolt hatarok kozott van, akkor az adott valtozo visszakapja r erteket	*/
-			if(rvec[i] > riomH && rvec[i] < riopH) {
-			    	rmid = (rvec[i] - disk_params->RMIN)/ disk_params->DD;     						/* 	The integer part of this gives at which index is the body	*/
-				rtemp = (int) floor(rmid + 0.5);						/*	Rounding up (>.5) or down (<.5)					*/
-				*ind_io = rtemp;
-			}
-		}
+    // Debug kiírások a számított értékekről (opcionális, de jó az ellenőrzéshez)
+    fprintf(stderr, "DEBUG [find_r_annulus]: rin=%.2e, rout=%.2e\n", rin, rout);
+    fprintf(stderr, "DEBUG [find_r_annulus]: riimH=%.2e, riipH=%.2e, riomH=%.2e, riopH=%.2e\n",
+            riimH, riipH, riomH, riopH);
+    fprintf(stderr, "DEBUG [find_r_annulus]: roimH=%.2e, roipH=%.2e, roomH=%.2e, roopH=%.2e\n",
+            roimH, roipH, roomH, roopH);
 
 
-/*	Ha az r tavolsag a kijelolt hatarok kozott van, akkor az adott valtozo visszakapja r erteket	*/
-		if(rvec[i] > roimH && rvec[i] < roipH) {
-		    	rmid = (rvec[i] - disk_params->RMIN)/ disk_params->DD;     						/* 	The integer part of this gives at which index is the body	*/
-			rtemp = (int) floor(rmid + 0.5);						/*	Rounding up (>.5) or down (<.5)					*/
-			*ind_oi = rtemp;
-		}
-				
-/*	Ha az r tavolsag a kijelolt hatarok kozott van, akkor az adott valtozo visszakapja r erteket	*/
-		if(rvec[i] > roomH && rvec[i] < roopH) {
-		    	rmid = (rvec[i] - disk_params->RMIN)/ disk_params->DD;     						/* 	The integer part of this gives at which index is the body	*/
-			rtemp = (int) floor(rmid + 0.5);						/*	Rounding up (>.5) or down (<.5)					*/
-			*ind_oo = rtemp;
-		}
+    for(i = 1; i <= disk_params->NGRID; i++) {
 
-		if(rvec[i] > roopH) break;
+        if(sim_opts->dzone == 1) {
+            /* Ha az r távolság a kijelölt határok között van, akkor az adott változó visszakapja r értékét */
+            if(rvec[i] > riimH && rvec[i] < riipH) {
+                rmid = (disk_params->rvec[i] - disk_params->RMIN)/ disk_params->DD;
+                rtemp = (int) floor(rmid + 0.5);
+                *ind_ii = rtemp;
+            }
+                
+            /* Ha az r távolság a kijelölt határok között van, akkor az adott változó visszakapja r értékét */
+            if(rvec[i] > riomH && rvec[i] < riopH) {
+                rmid = (rvec[i] - disk_params->RMIN)/ disk_params->DD;
+                rtemp = (int) floor(rmid + 0.5);
+                *ind_io = rtemp;
+            }
+        }
 
-	}
 
+        /* Ha az r távolság a kijelölt határok között van, akkor az adott változó visszakapja r értékét */
+        if(rvec[i] > roimH && rvec[i] < roipH) {
+            rmid = (rvec[i] - disk_params->RMIN)/ disk_params->DD;
+            rtemp = (int) floor(rmid + 0.5);
+            *ind_oi = rtemp;
+        }
+                
+        /* Ha az r távolság a kijelölt határok között van, akkor az adott változó visszakapja r értékét */
+        if(rvec[i] > roomH && rvec[i] < roopH) {
+            rmid = (rvec[i] - disk_params->RMIN)/ disk_params->DD;
+            rtemp = (int) floor(rmid + 0.5);
+            *ind_oo = rtemp;
+        }
+
+        if(rvec[i] > roopH) break;
+
+    }
+    fprintf(stderr, "DEBUG [find_r_annulus]: Kilépés. disk_params címe=%p, FLIND=%.2f, HASP=%.2f\n",
+            (void*)disk_params, disk_params->FLIND, disk_params->HASP);
 }
 
 

@@ -19,7 +19,7 @@ double find_max(double r[][2], int n);
 double find_min(double s1, double s2, double s3);
 
 //counting the number of zero points of the pressure gradient function	
-int find_num_zero(disk_t *disk_params);
+int find_num_zero(const disk_t *disk_params);
 
 //mivel a dp csak diszkret pontokban ismert, ezert 2 pontra illeszt egy egyenest, es megnezi, hogy annak hol lenne 0 az erteke
 //	solving a*x + b = y (here a = r, y = dp)	

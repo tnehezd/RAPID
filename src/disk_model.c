@@ -129,6 +129,8 @@ void Initial_Profile(disk_t *disk_params){		/*	initial profile of sigma		*/
 }
 
 void Initial_Press(disk_t *disk_params){		/*	initial profile of pressure		*/
+    fprintf(stderr, "DEBUG [Initial_Press]: Entry. disk_params address=%p, FLIND=%.2f, HASP=%.2f\n",
+            (void*)disk_params, disk_params->FLIND, disk_params->HASP);
 
   	int i;
   
@@ -141,6 +143,8 @@ void Initial_Press(disk_t *disk_params){		/*	initial profile of pressure		*/
 }
 
 void Initial_dPress(disk_t *disk_params){		/*	initial profile of pressure		*/
+    fprintf(stderr, "DEBUG [Initial_dPress]: Entry. disk_params address=%p, FLIND=%.2f, HASP=%.2f\n",
+            (void*)disk_params, disk_params->FLIND, disk_params->HASP);
 
 	dpress(disk_params);
    	Perem(disk_params->dpressvec,disk_params);
@@ -149,7 +153,9 @@ void Initial_dPress(disk_t *disk_params){		/*	initial profile of pressure		*/
 
 /*	ug vektor feltoltese az u_gas ertekevel	*/
 void Initial_Ugas(disk_t *disk_params){		/*	initial profile of pressure		*/
-	
+      fprintf(stderr, "DEBUG [Initial_Ugas]: Entry. disk_params address=%p, FLIND=%.2f, HASP=%.2f\n",
+            (void*)disk_params, disk_params->FLIND, disk_params->HASP);
+ 	
 	u_gas(disk_params);
   	Perem(disk_params->ugvec,disk_params);
 }
