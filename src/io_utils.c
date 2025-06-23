@@ -113,7 +113,7 @@ void por_be(double radius[][2], double radiusmicr[][2], double *mass, double *ma
 }
 
 
-void sigIn(double *sigma_arr, double *r_arr, const disk_t *disk_params, const char *filename) {
+void sigIn(disk_t *disk_params, const char *filename) {
     const char *input_filename = filename;
 
     FILE *fp = fopen(input_filename, "r");
@@ -158,10 +158,10 @@ void sigIn(double *sigma_arr, double *r_arr, const disk_t *disk_params, const ch
         }
 
         // Adjust index for 1-based indexing in array (if NGRID is 0-based for loops)
-        // Your code uses 1-based indexing for r_arr and sigma_arr
+        // Your code uses 1-based indexing for r_arr and disk_params->sigmavec
         if ((i_read + 1) >= 0 && (i_read + 1) <= disk_params->NGRID) {
-             r_arr[i_read + 1] = r_read;
-             sigma_arr[i_read + 1] = repmass_pop1_read + repmass_pop2_read;
+             disk_params->rvec[i_read + 1] = r_read;
+             disk_params->sigmavec[i_read + 1] = repmass_pop1_read + repmass_pop2_read;
         } else {
             fprintf(stderr, "WARNING [sigIn]: Skipping data for out-of-bounds index %d.\n", i_read);
         }

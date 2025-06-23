@@ -476,19 +476,19 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
 
 
                     if(t==0) {
-                        fprintf(stderr, "DEBUG [tIntegrate]: Initializing mass for t=0.\n");
+//                        fprintf(stderr, "DEBUG [tIntegrate]: Initializing mass for t=0.\n");
 /* A részecskék tömegét tartalmazó tömb inicializálása */
                         Count_Mass(radius,partmassind,massvec,t,PARTICLE_NUMBER,disk_params);
                         if(sim_opts->twopop==1) Count_Mass(radiusmicr,partmassmicrind,massmicrvec,t,PARTICLE_NUMBER,disk_params);
                         if(sim_opts->twopop==1) Count_Mass(radiussec,partmasssecind,masssecvec,t,4*PARTICLE_NUMBER,disk_params);
-                        fprintf(stderr, "DEBUG [tIntegrate]: Count_Mass completed for t=0.\n");
+//                        fprintf(stderr, "DEBUG [tIntegrate]: Count_Mass completed for t=0.\n");
 
 /* Ha van tömegnövekedés, akkor a por felületsűrűségének kiszámolása itt történik */
                         if(sim_opts->growth == 1.) {
-                            fprintf(stderr, "DEBUG [tIntegrate]: sim_opts->growth is ON. Calling Get_Sigmad for t=0.\n");
+//                            fprintf(stderr, "DEBUG [tIntegrate]: sim_opts->growth is ON. Calling Get_Sigmad for t=0.\n");
                             // JAVÍTVA: A Get_Sigmad függvény paraméterezése
                             Get_Sigmad(max, min, radius, radiusmicr, radiussec, sigmad, sigmadm, sigmads, massvec, massmicrvec, masssecvec, rdvec, rmicvec, rsvec, sim_opts, disk_params);
-                            fprintf(stderr, "DEBUG [tIntegrate]: Get_Sigmad completed for t=0.\n");
+//                             fprintf(stderr, "DEBUG [tIntegrate]: Get_Sigmad completed for t=0.\n");
                         }
                     }
 

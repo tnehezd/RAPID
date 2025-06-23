@@ -281,7 +281,7 @@ int main(int argc, const char **argv) {
     // the path to FILENAME_INIT_PROFILE in initial_dir_path.
     fprintf(stderr, "DEBUG [main]: Loading initial profile from '%s'.\n", current_inputsig_file);
     fprintf(stderr, "DEBUG [main]: Calling sigIn(disk_params.sigmavec, disk_params.rvec, &disk_params, '%s')...\n", current_inputsig_file);
-    sigIn(disk_params.sigmavec, disk_params.rvec, &disk_params, current_inputsig_file);
+    sigIn(&disk_params, current_inputsig_file);
     fprintf(stderr, "DEBUG [main]: sigIn completed. Calling Perem for disk_params.rvec and disk_params.sigmavec...\n");
     Perem(disk_params.rvec,&disk_params);
     Perem(disk_params.sigmavec,&disk_params);

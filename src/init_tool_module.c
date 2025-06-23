@@ -97,7 +97,7 @@ static long double calculate_sigma0_from_disk_mass(init_tool_options_t *init_opt
 
 // Calculates gas surface density at radial position r [M_Sun / AU / AU].
 static long double calculate_gas_surface_density(double r_au, init_tool_options_t *init_opts, long double current_sigma0) {
-    return current_sigma0 * pow(r_au, -init_opts->sigma_exponent);
+    return current_sigma0 * pow(r_au, init_opts->sigma_exponent);
 }
 
 // Calculates dust surface density at radial position r [M_Sun / AU / AU].

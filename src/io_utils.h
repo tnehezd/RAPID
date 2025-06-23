@@ -21,7 +21,7 @@ int reszecskek_szama(const char *filenev);
 void por_be(double radius[][2], double radiusmicr[][2], double *mass, double *massmicr, const char *filename);
 
 /* A sigmat tartalmazo file parametereinek beolvasasa */
-void sigIn(double *sigma_arr, double *r_arr, const disk_t *disk_params, const char *filename);
+void sigIn(disk_t *disk_params, const char *filename);
 
 /* Fuggveny az adott futashoz mappa letrehozasara */
 void Mk_Dir(const char *dir_path);

@@ -445,10 +445,12 @@ void Get_Radius(const char *nev, int opt, double radius[][2], const double *sigm
 
 			int_step(t, particle_radius, sigmad, rdvec, deltat, y, &y_out, &prad_new, disk_params, sim_opts);
             if (t == 0) {
-                if (opt == 0) {
+                if (sim_opts->twopop == 0) {
                     double current_drdt_val = (fabs(y_out - y) / (deltat));
                     // Azért kell a critical szekció, mert az fout2 fájlba írunk.
                     // Ez a critical szekció biztosítja, hogy egyszerre csak egy szál írjon a fájlba.
+                    printf("DEBUG: [dust_physics/Get_Radius]: y: %lg y_out: %lg, dt: %lg\n",y,y_out,current_drdt_val);
+
                     #pragma omp critical(fout2_write)
                     {
                         // Ellenőrizzük, hogy a fájlmutató nem NULL
@@ -461,10 +463,10 @@ void Get_Radius(const char *nev, int opt, double radius[][2], const double *sigm
                 }
             }
 
-            if (opt != 1) { // Ha növekedés engedélyezett vagy valami más mód
+            if (sim_opts->twopop != 1) { // Ha növekedés engedélyezett vagy valami más mód
                 radius[i][1] = prad_new;
                 radius[i][0] = y_out;
-            } else { // opt == 1, csak drift
+            } else { // sim_opts->twopop == 1, csak drift
                 radius[i][0] = y_out;
             }
         } else {
