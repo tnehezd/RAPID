@@ -19,9 +19,6 @@
 // Function declaration for default init_tool options, assuming it's in init_tool_module.h
 extern void create_default_init_tool_options(init_tool_options_t *def);
 
-// Assuming FILENAME_INIT_PROFILE, FILENAME_DISK_PARAM, CONFIG_DIR, LOGS_DIR, INITIAL_SURFACE_DENSITY_FILE
-// are external from config.h or config.c
-// (as defined in your config.c/h)
 
 int main(int argc, const char **argv) {
     // DEBUG: Program start
@@ -43,6 +40,8 @@ int main(int argc, const char **argv) {
     init_tool_options_t init_tool_params;
     // Set default values for init_tool. This is useful if 'def' doesn't override all of them.
     create_default_init_tool_options(&init_tool_params);
+
+
 //    fprintf(stderr, "DEBUG [main]: Default init_tool options created.\n");
 
 
@@ -91,7 +90,6 @@ int main(int argc, const char **argv) {
     // --- END CRITICAL ADDITION ---
 
 
-
 /*    fprintf(stderr, "DEBUG [main]: sim_opts structure populated (including output_dir_name).\n");
     fprintf(stderr, "DEBUG [main]:   evol=%.2f, drift=%.2f, growth=%.2f, twopop=%.2f, \n",
             sim_opts.evol, sim_opts.drift, sim_opts.growth, sim_opts.twopop);
@@ -138,6 +136,8 @@ int main(int argc, const char **argv) {
 //    fprintf(stderr, "DEBUG [main]: Creating main output directory: '%s'.\n", def.output_dir_name);
     Mk_Dir(def.output_dir_name); // Creates the main output folder
 
+    strncpy(sim_opts.output_dir_name, def.output_dir_name, MAX_PATH_LEN - 1);
+    sim_opts.output_dir_name[MAX_PATH_LEN - 1] = '\0';
 
     char initial_dir_path[MAX_PATH_LEN]; // Using MAX_PATH_LEN for consistency
     char logs_dir_path[MAX_PATH_LEN];    // Using MAX_PATH_LEN for consistency
@@ -146,13 +146,13 @@ int main(int argc, const char **argv) {
     snprintf(initial_dir_path, sizeof(initial_dir_path), "%s/%s", def.output_dir_name, CONFIG_DIR);
 //    fprintf(stderr, "DEBUG [main]: Creating initial files directory: '%s'.\n", initial_dir_path);
     Mk_Dir(initial_dir_path);
-    return 0;
+
     // Create the 'LOGS' subdirectory using LOGS_DIR
     snprintf(logs_dir_path, sizeof(logs_dir_path), "%s/%s", def.output_dir_name, LOGS_DIR);
-    fprintf(stderr, "DEBUG [main]: Creating LOGS directory: '%s'.\n", logs_dir_path);
+//    fprintf(stderr, "DEBUG [main]: Creating LOGS directory: '%s'.\n", logs_dir_path);
     Mk_Dir(logs_dir_path);
 
-    fprintf(stderr, "DEBUG [main]: Output subdirectories created.\n");
+    fprintf(stderr, "Output subdirectories created.\n");
 
     int dummy_sys_ret; // Dummy variable for system() call return value
     char cmd_buffer[MAX_PATH_LEN * 2]; // Buffer for system commands, needs to accommodate two paths and "cp "
