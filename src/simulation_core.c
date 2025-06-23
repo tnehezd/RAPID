@@ -155,23 +155,23 @@ void int_step(double time, double prad, const double *sigmad, const double *rdve
 
 void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, output_files_t *output_files) {
 
-    printf("DEBUG [tIntegrate]: Starting main integration loop.\n");
+//    printf("DEBUG [tIntegrate]: Starting main integration loop.\n");
 
-    fprintf(stderr, "DEBUG [tIntegrate]: Function entry. disk_params address=%p, sim_opts address=%p\n",
-            (void*)disk_params, (void*)sim_opts);
-    fprintf(stderr, "DEBUG [tIntegrate]:   sim_opts->output_dir_name = '%s'\n", sim_opts->output_dir_name);
-    fprintf(stderr, "DEBUG [tIntegrate]:   disk_params->FLIND = %.2f, disk_params->HASP = %.2f\n",
-            disk_params->FLIND, disk_params->HASP);
+//   fprintf(stderr, "DEBUG [tIntegrate]: Function entry. disk_params address=%p, sim_opts address=%p\n",
+//            (void*)disk_params, (void*)sim_opts);
+//    fprintf(stderr, "DEBUG [tIntegrate]:   sim_opts->output_dir_name = '%s'\n", sim_opts->output_dir_name);
+//    fprintf(stderr, "DEBUG [tIntegrate]:   disk_params->FLIND = %.2f, disk_params->HASP = %.2f\n",
+//            disk_params->FLIND, disk_params->HASP);
     int linesout = 0; // Ez a változó fogja tárolni a beolvasott sorok számát
 
     // A globális PARTICLE_NUMBER változó beállítása a szimulációs opciók alapján
     if(sim_opts->drift == 1.) {
-        printf("DEBUG [tIntegrate]: Particle drift is ON. Counting particles from %s.\n", sim_opts->input_filename);
+//        printf("DEBUG [tIntegrate]: Particle drift is ON. Counting particles from %s.\n", sim_opts->input_filename);
         // Itt adjuk át a `linesout` VÁLTOZÓ CÍMÉT és az input fájl nevét
         PARTICLE_NUMBER = reszecskek_szama(sim_opts->input_filename);
-        printf("DEBUG [tIntegrate]: PARTICLE_NUMBER set to %d. Lines read: %d.\n", PARTICLE_NUMBER, linesout);
+//        printf("DEBUG [tIntegrate]: PARTICLE_NUMBER set to %d. Lines read: %d.\n", PARTICLE_NUMBER, linesout);
     } else {
-        printf("DEBUG [tIntegrate]: Particle drift is OFF. PARTICLE_NUMBER set to 0.\n");
+//        printf("DEBUG [tIntegrate]: Particle drift is OFF. PARTICLE_NUMBER set to 0.\n");
         PARTICLE_NUMBER = 0;
     }
 
@@ -222,9 +222,9 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
             fprintf(stderr, "ERROR: Memory allocation failed in tIntegrate!\n");
             exit(EXIT_FAILURE);
         }
-        printf("DEBUG [tIntegrate]: Particle arrays dynamically allocated. Size based on PARTICLE_NUMBER: %d\n", PARTICLE_NUMBER);
+//        printf("DEBUG [tIntegrate]: Particle arrays dynamically allocated. Size based on PARTICLE_NUMBER: %d\n", PARTICLE_NUMBER);
     } else {
-        printf("DEBUG [tIntegrate]: PARTICLE_NUMBER is 0. No particle arrays allocated.\n");
+//        printf("DEBUG [tIntegrate]: PARTICLE_NUMBER is 0. No particle arrays allocated.\n");
     }
 
     double max = 0.0, min = 0.0, max2 = 0.0, min2 = 0.0;
@@ -242,7 +242,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
 
 /* A reszecskek adatainak beolvasasa file-bol, ha az optdr erteke 1, egyebkent nem szamol a program driftet */
     if(sim_opts->drift == 1.) {
-        fprintf(stderr, "DEBUG [tIntegrate]: Reading particle data from file.\n");
+//        fprintf(stderr, "DEBUG [tIntegrate]: Reading particle data from file.\n");
         // Feltételezzük, hogy a por_be vagy globálisan éri el, vagy kap paramétert.
         // Ha kap paramétert, így kellene: por_be(radius, radiusmicr, massvec, massmicrvec, sim_opts->input_filename);
         por_be(radius,radiusmicr,massvec,massmicrvec, sim_opts->input_filename);    /* porreszecskek adatainak beolvasasa */
@@ -252,22 +252,22 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
         snprintf(mv, sizeof(mv),"cp %s %s/",sim_opts->input_filename, sim_opts->output_dir_name); /* az adott helyre, ahova eppen menti a futast eredmenyeit a program, a porreszecskek adatait tartalmazo file atmasolasa, igy kesobb is visszanezheto, hogy mik voltak a kezdeti adatok */
         dummy = system(mv);     /* itt masolja at a file-t */
         (void)dummy; // Suppress unused variable warning
-        fprintf(stderr, "DEBUG [tIntegrate]: Copied %s to %s/\n", sim_opts->input_filename, sim_opts->output_dir_name);
+//        fprintf(stderr, "DEBUG [tIntegrate]: Copied %s to %s/\n", sim_opts->input_filename, sim_opts->output_dir_name);
 
 
-/* az aktualis mappaban a pormozgas.dat file letrehozasa: ebbe kerul be a porreszecske tavolsaga es indexe, valamint az adott idolepes */
-        snprintf(porout,MAX_PATH_LEN,"%s/pormozgas.dat",sim_opts->output_dir_name);
+/* az aktualis mappaban a dust_particle_evolution.dat file letrehozasa: ebbe kerul be a porreszecske tavolsaga es indexe, valamint az adott idolepes */
+        snprintf(porout,MAX_PATH_LEN,"%s/%s/dust_particle_evolution.dat",sim_opts->output_dir_name,LOGS_DIR);
 /* ha 2 populacios a futas, akkor a mikronos pornak is letrehoz egy pormozgas file-t, ebbe kerul be a tavolsag, index es az ido */
         if(sim_opts->twopop == 1.) {
-            snprintf(poroutmicr,MAX_PATH_LEN,"%s/%s/%s",LOGS_DIR,sim_opts->output_dir_name, output_files->micron_motion_file);
+            snprintf(poroutmicr,MAX_PATH_LEN,"%s/%s/%s",sim_opts->output_dir_name, LOGS_DIR, output_files->micron_motion_file);
         }
 /* tomegnovekedesi file letrehozasa az aktualis mappaba - ez lehet, hogy egy kulon opcio lesz a kimeneti adatok meretenek csokkentesere  */
         
-        // --- MÓDOSÍTÁS: mass.dat a LOGS mappába ---
-        snprintf(massout,MAX_PATH_LEN,"%s/LOGS/mass.dat",sim_opts->output_dir_name);
+        // --- MÓDOSÍTÁS: mass_accumulation_dze_edge.dat a LOGS mappába ---
+        snprintf(massout,MAX_PATH_LEN,"%s/%s/mass_accumulation_dze_edge.dat",sim_opts->output_dir_name,LOGS_DIR);
         // --- MÓDOSÍTÁS VÉGE ---
 
-        printf("DEBUG [tIntegrate]: Opening output files: %s, %s (if 2pop), %s\n", porout, poroutmicr, massout);
+//        printf("DEBUG [tIntegrate]: Opening output files: %s, %s (if 2pop), %s\n", porout, poroutmicr, massout);
 
         output_files->por_motion_file = fopen(porout,"w");
         if (output_files->por_motion_file == NULL) { fprintf(stderr, "ERROR: Could not open %s\n", porout); /*exit(EXIT_FAILURE);*/ }
@@ -280,7 +280,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
         output_files->mass_file = fopen(massout,"w");
         if (output_files->mass_file == NULL) { fprintf(stderr, "ERROR: Could not open %s\n", massout); /*exit(EXIT_FAILURE);*/ }
 
-        // Fejléc írása a mass.dat fájlba
+        // Fejléc írása a mass_accumulation_dze_edge.dat fájlba
         if (output_files->mass_file != NULL) {
             fprintf(output_files->mass_file, "# This file contains the time evolution of dust mass within specified disk regions.\n");
             fprintf(output_files->mass_file, "#\n");
@@ -318,7 +318,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
 
     // A secondary particles inicializálása
     if (PARTICLE_NUMBER > 0) {
-        printf("DEBUG [tIntegrate]: Initializing secondary particle arrays (size 4*PARTICLE_NUMBER = %d).\n", 4 * PARTICLE_NUMBER);
+//        printf("DEBUG [tIntegrate]: Initializing secondary particle arrays (size 4*PARTICLE_NUMBER = %d).\n", 4 * PARTICLE_NUMBER);
         for(i = 0; i < 4*PARTICLE_NUMBER; i++) {
             radiussec[i][0] = 0;
             radiussec[i][1] = 0;
@@ -331,7 +331,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
 
         // Ha nincs két populáció, a mikronos részecsketömbök nullázása
         if(sim_opts->twopop == 0) {
-            printf("DEBUG [tIntegrate]: Two-population simulation is OFF. Initializing micron particle arrays to zero.\n");
+//            printf("DEBUG [tIntegrate]: Two-population simulation is OFF. Initializing micron particle arrays to zero.\n");
             for(i = 0; i < PARTICLE_NUMBER; i++) {
                 radiusmicr[i][0] = 0;
                 radiusmicr[i][1] = 0;
@@ -348,9 +348,9 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
 /* Ha van drift: */
         if(sim_opts->drift == 1.) {
             if(sim_opts->twopop == 1) {
-                printf("DEBUG [tIntegrate]: sim_opts->twopop is ON. Calling secondaryGrowth.\n");
+//                printf("DEBUG [tIntegrate]: sim_opts->twopop is ON. Calling secondaryGrowth.\n");
                 secondaryGrowth(radius,radiusmicr,radiussec,partmassmicrind,partmasssecind,massmicrvec,masssecvec,disk_params);
-                printf("DEBUG [tIntegrate]: secondaryGrowth completed.\n");
+//                printf("DEBUG [tIntegrate]: secondaryGrowth completed.\n");
             }
 /* A minimum kereseshez letrehozza a cm-es reszecskek tavolsaganak reciprokat */
             for (i=0; i < PARTICLE_NUMBER; i++) {
@@ -397,33 +397,33 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                 if((fmod(time, (sim_opts->TMAX/sim_opts->WO)) < deltat || time == 0) && L-time < deltat){ // TMAX és WO a sim_opts-ból
                     printf("\n--- Simulation Time: %.2e years (Internal time: %.2e, L: %.2e) ---\n", time, t, L);
 
-                    printf("DEBUG [tIntegrate]: Outputting data at time %.2e. L=%.2e\n", time, L);
+//                    printf("DEBUG [tIntegrate]: Outputting data at time %.2e. L=%.2e\n", time, L);
 
 /* Az adatok kiirasahoz szukseges file-ok neveinek elmentese */
                     if (t==0) {
                         // --- MÓDOSÍTÁS: surface.dat a LOGS mappába ---
-                        snprintf(dens_name,MAX_PATH_LEN,"%s/initial/%s",sim_opts->output_dir_name,INITIAL_SURFACE_DENSITY_FILE);
+                        snprintf(dens_name,MAX_PATH_LEN,"%s/%s/%s",sim_opts->output_dir_name,CONFIG_DIR,INITIAL_SURFACE_DENSITY_FILE);
                         // --- MÓDOSÍTÁS VÉGE ---
-                        printf("DEBUG [tIntegrate]: Outputting surface.dat for t=0.\n");
+//                        printf("DEBUG [tIntegrate]: Outputting surface.dat for t=0.\n");
                     } else {
                         if(sim_opts->evol == 1) {
                             // --- MÓDOSÍTÁS: dens.X.dat a LOGS mappába (8 vezető nullával) ---
-                            snprintf(dens_name,MAX_PATH_LEN,"%s/LOGS/dens_%08d.dat",sim_opts->output_dir_name,(int)L);
+                            snprintf(dens_name,MAX_PATH_LEN,"%s/%s/density_profile_%08d.dat",sim_opts->output_dir_name,LOGS_DIR,(int)L);
                             // --- MÓDOSÍTÁS VÉGE ---
-                            printf("DEBUG [tIntegrate]: Outputting dens_%08d.dat.\n", (int)L);
+//                            printf("DEBUG [tIntegrate]: Outputting dens_%08d.dat.\n", (int)L);
                         }
                     }
 
                     // --- MÓDOSÍTÁS: dust.X.dat és dustmic.X.dat a LOGS mappába ---
-                    snprintf(dust_name,MAX_PATH_LEN,"%s/LOGS/dust.%i.dat",sim_opts->output_dir_name,(int)L);
-                    snprintf(dust_name2,MAX_PATH_LEN,"%s/LOGS/dustmic.%i.dat",sim_opts->output_dir_name,(int)L);
+                    snprintf(dust_name,MAX_PATH_LEN,"%s/%s/dust.%i.dat",sim_opts->output_dir_name,LOGS_DIR,(int)L);
+                    snprintf(dust_name2,MAX_PATH_LEN,"%s/%s/dustmic.%i.dat",sim_opts->output_dir_name,LOGS_DIR,(int)L);
                     // --- MÓDOSÍTÁS VÉGE ---
 
                     // --- MÓDOSÍTÁS: size.X.dat a LOGS mappába ---
-                    snprintf(size_name,MAX_PATH_LEN,"%s/LOGS/size.%d.dat",sim_opts->output_dir_name,(int)L);
+                    snprintf(size_name,MAX_PATH_LEN,"%s/%s/size.%d.dat",sim_opts->output_dir_name,LOGS_DIR,(int)L);
                     // --- MÓDOSÍTÁS VÉGE ---
 
-                    printf("DEBUG [tIntegrate]: Output file names set: dust.dat, dustmic.dat, size.dat.\n");
+//                    printf("DEBUG [tIntegrate]: Output file names set: dust.dat, dustmic.dat, size.dat.\n");
 
                     // *******************************************************************
                     // FÁJLOK MEGNYITÁSA AZ ADATKIÍRÁSHOZ
@@ -433,7 +433,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                         fprintf(stderr, "ERROR: Could not open %s for writing.\n", dens_name);
                         // exit(EXIT_FAILURE); // Fontos lehet!
                     } else {
-                        fprintf(stderr, "DEBUG [tIntegrate]: Opened %s for writing.\n", dens_name);
+//                        fprintf(stderr, "DEBUG [tIntegrate]: Opened %s for writing.\n", dens_name);
                         // FEJLÉC Hozzáadása ide
                         fprintf(output_files->surface_file, "# Disk Profile Data (Gas Surface Density, Pressure, Gradient)\n");
                         fprintf(output_files->surface_file, "# Columns: 1. Radius [AU], 2. Sigma_gas [M_Sun/AU^2],\n");
@@ -448,7 +448,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                         fprintf(stderr, "ERROR: Could not open %s for writing.\n", dust_name);
                         // exit(EXIT_FAILURE); // Fontos lehet!
                     } else {
-                        fprintf(stderr, "DEBUG [tIntegrate]: Opened %s for writing.\n", dust_name);
+//                        fprintf(stderr, "DEBUG [tIntegrate]: Opened %s for writing.\n", dust_name);
                     }
 
                     if(sim_opts->twopop == 1.) {
@@ -457,7 +457,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                             fprintf(stderr, "ERROR: Could not open %s for writing.\n", dust_name2);
                             // exit(EXIT_FAILURE); // Fontos lehet!
                         } else {
-                            fprintf(stderr, "DEBUG [tIntegrate]: Opened %s for writing.\n", dust_name2);
+//                            fprintf(stderr, "DEBUG [tIntegrate]: Opened %s for writing.\n", dust_name2);
                         }
                     }
 
@@ -467,7 +467,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                         fprintf(stderr, "ERROR: Could not open %s for writing.\n", size_name);
                         // exit(EXIT_FAILURE); // Fontos lehet!
                     } else {
-                        fprintf(stderr, "DEBUG [tIntegrate]: Opened %s for writing.\n", size_name);
+//                        fprintf(stderr, "DEBUG [tIntegrate]: Opened %s for writing.\n", size_name);
                     }
                     // *******************************************************************
                     // FÁJL MEGNYITÁS VÉGE
@@ -475,34 +475,34 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
 
 
                     if(t==0) {
-                        printf("DEBUG [tIntegrate]: Initializing mass for t=0.\n");
+//                        printf("DEBUG [tIntegrate]: Initializing mass for t=0.\n");
 /* A reszecskek tomeget tartalmazo tomb inicializalasa  */
                         Count_Mass(radius,partmassind,massvec,t,PARTICLE_NUMBER,disk_params);
                         if(sim_opts->twopop==1) Count_Mass(radiusmicr,partmassmicrind,massmicrvec,t,PARTICLE_NUMBER,disk_params);
                         if(sim_opts->twopop==1) Count_Mass(radiussec,partmasssecind,masssecvec,t,4*PARTICLE_NUMBER,disk_params);
-                        printf("DEBUG [tIntegrate]: Count_Mass completed for t=0.\n");
+//                        printf("DEBUG [tIntegrate]: Count_Mass completed for t=0.\n");
 
 /* Ha van tomegnovekedes, akkor a por feluletisurusegenek kiszamolasa itt tortenik */
                         if(sim_opts->growth == 1.) {
-                            printf("DEBUG [tIntegrate]: sim_opts->growth is ON. Calling Get_Sigmad for t=0.\n");
+//                            printf("DEBUG [tIntegrate]: sim_opts->growth is ON. Calling Get_Sigmad for t=0.\n");
                             Get_Sigmad(max,min,radius,radiusmicr,radiussec,sigmad,sigmadm,sigmads,massvec,massmicrvec,masssecvec,rdvec,rmicvec,rsvec,sim_opts,disk_params);
                             
-                            printf("DEBUG [tIntegrate]: Get_Sigmad completed for t=0.\n");
+//                            printf("DEBUG [tIntegrate]: Get_Sigmad completed for t=0.\n");
                         }
                     }
 
 /* A sigma, p, dp kiirasa egy file-ba */
                     if(sim_opts->evol == 1 || time == 0) {
-                        printf("DEBUG [tIntegrate]: Calling Print_Sigma.\n");
+//                        printf("DEBUG [tIntegrate]: Calling Print_Sigma.\n");
                         Print_Sigma(disk_params, output_files);
-                        printf("DEBUG [tIntegrate]: Print_Sigma completed.\n");
+//                        printf("DEBUG [tIntegrate]: Print_Sigma completed.\n");
                     }
 
 /* Ha szamol a futas driftet, itt irja ki a reszecskek tavolsagat es meretet */
                     if(sim_opts->drift == 1) {
-                        printf("DEBUG [tIntegrate]: sim_opts->drift is ON. Calling Print_Pormozg_Size.\n");
+//                        printf("DEBUG [tIntegrate]: sim_opts->drift is ON. Calling Print_Pormozg_Size.\n");
                         Print_Pormozg_Size(size_name, (int)L, radius, radiusmicr, disk_params, sim_opts, output_files);
-                        printf("DEBUG [tIntegrate]: Print_Pormozg_Size completed.\n");
+//                        printf("DEBUG [tIntegrate]: Print_Pormozg_Size completed.\n");
                     }
 
 /* A tomegnovekedesi file-ba az adatok kiirasa */
@@ -510,26 +510,26 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                     massmtempiout = 0;
                     masstempoout = 0;
                     massmtempoout = 0;
-                    printf("DEBUG [tIntegrate]: Calling Print_Mass.\n");
+//                    printf("DEBUG [tIntegrate]: Calling Print_Mass.\n");
                     Print_Mass(L, disk_params->rvec, partmassind, partmassmicrind, partmasssecind, disk_params->dpressvec, masstempiin, masstempoin,massmtempiin, massmtempoin, &masstempiout, &masstempoout, &massmtempiout, &massmtempoout,&tavin, &tavout, disk_params, sim_opts, output_files);
-                    printf("DEBUG [tIntegrate]: Print_Mass completed. Outputs: masstempiout=%.2e, massmtempiout=%.2e\n", masstempiout, massmtempiout);
+//                    printf("DEBUG [tIntegrate]: Print_Mass completed. Outputs: masstempiout=%.2e, massmtempiout=%.2e\n", masstempiout, massmtempiout);
 
                     if(disk_params->r_dze_i != tavin) { // r_dze_i a disk_params-ból
                         masstempiin = masstempiout;
                         massmtempiin = massmtempiout;
-                        printf("DEBUG [tIntegrate]: r_dze_i (%.2f) != tavin (%.2f). Updating masstempiin/massmtempiin.\n", disk_params->r_dze_i, tavin);
+//                        printf("DEBUG [tIntegrate]: r_dze_i (%.2f) != tavin (%.2f). Updating masstempiin/massmtempiin.\n", disk_params->r_dze_i, tavin);
                     }
                     if(disk_params->r_dze_o != tavout) { // r_dze_o a disk_params-ból
                         masstempoin = masstempoout;
                         massmtempoin = massmtempoout;
-                        printf("DEBUG [tIntegrate]: r_dze_o (%.2f) != tavout (%.2f). Updating masstempoin/massmtempoin.\n", disk_params->r_dze_o, tavout);
+//                        printf("DEBUG [tIntegrate]: r_dze_o (%.2f) != tavout (%.2f). Updating masstempoin/massmtempoin.\n", disk_params->r_dze_o, tavout);
                     }
 
 /* Ha van pornovekedes, kiirja a por felultisuruseget egy file-ba --> a pornovekedeshez szukseges egyaltalan ezt kiszamolni! */
                     if(sim_opts->growth == 1.) {
-                        printf("DEBUG [tIntegrate]: sim_opts->growth is ON. Calling Print_Sigmad.\n");
+//                        printf("DEBUG [tIntegrate]: sim_opts->growth is ON. Calling Print_Sigmad.\n");
                         Print_Sigmad(rdvec, rmicvec, sigmad, sigmadm, disk_params, sim_opts, output_files);
-                        printf("DEBUG [tIntegrate]: Print_Sigmad completed.\n");
+//                        printf("DEBUG [tIntegrate]: Print_Sigmad completed.\n");
                     }
 
                     L = L+(double)(sim_opts->TMAX/sim_opts->WO); // TMAX és WO a sim_opts-ból
@@ -606,14 +606,14 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                 printf("DEBUG [tIntegrate]: Outputting data for gas-only simulation at time %.2e. L=%.2e\n", time, L);
                 if (t==0) {
                     // --- MÓDOSÍTÁS: surface.dat a LOGS mappába (gáz-only ág) ---
-                    snprintf(dens_name,MAX_PATH_LEN,"%s/LOGS/surface.dat",sim_opts->output_dir_name);
+                    snprintf(dens_name,MAX_PATH_LEN,"%s/%s/%s",sim_opts->output_dir_name,LOGS_DIR,INITIAL_SURFACE_DENSITY_FILE);
                     // --- MÓDOSÍTÁS VÉGE ---
                     printf("DEBUG [tIntegrate]: Outputting surface.dat for t=0.\n");
                 } else {
                     // --- MÓDOSÍTÁS: dens.X.dat a LOGS mappába (gáz-only ág, 8 vezető nullával) ---
-                    snprintf(dens_name,MAX_PATH_LEN,"%s/LOGS/dens.%08d.dat",sim_opts->output_dir_name,(int)L);
+                    snprintf(dens_name,MAX_PATH_LEN,"%s/%s/density_profile_%08d.dat",sim_opts->output_dir_name,LOGS_DIR,(int)L);
                     // --- MÓDOSÍTÁS VÉGE ---
-                    printf("DEBUG [tIntegrate]: Outputting dens.%08d.dat.\n", (int)L);
+//                    printf("DEBUG [tIntegrate]: Outputting dens.%08d.dat.\n", (int)L);
                 }
 
                 // Ebben az ágban feltételezzük, hogy a Print_Sigma maga kezeli a fájl megnyitását/bezárását.
@@ -684,15 +684,15 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
     // Fájlok bezárása, amelyek az integrációs ciklus elején nyíltak meg (egyszer).
     if (output_files->por_motion_file != NULL) {
         fclose(output_files->por_motion_file);
-        fprintf(stderr, "DEBUG [tIntegrate]: Closed pormozgas.dat\n");
+//        fprintf(stderr, "DEBUG [tIntegrate]: Closed dust_particle_evolution.dat\n");
     }
     if (sim_opts->twopop == 1 && output_files->micron_motion_file != NULL) {
         fclose(output_files->micron_motion_file);
-        fprintf(stderr, "DEBUG [tIntegrate]: Closed pormozgasmic.dat\n");
+//        fprintf(stderr, "DEBUG [tIntegrate]: Closed pormozgasmic.dat\n");
     }
     if (output_files->mass_file != NULL) {
         fclose(output_files->mass_file);
-        fprintf(stderr, "DEBUG [tIntegrate]: Closed mass.dat\n");
+        fprintf(stderr, "DEBUG [tIntegrate]: Closed mass_accumulation_dze_edge.dat\n");
     }
     // Az itt bezárandó fájlok listájából KIVETTÜK a surface/dens, dust, size fájlokat,
     // mivel azok már be lettek zárva minden iteráció végén a ciklusban.
@@ -703,23 +703,23 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
 
 
 void secondaryGrowth(double rad[][2], double radmicr[][2], double radsec[][2], double partmicind[][4], double partsecind[][4], double *massmicvec, double *masssecvec, const disk_t *disk_params) {
-    printf("DEBUG [secondaryGrowth]: Entering secondaryGrowth function.\n");
-    fprintf(stderr, "DEBUG [secondaryGrowth]: Function entry. disk_params address=%p\n", (void*)disk_params);
-    fprintf(stderr, "DEBUG [secondaryGrowth]:   disk_params->FLIND = %.2f, disk_params->HASP = %.2f\n",
-            disk_params->FLIND, disk_params->HASP);
+//    printf("DEBUG [secondaryGrowth]: Entering secondaryGrowth function.\n");
+//    fprintf(stderr, "DEBUG [secondaryGrowth]: Function entry. disk_params address=%p\n", (void*)disk_params);
+//    fprintf(stderr, "DEBUG [secondaryGrowth]:   disk_params->FLIND = %.2f, disk_params->HASP = %.2f\n",
+//            disk_params->FLIND, disk_params->HASP);
 
     int i, j; //, k=0;
     int step = 0;
     double temp[PARTICLE_NUMBER], temp2[4*PARTICLE_NUMBER], tempmic[PARTICLE_NUMBER], temp2ch1[PARTICLE_NUMBER], temp2ch2[PARTICLE_NUMBER], temp2ch3[PARTICLE_NUMBER], temp2ch4[PARTICLE_NUMBER];
     int hist[PARTICLE_NUMBER], histmic[PARTICLE_NUMBER];
-    printf("DEBUG [secondaryGrowth]: Declared local arrays (hist, temp, etc.) based on PARTICLE_NUMBER: %d.\n", PARTICLE_NUMBER);
+//    printf("DEBUG [secondaryGrowth]: Declared local arrays (hist, temp, etc.) based on PARTICLE_NUMBER: %d.\n", PARTICLE_NUMBER);
 
 /*	A porszemcse generalo program gridfelbontasa -- nem feltetlen egyezik meg a jelenlegi gridfelbontassal!	*/
     double dd = (disk_params->RMAX - disk_params->RMIN) / (PARTICLE_NUMBER-1), rtempvec[PARTICLE_NUMBER];
     double temptemp[4*PARTICLE_NUMBER], masstemp[4*PARTICLE_NUMBER][2], sizetemp[4*PARTICLE_NUMBER],mtp[4*PARTICLE_NUMBER], indtemp[4*PARTICLE_NUMBER][2];
-    printf("DEBUG [secondaryGrowth]: Calculated dd=%.2e based on RMAX=%.2f, RMIN=%.2f, PARTICLE_NUMBER=%d.\n", dd, disk_params->RMAX, disk_params->RMIN, PARTICLE_NUMBER);
+//    printf("DEBUG [secondaryGrowth]: Calculated dd=%.2e based on RMAX=%.2f, RMIN=%.2f, PARTICLE_NUMBER=%d.\n", dd, disk_params->RMAX, disk_params->RMIN, PARTICLE_NUMBER);
 
-    printf("DEBUG [secondaryGrowth]: Initializing radsec, partsecind, masssecvec, sizetemp, mtp, indtemp arrays.\n");
+//    printf("DEBUG [secondaryGrowth]: Initializing radsec, partsecind, masssecvec, sizetemp, mtp, indtemp arrays.\n");
     for(i=0; i < 4*PARTICLE_NUMBER; i++) {	
         temp2[i] = radsec[i][0];			// masodlagosan novesztett porszemcsek tavolsaga
         sizetemp[i] = radsec[i][1];
@@ -730,9 +730,9 @@ void secondaryGrowth(double rad[][2], double radmicr[][2], double radsec[][2], d
         if(temp2[i] != 0) step++;			// megszamolja, hogy hany novesztett reszecske van a fuggvenybe valo belepeskor
         indtemp[i][0] = partsecind[i][3];
     }
-    printf("DEBUG [secondaryGrowth]: Initial step (count of existing secondary particles) = %d.\n", step);
+//    printf("DEBUG [secondaryGrowth]: Initial step (count of existing secondary particles) = %d.\n", step);
 
-    printf("DEBUG [secondaryGrowth]: Initializing temp, tempmic, rtempvec, hist, histmic, temp2chX arrays.\n");
+//    printf("DEBUG [secondaryGrowth]: Initializing temp, tempmic, rtempvec, hist, histmic, temp2chX arrays.\n");
 
     #pragma omp parallel for
 
@@ -749,12 +749,12 @@ void secondaryGrowth(double rad[][2], double radmicr[][2], double radsec[][2], d
         temp2ch3[i] = temp2[i+2*PARTICLE_NUMBER];
         temp2ch4[i] = temp2[i+3*PARTICLE_NUMBER];
     }
-    printf("DEBUG [secondaryGrowth]: Array initializations complete.\n");
+//    printf("DEBUG [secondaryGrowth]: Array initializations complete.\n");
 
 
 /*	Megvizsgalja, hogy az adott tavolsagon hany reszecske talalhato	*/
 /*	Valamiert csak ugy ad jo kepet, ha az if-es felteleket beirom.	*/
-    printf("DEBUG [secondaryGrowth]: Calling histogram for various particle types.\n");
+//    printf("DEBUG [secondaryGrowth]: Calling histogram for various particle types.\n");
     for(i=0;i<PARTICLE_NUMBER;i++) {
         if(temp[i] != 0) {
             // printf("DEBUG [secondaryGrowth]: Calling histogram for temp[%d]=%.2e\n", i, temp[i]);
@@ -781,10 +781,10 @@ void secondaryGrowth(double rad[][2], double radmicr[][2], double radsec[][2], d
             histogram(temp2ch4[i],hist,dd,disk_params);
         }
     }
-    printf("DEBUG [secondaryGrowth]: All histogram calls completed.\n");
+//    printf("DEBUG [secondaryGrowth]: All histogram calls completed.\n");
 
     j=0;
-    printf("DEBUG [secondaryGrowth]: Checking for new particle growth conditions.\n");
+//    printf("DEBUG [secondaryGrowth]: Checking for new particle growth conditions.\n");
     for(i=0;i<PARTICLE_NUMBER;i++) {
 /*	Megvizsgalja, hogy kifogyott-e az adott tavolsagrol a cm-es por. Ha igen, viszont az adott tavolsagon van mikronos, akkor novel egy ujabb reszecsket, ha a mikronos por altal kepviselt tomeg az eredeti helyen levo tomeg szazadanal nagyobb	*/
         if(hist[i] == 0 && histmic[i] != 0) {
@@ -795,7 +795,7 @@ void secondaryGrowth(double rad[][2], double radmicr[][2], double radsec[][2], d
                 siginit = partmicind[i][2]/(2.0 * M_PI * dd * (temp[i] - dd/2.));
                 // printf("DEBUG [secondaryGrowth]: sigcurr=%.2e, siginit=%.2e\n", sigcurr, siginit);
                 if(sigcurr >= siginit / 100.) {
-                    printf("DEBUG [secondaryGrowth]: New particle grown at rtempvec[%d]=%.2e. j=%d\n", i, rtempvec[i], j);
+//                    printf("DEBUG [secondaryGrowth]: New particle grown at rtempvec[%d]=%.2e. j=%d\n", i, rtempvec[i], j);
 /*	Uj reszecske novelese --> az adott helyen levo mikronos reszecske tomegenek 75%-at kapja az uj reszecske, ezzel egyutt a mikronos reszecske altal kepviselt reszecske tomege 75%-kal csokken	*/
                     massmicvec[i] = partmicind[i][0] * (1.-.75);	// a mikronos reszecske tomegenek csokkentese
                     masstemp[j][1] = partmicind[i][0] * .75;	// novesztett reszecske altal kepviselt tomeg
@@ -806,14 +806,14 @@ void secondaryGrowth(double rad[][2], double radmicr[][2], double radsec[][2], d
             }
         }
     }
-    printf("DEBUG [secondaryGrowth]: Particle growth checks completed. Total new particles tracked by j=%d.\n", j);
+//    printf("DEBUG [secondaryGrowth]: Particle growth checks completed. Total new particles tracked by j=%d.\n", j);
 
 /*	A novesztett reszecske tavolsagat tartalmazo atmeneti vektor sorbarendezese	*/
-    printf("DEBUG [secondaryGrowth]: Calling sort for temptemp (4*PARTICLE_NUMBER = %d).\n", 4 * PARTICLE_NUMBER);
+//    printf("DEBUG [secondaryGrowth]: Calling sort for temptemp (4*PARTICLE_NUMBER = %d).\n", 4 * PARTICLE_NUMBER);
     sort(temptemp,4*PARTICLE_NUMBER);	
-    printf("DEBUG [secondaryGrowth]: Sort completed.\n");
+//    printf("DEBUG [secondaryGrowth]: Sort completed.\n");
 
-    printf("DEBUG [secondaryGrowth]: Processing sorted temptemp to radsec.\n");
+//    printf("DEBUG [secondaryGrowth]: Processing sorted temptemp to radsec.\n");
 
     #pragma omp parallel for
     for(i=0; i < 4*PARTICLE_NUMBER-step; i++) {
@@ -826,9 +826,9 @@ void secondaryGrowth(double rad[][2], double radmicr[][2], double radsec[][2], d
             radsec[i][1] = 0;
         }
     }
-    printf("DEBUG [secondaryGrowth]: First pass of radsec population completed.\n");
+//    printf("DEBUG [secondaryGrowth]: First pass of radsec population completed.\n");
 
-    printf("DEBUG [secondaryGrowth]: Copying radsec to temptemp and re-sorting.\n");
+//    printf("DEBUG [secondaryGrowth]: Copying radsec to temptemp and re-sorting.\n");
 
     #pragma omp parallel for
 
@@ -839,10 +839,10 @@ void secondaryGrowth(double rad[][2], double radmicr[][2], double radsec[][2], d
     }
 
     sort(temptemp,4*PARTICLE_NUMBER);
-    printf("DEBUG [secondaryGrowth]: Re-sort of temptemp completed.\n");
+//    printf("DEBUG [secondaryGrowth]: Re-sort of temptemp completed.\n");
 //	double index = find_max(indtemp,4*PARTICLE_NUMBER);
 
-    printf("DEBUG [secondaryGrowth]: Final population of radsec and masssecvec.\n");
+//    printf("DEBUG [secondaryGrowth]: Final population of radsec and masssecvec.\n");
     for(i=0; i < 4*PARTICLE_NUMBER; i++) {
         if(temptemp[i] >= disk_params->RMIN) {
             radsec[i][0] = temptemp[i];
@@ -862,5 +862,5 @@ void secondaryGrowth(double rad[][2], double radmicr[][2], double radsec[][2], d
             }
         }
     }
-    printf("DEBUG [secondaryGrowth]: Exiting secondaryGrowth function.\n");
+//    printf("DEBUG [secondaryGrowth]: Exiting secondaryGrowth function.\n");
 }

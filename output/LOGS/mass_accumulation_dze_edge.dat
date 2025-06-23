@@ -9,4 +9,6 @@
 #
 # All masses include both 'cm-sized' (larger) and 'micron-sized' dust populations.
 # Data is updated periodically during the simulation.
-0 0 0 0 0.00311173
+0 1 1.59185e-19 5 1.59185e-19
+1 1 137691 5 137691
+2 1 137691 5 137691
