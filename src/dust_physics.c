@@ -42,8 +42,8 @@ double visc(double r, const disk_t *disk_params) {
 
 /*	local scale height	*/
 double scale_height(double r, const disk_t *disk_params) {
-	fprintf(stderr, "DEBUG [scale_height]: Called with r=%.2e, disk_params address=%p, FLIND=%.2f, HASP=%.2f\n",
-            r, (void*)disk_params, disk_params->FLIND, disk_params->HASP);
+//	fprintf(stderr, "DEBUG [scale_height]: Called with r=%.2e, disk_params address=%p, FLIND=%.2f, HASP=%.2f\n",
+//            r, (void*)disk_params, disk_params->FLIND, disk_params->HASP);
     return pow(r, 1. + disk_params->FLIND) * disk_params->HASP;
 }
 

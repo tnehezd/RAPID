@@ -1,7 +1,11 @@
 // src/config.c
 #include "config.h"
+#include "simulation_types.h"
+
 
 int PARTICLE_NUMBER;
+
+
 
 
 // --- Global File Pointer Definitions ---
@@ -23,6 +27,10 @@ const char *inputsig = NULL;
 const char * const FILENAME_INIT_PROFILE = "initial_dust_profile.dat";
 const char * const FILENAME_DISK_PARAM = "disk_config.dat";
 const char * const INITIAL_SURFACE_DENSITY_FILE = "initial_gas_surface_density.dat";
+
+const char * const LOGS_DIR = "LOGS";
+const char * const CONFIG_DIR = "config";
+
 
 
 

@@ -240,24 +240,24 @@ void Print_Mass(double step, const double *rvec, double (*partmassind)[4], doubl
                 const disk_t *disk_params, const simulation_options_t *sim_opts,
                 output_files_t *output_files) {
 
-    fprintf(stderr, "DEBUG [Print_Mass]: Entry. disk_params address=%p, FLIND=%.2f, HASP=%.2f\n",
-            (void*)disk_params, disk_params->FLIND, disk_params->HASP);
+//    fprintf(stderr, "DEBUG [Print_Mass]: Entry. disk_params address=%p, FLIND=%.2f, HASP=%.2f\n",
+//            (void*)disk_params, disk_params->FLIND, disk_params->HASP);
 
     double ind_ii, ind_io, ind_oi, ind_oo, tav, tav2;
 
     tav = disk_params->r_dze_o;
     tav2 = disk_params->r_dze_i;
 
-    fprintf(stderr, "DEBUG [Print_Mass]: Before find_num_zero. disk_params address=%p, FLIND=%.2f, HASP=%.2f\n",
-            (void*)disk_params, disk_params->FLIND, disk_params->HASP);
+//    fprintf(stderr, "DEBUG [Print_Mass]: Before find_num_zero. disk_params address=%p, FLIND=%.2f, HASP=%.2f\n",
+//            (void*)disk_params, disk_params->FLIND, disk_params->HASP);
     int dim = find_num_zero(disk_params); // Assuming find_num_zero is const-correct
-    fprintf(stderr, "DEBUG [Print_Mass]: After find_num_zero. dim=%d. disk_params address=%p, FLIND=%.2f, HASP=%.2f\n",
-            dim, (void*)disk_params, disk_params->FLIND, disk_params->HASP);
+//    fprintf(stderr, "DEBUG [Print_Mass]: After find_num_zero. dim=%d. disk_params address=%p, FLIND=%.2f, HASP=%.2f\n",
+//            dim, (void*)disk_params, disk_params->FLIND, disk_params->HASP);
 
     // double r_count[dim]; // VLA - C99 standard. If compiling with C11 or later and not using GNU extensions, consider dynamic allocation.
     double *r_count = (double *)malloc(sizeof(double) * dim); // Safer for larger dim
-    fprintf(stderr, "DEBUG [Print_Mass]: After malloc for r_count (size %zu). r_count address=%p. disk_params address=%p, FLIND=%.2f, HASP=%.2f\n",
-            sizeof(double) * dim, (void*)r_count, (void*)disk_params, disk_params->FLIND, disk_params->HASP);
+//    fprintf(stderr, "DEBUG [Print_Mass]: After malloc for r_count (size %zu). r_count address=%p. disk_params address=%p, FLIND=%.2f, HASP=%.2f\n",
+//            sizeof(double) * dim, (void*)r_count, (void*)disk_params, disk_params->FLIND, disk_params->HASP);
 
     if (dim > 0 && r_count == NULL) {
         fprintf(stderr, "ERROR [Print_Mass]: Failed to allocate memory for r_count. Exiting.\n");
@@ -292,8 +292,8 @@ void Print_Mass(double step, const double *rvec, double (*partmassind)[4], doubl
             }
         }
     }
-    fprintf(stderr, "DEBUG [Print_Mass]: After r_count population loop. disk_params address=%p, FLIND=%.2f, HASP=%.2f\n",
-            (void*)disk_params, disk_params->FLIND, disk_params->HASP);
+//    fprintf(stderr, "DEBUG [Print_Mass]: After r_count population loop. disk_params address=%p, FLIND=%.2f, HASP=%.2f\n",
+//            (void*)disk_params, disk_params->FLIND, disk_params->HASP);
 
 
     if(sim_opts->dzone == 1.0) { // Using sim_opts->dzone
@@ -315,8 +315,8 @@ void Print_Mass(double step, const double *rvec, double (*partmassind)[4], doubl
             rout_new = tav; // Using tav (disk_params->r_dze_o)
         }
     }
-    fprintf(stderr, "DEBUG [Print_Mass]: After dzone logic. disk_params address=%p, FLIND=%.2f, HASP=%.2f\n",
-            (void*)disk_params, disk_params->FLIND, disk_params->HASP);
+//    fprintf(stderr, "DEBUG [Print_Mass]: After dzone logic. disk_params address=%p, FLIND=%.2f, HASP=%.2f\n",
+//            (void*)disk_params, disk_params->FLIND, disk_params->HASP);
 
 
     // The rin and rout variables are now consistently updated
@@ -326,12 +326,12 @@ void Print_Mass(double step, const double *rvec, double (*partmassind)[4], doubl
     *tavin = rin_current; // Update output parameter directly
     *tavout = rout_current; // Update output parameter directly
 
-    fprintf(stderr, "DEBUG [Print_Mass]: Before find_r_annulus call. disk_params address=%p, FLIND=%.2f, HASP=%.2f\n",
-            (void*)disk_params, disk_params->FLIND, disk_params->HASP);
+//    fprintf(stderr, "DEBUG [Print_Mass]: Before find_r_annulus call. disk_params address=%p, FLIND=%.2f, HASP=%.2f\n",
+//            (void*)disk_params, disk_params->FLIND, disk_params->HASP);
     // Passing updated tav2 and tav to find_r_annulus
     find_r_annulus(disk_params->rvec,*tavin,&ind_ii,&ind_io,*tavout,&ind_oi,&ind_oo,sim_opts,disk_params);
-    fprintf(stderr, "DEBUG [Print_Mass]: After find_r_annulus call. disk_params address=%p, FLIND=%.2f, HASP=%.2f\n",
-            (void*)disk_params, disk_params->FLIND, disk_params->HASP);
+//    fprintf(stderr, "DEBUG [Print_Mass]: After find_r_annulus call. disk_params address=%p, FLIND=%.2f, HASP=%.2f\n",
+//            (void*)disk_params, disk_params->FLIND, disk_params->HASP);
 
 
     double massii = 0, massoi = 0;

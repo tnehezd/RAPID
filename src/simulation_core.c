@@ -1,3 +1,4 @@
+
 // src/simulation_core.c
 
 // Standard C Library Includes
@@ -239,28 +240,33 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
     char dust_name[MAX_PATH_LEN] = "";
     char dust_name2[MAX_PATH_LEN] = "";
 
-/* A reszecskek adatainak beolvasasa file-bol, ha az optdr erteke 1, egyebkent nem szamol a program driftet  */
+/* A reszecskek adatainak beolvasasa file-bol, ha az optdr erteke 1, egyebkent nem szamol a program driftet */
     if(sim_opts->drift == 1.) {
         fprintf(stderr, "DEBUG [tIntegrate]: Reading particle data from file.\n");
         // Feltételezzük, hogy a por_be vagy globálisan éri el, vagy kap paramétert.
         // Ha kap paramétert, így kellene: por_be(radius, radiusmicr, massvec, massmicrvec, sim_opts->input_filename);
-        por_be(radius,radiusmicr,massvec,massmicrvec, sim_opts->input_filename);  /* porreszecskek adatainak beolvasasa */
+        por_be(radius,radiusmicr,massvec,massmicrvec, sim_opts->input_filename);    /* porreszecskek adatainak beolvasasa */
 
         int dummy;
         // Az input_filename és output_dir_name használata
         snprintf(mv, sizeof(mv),"cp %s %s/",sim_opts->input_filename, sim_opts->output_dir_name); /* az adott helyre, ahova eppen menti a futast eredmenyeit a program, a porreszecskek adatait tartalmazo file atmasolasa, igy kesobb is visszanezheto, hogy mik voltak a kezdeti adatok */
-        dummy = system(mv);     /* itt masolja at a file-t  */
+        dummy = system(mv);     /* itt masolja at a file-t */
         (void)dummy; // Suppress unused variable warning
         fprintf(stderr, "DEBUG [tIntegrate]: Copied %s to %s/\n", sim_opts->input_filename, sim_opts->output_dir_name);
 
+
 /* az aktualis mappaban a pormozgas.dat file letrehozasa: ebbe kerul be a porreszecske tavolsaga es indexe, valamint az adott idolepes */
-        snprintf(porout,MAX_PATH_LEN,"%s/LOGS/macro_dust_evolution.dat",sim_opts->output_dir_name);
+        snprintf(porout,MAX_PATH_LEN,"%s/pormozgas.dat",sim_opts->output_dir_name);
 /* ha 2 populacios a futas, akkor a mikronos pornak is letrehoz egy pormozgas file-t, ebbe kerul be a tavolsag, index es az ido */
         if(sim_opts->twopop == 1.) {
-            snprintf(poroutmicr,MAX_PATH_LEN,"%s/micron_dust_evolution.dat",sim_opts->output_dir_name);
+            snprintf(poroutmicr,MAX_PATH_LEN,"%s/%s/%s",LOGS_DIR,sim_opts->output_dir_name, output_files->micron_motion_file);
         }
-/* tomegnovekedesi file letrehozasa az aktualis mappaba - ez lehet, hogy egy kulon opcio lesz a kimeneti adatok meretenek csokkentesere  */
-        snprintf(massout,MAX_PATH_LEN,"%s/LOGS/accumulated_dust_mass.dat",sim_opts->output_dir_name);
+/* tomegnovekedesi file letrehozasa az aktualis mappaba - ez lehet, hogy egy kulon opcio lesz a kimeneti adatok meretenek csokkentesere  */
+        
+        // --- MÓDOSÍTÁS: mass.dat a LOGS mappába ---
+        snprintf(massout,MAX_PATH_LEN,"%s/LOGS/mass.dat",sim_opts->output_dir_name);
+        // --- MÓDOSÍTÁS VÉGE ---
+
         printf("DEBUG [tIntegrate]: Opening output files: %s, %s (if 2pop), %s\n", porout, poroutmicr, massout);
 
         output_files->por_motion_file = fopen(porout,"w");
@@ -281,7 +287,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
             fprintf(output_files->mass_file, "# Columns:\n");
             fprintf(output_files->mass_file, "# 1. Time Step (arbitrary unit, iteration count)\n");
             fprintf(output_files->mass_file, "# 2. Inner Boundary Radius (R_in) of the inner region [AU]\n");
-            fprintf(output_files->mass_file, "# 3. Total Dust Mass (non-micron + micron) within R < R_in [M_Jupiter]\n");
+            fprintf(output_files->mass_file, "# 3. Total Dust Mass (non-micron + micron) within R < R_in [M_Jupiter]\n"); // Hiba: Jelfut helyett output_files->mass_file
             fprintf(output_files->mass_file, "# 4. Outer Boundary Radius (R_out) of the outer region [AU]\n");
             fprintf(output_files->mass_file, "# 5. Total Dust Mass (non-micron + micron) within R > R_out [M_Jupiter]\n");
             fprintf(output_files->mass_file, "#\n");
@@ -355,8 +361,8 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                 }
             }
 
-            max = find_max(radius,PARTICLE_NUMBER);     /* Megkeresi, hogy melyik a legtavolabbi cm-es reszecske a kozponti csillagtol */
-            min = find_max(radius_rec,PARTICLE_NUMBER);     /* Megkeresi a tavolsag reciprokanak maximumat, azaz a legkisebb tavolsagra levo cm-es reszecsket */
+            max = find_max(radius,PARTICLE_NUMBER);    /* Megkeresi, hogy melyik a legtavolabbi cm-es reszecske a kozponti csillagtol */
+            min = find_max(radius_rec,PARTICLE_NUMBER);    /* Megkeresi a tavolsag reciprokanak maximumat, azaz a legkisebb tavolsagra levo cm-es reszecsket */
             min = 1. / min;
 
             double mint, maxt;
@@ -371,7 +377,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                     }
                 }
 
-                max2 = find_max(radiusmicr,PARTICLE_NUMBER);     /* Megkeresi, hogy melyik a legtavolabbi reszecske a kozponti csillagtol */
+                max2 = find_max(radiusmicr,PARTICLE_NUMBER);    /* Megkeresi, hogy melyik a legtavolabbi reszecske a kozponti csillagtol */
                 min2 = find_max(radius_rec,PARTICLE_NUMBER);
                 min2 = 1. / min2;
 
@@ -395,19 +401,29 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
 
 /* Az adatok kiirasahoz szukseges file-ok neveinek elmentese */
                     if (t==0) {
-                        snprintf(dens_name,MAX_PATH_LEN,"%s/%s.dat",sim_opts->output_dir_name,INITIAL_SURFACE_DENSITY_FILE); // output_dir_name a sim_opts-ból
+                        // --- MÓDOSÍTÁS: surface.dat a LOGS mappába ---
+                        snprintf(dens_name,MAX_PATH_LEN,"%s/initial/%s",sim_opts->output_dir_name,INITIAL_SURFACE_DENSITY_FILE);
+                        // --- MÓDOSÍTÁS VÉGE ---
                         printf("DEBUG [tIntegrate]: Outputting surface.dat for t=0.\n");
                     } else {
                         if(sim_opts->evol == 1) {
-                            snprintf(dens_name,MAX_PATH_LEN,"%s/LOGS/density_profiles_%08d.dat",sim_opts->output_dir_name,(int)L); // output_dir_name a sim_opts-ból
-                            printf("DEBUG [tIntegrate]: Outputting dens.%d.dat.\n", (int)L);
+                            // --- MÓDOSÍTÁS: dens.X.dat a LOGS mappába (8 vezető nullával) ---
+                            snprintf(dens_name,MAX_PATH_LEN,"%s/LOGS/dens_%08d.dat",sim_opts->output_dir_name,(int)L);
+                            // --- MÓDOSÍTÁS VÉGE ---
+                            printf("DEBUG [tIntegrate]: Outputting dens_%08d.dat.\n", (int)L);
                         }
                     }
 
-                    snprintf(dust_name,MAX_PATH_LEN,"%s/LOGS/dust_profiles_%08d.dat",sim_opts->output_dir_name,(int)L); // output_dir_name a sim_opts-ból
-                    snprintf(dust_name2,MAX_PATH_LEN,"%s/LOGS/micron_sized_%08d.dat",sim_opts->output_dir_name,(int)L); // output_dir_name a sim_opts-ból
-                    snprintf(size_name,MAX_PATH_LEN,"%s/LOGS/macro_sized_%08d.dat",sim_opts->output_dir_name,(int)L); // output_dir_name a sim_opts-ból
-//                    printf("DEBUG [tIntegrate]: Output file names set: dust.dat, dustmic.dat, size.dat.\n");
+                    // --- MÓDOSÍTÁS: dust.X.dat és dustmic.X.dat a LOGS mappába ---
+                    snprintf(dust_name,MAX_PATH_LEN,"%s/LOGS/dust.%i.dat",sim_opts->output_dir_name,(int)L);
+                    snprintf(dust_name2,MAX_PATH_LEN,"%s/LOGS/dustmic.%i.dat",sim_opts->output_dir_name,(int)L);
+                    // --- MÓDOSÍTÁS VÉGE ---
+
+                    // --- MÓDOSÍTÁS: size.X.dat a LOGS mappába ---
+                    snprintf(size_name,MAX_PATH_LEN,"%s/LOGS/size.%d.dat",sim_opts->output_dir_name,(int)L);
+                    // --- MÓDOSÍTÁS VÉGE ---
+
+                    printf("DEBUG [tIntegrate]: Output file names set: dust.dat, dustmic.dat, size.dat.\n");
 
                     // *******************************************************************
                     // FÁJLOK MEGNYITÁSA AZ ADATKIÍRÁSHOZ
@@ -418,6 +434,13 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                         // exit(EXIT_FAILURE); // Fontos lehet!
                     } else {
                         fprintf(stderr, "DEBUG [tIntegrate]: Opened %s for writing.\n", dens_name);
+                        // FEJLÉC Hozzáadása ide
+                        fprintf(output_files->surface_file, "# Disk Profile Data (Gas Surface Density, Pressure, Gradient)\n");
+                        fprintf(output_files->surface_file, "# Columns: 1. Radius [AU], 2. Sigma_gas [M_Sun/AU^2],\n");
+                        fprintf(output_files->surface_file, "#          3. Pressure [units], 4. dP/dR [units]\n");
+                        fprintf(output_files->surface_file, "#\n"); // Üres sor
+                        fprintf(output_files->surface_file, "# Data generated by Dust Drift Simulation\n");
+                        fflush(output_files->surface_file); // Frissítsd a fájlt azonnal
                     }
 
                     output_files->dust_file = fopen(dust_name, "w");
@@ -453,7 +476,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
 
                     if(t==0) {
                         printf("DEBUG [tIntegrate]: Initializing mass for t=0.\n");
-/* A reszecskek tomeget tartalmazo tomb inicializalasa  */
+/* A reszecskek tomeget tartalmazo tomb inicializalasa  */
                         Count_Mass(radius,partmassind,massvec,t,PARTICLE_NUMBER,disk_params);
                         if(sim_opts->twopop==1) Count_Mass(radiusmicr,partmassmicrind,massmicrvec,t,PARTICLE_NUMBER,disk_params);
                         if(sim_opts->twopop==1) Count_Mass(radiussec,partmasssecind,masssecvec,t,4*PARTICLE_NUMBER,disk_params);
@@ -582,18 +605,42 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
 
                 printf("DEBUG [tIntegrate]: Outputting data for gas-only simulation at time %.2e. L=%.2e\n", time, L);
                 if (t==0) {
-                    snprintf(dens_name,MAX_PATH_LEN,"%s/surface.dat",sim_opts->output_dir_name); // output_dir_name a sim_opts-ból
+                    // --- MÓDOSÍTÁS: surface.dat a LOGS mappába (gáz-only ág) ---
+                    snprintf(dens_name,MAX_PATH_LEN,"%s/LOGS/surface.dat",sim_opts->output_dir_name);
+                    // --- MÓDOSÍTÁS VÉGE ---
                     printf("DEBUG [tIntegrate]: Outputting surface.dat for t=0.\n");
                 } else {
-                    snprintf(dens_name,MAX_PATH_LEN,"%s/dens.%d.dat",sim_opts->output_dir_name,(int)L); // output_dir_name a sim_opts-ból
-                    printf("DEBUG [tIntegrate]: Outputting dens.%d.dat.\n", (int)L);
+                    // --- MÓDOSÍTÁS: dens.X.dat a LOGS mappába (gáz-only ág, 8 vezető nullával) ---
+                    snprintf(dens_name,MAX_PATH_LEN,"%s/LOGS/dens.%08d.dat",sim_opts->output_dir_name,(int)L);
+                    // --- MÓDOSÍTÁS VÉGE ---
+                    printf("DEBUG [tIntegrate]: Outputting dens.%08d.dat.\n", (int)L);
                 }
 
                 // Ebben az ágban feltételezzük, hogy a Print_Sigma maga kezeli a fájl megnyitását/bezárását.
                 // Itt valószínűleg a Print_Sigma függvénynek is meg kellene kapnia az `output_files` pointert.
                 // Átírtam, hogy konzisztens legyen a másik ággal.
+                output_files->surface_file = fopen(dens_name, "w"); // Fájl megnyitása a Print_Sigma hívása előtt
+                if (output_files->surface_file == NULL) {
+                    fprintf(stderr, "ERROR: Could not open %s for writing in gas-only branch.\n", dens_name);
+                } else {
+                    fprintf(stderr, "DEBUG [tIntegrate]: Opened %s for writing in gas-only branch.\n", dens_name);
+                    // FEJLÉC Hozzáadása ide
+                    fprintf(output_files->surface_file, "# Disk Profile Data (Gas Surface Density, Pressure, Gradient)\n");
+                    fprintf(output_files->surface_file, "# Columns: 1. Radius [AU], 2. Sigma_gas [M_Sun/AU^2],\n");
+                    fprintf(output_files->surface_file, "#          3. Pressure [units], 4. dP/dR [units]\n");
+                    fprintf(output_files->surface_file, "#\n"); // Üres sor
+                    fprintf(output_files->surface_file, "# Data generated by Dust Drift Simulation\n");
+                    fflush(output_files->surface_file); // Frissítsd a fájlt azonnal
+                }
+
                 Print_Sigma(disk_params, output_files);
                 printf("DEBUG [tIntegrate]: Print_Sigma completed.\n");
+                
+                if (output_files->surface_file != NULL) { // Fájl bezárása a Print_Sigma hívása után
+                    fclose(output_files->surface_file);
+                    output_files->surface_file = NULL;
+                    fprintf(stderr, "DEBUG [tIntegrate]: Closed %s in gas-only branch.\n", dens_name);
+                }
 
                 L = L+(double)(sim_opts->TMAX/sim_opts->WO); // TMAX és WO a sim_opts-ból
                 printf("DEBUG [tIntegrate]: Updated L to %.2e.\n", L);
@@ -603,7 +650,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
             // A Get_Sigma_P_dP függvénynek is meg kellene kapnia a disk_params struktúrát.
             Get_Sigma_P_dP(sim_opts, disk_params);
             printf("DEBUG [tIntegrate]: Get_Sigma_P_dP completed.\n");
-            t = t + deltat;     /* Idoleptetes  */
+            t = t + deltat;     /* Idoleptetes  */
             printf("DEBUG [tIntegrate]: Time advanced to t=%.2e.\n", t);
         }
 

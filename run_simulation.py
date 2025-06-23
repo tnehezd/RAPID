@@ -106,7 +106,7 @@ def main():
         "rmin_val": 1.0,
         "rmax_val": 100.0,
         "sigma0_val": 1.0,
-        "sigmap_exp_val": 1.0,
+        "sigmap_exp_val": 0.5, # KORRIGÁLVA a C kód alapértelmezettjéhez
         "alpha_visc_val": 0.01,
         "star_val": 1.0,
         "hasp_val": 0.05,
@@ -132,6 +132,7 @@ def main():
         "ratio_val": 0.85,
         "mic_val": 1e-4,
         "onesize_val": 0.0,
+        "pdensity_val": 1.6, # NEW: PDENSITY alapértelmezett érték
     }
 
     all_params = default_options.copy()
@@ -173,6 +174,7 @@ def main():
             "population_one_mass_ratio": "ratio_val",
             "micro_particle_size_cm": "mic_val",
             "one_size_particle_value_cm": "onesize_val",
+            "dust_particle_density_g_cm3": "pdensity_val", # NEW: PDENSITY hozzáadva a mappinghez
 
             # File I/O Parameters (new names)
             "input_file_path": "input_file",
@@ -212,6 +214,7 @@ def main():
 
         # Dust Initialization Parameters
         "eps_val": "-eps", "ratio_val": "-ratio", "mic_val": "-mic", "onesize_val": "-onesize",
+        "pdensity_val": "-pdensity", # NEW: PDENSITY parancssori flag
 
         # File I/O Parameters
         "input_file": "-i", "output_dir_name": "-o",

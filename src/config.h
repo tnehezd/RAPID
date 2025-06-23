@@ -25,6 +25,7 @@ extern FILE *fin1;
 extern FILE *fin2;
 extern FILE *fil;
 
+#include "simulation_types.h"
 
 // --- Physical Constants (Macros) ---
 // These constants have been moved here from init_tool.c for global access,
@@ -49,6 +50,10 @@ extern FILE *fil;
 // --- Global Filename Declarations (extern) ---
 extern const char * const FILENAME_INIT_PROFILE;
 extern const char * const FILENAME_DISK_PARAM;
+extern const char * const INITIAL_SURFACE_DENSITY_FILE;
+
+extern const char * const LOGS_DIR;
+extern const char * const CONFIG_DIR;
 
 
 // Parameter controls

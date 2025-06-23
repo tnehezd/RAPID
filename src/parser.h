@@ -55,6 +55,10 @@ typedef struct {
     double mic_val;         // Micro-sized particle radius (cm)
     double onesize_val;     // Flag/value for one size particles (0.0 for distribution, 1.0 for mic_val)
 
+    
+    // NEW: Add PDENSITY (dust particle density) parameter
+    double pdensity_val;    // Dust particle density [g/cm^3]
+
 } options_t;
 
 /*

@@ -67,39 +67,6 @@ void disk_param_be(disk_t *disk_params) {
 
     fprintf(stderr, "DEBUG [disk_param_be]: Calculated PDENSITY = %.2e, PDENSITYDIMLESS = %.2e.\n",
            disk_params->PDENSITY, disk_params->PDENSITYDIMLESS);
-
-    // Fájlba írás: Most már az aktuális, disk_params-ban lévő értékeket írjuk ki.
-    // A `filenev2` globális változó helyett közvetlenül megadjuk a fájlnevet.
-    // IDEÁLIS ESETBEN EZT IS PARAMÉTERKÉNT KELLENE ÁTADNI, PL. EGY output_files_t STRUKTÚRÁBAN.
-    // Most egy fix fájlnevet használunk, de gondold végig az output fájlok kezelését is.
-    const char *output_filename = "disk_param.dat"; // Ez lehetne a sim_opts-ból, ha az output fájlokat is ott tárolod
-    FILE *fout = fopen(output_filename, "w");
-    if (fout == NULL) {
-        fprintf(stderr, "ERROR [disk_param_be]: Could not open output file '%s'.\n", output_filename);
-        perror("Reason"); // Kiírja a pontos rendszerhiba üzenetet
-        exit(EXIT_FAILURE);
-    }
-
-    // A disk_params struktúra tagjait írjuk ki
-    fprintf(fout, "RMIN %lf\n", disk_params->RMIN);
-    fprintf(fout, "RMAX %lf\n", disk_params->RMAX);
-    fprintf(fout, "NGRID %d\n", disk_params->NGRID);
-    fprintf(fout, "SIGMA0 %e\n", disk_params->SIGMA0);
-    fprintf(fout, "SIGMAP_EXP %lf\n", disk_params->SIGMAP_EXP);
-    fprintf(fout, "ALPHA %e\n", disk_params->alpha_visc);
-    fprintf(fout, "STAR_MASS %lf\n", disk_params->STAR_MASS);
-    fprintf(fout, "HASP %lf\n", disk_params->HASP);
-    fprintf(fout, "FLIND %lf\n", disk_params->FLIND);
-    fprintf(fout, "R_DZE_I %lf\n", disk_params->r_dze_i);
-    fprintf(fout, "R_DZE_O %lf\n", disk_params->r_dze_o);
-    fprintf(fout, "DR_DZE_I %lf\n", disk_params->Dr_dze_i);
-    fprintf(fout, "DR_DZE_O %lf\n", disk_params->Dr_dze_o);
-    fprintf(fout, "A_MOD %lf\n", disk_params->a_mod);
-    fprintf(fout, "PDENSITY %e\n", disk_params->PDENSITY);
-    fprintf(fout, "PDENSITYDIMLESS %e\n", disk_params->PDENSITYDIMLESS);
-
-    fclose(fout);
-    fprintf(stderr, "DEBUG [disk_param_be]: Disk parameters written to %s.\n", output_filename);
 }
 
 

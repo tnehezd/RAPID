@@ -24,7 +24,7 @@ void create_default_options(options_t *opt) {
     opt->rmax_val        = 100.0;
     // ADJUST THESE DEFAULTS FOR REALISTIC VALUES, AS DISCUSSED PREVIOUSLY!
     opt->sigma0_val      = 1.0; // Consider changing this default (e.g., 1.0e3)
-    opt->sigmap_exp_val  = 1.0; // Consider changing this default (e.g., 1.5 for r^-1.5)
+    opt->sigmap_exp_val  = 0.5; // KORRIGÁLVA: Pozitív értékre, pl. 0.5 a Sigma ~ r^-0.5 esetén
     opt->alpha_visc_val  = 0.01;
     opt->star_val        = 1.0;
     opt->hasp_val        = 0.05;
@@ -52,6 +52,9 @@ void create_default_options(options_t *opt) {
     opt->ratio_val = 0.85; // e.g., 0.85 for 85% Pop1
     opt->mic_val = 1e-4; // e.g., 1e-4 for 100 micron (0.01 cm)
     opt->onesize_val = 0.0; // 0.0 for size distribution, 1.0 for single size (e.g., mic_val)
+
+    // NEW: PDENSITY (dust particle density) default value
+    opt->pdensity_val = 1.6; // Por sűrűsége (g/cm^3) - ez az alapértelmezett 1.6
     fprintf(stderr, "DEBUG [create_default_options]: Default options setting complete.\n");
 }
 
@@ -78,7 +81,7 @@ void print_usage() {
     fprintf(stderr, "  -ri <val>      Inner radius (AU, default: 1.0)\n");
     fprintf(stderr, "  -ro <val>      Outer radius (AU, default: 100.0)\n");
     fprintf(stderr, "  -sigma0_init <val> Initial gas surface density at 1 AU (M_sun/AU^2, default: 1.0)\n");
-    fprintf(stderr, "  -index_init <val> Exponent of surface density profile (positive value, default: 1.0 for r^-1)\n");
+    fprintf(stderr, "  -index_init <val> Exponent of surface density profile (positive value, default: 0.5 for r^-0.5)\n"); // KORRIGÁLVA a súgóban
     fprintf(stderr, "  -alpha_init <val> Alpha viscosity (default: 0.01)\n");
     fprintf(stderr, "  -m0_init <val> Star mass (M_sun, default: 1.0)\n");
     fprintf(stderr, "  -h_init <val>  Aspect ratio at 1 AU (H/R, default: 0.05)\n");
@@ -92,7 +95,9 @@ void print_usage() {
     fprintf(stderr, "  -ratio <val>   Ratio of Pop1 dust mass to total dust mass (default: 0.85)\n");
     fprintf(stderr, "  -mic <val>     Micro-sized particle radius (cm, default: 1e-4)\n");
     fprintf(stderr, "  -onesize <val> Use one size particles (0 for distribution, 1 for mic_val, default: 0.0)\n");
+    // NEW: PDENSITY usage message
     fprintf(stderr, "Other:\n");
+    fprintf(stderr, "  -pdensity <val> Dust particle density (g/cm^3, default: 1.6)\n"); // NEW usage line
     fprintf(stderr, "  -h or --help   Display this help message\n");
 }
 
@@ -195,6 +200,12 @@ int parse_options(int argc, const char **argv, options_t *opt){
         else if (strcmp(argv[i], "-ratio") == 0) { i++; if (i < argc) opt->ratio_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -ratio.\n"); return 1; } fprintf(stderr, "DEBUG [parse_options]:   -ratio set to %.2e\n", opt->ratio_val); }
         else if (strcmp(argv[i], "-mic") == 0) { i++; if (i < argc) opt->mic_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -mic.\n"); return 1; } fprintf(stderr, "DEBUG [parse_options]:   -mic set to %.2e\n", opt->mic_val); }
         else if (strcmp(argv[i], "-onesize") == 0) { i++; if (i < argc) opt->onesize_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -onesize.\n"); return 1; } fprintf(stderr, "DEBUG [parse_options]:   -onesize set to %.2e\n", opt->onesize_val); }
+        // NEW: Handle -pdensity flag
+        else if (strcmp(argv[i], "-pdensity") == 0) {
+            i++;
+            if (i < argc) opt->pdensity_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -pdensity.\n"); return 1; }
+            fprintf(stderr, "DEBUG [parse_options]:   -pdensity set to %.2f\n", opt->pdensity_val);
+        }
         else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
             print_usage();
             return 1; // Exit after printing usage

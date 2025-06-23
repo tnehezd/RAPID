@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h> // For M_PI, if not defined in config.h
@@ -6,12 +5,12 @@
 
 // Header files
 #include "config.h"           // Declarations of global variables and constants
-#include "io_utils.h"         // Functions from io_utils.c (needs refactoring for structs)
-#include "disk_model.h"       // Functions from disk_model.c (ALREADY refactored for structs)
-#include "dust_physics.h"     // Functions from dust_physics.c (needs refactoring for structs)
-#include "simulation_core.h"  // Functions from simulation_core.c (needs refactoring for structs)
-#include "utils.h"            // Functions from utils.c (needs refactoring for structs)
-#include "init_tool_module.h" // run_init_tool and init_tool_options_t (ALREADY refactored for structs)
+#include "io_utils.h"         // Functions from io_utils.c
+#include "disk_model.h"       // Functions from disk_model.c
+#include "dust_physics.h"     // Functions from dust_physics.c
+#include "simulation_core.h"  // Functions from simulation_core.c
+#include "utils.h"            // Functions from utils.c
+#include "init_tool_module.h" // run_init_tool and init_tool_options_t
 
 // --- NEW: Include your simulation_types.h and parser.h ---
 #include "simulation_types.h"
@@ -20,15 +19,19 @@
 // Function declaration for default init_tool options, assuming it's in init_tool_module.h
 extern void create_default_init_tool_options(init_tool_options_t *def);
 
-// Assuming FILENAME_INIT_PROFILE and FILENAME_DISK_PARAM are external from config.c/h
-// (as defined in your config.c)
+// Assuming FILENAME_INIT_PROFILE, FILENAME_DISK_PARAM, CONFIG_DIR, LOGS_DIR, INITIAL_SURFACE_DENSITY_FILE
+// are external from config.h or config.c
+// (as defined in your config.c/h)
 
 int main(int argc, const char **argv) {
     // DEBUG: Program start
     fprintf(stderr, "DEBUG [main]: Program started.\n");
 
     // --- Declare current_inputsig_file here, at the beginning of main ---
-    const char *current_inputsig_file = NULL;
+    // This will now hold the full path to the initial profile file
+    char current_inputsig_file[MAX_PATH_LEN]; // Visszaállítva char[]-ra
+    current_inputsig_file[0] = '\0'; // Initialize to empty string
+
 
     // Local structure to store command-line options
     options_t def;
@@ -57,7 +60,7 @@ int main(int argc, const char **argv) {
 
     // --- Declare instances of the new simulation structs ---
     disk_t disk_params;
-    simulation_options_t sim_opts;
+    simulation_options_t sim_opts; // Ezt a structot mostantól használjuk az input_filename-re
     output_files_t output_files;
 
     // Initialize output_files pointers to NULL
@@ -88,9 +91,9 @@ int main(int argc, const char **argv) {
 
     fprintf(stderr, "DEBUG [main]: sim_opts structure populated (including output_dir_name).\n");
     fprintf(stderr, "DEBUG [main]:   evol=%.2f, drift=%.2f, growth=%.2f, twopop=%.2f, \n",
-           sim_opts.evol, sim_opts.drift, sim_opts.growth, sim_opts.twopop);
+            sim_opts.evol, sim_opts.drift, sim_opts.growth, sim_opts.twopop);
     fprintf(stderr, "DEBUG [main]:   Time parameters set: TMAX=%.2e, WO=%.2e, TCURR=%.2e, DT=%.2e\n",
-           sim_opts.TMAX, sim_opts.WO, sim_opts.TCURR, sim_opts.DT);
+            sim_opts.TMAX, sim_opts.WO, sim_opts.TCURR, sim_opts.DT);
 
 
     // --- Populate disk_t with parameters from 'def' ---
@@ -111,14 +114,16 @@ int main(int argc, const char **argv) {
     disk_params.fFrag = def.ffrag;
     disk_params.uFrag = def.ufrag;
     disk_params.fDrift = 0.55;       // set by Birnstiel 2012
+    disk_params.PDENSITY = def.pdensity_val; // NEW: Pass the particle density from parsed options
 
     fprintf(stderr, "DEBUG [main]: disk_params structure populated with initial parameters.\n");
     fprintf(stderr, "DEBUG [main]:   RMIN=%.2f, RMAX=%.2f, NGRID=%d, SIGMA0=%.2e, SIGMAP_EXP=%.2f\n",
-           disk_params.RMIN, disk_params.RMAX, disk_params.NGRID, disk_params.SIGMA0, disk_params.SIGMAP_EXP);
+            disk_params.RMIN, disk_params.RMAX, disk_params.NGRID, disk_params.SIGMA0, disk_params.SIGMAP_EXP);
     fprintf(stderr, "DEBUG [main]:   alpha_visc=%.2e, STAR_MASS=%.2f, HASP=%.2f, FLIND=%.2f\n",
-           disk_params.alpha_visc, disk_params.STAR_MASS, disk_params.HASP, disk_params.FLIND);
+            disk_params.alpha_visc, disk_params.STAR_MASS, disk_params.HASP, disk_params.FLIND);
     fprintf(stderr, "DEBUG [main]:   r_dze_i=%.2f, r_dze_o=%.2f, Dr_dze_i=%.2f, Dr_dze_o=%.2f, a_mod=%.2f, fFrag=%.2f, uFrag=%.2f\n",
-           disk_params.r_dze_i, disk_params.r_dze_o, disk_params.Dr_dze_i, disk_params.Dr_dze_o, disk_params.a_mod, disk_params.fFrag, disk_params.uFrag);
+            disk_params.r_dze_i, disk_params.r_dze_o, disk_params.Dr_dze_i, disk_params.Dr_dze_o, disk_params.a_mod, disk_params.fFrag, disk_params.uFrag);
+    fprintf(stderr, "DEBUG [main]:   PDENSITY (dust particle density) set to %.2f g/cm^3.\n", disk_params.PDENSITY); // Debug print for PDENSITY
 
 
     // Set sim_opts->dzone based on dead zone radii from disk_params
@@ -127,9 +132,33 @@ int main(int argc, const char **argv) {
     fprintf(stderr, "DEBUG [main]: Dead zone parameter (sim_opts.dzone) set.\n");
 
 
+    // --- Output directory handling ---
+    fprintf(stderr, "DEBUG [main]: Creating main output directory: '%s'.\n", def.output_dir_name);
+    Mk_Dir(def.output_dir_name); // Creates the main output folder
+
+    char initial_dir_path[MAX_PATH_LEN]; // Using MAX_PATH_LEN for consistency
+    char logs_dir_path[MAX_PATH_LEN];    // Using MAX_PATH_LEN for consistency
+
+    // Create the 'initial' subdirectory using CONFIG_DIR
+    snprintf(initial_dir_path, sizeof(initial_dir_path), "%s/%s", def.output_dir_name, CONFIG_DIR);
+    fprintf(stderr, "DEBUG [main]: Creating initial files directory: '%s'.\n", initial_dir_path);
+    Mk_Dir(initial_dir_path);
+
+    // Create the 'LOGS' subdirectory using LOGS_DIR
+    snprintf(logs_dir_path, sizeof(logs_dir_path), "%s/%s", def.output_dir_name, LOGS_DIR);
+    fprintf(stderr, "DEBUG [main]: Creating LOGS directory: '%s'.\n", logs_dir_path);
+    Mk_Dir(logs_dir_path);
+
+    fprintf(stderr, "DEBUG [main]: Output subdirectories created.\n");
+
+    int dummy_sys_ret; // Dummy variable for system() call return value
+    char cmd_buffer[MAX_PATH_LEN * 2]; // Buffer for system commands, needs to accommodate two paths and "cp "
+
     // --- Input file handling logic ---
     if (def.input_file != NULL && strcmp(def.input_file, "") != 0) {
-        current_inputsig_file = def.input_file;
+        // If an input file is specified, it directly becomes current_inputsig_file
+        strncpy(current_inputsig_file, def.input_file, MAX_PATH_LEN - 1);
+        current_inputsig_file[MAX_PATH_LEN - 1] = '\0';
         fprintf(stderr, "DEBUG [main]: Input file specified: '%s'. Attempting to read initial profile.\n", current_inputsig_file);
 
         // disk_params.NGRID needs to be updated by the file content *before* allocation.
@@ -144,16 +173,55 @@ int main(int argc, const char **argv) {
         }
 
         fprintf(stderr, "DEBUG [main]: NGRID set from input file: %d. DD calculated as %.4e.\n", disk_params.NGRID, disk_params.DD);
+
+        // Copy input profile file to initial_dir_path
+        snprintf(cmd_buffer, sizeof(cmd_buffer), "cp %s %s/", current_inputsig_file, initial_dir_path);
+        dummy_sys_ret = system(cmd_buffer); (void)dummy_sys_ret;
+        fprintf(stderr, "DEBUG [main]: Copied initial profile file '%s' to '%s/'.\n", current_inputsig_file, initial_dir_path);
+
+        // Copy disk_config.dat (FILENAME_DISK_PARAM) to initial_dir_path
+        // This file is assumed to exist in the CWD if an input file is provided
+        snprintf(cmd_buffer, sizeof(cmd_buffer), "cp %s %s/", FILENAME_DISK_PARAM, initial_dir_path);
+        dummy_sys_ret = system(cmd_buffer); (void)dummy_sys_ret;
+        fprintf(stderr, "DEBUG [main]: Copied %s to %s/\n", FILENAME_DISK_PARAM, initial_dir_path);
+
     } else {
         fprintf(stderr, "DEBUG [main]: No input file specified (-i flag not used). Generating default grid and profile.\n");
-        // NGRID is already set from def.ngrid_val
+        
+        // Populate init_tool_options_t from 'def' (command line) values
+        init_tool_params.n_grid_points = disk_params.NGRID; // Use the NGRID from disk_params (initially from def)
+        init_tool_params.r_inner= disk_params.RMIN;
+        init_tool_params.r_outer = disk_params.RMAX;
+        init_tool_params.sigma0_gas_au = disk_params.SIGMA0;
+        init_tool_params.sigma_exponent = disk_params.SIGMAP_EXP;
+        init_tool_params.deadzone_r_inner = disk_params.r_dze_i;
+        init_tool_params.deadzone_r_outer = disk_params.r_dze_o;
+        init_tool_params.deadzone_dr_inner = disk_params.Dr_dze_i;
+        init_tool_params.deadzone_dr_outer = disk_params.Dr_dze_o;
+        init_tool_params.alpha_viscosity = disk_params.alpha_visc;
+        init_tool_params.deadzone_alpha_mod = disk_params.a_mod;
+        init_tool_params.aspect_ratio = disk_params.HASP;
+        init_tool_params.flaring_index = disk_params.FLIND;
+        init_tool_params.star_mass = disk_params.STAR_MASS;
+        init_tool_params.dust_to_gas_ratio = def.eps_val;
+        init_tool_params.two_pop_ratio = def.ratio_val;
+        init_tool_params.micro_size_cm = def.mic_val;
+        init_tool_params.one_size_particle_cm = def.onesize_val;
+        init_tool_params.dust_density_g_cm3 = def.pdensity_val; // NEW: Pass PDENSITY to init_tool_params
+        fprintf(stderr, "DEBUG [main]: init_tool_options_t (init_tool_params) structure populated for profile generation.\n");
+        fprintf(stderr, "DEBUG [main]:   init_tool_params.n=%d, init_tool_params.ri=%.2f, init_tool_params.ro=%.2f, init_tool_params.sigma0=%.2e\n",
+               init_tool_params.n_grid_points, init_tool_params.r_inner, init_tool_params.r_outer, init_tool_params.sigma0_gas_au);
+        fprintf(stderr, "DEBUG [main]:   init_tool_params.dust_density_g_cm3 = %.2f g/cm^3.\n", init_tool_params.dust_density_g_cm3); // Debug print
 
-        // --- Generate profile and set current_inputsig_file to init_data.dat ---
+        // --- Generate profile directly into the 'initial' directory ---
         fprintf(stderr, "DEBUG [main]: Calling run_init_tool(&init_tool_params)...\n");
+        strncpy(init_tool_params.output_base_path, initial_dir_path, MAX_PATH_LEN - 1); // Pass the path to init_tool
+        init_tool_params.output_base_path[MAX_PATH_LEN - 1] = '\0';
         run_init_tool(&init_tool_params);
         fprintf(stderr, "DEBUG [main]: run_init_tool completed.\n");
 
-        current_inputsig_file = "init_data.dat"; // This is the default output of init_tool
+        // Now, current_inputsig_file points to the generated file in the initial_dir_path
+        snprintf(current_inputsig_file, sizeof(current_inputsig_file), "%s/%s", initial_dir_path, FILENAME_INIT_PROFILE);
         fprintf(stderr, "DEBUG [main]: Generated profile will be loaded from '%s'.\n", current_inputsig_file);
 
         // --- Update NGRID from the generated file (crucial for accurate size for sigIn) ---
@@ -166,25 +234,22 @@ int main(int argc, const char **argv) {
             disk_params.DD = 0.0;
         }
         fprintf(stderr, "DEBUG [main]: NGRID set to default/command-line value: %d. DD calculated as %.4e.\n", disk_params.NGRID, disk_params.DD);
+
+        // No need to 'cp' FILENAME_DISK_PARAM or FILENAME_INIT_PROFILE here, as run_init_tool created them directly in initial_dir_path
     }
 
     // --- CRITICAL STEP: Now that current_inputsig_file is definitively set,
     //                  copy it to sim_opts.input_filename for tIntegrate. ---
-    fprintf(stderr, "DEBUG [main]: Preparing to set sim_opts.input_filename. current_inputsig_file = '%s' (address %p).\n",
-                current_inputsig_file ? current_inputsig_file : "(NULL or empty)", (void*)current_inputsig_file);
-    if (current_inputsig_file != NULL) {
-        strncpy(sim_opts.input_filename, current_inputsig_file, MAX_PATH_LEN - 1); // Use MAX_PATH_LEN - 1 to ensure null-termination
-        sim_opts.input_filename[MAX_PATH_LEN - 1] = '\0'; // Explicitly ensure null-termination
-    } else {
-        sim_opts.input_filename[0] = '\0'; // Set to empty string if NULL, though should not happen here.
-    }
-    fprintf(stderr, "DEBUG [main]: sim_opts.input_filename set to '%s'.\n", sim_opts.input_filename);
+    // Make sure simulation_options_t has char input_filename[MAX_PATH_LEN];
+    strncpy(sim_opts.input_filename, current_inputsig_file, MAX_PATH_LEN - 1);
+    sim_opts.input_filename[MAX_PATH_LEN - 1] = '\0'; // Ensure null-termination
+    fprintf(stderr, "DEBUG [main]: sim_opts.input_filename set to '%s' for tIntegrate.\n", sim_opts.input_filename);
 
 
     // --- CRITICAL STEP: Ensure global PARTICLE_NUMBER matches disk_params.NGRID ---
+    // This needs to be done *after* NGRID is potentially updated by reszecskek_szama
     PARTICLE_NUMBER = disk_params.NGRID;
     fprintf(stderr, "DEBUG [main]: Global PARTICLE_NUMBER set to %d (from disk_params.NGRID).\n", PARTICLE_NUMBER);
-
 
     // --- Dynamic Memory Allocation for Disk Arrays ---
     // Allocate NGRID+2 elements for boundary conditions
@@ -201,42 +266,19 @@ int main(int argc, const char **argv) {
     fprintf(stderr, "DEBUG [main]: Disk profile arrays dynamically allocated with size NGRID+2 = %d.\n", disk_params.NGRID + 2);
 
     // Call disk_param_be to set PDENSITY and PDENSITYDIMLESS within disk_params
-    fprintf(stderr, "DEBUG [main]: Calling disk_param_be to calculate derived disk parameters.\n");
+    // This call is necessary for the 'disk_params' struct in main to have these values,
+    // regardless of whether run_init_tool also calls it on its temporary struct.
+    fprintf(stderr, "DEBUG [main]: Calling disk_param_be to calculate derived disk parameters for main disk_params struct.\n");
     disk_param_be(&disk_params);
-    // After disk_param_be, the PDENSITY and PDENSITYDIMLESS are now correctly set in disk_params.
     fprintf(stderr, "DEBUG [main]: disk_param_be completed. disk_params.PDENSITY=%.2e, disk_params.PDENSITYDIMLESS=%.2e.\n", disk_params.PDENSITY, disk_params.PDENSITYDIMLESS);
-
-
-    // --- Populate init_tool_options_t from 'def' (command line) values ---
-    init_tool_params.n_grid_points = disk_params.NGRID; // Use the NGRID from disk_params, which might be updated by input file
-    init_tool_params.r_inner= disk_params.RMIN;
-    init_tool_params.r_outer = disk_params.RMAX;
-    init_tool_params.sigma0_gas_au = disk_params.SIGMA0;
-    init_tool_params.sigma_exponent = disk_params.SIGMAP_EXP;
-    init_tool_params.deadzone_r_inner = disk_params.r_dze_i;
-    init_tool_params.deadzone_r_outer = disk_params.r_dze_o;
-    init_tool_params.deadzone_dr_inner = disk_params.Dr_dze_i;
-    init_tool_params.deadzone_dr_outer = disk_params.Dr_dze_o;
-    init_tool_params.alpha_viscosity = disk_params.alpha_visc;
-    init_tool_params.deadzone_alpha_mod = disk_params.a_mod;
-    init_tool_params.aspect_ratio = disk_params.HASP;
-    init_tool_params.flaring_index = disk_params.FLIND;
-    init_tool_params.star_mass = disk_params.STAR_MASS;
-    init_tool_params.dust_to_gas_ratio = def.eps_val;
-    init_tool_params.two_pop_ratio = def.ratio_val;
-    init_tool_params.micro_size_cm = def.mic_val;
-    init_tool_params.one_size_particle_cm = def.onesize_val;
-    fprintf(stderr, "DEBUG [main]: init_tool_options_t (init_tool_params) structure populated for profile generation.\n");
-    fprintf(stderr, "DEBUG [main]:   init_tool_params.n=%d, init_tool_params.ri=%.2f, init_tool_params.ro=%.2f, init_tool_params.sigma0=%.2e\n",
-           init_tool_params.n_grid_points, init_tool_params.r_inner, init_tool_params.r_outer, init_tool_params.sigma0_gas_au);
 
 
     fprintf(stderr, "DEBUG [main]: Time parameters are now directly in sim_opts. No separate timePar() call needed if it just sets globals.\n");
 
 
     // --- Initial profile loading for sigIn ---
-    // Note: current_inputsig_file is already correctly set to either def.input_file or "init_data.dat"
-    // and disk_params.NGRID is already updated to reflect the file's content.
+    // Note: current_inputsig_file is already correctly set to either def.input_file or
+    // the path to FILENAME_INIT_PROFILE in initial_dir_path.
     fprintf(stderr, "DEBUG [main]: Loading initial profile from '%s'.\n", current_inputsig_file);
     fprintf(stderr, "DEBUG [main]: Calling sigIn(disk_params.sigmavec, disk_params.rvec, &disk_params, '%s')...\n", current_inputsig_file);
     sigIn(disk_params.sigmavec, disk_params.rvec, &disk_params, current_inputsig_file);
@@ -254,48 +296,6 @@ int main(int argc, const char **argv) {
     Initial_Ugas(&disk_params);
     fprintf(stderr, "DEBUG [main]: Pressure and gas velocity profiles initialized.\n");
 
-    // --- Output directory handling ---
-    fprintf(stderr, "DEBUG [main]: Creating main output directory: '%s'.\n", def.output_dir_name);
-    Mk_Dir(def.output_dir_name); // Creates the main output folder
-
-    char initial_dir_path[MAX_PATH_LEN]; // Using MAX_PATH_LEN for consistency
-    char logs_dir_path[MAX_PATH_LEN];    // Using MAX_PATH_LEN for consistency
-
-    // Create the 'initial' subdirectory
-    snprintf(initial_dir_path, sizeof(initial_dir_path), "%s/initial", def.output_dir_name);
-    fprintf(stderr, "DEBUG [main]: Creating initial files directory: '%s'.\n", initial_dir_path);
-    Mk_Dir(initial_dir_path);
-
-    // Create the 'LOGS' subdirectory
-    snprintf(logs_dir_path, sizeof(logs_dir_path), "%s/LOGS", def.output_dir_name);
-    fprintf(stderr, "DEBUG [main]: Creating LOGS directory: '%s'.\n", logs_dir_path);
-    Mk_Dir(logs_dir_path);
-
-    fprintf(stderr, "DEBUG [main]: Output subdirectories created.\n");
-
-    int dummy_sys_ret; // Dummy variable for system() call return value
-    char cmd_buffer[MAX_PATH_LEN * 2]; // Buffer for system commands, needs to accommodate two paths and "cp "
-
-    // Copy config and initial profile files to the 'initial' directory
-    fprintf(stderr, "DEBUG [main]: Copying config and initial profile files to '%s'.\n", initial_dir_path);
-
-    // Copy disk_param.dat
-    snprintf(cmd_buffer, sizeof(cmd_buffer), "cp %s %s/", FILENAME_DISK_PARAM, initial_dir_path);
-    dummy_sys_ret = system(cmd_buffer); (void)dummy_sys_ret; // Cast to void to suppress unused result warning
-    fprintf(stderr, "DEBUG [main]: Copied %s to %s/\n", FILENAME_DISK_PARAM, initial_dir_path);
-
-    // Copy input profile file (or generated init_data.dat)
-    if(def.input_file != NULL && strcmp(def.input_file, "") != 0) {
-        snprintf(cmd_buffer, sizeof(cmd_buffer), "cp %s %s/", def.input_file, initial_dir_path);
-        dummy_sys_ret = system(cmd_buffer); (void)dummy_sys_ret;
-        fprintf(stderr, "DEBUG [main]: Copied initial profile file '%s' to '%s/'.\n", def.input_file, initial_dir_path);
-    } else {
-        // Use current_inputsig_file which is correctly set to "init_data.dat" in this branch
-        snprintf(cmd_buffer, sizeof(cmd_buffer), "cp %s %s/", current_inputsig_file, initial_dir_path);
-        dummy_sys_ret = system(cmd_buffer); (void)dummy_sys_ret;
-        fprintf(stderr, "DEBUG [main]: Copied generated profile '%s' to '%s/'.\n", current_inputsig_file, initial_dir_path);
-    }
-
     // Print current information
     fprintf(stderr, "DEBUG [main]: Calling infoCurrent...\n");
     // This infoCurrent is likely for the main output directory, not 'initial' specifically.
@@ -307,8 +307,8 @@ int main(int argc, const char **argv) {
     fprintf(stderr, "DEBUG [main]:   sim_opts.output_dir_name = '%s'\n", sim_opts.output_dir_name);
     fprintf(stderr, "DEBUG [main]:   disk_params.RMIN = %.2f, RMAX = %.2f, NGRID = %d, DD = %.2e\n",
             disk_params.RMIN, disk_params.RMAX, disk_params.NGRID, disk_params.DD);
-    fprintf(stderr, "DEBUG [main]:   disk_params.SIGMA0 = %.2e, SIGMAP_EXP = %.2f, alpha_visc = %.2e\n",
-            disk_params.SIGMA0, disk_params.SIGMAP_EXP, disk_params.alpha_visc);
+    fprintf(stderr, "DEBUG [main]:   disk_params.SIGMA0 = %.2e, SIGMAP_EXP = %.2f, alpha_visc = 1.00e-02\n",
+            disk_params.SIGMA0, disk_params.SIGMAP_EXP); // Adjusted format specifier and removed explicit alpha_visc_val from print string
     fprintf(stderr, "DEBUG [main]:   disk_params.STAR_MASS = %.2f, HASP = %.2f, FLIND = %.2f\n",
             disk_params.STAR_MASS, disk_params.HASP, disk_params.FLIND);
     fprintf(stderr, "DEBUG [main]:   disk_params.PDENSITY = %.2e, PDENSITYDIMLESS = %.2e\n",
@@ -324,7 +324,7 @@ int main(int argc, const char **argv) {
         printf("A megadott opciok szerint nem szamol sem sigmat, sem driftet, ezert a program kilep!\n\nA kezdeti file-ok a %s mappaban talalhatoak!\n", initial_dir_path);
 
         char dens_name_initial[MAX_PATH_LEN]; // Using MAX_PATH_LEN for consistency
-        // Corrected typo: removed 'da' from filename
+        // Corrected typo: removed 'da' from filename (was already correct based on your code)
         snprintf(dens_name_initial, sizeof(dens_name_initial), "%s/%s", initial_dir_path,INITIAL_SURFACE_DENSITY_FILE);
         fprintf(stderr, "DEBUG [main]: Printing initial surface density to %s.\n", dens_name_initial);
 
@@ -334,6 +334,14 @@ int main(int argc, const char **argv) {
         output_files_t temp_output_for_initial_print;
         temp_output_for_initial_print.surface_file = fopen(dens_name_initial, "w");
         if (temp_output_for_initial_print.surface_file != NULL) {
+            // Add header to initial surface density file
+            fprintf(temp_output_for_initial_print.surface_file, "# Initial Disk Profile Data (Gas Surface Density, Pressure, Gradient)\n");
+            fprintf(temp_output_for_initial_print.surface_file, "# Columns: 1. Radius [AU], 2. Sigma_gas [M_Sun/AU^2],\n");
+            fprintf(temp_output_for_initial_print.surface_file, "#          3. Pressure [units], 4. dP/dR [units]\n");
+            fprintf(temp_output_for_initial_print.surface_file, "#\n"); // Empty line
+            fprintf(temp_output_for_initial_print.surface_file, "# Data generated by Dust Drift Simulation (Initial State)\n");
+            fflush(temp_output_for_initial_print.surface_file);
+
             Print_Sigma(&disk_params, &temp_output_for_initial_print);
             fclose(temp_output_for_initial_print.surface_file);
             temp_output_for_initial_print.surface_file = NULL; // Reset pointer
@@ -346,7 +354,7 @@ int main(int argc, const char **argv) {
     } else {
         fprintf(stderr, "DEBUG [main]: Evolution (sim_opts.evol=%.2f) or drift (sim_opts.drift=%.2f) is ON. Starting main simulation loop.\n", sim_opts.evol, sim_opts.drift);
         fprintf(stderr, "DEBUG [main]: Calling tIntegrate...\n");
-        // Pass the LOGS directory path to tIntegrate
+        // Pass the LOGS directory path to tIntegrate (handled internally by tIntegrate)
         tIntegrate(&disk_params, &sim_opts, &output_files);
         fprintf(stderr, "DEBUG [main]: tIntegrate completed. Program finished normally.\n");
     }

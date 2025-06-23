@@ -4,6 +4,9 @@
 // Required includes if not already present globally
 #include <stdbool.h> // For 'true'/'false'
 
+#include "simulation_types.h"
+
+
 // Structure to hold initialization options
 typedef struct init_tool_options {
     // Grid and Physical Parameters
@@ -32,6 +35,10 @@ typedef struct init_tool_options {
     double  micro_size_cm;          // Size of micron-sized particles for two-population model
     double  f_drift;                // Factor for drift-limited size (default value, adjust as needed)
     double  f_frag;                 // Factor for fragmentation-limited size (default value, adjust as needed)
+
+    char output_base_path[MAX_PATH_LEN]; // NEW: Base path where init_tool should create its output files
+    double dust_density_g_cm3; // NEW: Por szemcse sűrűsége (g/cm^3)
+
 
 } init_tool_options_t;
 
