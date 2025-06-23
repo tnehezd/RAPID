@@ -51,7 +51,7 @@ void disk_param_be(disk_t *disk_params) {
 
     // <<< FONTOS VÁLTOZTATÁS: Nincs fájlbeolvasás (fopen, fscanf) itt! >>>
     // A függvény most már feltételezi, hogy a `disk_params` struktúra már tartalmazza az összes
-    // bemeneti adatot (pl. RMIN, STAR_MASS stb.), amit a `main` függvény már feltöltött.
+    // bemeneti adatot (pl. disk_params->RMIN, STAR_MASS stb.), amit a `main` függvény már feltöltött.
 
     // A PDENSITY és PDENSITYDIMLESS értékek kiszámítása,
     // a disk_params struktúrában tárolt paraméterek alapján.
@@ -106,76 +106,76 @@ void disk_param_be(disk_t *disk_params) {
 
 
 /*	r vektor (gridcellák) inicializálása	*/
-void load_R(double *rvec) {
+void load_R(disk_t *disk_params) {
 	
 	int i;
- 	for(i = 0; i <= NGRID+1; i++) {						/*	load an array of radii	*/
- 		rvec[i] = RMIN + (i-1) * DD;
+ 	for(i = 0; i <= disk_params->NGRID+1; i++) {						/*	load an array of radii	*/
+ 		disk_params->rvec[i] = disk_params->RMIN + (i-1) * disk_params->DD;
 	}
 
 }
 
 /*	a sigmara kezdeti profil betoltese	*/
-void Initial_Profile(double *sigmavec, double *r){		/*	initial profile of sigma		*/
+void Initial_Profile(disk_t *disk_params){		/*	initial profile of sigma		*/
 
   	int i;
   
-  	for(i = 1; i <= NGRID; i++) {
-    		sigmavec[i] = SIGMA0 * pow(r[i],SIGMAP_EXP);		/*	sigma0*r^x (x could be eg. -1/2)	*/
+  	for(i = 1; i <= disk_params->NGRID; i++) {
+    		disk_params->sigmavec[i] = disk_params->SIGMA0 * pow(disk_params->rvec[i],disk_params->SIGMAP_EXP);		/*	sigma0*r^x (x could be eg. -1/2)	*/
   	}
   
-  	Perem(sigmavec);
+  	Perem(disk_params->sigmavec,disk_params);
 
 }
 
-void Initial_Press(double *pressvec, double *sigmavec, double *rvec){		/*	initial profile of pressure		*/
+void Initial_Press(disk_t *disk_params){		/*	initial profile of pressure		*/
 
   	int i;
   
-  	for(i = 1; i <= NGRID; i++) {
-    		pressvec[i] = press(sigmavec[i],rvec[i]);
+  	for(i = 1; i <= disk_params->NGRID; i++) {
+    		disk_params->pressvec[i] = press(disk_params->sigmavec[i],disk_params->rvec[i],disk_params);
   	}
   
-  	Perem(pressvec);
+  	Perem(disk_params->pressvec,disk_params);
 
 }
 
-void Initial_dPress(double *dpressvec, double *pressvec){		/*	initial profile of pressure		*/
+void Initial_dPress(disk_t *disk_params){		/*	initial profile of pressure		*/
 
-	dpress(dpressvec,pressvec);
-   	Perem(dpressvec);
+	dpress(disk_params);
+   	Perem(disk_params->dpressvec,disk_params);
 
 }
 
 /*	ug vektor feltoltese az u_gas ertekevel	*/
-void Initial_Ugas(double *sigmavec, double *rvec, double *ug){		/*	initial profile of pressure		*/
-
-	u_gas(sigmavec,rvec,ug);
-  	Perem(ug);
+void Initial_Ugas(disk_t *disk_params){		/*	initial profile of pressure		*/
+	
+	u_gas(disk_params);
+  	Perem(disk_params->ugvec,disk_params);
 }
 
 
 
-void loadSigDust(double radin[][2], double *massin, double out[][3], double dd, int n) {
+void loadSigDust(double radin[][2], double *massin, double out[][3], int n, const disk_t *disk_params) {
 
 	int i;
 
 	for(i=0;i<n;i++){
 
 /*	cm-es por feluletisurusegenek kiszamolasa	*/
-/*	ha a reszecske tavolsaga nagyobb, mint RMIN, azaz a szamolas tartomanyan belul van, a feluletisuruseget az altala kepviselt tomegbol szamolja vissza a program	*/
-		if((radin[i][0] >= RMIN)) {
-			out[i][0] = massin[i] / (2. * (radin[i][0]-dd/2.) * M_PI * dd);	// sigma = m /(2 * r * pi * dr) --> itt a dr az a tavolsag, ami porreszecske "generalo" programban az eredeti gridfelbontas
+/*	ha a reszecske tavolsaga nagyobb, mint disk_params->RMIN, azaz a szamolas tartomanyan belul van, a feluletisuruseget az altala kepviselt tomegbol szamolja vissza a program	*/
+		if((radin[i][0] >= disk_params->RMIN)) {
+			out[i][0] = massin[i] / (2. * (radin[i][0]-disk_params->DD/2.) * M_PI * disk_params->DD);	// sigma = m /(2 * r * pi * dr) --> itt a dr az a tavolsag, ami porreszecske "generalo" programban az eredeti gridfelbontas
 			out[i][1] = radin[i][0];					// elmenti a reszecske tavolsagat is
 
-  			double rmid = (radin[i][0] - RMIN) / dd;     						/* 	The integer part of this gives at which index is the body			*/
+  			double rmid = (radin[i][0] - disk_params->RMIN) / disk_params->DD;     						/* 	The integer part of this gives at which index is the body			*/
 			int rindex = (int) floor(rmid);							/* 	Ez az rmid egesz resze --> floor egeszreszre kerekit lefele, a +0.5-el elerheto, hogy .5 felett felfele, .5 alatt lefele kerekitsen						*/
 			out[i][2] = (double) rindex;
 
-/*	ha a reszecske RMIN-en belul van, akkor az o "tavolsagaban" a feluletisuruseg 0		*/	
+/*	ha a reszecske disk_params->RMIN-en belul van, akkor az o "tavolsagaban" a feluletisuruseg 0		*/	
 		} else {
 			out[i][0] = 0;
-			out[i][1] = 0;					// r = 0, mert ha RMIN-en belulre kerult a reszecske, akkor a program automatikusan kinullazza a reszecske tavolsagat. Itt tehat a sigdtemp[i][1] = 0 lesz!
+			out[i][1] = 0;					// r = 0, mert ha disk_params->RMIN-en belulre kerult a reszecske, akkor a program automatikusan kinullazza a reszecske tavolsagat. Itt tehat a sigdtemp[i][1] = 0 lesz!
 			out[i][2] = 0;
 		}
 	}

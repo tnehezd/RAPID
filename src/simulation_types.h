@@ -1,6 +1,10 @@
 #ifndef SIMULATION_TYPES_H
 #define SIMULATION_TYPES_H
 
+#include <stdio.h>
+
+#define MAX_PATH_LEN 8192 // Definiálj egy maximális hosszt fájlnevekhez
+
 // Define fundamental physical constants if they're not in config.h
 // #define AU2CM 1.496e13 // Example: Astronomical Unit to Centimeters
 
@@ -55,41 +59,58 @@ typedef struct disk_t {
     double PDENSITY; // Por sűrűség (fizikai egységekben, pl. g/cm^3)
     double PDENSITYDIMLESS; // Dimenziómentes por sűrűség
 
-    // Dinamikusan allokált tömbök (ezek a main-ben vannak beállítva)
-    double *rvec;
-    double *sigmavec;
-    double *pressvec;
-    double *dpressvec;
-    double *ugvec;
+    // Dinamikusan allokált tömbök (ezek a main-ben vannak beállítva, vagy itt lesznek allokálva)
+    double *rvec;          // Rádiusz vektor
+    double *sigmavec;      // Gáz felületi sűrűség
+    double *pressvec;      // Gáz nyomás
+    double *dpressvec;     // Gáz nyomás gradiens (rádiusz szerinti derivált)
+    double *ugvec;         // Gáz belső energia vagy hőmérséklet
+    double *sigmadustvec;  // Por felületi sűrűség (Új: sigmad)
+    double *rhopvec;       // Por sűrűsége a részecskében (Új: rho_p)
 
-    // Ha vannak további konstansok vagy segédértékek, amiket globálisan használnál,
-    // azok is ide kerülhetnek, ha a diskkel kapcsolatosak.
+    // Por koagulációs/fragmentációs paraméterek
+    double fFrag;          // Fragmentációs hatékonysági faktor
+    double uFrag;          // Fragmentációs sebesség küszöb
+    double fDrift;         // fd in Birnstiel 2012, set to 0.55
+
+    // További általános paraméterek vagy tömbök
+    // Ha a 'dp' és 'rho_p' nem tömbök, hanem skalárok, akkor azok is ide jöhetnek,
+    // de a kontextusból valószínűbb, hogy rácspontonként változnak.
+    // Mivel az 'dp' már dpressvec néven létezik, csak a 'rho_p'-t kell hozzáadni.
+    // Látom, a korábbi hibáknál 'dp' néven hivatkoztál rá, az most 'dpressvec'.
+    // A 'rho_p' viszont egy új bejegyzés.
 
 } disk_t;
 
 // --- Simulation Options/Control Structure ---
 // Groups all boolean/flag-like options
 typedef struct {
-    double evol;      // optev in your code (gas evolution)
-    double drift;     // optdr (particle drift)
-    double growth;    // optgr (particle growth)
-    double twopop;    // opttwopop (two-population simulation)
-    double fFrag;
-    double uFrag;
-    double DT;        // User-defined fixed time step
-    double TMAX;      // Maximum simulation time
-    double WO;        // Write-out interval (TMAX/WO)
-    double TCURR; // <-- Add this line
+    double evol;    // Gas evolution (replaces optev)
+    double drift;   // Particle drift (replaces optdr)
+    double growth;  // Particle growth (replaces optgr)
+    double twopop;  // Two-population simulation (replaces opttwopop)
+    double dzone;   // Dead zone flag (replaces optdze)
+    double DT;      // User-defined fixed time step
+    double TMAX;    // Maximum simulation time
+    double WO;      // Write-out interval (TMAX/WO)
+    double TCURR;
+
+    char input_filename[MAX_PATH_LEN];  // Input fájl neve (pl. init_data.dat)
+    char output_dir_name[MAX_PATH_LEN]; // Kimeneti könyvtár neve
 
 } simulation_options_t;
 
-// --- Output File Pointers Structure (optional but good for organization) ---
-typedef struct {
-    FILE *por_motion_file;      // fout
-    FILE *micron_motion_file;   // foutmicr
-    FILE *mass_file;            // massfil
-    // Add other file pointers here (e.g., surface density, dust profiles)
-} output_files_t;
 
+// --- Output File Pointers Structure ---
+typedef struct {
+    FILE *por_motion_file;      // pormozgas.dat (fout a régi kódokban)
+    FILE *micron_motion_file;   // pormozgasmic.dat (foutmicr a régi kódokban)
+    FILE *mass_file;            // mass.dat (massfil a régi kódokban)
+    FILE *surface_file;         // surface.dat (a Print_Sigma számára)
+    FILE *dust_file;            // dust.dat (a Print_Sigmad fő por kimenetéhez)
+    FILE *micron_dust_file;     // dustmic.dat (a Print_Sigmad mikronos por kimenetéhez)
+    FILE *size_file; 
+    // Add other file pointers here if you need more output files
+} output_files_t;
 
 #endif // SIMULATION_TYPES_H

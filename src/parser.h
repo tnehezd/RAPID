@@ -1,11 +1,13 @@
 #ifndef PARSER_H
 #define PARSER_H
 
-#include <stdbool.h> // For bool type
+#include <stdbool.h>      // For bool type
+#include "config.h"       // Keep this for other config definitions if needed
+#include "simulation_types.h" // CRITICAL: This line provides MAX_PATH_LEN
 
 // Define a maximum length for the output directory name
-// This prevents buffer overflows if the user provides a very long directory name.
-#define MAX_OUTPUT_DIR_LEN 1024
+// Use MAX_PATH_LEN from simulation_types.h for consistency
+#define MAX_OUTPUT_DIR_LEN MAX_PATH_LEN
 
 /*
  * @brief Structure to hold all parsed command-line options.
@@ -37,7 +39,7 @@ typedef struct {
     double a_mod_val;       // Alpha viscosity multiplier in dead zone
 
     // File input/output
-    const char *input_file;     // Path to the input profile file, NULL if not provided
+    const char *input_file;      // Path to the input profile file, NULL if not provided
     char output_dir_name[MAX_OUTPUT_DIR_LEN]; // Name of the output directory
 
     // Time parameters

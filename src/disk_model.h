@@ -14,16 +14,16 @@
 // Funkciódeklarációk a disk_model.c-ből
 void disk_param_be(disk_t *disk_params);
 
-void load_R(double *rvec);
+void load_R(disk_t *disk_params);
 
-void Initial_Profile(double *sigmavec, double *r);
+void Initial_Profile(disk_t *disk_params);
 
-void Initial_Press(double *pressvec, double *sigmavec, double *rvec);
+void Initial_Press(disk_t *disk_params);
 
-void Initial_dPress(double *dpressvec, double *pressvec);
+void Initial_dPress(disk_t *disk_params);
 
-void Initial_Ugas(double *sigmavec, double *rvec, double *ug);
+void Initial_Ugas(disk_t *disk_params);
 
-void loadSigDust(double radin[][2], double *massin, double out[][3], double dd, int n);
+void loadSigDust(double radin[][2], double *massin, double out[][3], int n, const disk_t *disk_params);
 
 #endif // DISK_MODEL_H

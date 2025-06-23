@@ -1,38 +1,82 @@
-// src/simulation_core.h
-
 #ifndef SIMULATION_CORE_H
 #define SIMULATION_CORE_H
 
-// Include any headers needed *by this header itself* for types used in declarations.
-// For tIntegrate, it uses 'char' and 'double', which are built-in, so no specific
-// includes are strictly necessary *just for the prototype*. However, if this header
-// were to define structs or other types that are part of the public interface,
-// you'd include their definitions here.
+#include "disk_model.h"         // disk_t struktúra miatt
+#include "simulation_types.h"   // simulation_options_t és output_files_t struktúrák miatt
 
-// 	1D drfit: dr/dt = St/(1+St*St)*H(r)/r*dlnP/dlnr*cs = St/(1+St*St) * (H/r) * (r/P) * (dP/dr) * cs
-void eqrhs(double pradius, double dp, double sigma, double ug, double r, double *drdt);
+// FÜGGVÉNY PROTOTÍPUSOK
+
+/**
+ * @brief Kiszámítja az 1D-s részecske drift sebességét (dr/dt).
+ * @param pradius A részecske sugara [AU].
+ * @param dp Nyomásgradiens (dP/dr) [dimenziótlan].
+ * @param sigma A gáz felszíni sűrűsége [CGS].
+ * @param ug A gáz sebessége (valószínűleg a viszkózus ráta) [cm/s].
+ * @param r Aktuális sugárpozíció [AU].
+ * @param drdt A kimeneti drift sebesség [AU/s].
+ * @param disk_params A diszk paramétereit tartalmazó struktúra.
+ * @return void (az eredményt a drdt pointerbe írja).
+ */
+void eqrhs(double pradius, double dp, double sigma, double ug, double r, double *drdt, const disk_t *disk_params);
+
+/**
+ * @brief Kiszámítja a viszkozitással kapcsolatos Coeff_1 együtthatót.
+ * A diffúziós egyenlet 3 * nu tagja.
+ * @param r Aktuális sugárpozíció [AU].
+ * @param disk_params A diszk paramétereit tartalmazó struktúra.
+ * @return Az Coeff_1 értéke.
+ */
+double Coeff_1(double r, const disk_t *disk_params);
+
+/**
+ * @brief Kiszámítja a viszkozitással kapcsolatos Coeff_2 együtthatót.
+ * A diffúziós egyenlet 9 * nu / (2 * r) tagja.
+ * @param r Aktuális sugárpozíció [AU].
+ * @param disk_params A diszk paramétereit tartalmazó struktúra.
+ * @return Az Coeff_2 értéke.
+ */
+double Coeff_2(double r, const disk_t *disk_params);
+
+/**
+ * @brief Kiszámítja a minimális időlépést a szimulációhoz.
+ * @param rvec A diszk sugárkoordinátáinak vektora.
+ * @param disk_params A diszk paramétereit tartalmazó struktúra.
+ * @return A számított időlépés.
+ */
+double time_step(const disk_t *disk_params);
+
+/**
+ * @brief Egyetlen Runge-Kutta 4 lépést hajt végre a részecske mozgására.
+ * @param time Aktuális szimulációs idő.
+ * @param prad Aktuális részecskesugár.
+ * @param pressvec Nyomás vektor a diszk rácspontjain.
+ * @param dpressvec Nyomásgradiens vektor a diszk rácspontjain.
+ * @param sigmavec Gáz felszíni sűrűség vektor a diszk rácspontjain.
+ * @param sigmad Por felszíni sűrűség (adott részecske rácspontján).
+ * @param rdvec A por részecskék radiális koordinátái.
+ * @param rvec A diszk rácspontjainak radiális koordinátái.
+ * @param ugvec Gáz sebesség vektor a diszk rácspontjain.
+ * @param step Az időlépés mérete.
+ * @param y A részecske aktuális radiális pozíciója.
+ * @param ynew A részecske új radiális pozíciója (kimenet).
+ * @param pradnew A részecske új sugara (kimenet, növekedés után).
+ * @param disk_params A diszk paramétereit tartalmazó struktúra.
+ * @param sim_opts A szimulációs opciókat tartalmazó struktúra.
+ */
+void int_step(double time, double prad, const double *sigmad, const double *rdvec, double step, double y, double *ynew, double *pradnew, const disk_t *disk_params, const simulation_options_t *sim_opts);
+
+/**
+ * @brief A fő időintegrációs ciklus.
+ * Koordinálja a részecskék mozgását, növekedését,
+ * és a gázfelszíni sűrűség evolúcióját, valamint a kimeneti adatok írását.
+ * @param output_dir_name A kimeneti könyvtár neve.
+ * @param disk_params A diszk paramétereit tartalmazó struktúra.
+ * @param sim_opts A szimulációs opciókat tartalmazó struktúra.
+ * @param output_files A kimeneti fájl mutatókat tartalmazó struktúra.
+ */
+void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, output_files_t *output_files);
 
 
-// for solving d(sigma*nu)/dt = 3*nu*d2(sigma*nu)/dr2 + 9*hu/(2*r)*dsigma/dr	--> 3*nu = Coeff_1 
-double Coeff_1(double r);
-
-// for solving d(sigma*nu)/dt = 3*nu*d2(sigma*nu)/dr2 + 9*hu/(2*r)*dsigma/dr	--> 9*nu /(2*r) = Coeff_2
-double Coeff_2(double r);
-
-/*	Runge-Kutta4 integrator	*/
-// prad bemenet: AU-ban!
-void int_step(double time, double prad, double *pressvec, double *dpressvec, double *sigmavec, double *sigmad, double *rdvec, double *rvec, double *ugvec, double step, double y, double *ynew, double *pradnew);
-
-
-// a diffúziós egyenlet megoldásához szükséges minimális időlépés
-double time_step(double *rvec);
-
-// Function Declarations
-void tIntegrate(const char *nev, const disk_t *disk_params);
-
-void secondaryGrowth(double rad[][2], double radmicr[][2], double radsec[][2], double partmicind[][4], double partsecind[][4], double *massmicvec, double *masssecvec);
-
-// If you add other functions to simulation_core.c that are called elsewhere,
-// declare them here as well.
+void secondaryGrowth(double rad[][2], double radmicr[][2], double radsec[][2], double partmicind[][4], double partsecind[][4], double *massmicvec, double *masssecvec, const disk_t *disk_params);
 
 #endif // SIMULATION_CORE_H

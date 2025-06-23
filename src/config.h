@@ -6,35 +6,12 @@
 
 // --- Global Variable Declarations (extern) ---
 // Disk parameters
-extern double RMIN;
-extern double RMAX;
-extern int NGRID;
-extern double DD;
 
-extern double SIGMA0;
-extern double SIGMAP_EXP;
-extern double FLIND;
-extern double alpha_visc;
-extern double a_mod;
-extern double STAR;
-extern double HASP;
+
 
 // Dust parameters
-extern double PDENSITY;
-extern double PDENSITYDIMLESS;
 extern int PARTICLE_NUMBER;
 
-// Dead Zone parameters
-extern double r_dze_i;
-extern double r_dze_o;
-extern double Dr_dze_i;
-extern double Dr_dze_o;
-
-// Time parameters
-extern double DT;
-extern double TMAX;
-extern double WO;
-extern double TCURR;
 
 // --- Global File Pointer Declarations (extern) ---
 extern FILE *fmo;
@@ -70,15 +47,12 @@ extern FILE *fil;
 
 
 // --- Global Filename Declarations (extern) ---
-extern char filenev1[1024]; // "init_data.dat"
-extern char filenev2[1024]; // "disk_param.dat"
+extern const char * const FILENAME_INIT_PROFILE;
+extern const char * const FILENAME_DISK_PARAM;
 
 
 // Parameter controls
-extern double optev, optdr, optgr, opttwopop, optdze; // variables to control different parts of the code
-// inputsig: flag to indicate if input sigma file is provided (0 = yes, 1 = no)
 extern const char *inputsig;
-extern double fFrag, uFrag;
 
 
 // Function Declaration (if this function is implemented in a .c file and used elsewhere)

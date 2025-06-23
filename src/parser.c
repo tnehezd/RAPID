@@ -37,8 +37,9 @@ void create_default_options(options_t *opt) {
 
     // File input/output
     opt->input_file      = NULL; // Default to NULL if no -i flag, easier to check
-    strcpy(opt->output_dir_name, "output");
-    
+    strncpy(opt->output_dir_name, "output", sizeof(opt->output_dir_name) - 1);
+    opt->output_dir_name[sizeof(opt->output_dir_name) - 1] = '\0'; // Ensure null termination
+
     // Time parameters
     opt->tStep           = 0.;
     opt->totalTime       = 1.0e6;

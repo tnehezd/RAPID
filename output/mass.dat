@@ -1,0 +1,11 @@
+# This file contains the time evolution of dust mass within specified disk regions.
+#
+# Columns:
+# 1. Time Step (arbitrary unit, iteration count)
+# 2. Inner Boundary Radius (R_in) of the inner region [AU]
+# 3. Total Dust Mass (non-micron + micron) within R < R_in [M_Jupiter]
+# 4. Outer Boundary Radius (R_out) of the outer region [AU]
+# 5. Total Dust Mass (non-micron + micron) within R > R_out [M_Jupiter]
+#
+# All masses include both 'cm-sized' (larger) and 'micron-sized' dust populations.
+# Data is updated periodically during the simulation.

@@ -1,38 +1,8 @@
 // src/config.c
 #include "config.h"
 
-// --- Global Variable Definitions and Initializations ---
-// Disk parameters
-double RMIN;
-double RMAX;
-int NGRID;
-double DD; // Declare DD, but DO NOT initialize here
-
-double SIGMA0;
-double SIGMAP_EXP;
-double FLIND;
-double alpha_visc;
-double a_mod;
-double STAR;
-double HASP;
-
-// Dust parameters
-double PDENSITY;
-double PDENSITYDIMLESS;
 int PARTICLE_NUMBER;
 
-// Dead Zone parameters
-double r_dze_i;
-double r_dze_o;
-double Dr_dze_i;
-double Dr_dze_o;
-
-
-// Time parameters
-double DT;
-double TMAX;
-double WO;
-double TCURR;
 
 // --- Global File Pointer Definitions ---
 FILE *fmo = NULL;
@@ -47,19 +17,11 @@ FILE *fin2 = NULL;
 FILE *fil = NULL;
 const char *inputsig = NULL;
 
-// --- Global Filename Definitions ---
-char filenev1[1024] = "init_data.dat";
-char filenev2[1024] = "disk_param.dat";
+// --- Global Filename Definitions (Constant Pointers) ---
+// Using const char * const for truly constant string literals.
+// These cannot be modified at runtime.
+const char * const FILENAME_INIT_PROFILE = "initial_dust_profile.dat";
+const char * const FILENAME_DISK_PARAM = "disk_param.dat";
 
-
-// opt parsing things
-double optev, optdr, optgr, opttwopop, optdze, optinp; // Inicializáld őket 0.0-ra vagy 1.0-ra ha szükséges
-double fFrag, uFrag;
-
-
-// Function to initialize derived global variables
-void initialize_derived_config_variables() {
-    DD = (RMAX - RMIN) / NGRID;
-}
 
 

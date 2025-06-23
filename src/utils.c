@@ -4,16 +4,18 @@
                       // más utility függvényeknek szüksége lehet rá.
                       // Jó gyakorlat ide tenni.
 
+#include "simulation_types.h" 
+
 /*	Parabola illesztés a peremen	*/
-void Parabola(double *vec, int i1, int i2, int i3, double *a, double *b, double *c, double dd) {
+void Parabola(double *vec, int i1, int i2, int i3, double *a, double *b, double *c, double dd, const disk_t *disk_params) {
 
 	double x1, x2, x3;	/*	meghatározott x pontok, ahol illesztünk					*/
 	double y1, y2, y3;	/*	amit illesztünk a meghatározott pontokban				*/
 	double av, bv, cv;	/*	illesztéshez szükséges együtthatók --> ezt adja vissza a függvény	*/
 
-	x1 = RMIN + (i1-1) * dd;
-	x2 = RMIN + (i2-1) * dd;
-	x3 = RMIN + (i3-1) * dd;
+	x1 = disk_params->RMIN + (i1-1) * dd;
+	x2 = disk_params->RMIN + (i2-1) * dd;
+	x3 = disk_params->RMIN + (i3-1) * dd;
  
 	y1 = vec[i1];
 	y2 = vec[i2];
@@ -31,26 +33,26 @@ void Parabola(double *vec, int i1, int i2, int i3, double *a, double *b, double 
 
 
 /*	A peremen parabolat illeszt	*/
-void Perem(double *vec) {					/*	boundary condition for sigma, p, dp...	*/
+void Perem(double *vec, const disk_t *disk_params) {					/*	boundary condition for sigma, p, dp...	*/
 
 	double a, b, c; 
 
-	Parabola(vec, 1, 2, 3, &a, &b, &c, DD);
-	vec[0] =  a * (RMIN - DD) * (RMIN - DD) + b * (RMIN - DD) + c;
+	Parabola(vec, 1, 2, 3, &a, &b, &c, disk_params->DD,disk_params);
+	vec[0] =  a * (disk_params->RMIN - disk_params->DD) * (disk_params->RMIN - disk_params->DD) + b * (disk_params->RMIN - disk_params->DD) + c;
 
-	Parabola(vec, NGRID - 2, NGRID - 1, NGRID, &a, &b, &c, DD);
-	vec[NGRID+1] = a * (RMAX + DD) * (RMAX + DD) + b * (RMAX + DD) + c;
+	Parabola(vec, disk_params->NGRID - 2, disk_params->NGRID - 1, disk_params->NGRID, &a, &b, &c, disk_params->DD,disk_params);
+	vec[disk_params->NGRID+1] = a * (disk_params->RMAX + disk_params->DD) * (disk_params->RMAX + disk_params->DD) + b * (disk_params->RMAX + disk_params->DD) + c;
 
 }
 
 
 /*	egy megadott, diszkret pontokban ismert fuggvenyt interpolal a reszecske aktualis helyere	*/
-void interpol(double *invec, double *rvec, double pos, double *out, double rd, int opt) {
+void interpol(double *invec, double *rvec, double pos, double *out, double rd, int opt, const disk_t *disk_params) {
 
 	double rmid, rindex, coef1, temp;
 	int index; 
 
-     	rmid = pos - RMIN;
+    rmid = pos - disk_params->RMIN;
 	rmid = rmid / rd;     						/* 	the integer part of this gives at which index is the body	*/
 	index = (int) floor(rmid);					/* 	ez az rmid egesz resze	(kerekites 0.5-tol)			*/
 	rindex = rvec[index];       					/* 	the corresponding r, e.g rd[ind] < r < rd[ind+1]		*/
@@ -108,13 +110,13 @@ double find_min(double s1, double s2, double s3) {
 
 
 /*	counting the number of zero points of the pressure gradient function	*/
-int find_num_zero(double *dp) {
+int find_num_zero(disk_t *disk_params) {
 
 	int i,count;
 	count = 0;
 
-	for(i = 0; i < NGRID-1; i++) {
-		if(((dp[i] * dp[i+1]) <= 0.)  && (dp[i] > dp[i+1])) {	/*	Osszeszorozza a ket ponton a nyomas derivaltjanak erteket, ahol a szorzat negativ, ott elojelvaltas tortenik --> negativbol pozitivba, vagy pozitivbol negativba valt --> nyomasi maximum. Maximum pedig ott talalhato, ahol a fuggveny pozitivbol negativba valt at (ezt keresi a masodik feltetel).	*/
+	for(i = 0; i < disk_params->NGRID-1; i++) {
+		if(((disk_params->dpressvec[i] * disk_params->dpressvec[i+1]) <= 0.)  && (disk_params->dpressvec[i] > disk_params->dpressvec[i+1])) {	/*	Osszeszorozza a ket ponton a nyomas derivaltjanak erteket, ahol a szorzat negativ, ott elojelvaltas tortenik --> negativbol pozitivba, vagy pozitivbol negativba valt --> nyomasi maximum. Maximum pedig ott talalhato, ahol a fuggveny pozitivbol negativba valt at (ezt keresi a masodik feltetel).	*/
 			count++;
 		} 
 
@@ -140,7 +142,7 @@ double find_r_zero(double r1, double r2, double dp1, double dp2) {
 
 
 /*	this function counts where (which r) the pressure maximum is	*/
-double find_zero(int i, double *rvec, double *dp) {
+double find_zero(int i, const double *rvec, const double *dp) {
 
 	double r;
 	
@@ -156,7 +158,7 @@ double find_zero(int i, double *rvec, double *dp) {
 
 
 /*	A nyomasi maximum korul 1H tavolsagban jeloli ki a korgyurut	*/
-void find_r_annulus(double *rvec, double rin, double *ind_ii, double *ind_io, double rout, double *ind_oi, double *ind_oo) {
+void find_r_annulus(const double *rvec, double rin, double *ind_ii, double *ind_io, double rout, double *ind_oi, double *ind_oo, const simulation_options_t *sim_opts, const disk_t *disk_params) {
 
 	int i;
 	double rmid, rtemp;
@@ -169,36 +171,36 @@ void find_r_annulus(double *rvec, double rin, double *ind_ii, double *ind_io, do
 	double riomH;
 	double riopH;
 
-	if(optdze == 0) {
+	if(sim_opts->dzone == 0) {
 	
 		*ind_ii = 0;
 		*ind_io = 0;
 	
 	}
 
-	riimH = (rin - scale_height(rin)) - DD / 2.0;		/*	A nyomasi maximum az rout pontban van, ettol rout - 1/2H - DD / 2 es rout + 1*2H -DD / 2 kozott van a korgyuru belso hatara (azert DD/2, hogy biztosan 1 cellat tudjunk kijelolni, ne pedig egy tartomanyt)	*/
-	riipH = (rin - scale_height(rin)) + DD / 2.0;		
-	riomH = (rin + scale_height(rin)) - DD / 2.0;		/*	Az alabbi ketto pedig a kulso hatarat adja meg a korgyurunek	*/
-	riopH = (rin + scale_height(rin)) + DD / 2.0;
+	riimH = (rin - scale_height(rin)) - disk_params->DD / 2.0;		/*	A nyomasi maximum az rout pontban van, ettol rout - 1/2H - DD / 2 es rout + 1*2H -DD / 2 kozott van a korgyuru belso hatara (azert DD/2, hogy biztosan 1 cellat tudjunk kijelolni, ne pedig egy tartomanyt)	*/
+	riipH = (rin - scale_height(rin)) + disk_params->DD / 2.0;		
+	riomH = (rin + scale_height(rin)) - disk_params->DD / 2.0;		/*	Az alabbi ketto pedig a kulso hatarat adja meg a korgyurunek	*/
+	riopH = (rin + scale_height(rin)) + disk_params->DD / 2.0;
 
-	roimH = (rout - scale_height(rout)) - DD / 2.0;		/*	A nyomasi maximum az rout pontban van, ettol rout - 1/2H - DD / 2 es rout + 1*2H -DD / 2 kozott van a korgyuru belso hatara (azert DD/2, hogy biztosan 1 cellat tudjunk kijelolni, ne pedig egy tartomanyt)	*/
-	roipH = (rout - scale_height(rout)) + DD / 2.0;		
-	roomH = (rout + scale_height(rout)) - DD / 2.0;		/*	Az alabbi ketto pedig a kulso hatarat adja meg a korgyurunek	*/
-	roopH = (rout + scale_height(rout)) + DD / 2.0;
+	roimH = (rout - scale_height(rout)) - disk_params->DD / 2.0;		/*	A nyomasi maximum az rout pontban van, ettol rout - 1/2H - DD / 2 es rout + 1*2H -DD / 2 kozott van a korgyuru belso hatara (azert DD/2, hogy biztosan 1 cellat tudjunk kijelolni, ne pedig egy tartomanyt)	*/
+	roipH = (rout - scale_height(rout)) + disk_params->DD / 2.0;		
+	roomH = (rout + scale_height(rout)) - disk_params->DD / 2.0;		/*	Az alabbi ketto pedig a kulso hatarat adja meg a korgyurunek	*/
+	roopH = (rout + scale_height(rout)) + disk_params->DD / 2.0;
 
-	for(i = 1; i <= NGRID; i++) {
+	for(i = 1; i <= disk_params->NGRID; i++) {
 
-		if(optdze == 1) { 
+		if(sim_opts->dzone == 1) { 
 /*	Ha az r tavolsag a kijelolt hatarok kozott van, akkor az adott valtozo visszakapja r erteket	*/
 			if(rvec[i] > riimH && rvec[i] < riipH) {
-			    	rmid = (rvec[i] - RMIN)/ DD;     						/* 	The integer part of this gives at which index is the body	*/
+			    	rmid = (disk_params->rvec[i] - disk_params->RMIN)/ disk_params->DD;     						/* 	The integer part of this gives at which index is the body	*/
 				rtemp = (int) floor(rmid + 0.5);						/*	Rounding up (>.5) or down (<.5)					*/
 				*ind_ii = rtemp;
 			}
 				
 /*	Ha az r tavolsag a kijelolt hatarok kozott van, akkor az adott valtozo visszakapja r erteket	*/
 			if(rvec[i] > riomH && rvec[i] < riopH) {
-			    	rmid = (rvec[i] - RMIN)/ DD;     						/* 	The integer part of this gives at which index is the body	*/
+			    	rmid = (rvec[i] - disk_params->RMIN)/ disk_params->DD;     						/* 	The integer part of this gives at which index is the body	*/
 				rtemp = (int) floor(rmid + 0.5);						/*	Rounding up (>.5) or down (<.5)					*/
 				*ind_io = rtemp;
 			}
@@ -207,14 +209,14 @@ void find_r_annulus(double *rvec, double rin, double *ind_ii, double *ind_io, do
 
 /*	Ha az r tavolsag a kijelolt hatarok kozott van, akkor az adott valtozo visszakapja r erteket	*/
 		if(rvec[i] > roimH && rvec[i] < roipH) {
-		    	rmid = (rvec[i] - RMIN)/ DD;     						/* 	The integer part of this gives at which index is the body	*/
+		    	rmid = (rvec[i] - disk_params->RMIN)/ disk_params->DD;     						/* 	The integer part of this gives at which index is the body	*/
 			rtemp = (int) floor(rmid + 0.5);						/*	Rounding up (>.5) or down (<.5)					*/
 			*ind_oi = rtemp;
 		}
 				
 /*	Ha az r tavolsag a kijelolt hatarok kozott van, akkor az adott valtozo visszakapja r erteket	*/
 		if(rvec[i] > roomH && rvec[i] < roopH) {
-		    	rmid = (rvec[i] - RMIN)/ DD;     						/* 	The integer part of this gives at which index is the body	*/
+		    	rmid = (rvec[i] - disk_params->RMIN)/ disk_params->DD;     						/* 	The integer part of this gives at which index is the body	*/
 			rtemp = (int) floor(rmid + 0.5);						/*	Rounding up (>.5) or down (<.5)					*/
 			*ind_oo = rtemp;
 		}
@@ -249,20 +251,20 @@ void sort(double *rv,int n) {
 }
 // If NGRID is not directly available, you might need to pass the array size
 // void histogram(double r, int *hist, double dd, int hist_size) {
-void histogram(double r, int *hist, double dd) {
+void histogram(double r, int *hist, double dd, disk_t *disk_params) {
     int index;
     double rmid; // hist_i is no longer needed as a separate variable
 
     // 1. Clamp 'r' to ensure it's within the valid range [RMIN, RMAX]
     // This prevents negative indices or indices that are too large.
-    if (r < RMIN) {
-        r = RMIN;
-    } else if (r > RMAX) {
-        r = RMAX;
+    if (r < disk_params->RMIN) {
+        r = disk_params->RMIN;
+    } else if (r > disk_params->RMAX) {
+        r = disk_params->RMAX;
     }
 
     // Calculate the potential index
-    rmid = (r - RMIN) / dd;
+    rmid = (r - disk_params->RMIN) / dd;
     index = (int) floor(rmid);
 
     // 2. Explicitly check and clamp the index to the array bounds
@@ -275,8 +277,8 @@ void histogram(double r, int *hist, double dd) {
     }
     // Make sure NGRID is the correct size of the array 'hist'
     // If hist is int hist[PARTICLE_NUMBER], then upper bound is PARTICLE_NUMBER-1
-    if (index >= NGRID) { // NGRID should be defined and accessible here
-        index = NGRID - 1; // Ensure index does not exceed the array's upper bound
+    if (index >= disk_params->NGRID) { // NGRID should be defined and accessible here
+        index = disk_params->NGRID - 1; // Ensure index does not exceed the array's upper bound
         // Optionally print a debug message:
         // fprintf(stderr, "DEBUG WARNING: histogram index exceeded NGRID. Clamped to NGRID-1. r=%.10f, RMAX=%.10f, dd=%.10e, rmid=%.10f\n", r, RMAX, dd, rmid);
     }
@@ -314,9 +316,9 @@ void sortarray(double rv[][3],int n) {
 }
 
 
-void kerekit(double in[][3], int n) {
+void kerekit(double in[][3], int n, const disk_t *disk_params) {
 
-	double dd = (RMAX - RMIN) / (PARTICLE_NUMBER-1);
+	double dd = (disk_params->RMAX - disk_params->RMIN) / (PARTICLE_NUMBER-1);
 	int dker = (int)(1./dd);//
 	dker = dker * KEREK;
 	double ddker = (double) dker;
@@ -335,7 +337,7 @@ void kerekit(double in[][3], int n) {
 
 
 
-void contract(double L, double in[][3], double dd, int n) {
+void contract(double in[][3], double dd, int n, const disk_t *disk_params) {
 
 	int i;
 	int j;
@@ -352,7 +354,7 @@ void contract(double L, double in[][3], double dd, int n) {
 	j = 0;
 	k = 0;
 
-	kerekit(in,n);
+	kerekit(in,n,disk_params);
 	sortarray(in,n);
 
 
@@ -386,7 +388,7 @@ void contract(double L, double in[][3], double dd, int n) {
 	
 		in[i][0] = sigout[i];
 		in[i][1] = radout[i];
-  		double rmid = (in[i][1] - RMIN) / dd;     						/* 	The integer part of this gives at which index is the body			*/
+  		double rmid = (in[i][1] - disk_params->RMIN) / dd;     						/* 	The integer part of this gives at which index is the body			*/
 		int rindex = (int) floor(rmid);							/* 	Ez az rmid egesz resze --> floor egeszreszre kerekit lefele, a +0.5-el elerheto, hogy .5 felett felfele, .5 alatt lefele kerekitsen						*/
 		in[i][2] = (double)rindex;
 	}
@@ -394,14 +396,14 @@ void contract(double L, double in[][3], double dd, int n) {
 }
 
 /*	fuggveny a reszecskek tomegenek, indexenek es r_indexenek (a reszecske tavolsagaban levo gridcella indexe) frissitesere	*/
-void Count_Mass(double radin[][2], double partmassindin[][4], double *massvecin, double t, int n) {
+void Count_Mass(double radin[][2], double partmassindin[][4], double *massvecin, double t, int n, const disk_t *disk_params) {
 
 	int i, rindex;
 	double rmid;	
 
 	for (i = 0; i < n; i++) {	
 
-  		rmid = (radin[i][0] - RMIN) / DD;     						/* 	The integer part of this gives at which index is the body			*/
+  		rmid = (radin[i][0] - disk_params->RMIN) / disk_params->DD;     						/* 	The integer part of this gives at which index is the body			*/
 		rindex = (int) floor(rmid+0.5);							/* 	Ez az rmid egesz resze --> floor egeszreszre kerekit lefele, a +0.5-el elerheto, hogy .5 felett felfele, .5 alatt lefele kerekitsen						*/
 		if(rmid < 0) rindex = 0;
 		if(isnan(rmid)) rindex = 0;	/*	neha az indexre - ha az mar RMIN-en belul van, nan-t ad, ezert abban az esetben is 0 lesz a rindex	 */
