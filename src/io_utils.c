@@ -4,12 +4,14 @@
 #include <errno.h>    // For errno
 
 #ifdef _WIN32
-#include <direct.h> // For _mkdir on Windows
-#define MKDIR_CALL(dir) _mkdir(dir)
+    #include <direct.h>
+    #define MKDIR_CALL(path) _mkdir(path)
+    #define access _access
+    #define F_OK 0
+    #include <io.h>
 #else
-#include <sys/stat.h> // For mkdir on Linux/macOS
-#include <sys/types.h>
-#define MKDIR_CALL(dir) mkdir(dir, 0755) // 0755 permissions: owner rwx, group rx, others rx
+    #include <unistd.h>
+    #define MKDIR_CALL(path) mkdir(path, 0755)
 #endif
 
 // Local includes
@@ -160,7 +162,7 @@ void sigIn(disk_t *disk_params, const char *filename) {
         // Adjust index for 1-based indexing in array (if NGRID is 0-based for loops)
         // Your code uses 1-based indexing for r_arr and disk_params->sigmavec
         if ((i_read + 1) >= 0 && (i_read + 1) <= disk_params->NGRID) {
-             disk_params->rvec[i_read + 1] = r_read;
+             disk_params->sigmavec[i_read + 1] = r_read;
              disk_params->sigmavec[i_read + 1] = repmass_pop1_read + repmass_pop2_read;
         } else {
             fprintf(stderr, "WARNING [sigIn]: Skipping data for out-of-bounds index %d.\n", i_read);
@@ -172,29 +174,36 @@ void sigIn(disk_t *disk_params, const char *filename) {
 }
 
 
-void Mk_Dir(const char *dir_path) {
-    fprintf(stderr, "DEBUG [Mk_Dir]: Attempting to create directory: '%s'\n", dir_path);
-    int result = MKDIR_CALL(dir_path);
+void Mk_Dir(char *dir_path) {
+    char tmp_path[MAX_PATH_LEN];
+    int counter = 0;
 
-    if (result == 0) {
-        fprintf(stderr, "DEBUG [Mk_Dir]: Directory '%s' created successfully.\n", dir_path);
-    } else {
-        // Hiba esetén ellenőrizzük, hogy már létezik-e a mappa
-        #ifdef _WIN32
-        // Windows alatt az _mkdir() -1-et ad vissza, ha már létezik, de nincs egyszerű GetLastError-os ellenőrzés itt
-        // Egyszerűen csak figyelmeztetést adunk
-        fprintf(stderr, "WARNING [Mk_Dir]: Failed to create directory '%s'. It might already exist or there's a permission issue.\n", dir_path);
-        #else
-        if (errno == EEXIST) {
-            fprintf(stderr, "DEBUG [Mk_Dir]: Directory '%s' already exists.\n", dir_path);
-        } else {
-            perror("ERROR [Mk_Dir]: Failed to create directory"); // Kiírja a rendszerspecifikus hibaüzenetet
-            fprintf(stderr, "ERROR [Mk_Dir]: Could not create directory: '%s'. Exiting.\n", dir_path);
-            exit(1); // Kilépés súlyos hiba esetén
+    // Másolat az eredeti névről
+    strncpy(tmp_path, dir_path, MAX_PATH_LEN - 1);
+    tmp_path[MAX_PATH_LEN - 1] = '\0';
+
+    while (access(tmp_path, F_OK) == 0) {  // Fájl vagy mappa létezik
+        snprintf(tmp_path, MAX_PATH_LEN, "%s_%04d", dir_path, ++counter);
+        if (counter > 99) {
+            fprintf(stderr, "ERROR [Mk_Dir]: Too many existing directories with similar names.\n");
+            exit(1);
         }
-        #endif
     }
-    fflush(stderr); // Biztosítsuk, hogy a debug üzenetek azonnal kiíródjanak
+
+    int result = MKDIR_CALL(tmp_path);
+    if (result != 0) {
+        perror("ERROR [Mk_Dir]: mkdir failed");
+        fprintf(stderr, "ERROR [Mk_Dir]: Could not create directory: '%s'\n", tmp_path);
+        exit(1);
+    }
+
+    fprintf(stderr, "DEBUG [Mk_Dir]: Directory '%s' created successfully.\n", tmp_path);
+
+    // Másold vissza a létrehozott mappa nevét a bemenetbe
+    strncpy(dir_path, tmp_path, MAX_PATH_LEN - 1);
+    dir_path[MAX_PATH_LEN - 1] = '\0';
+
+    fflush(stderr);
 }
 
 /* Elkészít egy fájlt, ami tartalmazza a jelenlegi futás paramétereit,

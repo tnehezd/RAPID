@@ -25,7 +25,7 @@ extern void create_default_init_tool_options(init_tool_options_t *def);
 
 int main(int argc, const char **argv) {
     // DEBUG: Program start
-    fprintf(stderr, "DEBUG [main]: Program started.\n");
+//    fprintf(stderr, "DEBUG [main]: Program started.\n");
 
     // --- Declare current_inputsig_file here, at the beginning of main ---
     // This will now hold the full path to the initial profile file
@@ -37,25 +37,26 @@ int main(int argc, const char **argv) {
     options_t def;
     // Set default values
     create_default_options(&def);
-    fprintf(stderr, "DEBUG [main]: default_options.output_dir_name = '%s'\n", def.output_dir_name);
+//    fprintf(stderr, "DEBUG [main]: default_options.output_dir_name = '%s'\n", def.output_dir_name);
 
     // Local structure to store init_tool parameters (these will be populated from 'def')
     init_tool_options_t init_tool_params;
     // Set default values for init_tool. This is useful if 'def' doesn't override all of them.
     create_default_init_tool_options(&init_tool_params);
-    fprintf(stderr, "DEBUG [main]: Default init_tool options created.\n");
+//    fprintf(stderr, "DEBUG [main]: Default init_tool options created.\n");
+
 
     // Parse command-line options and populate the 'def' structure
     int retCode = parse_options(argc, argv, &def);
 
     if (0 != retCode) {
         // Exit on error (usage printed by parse_options)
-        fprintf(stderr, "DEBUG [main]: Error parsing command-line options. Exiting with code %d.\n", retCode);
+        fprintf(stderr, "Error parsing command-line options. Exiting with code %d.\n", retCode);
         return retCode;
     }
-    fprintf(stderr, "DEBUG [main]: Command-line options parsed successfully.\n");
+//    fprintf(stderr, "DEBUG [main]: Command-line options parsed successfully.\n");
     // DEBUG: After parsing, check output directory name from def
-    fprintf(stderr, "DEBUG [main]: after_parse_options.output_dir_name = '%s'\n", def.output_dir_name);
+//    fprintf(stderr, "DEBUG [main]: after_parse_options.output_dir_name = '%s'\n", def.output_dir_name);
 
 
     // --- Declare instances of the new simulation structs ---
@@ -71,7 +72,7 @@ int main(int argc, const char **argv) {
     output_files.dust_file = NULL;
     output_files.micron_dust_file = NULL;
     output_files.size_file = NULL; // Initialize this one too
-    fprintf(stderr, "DEBUG [main]: New simulation structs declared and output_files_t initialized to NULL.\n");
+//    fprintf(stderr, "DEBUG [main]: New simulation structs declared and output_files_t initialized to NULL.\n");
 
     /* Populate the simulation_options_t struct from 'def' (parsed options) */
     sim_opts.evol = def.evol;
@@ -86,15 +87,17 @@ int main(int argc, const char **argv) {
     // --- CRITICAL: Populate sim_opts.output_dir_name from def.output_dir_name ---
     strncpy(sim_opts.output_dir_name, def.output_dir_name, MAX_PATH_LEN - 1);
     sim_opts.output_dir_name[MAX_PATH_LEN - 1] = '\0'; // Ensure null-termination
-    fprintf(stderr, "DEBUG [main]: sim_opts.output_dir_name set to '%s' from def.output_dir_name.\n", sim_opts.output_dir_name);
+//    fprintf(stderr, "DEBUG [main]: sim_opts.output_dir_name set to '%s' from def.output_dir_name.\n", sim_opts.output_dir_name);
     // --- END CRITICAL ADDITION ---
 
-    fprintf(stderr, "DEBUG [main]: sim_opts structure populated (including output_dir_name).\n");
+
+
+/*    fprintf(stderr, "DEBUG [main]: sim_opts structure populated (including output_dir_name).\n");
     fprintf(stderr, "DEBUG [main]:   evol=%.2f, drift=%.2f, growth=%.2f, twopop=%.2f, \n",
             sim_opts.evol, sim_opts.drift, sim_opts.growth, sim_opts.twopop);
     fprintf(stderr, "DEBUG [main]:   Time parameters set: TMAX=%.2e, WO=%.2e, TCURR=%.2e, DT=%.2e\n",
             sim_opts.TMAX, sim_opts.WO, sim_opts.TCURR, sim_opts.DT);
-
+*/
 
     // --- Populate disk_t with parameters from 'def' ---
     disk_params.RMIN = def.rmin_val;
@@ -116,7 +119,7 @@ int main(int argc, const char **argv) {
     disk_params.fDrift = 0.55;       // set by Birnstiel 2012
     disk_params.PDENSITY = def.pdensity_val; // NEW: Pass the particle density from parsed options
 
-    fprintf(stderr, "DEBUG [main]: disk_params structure populated with initial parameters.\n");
+/*    fprintf(stderr, "DEBUG [main]: disk_params structure populated with initial parameters.\n");
     fprintf(stderr, "DEBUG [main]:   RMIN=%.2f, RMAX=%.2f, NGRID=%d, SIGMA0=%.2e, SIGMAP_EXP=%.2f\n",
             disk_params.RMIN, disk_params.RMAX, disk_params.NGRID, disk_params.SIGMA0, disk_params.SIGMAP_EXP);
     fprintf(stderr, "DEBUG [main]:   alpha_visc=%.2e, STAR_MASS=%.2f, HASP=%.2f, FLIND=%.2f\n",
@@ -124,26 +127,26 @@ int main(int argc, const char **argv) {
     fprintf(stderr, "DEBUG [main]:   r_dze_i=%.2f, r_dze_o=%.2f, Dr_dze_i=%.2f, Dr_dze_o=%.2f, a_mod=%.2f, fFrag=%.2f, uFrag=%.2f\n",
             disk_params.r_dze_i, disk_params.r_dze_o, disk_params.Dr_dze_i, disk_params.Dr_dze_o, disk_params.a_mod, disk_params.fFrag, disk_params.uFrag);
     fprintf(stderr, "DEBUG [main]:   PDENSITY (dust particle density) set to %.2f g/cm^3.\n", disk_params.PDENSITY); // Debug print for PDENSITY
-
-
+*/
     // Set sim_opts->dzone based on dead zone radii from disk_params
     sim_opts.dzone = (disk_params.r_dze_i > 0.0 || disk_params.r_dze_o > 0.0) ? 1.0 : 0.0;
 
-    fprintf(stderr, "DEBUG [main]: Dead zone parameter (sim_opts.dzone) set.\n");
+//    fprintf(stderr, "DEBUG [main]: Dead zone parameter (sim_opts.dzone) set.\n");
 
 
     // --- Output directory handling ---
-    fprintf(stderr, "DEBUG [main]: Creating main output directory: '%s'.\n", def.output_dir_name);
+//    fprintf(stderr, "DEBUG [main]: Creating main output directory: '%s'.\n", def.output_dir_name);
     Mk_Dir(def.output_dir_name); // Creates the main output folder
+
 
     char initial_dir_path[MAX_PATH_LEN]; // Using MAX_PATH_LEN for consistency
     char logs_dir_path[MAX_PATH_LEN];    // Using MAX_PATH_LEN for consistency
 
     // Create the 'initial' subdirectory using CONFIG_DIR
     snprintf(initial_dir_path, sizeof(initial_dir_path), "%s/%s", def.output_dir_name, CONFIG_DIR);
-    fprintf(stderr, "DEBUG [main]: Creating initial files directory: '%s'.\n", initial_dir_path);
+//    fprintf(stderr, "DEBUG [main]: Creating initial files directory: '%s'.\n", initial_dir_path);
     Mk_Dir(initial_dir_path);
-
+    return 0;
     // Create the 'LOGS' subdirectory using LOGS_DIR
     snprintf(logs_dir_path, sizeof(logs_dir_path), "%s/%s", def.output_dir_name, LOGS_DIR);
     fprintf(stderr, "DEBUG [main]: Creating LOGS directory: '%s'.\n", logs_dir_path);

@@ -24,7 +24,7 @@ void por_be(double radius[][2], double radiusmicr[][2], double *mass, double *ma
 void sigIn(disk_t *disk_params, const char *filename);
 
 /* Fuggveny az adott futashoz mappa letrehozasara */
-void Mk_Dir(const char *dir_path);
+void Mk_Dir(char *dir_path);
 
 /* Elkeszit egy file-t, ami tartalmazza a jelenlegi futas parametereit, es hogy melyik mappaban talalhatoak a file-ok */
 // FIX: The original had 'void infoCurrent(const char *nev);'
