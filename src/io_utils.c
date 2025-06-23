@@ -100,16 +100,16 @@ void por_be(double radius[][2], double radiusmicr[][2], double *mass, double *ma
             radiusmicr[i][1] = radmicr / AU2CM; // AU2CM from config.h
             massmicr[i] = reprmassmicr;
         } else {
-            fprintf(stderr, "\n\n******************* ERROR!      *********************\n\n");
-            fprintf(stderr, "   Failed to read line %d from particle data file '%s'!\n", i, filename);
-            fprintf(stderr, "   Expected 6 values, but fscanf failed. Program will exit.\n");
+            fprintf(stderr, "\n\n******************* ERROR!      *********************\n\n");
+            fprintf(stderr, "   Failed to read line %d from particle data file '%s'!\n", i, filename);
+            fprintf(stderr, "   Expected 6 values, but fscanf failed. Program will exit.\n");
             fclose(fin1);
             exit(EXIT_FAILURE);
         }
     }
 
     fclose(fin1);
-    printf("\n\n ******* A file beolvasasa sikerult!     ******* \n ******* Uss egy ENTER-t a folytatashoz! ******* \n\n ");
+    printf("\n\n ******* A file beolvasasa sikerult!     ******* \n ******* Uss egy ENTER-t a folytatashoz! ******* \n\n ");
 }
 
 
@@ -201,27 +201,31 @@ void Mk_Dir(const char *dir_path) {
  * és hogy melyik mappában találhatóak a fájlok */
 void infoCurrent(const char *nev, const disk_t *disk_params, const simulation_options_t *sim_opts) {
 
-    char out[1024];
+    char full_path[MAX_PATH_LEN]; // Használjuk a MAX_PATH_LEN-t a biztonságos puffereléshez
+    char file_name[100]; // Csak a fájlnév, pl. "run_0.dat"
 
-    // Removed extern declarations; now using struct members
+    sprintf(file_name, "run_%i.dat", (int)sim_opts->TCURR);
+    
+    // Építsük fel a teljes elérési utat: <nev>/<file_name>
+    snprintf(full_path, sizeof(full_path), "%s/%s", nev, file_name);
 
-    sprintf(out,"run_%i.dat",(int)sim_opts->TCURR);
-    // Use the global 'jelfut' which is declared extern in config.h
-    jelfut = fopen(out,"w");
+    fprintf(stderr, "DEBUG [infoCurrent]: Attempting to open file: '%s'\n", full_path);
+
+    jelfut = fopen(full_path, "w"); // Most már a teljes elérési utat használja
 
     if (jelfut == NULL) {
-        fprintf(stderr, "ERROR [infoCurrent]: Could not open file '%s'.\n", out);
+        fprintf(stderr, "ERROR [infoCurrent]: Could not open file '%s'.\n", full_path);
         perror("Reason");
         // Don't exit here, it's not critical, just warn and return
         return;
     }
 
     fprintf(jelfut,"A jelenlegi futás a %s mappaban taláható!\n",nev);
-    fprintf(jelfut,"\n\nA korong paraméterei:\nRMIN: %lg, RMAX: %lg\nSIGMA0: %lg, SIGMA_EXP: %lg, flaring index: %lg\nALPHA_VISC: %lg, ALPHA_MOD: %lg\nR_DZE_I: %lg, R_DZE_O: %lg, DR_DZEI: %lg, DR_DZE_O: %lg  (*** R_DZE_I/O = 0, akkor azt a DZE-t nem szimulálja a futás! ***)\n\n\n",
-            disk_params->RMIN, disk_params->RMAX,
-            disk_params->SIGMA0, disk_params->SIGMAP_EXP, disk_params->FLIND,
-            disk_params->alpha_visc, disk_params->a_mod,
-            disk_params->r_dze_i, disk_params->r_dze_o, disk_params->Dr_dze_i, disk_params->Dr_dze_o);
+    fprintf(jelfut,"\n\nA korong paraméterei:\nRMIN: %lg, RMAX: %lg\nSIGMA0: %lg, SIGMA_EXP: %lg, flaring index: %lg\nALPHA_VISC: %lg, ALPHA_MOD: %lg\nR_DZE_I: %lg, R_DZE_O: %lg, DR_DZEI: %lg, DR_DZE_O: %lg   (*** R_DZE_I/O = 0, akkor azt a DZE-t nem szimulálja a futás! ***)\n\n\n",
+              disk_params->RMIN, disk_params->RMAX,
+              disk_params->SIGMA0, disk_params->SIGMAP_EXP, disk_params->FLIND,
+              disk_params->alpha_visc, disk_params->a_mod,
+              disk_params->r_dze_i, disk_params->r_dze_o, disk_params->Dr_dze_i, disk_params->Dr_dze_o);
     fprintf(jelfut,"A központi csillag tömege: %lg M_Sun\n", disk_params->STAR_MASS);
     fclose(jelfut);
 }
@@ -363,7 +367,7 @@ void Print_Mass(double step, const double *rvec, double (*partmassind)[4], doubl
 
     *massbtempio = massi;
     *massbtempoo = masso;
-    *massmtempio = massim; // FIX: Changed from *massmtempiout to *massmtempio
+    *massmtempio = massim; // FIX: Corrected typo from massmtempiout to massmtempio
     *massmtempoo = massom;
 
     if (output_files->mass_file != NULL) {
@@ -413,12 +417,12 @@ void Print_Sigmad(const double *r, const double *rm, const double *sigmad, const
 
     for(i=0;i<PARTICLE_NUMBER;i++){ // PARTICLE_NUMBER from config.h
         if (r[i] >= disk_params->RMIN) { // Using disk_params->RMIN
-            fprintf(output_files->dust_file,"%.11lg  %lg \n",r[i],sigmad[i]);
+            fprintf(output_files->dust_file,"%.11lg  %lg \n",r[i],sigmad[i]);
         }
 
         if(sim_opts->twopop == 1.0 && output_files->micron_dust_file != NULL) {
             if (rm[i] >= disk_params->RMIN) { // Using disk_params->RMIN
-                fprintf(output_files->micron_dust_file,"%lg  %lg \n",rm[i],sigmadm[i]);
+                fprintf(output_files->micron_dust_file,"%lg  %lg \n",rm[i],sigmadm[i]);
             }
         }
     }
@@ -485,7 +489,7 @@ void Print_Pormozg_Size(char *size_name, int step, double (*rad)[2], double (*ra
 /* Az időt tartalmazó fájl paramétereinek beolvasása (vagy beállítása) */
 void timePar(double tMax_val, double stepping_val, double current_val, simulation_options_t *sim_opts) {
 
-    printf("\n\n *********** A korong parameterei sikeresen beolvasva!  *********** \n      tmax: %lg, a program %lg evenként írja ki a file-okat\n\n\n", tMax_val, stepping_val);
+    printf("\n\n *********** A korong parameterei sikeresen beolvasva!  *********** \n      tmax: %lg, a program %lg evenként írja ki a file-okat\n\n\n", tMax_val, stepping_val);
 
     sim_opts->TMAX = tMax_val;
     sim_opts->WO = tMax_val / stepping_val;

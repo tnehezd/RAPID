@@ -325,7 +325,7 @@ int main(int argc, const char **argv) {
 
         char dens_name_initial[MAX_PATH_LEN]; // Using MAX_PATH_LEN for consistency
         // Corrected typo: removed 'da' from filename
-        snprintf(dens_name_initial, sizeof(dens_name_initial), "%s/initial_gas_surface_density.dat", initial_dir_path);
+        snprintf(dens_name_initial, sizeof(dens_name_initial), "%s/%s", initial_dir_path,INITIAL_SURFACE_DENSITY_FILE);
         fprintf(stderr, "DEBUG [main]: Printing initial surface density to %s.\n", dens_name_initial);
 
         // --- Special handling for Print_Sigma when only initial output is needed ---

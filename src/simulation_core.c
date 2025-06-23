@@ -55,7 +55,7 @@ double time_step(const disk_t *disk_params) { // Add const here too
     printf("DEBUG [time_step]: Calculating minimum time step.\n");
     fprintf(stderr, "DEBUG [time_step]: Entry. disk_params address=%p, FLIND=%.2f, HASP=%.2f\n",
             (void*)disk_params, disk_params->FLIND, disk_params->HASP);
-    
+
     double A_max, stepping;
     int i;
 
@@ -254,13 +254,13 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
         fprintf(stderr, "DEBUG [tIntegrate]: Copied %s to %s/\n", sim_opts->input_filename, sim_opts->output_dir_name);
 
 /* az aktualis mappaban a pormozgas.dat file letrehozasa: ebbe kerul be a porreszecske tavolsaga es indexe, valamint az adott idolepes */
-        snprintf(porout,MAX_PATH_LEN,"%s/pormozgas.dat",sim_opts->output_dir_name);
+        snprintf(porout,MAX_PATH_LEN,"%s/LOGS/macro_dust_evolution.dat",sim_opts->output_dir_name);
 /* ha 2 populacios a futas, akkor a mikronos pornak is letrehoz egy pormozgas file-t, ebbe kerul be a tavolsag, index es az ido */
         if(sim_opts->twopop == 1.) {
-            snprintf(poroutmicr,MAX_PATH_LEN,"%s/pormozgasmic.dat",sim_opts->output_dir_name);
+            snprintf(poroutmicr,MAX_PATH_LEN,"%s/micron_dust_evolution.dat",sim_opts->output_dir_name);
         }
 /* tomegnovekedesi file letrehozasa az aktualis mappaba - ez lehet, hogy egy kulon opcio lesz a kimeneti adatok meretenek csokkentesere  */
-        snprintf(massout,MAX_PATH_LEN,"%s/mass.dat",sim_opts->output_dir_name);
+        snprintf(massout,MAX_PATH_LEN,"%s/LOGS/accumulated_dust_mass.dat",sim_opts->output_dir_name);
         printf("DEBUG [tIntegrate]: Opening output files: %s, %s (if 2pop), %s\n", porout, poroutmicr, massout);
 
         output_files->por_motion_file = fopen(porout,"w");
@@ -395,19 +395,19 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
 
 /* Az adatok kiirasahoz szukseges file-ok neveinek elmentese */
                     if (t==0) {
-                        snprintf(dens_name,MAX_PATH_LEN,"%s/surface.dat",sim_opts->output_dir_name); // output_dir_name a sim_opts-ból
+                        snprintf(dens_name,MAX_PATH_LEN,"%s/%s.dat",sim_opts->output_dir_name,INITIAL_SURFACE_DENSITY_FILE); // output_dir_name a sim_opts-ból
                         printf("DEBUG [tIntegrate]: Outputting surface.dat for t=0.\n");
                     } else {
                         if(sim_opts->evol == 1) {
-                            snprintf(dens_name,MAX_PATH_LEN,"%s/dens.%d.dat",sim_opts->output_dir_name,(int)L); // output_dir_name a sim_opts-ból
+                            snprintf(dens_name,MAX_PATH_LEN,"%s/LOGS/density_profiles_%08d.dat",sim_opts->output_dir_name,(int)L); // output_dir_name a sim_opts-ból
                             printf("DEBUG [tIntegrate]: Outputting dens.%d.dat.\n", (int)L);
                         }
                     }
 
-                    snprintf(dust_name,MAX_PATH_LEN,"%s/dust.%i.dat",sim_opts->output_dir_name,(int)L); // output_dir_name a sim_opts-ból
-                    snprintf(dust_name2,MAX_PATH_LEN,"%s/dustmic.%i.dat",sim_opts->output_dir_name,(int)L); // output_dir_name a sim_opts-ból
-                    snprintf(size_name,MAX_PATH_LEN,"%s/size.%d.dat",sim_opts->output_dir_name,(int)L); // output_dir_name a sim_opts-ból
-                    printf("DEBUG [tIntegrate]: Output file names set: dust.dat, dustmic.dat, size.dat.\n");
+                    snprintf(dust_name,MAX_PATH_LEN,"%s/LOGS/dust_profiles_%08d.dat",sim_opts->output_dir_name,(int)L); // output_dir_name a sim_opts-ból
+                    snprintf(dust_name2,MAX_PATH_LEN,"%s/LOGS/micron_sized_%08d.dat",sim_opts->output_dir_name,(int)L); // output_dir_name a sim_opts-ból
+                    snprintf(size_name,MAX_PATH_LEN,"%s/LOGS/macro_sized_%08d.dat",sim_opts->output_dir_name,(int)L); // output_dir_name a sim_opts-ból
+//                    printf("DEBUG [tIntegrate]: Output file names set: dust.dat, dustmic.dat, size.dat.\n");
 
                     // *******************************************************************
                     // FÁJLOK MEGNYITÁSA AZ ADATKIÍRÁSHOZ
