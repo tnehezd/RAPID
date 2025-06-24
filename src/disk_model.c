@@ -78,8 +78,8 @@ void load_R(disk_t *disk_params) {
 	int i;
  	for(i = 0; i <= disk_params->NGRID+1; i++) {						/*	load an array of radii	*/
  		disk_params->rvec[i] = disk_params->RMIN + (i-1) * disk_params->DD;
+//        fprintf(stderr, "DEBUG [load_R]: r: %lg\n", disk_params->rvec[i]);
 	}
-
 }
 
 /*	a sigmara kezdeti profil betoltese	*/
@@ -89,7 +89,7 @@ void Initial_Profile(disk_t *disk_params){		/*	initial profile of sigma		*/
   
   	for(i = 1; i <= disk_params->NGRID; i++) {
     		disk_params->sigmavec[i] = disk_params->SIGMA0 * pow(disk_params->rvec[i],disk_params->SIGMAP_EXP);		/*	sigma0*r^x (x could be eg. -1/2)	*/
-  	}
+    }
   
   	Perem(disk_params->sigmavec,disk_params);
 
@@ -104,8 +104,8 @@ void Initial_Press(disk_t *disk_params){		/*	initial profile of pressure		*/
   	for(i = 1; i <= disk_params->NGRID; i++) {
     		disk_params->pressvec[i] = press(disk_params->sigmavec[i],disk_params->rvec[i],disk_params);
   	}
-  
   	Perem(disk_params->pressvec,disk_params);
+
 
 }
 
@@ -115,6 +115,7 @@ void Initial_dPress(disk_t *disk_params){		/*	initial profile of pressure		*/
 
 	dpress(disk_params);
    	Perem(disk_params->dpressvec,disk_params);
+
 
 }
 

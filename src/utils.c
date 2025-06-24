@@ -37,12 +37,12 @@ void Perem(double *vec, const disk_t *disk_params) {					/*	boundary condition f
 
 	double a, b, c; 
 
-	Parabola(vec, 1, 2, 3, &a, &b, &c, disk_params->DD,disk_params);
-	vec[0] =  a * (disk_params->RMIN - disk_params->DD) * (disk_params->RMIN - disk_params->DD) + b * (disk_params->RMIN - disk_params->DD) + c;
-
-	Parabola(vec, disk_params->NGRID - 2, disk_params->NGRID - 1, disk_params->NGRID, &a, &b, &c, disk_params->DD,disk_params);
-	vec[disk_params->NGRID+1] = a * (disk_params->RMAX + disk_params->DD) * (disk_params->RMAX + disk_params->DD) + b * (disk_params->RMAX + disk_params->DD) + c;
-
+//	Parabola(vec, 1, 2, 3, &a, &b, &c, disk_params->DD,disk_params);
+//	vec[0] =  a * (disk_params->RMIN - disk_params->DD) * (disk_params->RMIN - disk_params->DD) + b * (disk_params->RMIN - disk_params->DD) + c;
+	vec[0] = vec[1];
+//	Parabola(vec, disk_params->NGRID - 2, disk_params->NGRID - 1, disk_params->NGRID, &a, &b, &c, disk_params->DD,disk_params);
+//	vec[disk_params->NGRID+1] = a * (disk_params->RMAX + disk_params->DD) * (disk_params->RMAX + disk_params->DD) + b * (disk_params->RMAX + disk_params->DD) + c;
+	vec[disk_params->NGRID+1] = vec[disk_params->NGRID];
 }
 
 

@@ -5,12 +5,13 @@
 
 // Header files
 #include "config.h"           // Declarations of global variables and constants
+#include "init_tool_module.h" // run_init_tool and init_tool_options_t
 #include "io_utils.h"         // Functions from io_utils.c
 #include "disk_model.h"       // Functions from disk_model.c
 #include "dust_physics.h"     // Functions from dust_physics.c
 #include "simulation_core.h"  // Functions from simulation_core.c
 #include "utils.h"            // Functions from utils.c
-#include "init_tool_module.h" // run_init_tool and init_tool_options_t
+
 
 // --- NEW: Include your simulation_types.h and parser.h ---
 #include "simulation_types.h"
@@ -40,6 +41,9 @@ int main(int argc, const char **argv) {
     init_tool_options_t init_tool_params;
     // Set default values for init_tool. This is useful if 'def' doesn't override all of them.
     create_default_init_tool_options(&init_tool_params);
+
+
+
 
 
 //    fprintf(stderr, "DEBUG [main]: Default init_tool options created.\n");
@@ -220,7 +224,7 @@ int main(int argc, const char **argv) {
         fprintf(stderr, "DEBUG [main]: Calling run_init_tool(&init_tool_params)...\n");
         strncpy(init_tool_params.output_base_path, initial_dir_path, MAX_PATH_LEN - 1); // Pass the path to init_tool
         init_tool_params.output_base_path[MAX_PATH_LEN - 1] = '\0';
-        run_init_tool(&init_tool_params);
+        run_init_tool(&init_tool_params,&disk_params);
         fprintf(stderr, "DEBUG [main]: run_init_tool completed.\n");
 
         // Now, current_inputsig_file points to the generated file in the initial_dir_path

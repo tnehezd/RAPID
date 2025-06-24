@@ -6,6 +6,8 @@
 #include "simulation_core.h" // int_step, Perem, find_num_zero, find_zero, find_r_annulus függvényekhez
 #include "utils.h"           // find_min függvényhez
 #include <stdio.h>
+#include <stdlib.h>
+
 #include <math.h>
 #include <omp.h>             // OpenMP támogatáshoz
 
@@ -75,16 +77,18 @@ double press(double sigma, double r, const disk_t *disk_params) {
 /*	a nyomas derivaltja	*/
 void dpress(disk_t *disk_params) {
     int i;
-    double ptemp, pvec[disk_params->NGRID + 1];
+    double ptemp, pvec[disk_params->NGRID + 2];
 
     for (i = 1; i <= disk_params->NGRID; i++) {
         ptemp = (disk_params->pressvec[i + 1] - disk_params->pressvec[i - 1]) / (2.0 * disk_params->DD);
         pvec[i] = ptemp;
-    }
 
+    }
     for (i = 1; i <= disk_params->NGRID; i++) {
         disk_params->dpressvec[i] = pvec[i];
+        printf("DEBUG ::: %lg  pi %lg  po %lg  DD %lg   R %lg   SIG %lg\n",disk_params->dpressvec[i], disk_params->pressvec[i + 1],disk_params->pressvec[i - 1], disk_params->DD, disk_params->rvec[i], disk_params->sigmavec[i]);
     }
+
 
 }
 
