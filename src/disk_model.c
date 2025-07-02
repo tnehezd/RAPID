@@ -27,7 +27,8 @@ void disk_param_be(disk_t *disk_params) {
 
 
     // A PDENSITYDIMLESS számítása a PDENSITY, csillagtömeg és más konstansok alapján
-    disk_params->PDENSITYDIMLESS = disk_params->PDENSITY / (G_GRAV_CONST * disk_params->STAR_MASS * SDCONV / (AU2CM * disk_params->RMIN * disk_params->RMIN));
+    disk_params->PDENSITYDIMLESS = disk_params->PDENSITY / SUN2GR * AU2CM * AU2CM * AU2CM;
+
     // Az eredeti kódodban volt egy másik képlet is, ami a SUN2GR-t használta:
     // disk_params->PDENSITYDIMLESS = disk_params->PDENSITY / SUN2GR * AU2CM * AU2CM * AU2CM;
     // Kérlek, ellenőrizd, melyik a helyes dimenziómentesítés a te modellben!

@@ -6,7 +6,7 @@ import numpy as np
 # --- Adatfájl útvonala ---
 # Győződj meg róla, hogy ez az útvonal helyes a szkript futtatási helyéhez képest!
 # Feltételezi, hogy a szkript a projekt gyökérkönyvtárában van.
-file_path = 'output_0002/LOGS/dust_particle_evolution.dat'
+file_path = 'output_0015/LOGS/dust_particle_evolution.dat'
 
 # --- Adatok beolvasása ---
 # A Gnuplot példához hasonlóan, ignoráljuk a komment sorokat (# jellel kezdődőket).

@@ -179,7 +179,7 @@ fprintf(stderr, "DEBUG [main]: Evolution (sim_opts.evol=%.2f) or drift (sim_opts
 
  } else {
   // Ha NINCS input fájl megadva:
-    fprintf(stderr, "DEBUG [main]: No input file specified (-i flag not used). Generating default grid and profile.\n");
+        fprintf(stderr, "DEBUG [main]: No input file specified (-i flag not used). Generating default grid and profile.\n");
 
   // init_tool_options_t feltöltése a 'def' (parancssori) értékekből
     init_tool_params.n_grid_points = disk_params.NGRID;

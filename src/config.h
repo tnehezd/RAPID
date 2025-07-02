@@ -41,10 +41,10 @@ extern FILE *fil;
 #define CMPSECTOAUPYRP2PI 3.35725e-07         // cm/sec to AU/(yr/2pi) conversion
 #define GRPCM32MSUNAU3    1.68329e6           // gr/cm^3 to M_sun/AU^3 conversion
 
-#define SUN2GR            1.989e33            // Solar Mass in grams (M_solar -> g) - PLEASE VERIFY THIS VALUE!
-#define AU2CM             1.496e13            // Astronomical Unit in centimeters (AU -> cm) - PLEASE VERIFY THIS VALUE!
-#define TWOPI             (2.0 * M_PI)        // Added parentheses for safety with expressions
-#define KEREK             1.0                 // Make sure this value is correct for your physics model!
+#define SUN2GR 1.989e33            // Solar Mass in grams (M_solar -> g) - PLEASE VERIFY THIS VALUE!
+#define AU2CM 1.496e13            // Astronomical Unit in centimeters (AU -> cm) - PLEASE VERIFY THIS VALUE!
+#define TWOPI (2.0 * M_PI)        // Added parentheses for safety with expressions
+#define KEREK 1.0                 // Make sure this value is correct for your physics model!
 
 
 // --- Global Filename Declarations (extern) ---

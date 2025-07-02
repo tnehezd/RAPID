@@ -32,7 +32,7 @@ void eqrhs(double pradius, double dp, double sigma, double ug, double r, double 
     csound = c_sound(r,disk_params); 
 
     *drdt = ug / (1. + St * St) + St / (1. + St * St) * H / P * dPdr * csound;	/* bearamlas sebessege: Birnstiel PHD	*/
-    // printf("DEBUG [eqrhs]: St=%.2e, H=%.2e, P=%.2e, dPdr=%.2e, csound=%.2e, drdt=%.2e\n", St, H, P, dPdr, csound, *drdt);
+//    printf("DEBUG [eqrhs]: St=%.2e, H=%.2e, P=%.2e, dPdr=%.2e, csound=%.2e, drdt=%.2e\n", St, H, P, dPdr, csound, *drdt);
 }
 
 
