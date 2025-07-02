@@ -249,6 +249,8 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
 
 /* az aktuális mappában a dust_particle_evolution.dat fájl létrehozása: ebbe kerül be a porrészecske távolsága és indexe, valamint az adott időlépés */
         snprintf(porout,MAX_PATH_LEN,"%s/%s/dust_particle_evolution.dat",sim_opts->output_dir_name,LOGS_DIR);
+
+
 /* ha 2 populációs a futás, akkor a mikronos pornak is létrehoz egy pormozgás fájlt, ebbe kerül be a távolság, index és az idő */
         if(sim_opts->twopop == 1.) {
             // --- JAVÍTVA: A FILE* pointer helyett a konstans fájlnevet használjuk ---

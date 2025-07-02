@@ -86,7 +86,6 @@ void dpress(disk_t *disk_params) {
     }
     for (i = 1; i <= disk_params->NGRID; i++) {
         disk_params->dpressvec[i] = pvec[i];
-        printf("DEBUG ::: %lg  pi %lg  po %lg  DD %lg   R %lg   SIG %lg\n",disk_params->dpressvec[i], disk_params->pressvec[i + 1],disk_params->pressvec[i - 1], disk_params->DD, disk_params->rvec[i], disk_params->sigmavec[i]);
     }
 
 

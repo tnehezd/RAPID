@@ -57,8 +57,6 @@ void Initial_Profile(disk_t *disk_params){		/*	initial profile of sigma		*/
   
   	for(i = 1; i <= disk_params->NGRID; i++) {
     		disk_params->sigmavec[i] = disk_params->SIGMA0 * pow(disk_params->rvec[i],disk_params->SIGMAP_EXP);		/*	sigma0*r^x (x could be eg. -1/2)	*/
-
-            printf(" DEBUG :::: SIG0: %lg R %lg    SIG %lg  \n",disk_params->SIGMA0 ,disk_params->rvec[i],disk_params->sigmavec[i]);
     }
   
 

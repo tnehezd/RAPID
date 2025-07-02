@@ -273,12 +273,6 @@ int run_init_tool(init_tool_options_t *opts, disk_t *disk_params) {
     Initial_dPress(disk_params);
     Initial_Ugas(disk_params);
 
-    // Debug print for initialized arrays (using disk_params directly)
-    int i = 0;
-    for(i = 1; i <= disk_params->NGRID; i++) {
-            printf("r: %lg sig: %lg press: %lg dpress: %lg\n",disk_params->rvec[i],disk_params->sigmavec[i],disk_params->pressvec[i],disk_params->dpressvec[i]);
-    }
-
 
     // --- Loop through grid points to calculate and write particle data ---
     for (int i_loop = 0; i_loop < opts->n_grid_points; i_loop++) { // Renamed loop variable to avoid conflict with 'i' above
@@ -433,15 +427,6 @@ int run_init_tool(init_tool_options_t *opts, disk_t *disk_params) {
     // Mivel a disk_params-t a hívó adta át és ő is foglalja a memóriát,
     // ITT NEM SZABAD FELSZABADÍTANI a disk_params tagjait.
     // A felszabadításért a hívó felel.
-
-    i = 0;
-
-    for(i = 1; i <= disk_params->NGRID; i++) {
-
-        printf("r %lg sigma. %lg press %lg  dpress : %lg\n", disk_params->rvec[i],disk_params->sigmavec[i],disk_params->pressvec[i],disk_params->dpressvec[i]);
-    }
-
-    exit(EXIT_SUCCESS);
 
     printf("Disk parameters file created (%s).\n\n", full_disk_param_path);
 
