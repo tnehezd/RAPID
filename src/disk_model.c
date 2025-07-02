@@ -14,30 +14,6 @@
 #include <string.h>
 
 
-// Fizikai konstansok (ideális esetben ezek egy külön "constants.h" vagy "config.h" fájlban lennének,
-// vagy egy dedikált struktúrában, amit átadsz a függvényeknek)
-// Most itt definiáljuk őket a példa kedvéért, ha még nincsenek máshol elérhetővé téve.
-#ifndef G_CGS
-    #define G_CGS 6.674e-8 // Gravitációs állandó cgs-ben
-#endif
-#ifndef AU2CM
-    #define AU2CM 1.496e13 // AU centiméterben
-#endif
-#ifndef SDCONV
-    #define SDCONV 1.0e-3 // SigmaDensityConversion (ha CGS-be konvertálunk) - ellenőrizd az értékét!
-#endif
-#ifndef SUN2GR
-    #define SUN2GR 1.989e33 // Nap tömege grammban
-#endif
-
-// A korábbi PDENSITY_DEF_CGS alapjául szolgáló érték.
-// Ha ez egy fix érték, akkor maradhat define. Ha számítás, akkor azt a számítást kell ide beírni.
-// A korábbi logod alapján ez 1.6e+00-ra jött ki. Ellenőrizd a pontos forrását!
-#ifndef PDENSITY_DEFAULT_CGS
-    #define PDENSITY_DEFAULT_CGS 1.0 // **FONTOS: Ezt az értéket a VALÓDI alapértelmezett PDENSITY-re cseréld!**
-#endif
-
-
 
 /*	A korong parametereinek beolvasasa	*/
 void disk_param_be(disk_t *disk_params) {
@@ -49,21 +25,13 @@ void disk_param_be(disk_t *disk_params) {
 
     fprintf(stderr, "DEBUG [disk_param_be]: Calculating derived disk parameters and writing to output file.\n");
 
-    // <<< FONTOS VÁLTOZTATÁS: Nincs fájlbeolvasás (fopen, fscanf) itt! >>>
-    // A függvény most már feltételezi, hogy a `disk_params` struktúra már tartalmazza az összes
-    // bemeneti adatot (pl. disk_params->RMIN, STAR_MASS stb.), amit a `main` függvény már feltöltött.
-
-    // A PDENSITY és PDENSITYDIMLESS értékek kiszámítása,
-    // a disk_params struktúrában tárolt paraméterek alapján.
-    disk_params->PDENSITY = PDENSITY_DEFAULT_CGS; // Ezt a sort ellenőrizd a programod logikája szerint!
-                                                // Ha a PDENSITY valójában egy számítás eredménye, akkor azt ide kell tenni.
 
     // A PDENSITYDIMLESS számítása a PDENSITY, csillagtömeg és más konstansok alapján
-    disk_params->PDENSITYDIMLESS = disk_params->PDENSITY / (G_CGS * disk_params->STAR_MASS * SDCONV / (AU2CM * disk_params->RMIN * disk_params->RMIN));
+    disk_params->PDENSITYDIMLESS = disk_params->PDENSITY / (G_GRAV_CONST * disk_params->STAR_MASS * SDCONV / (AU2CM * disk_params->RMIN * disk_params->RMIN));
     // Az eredeti kódodban volt egy másik képlet is, ami a SUN2GR-t használta:
     // disk_params->PDENSITYDIMLESS = disk_params->PDENSITY / SUN2GR * AU2CM * AU2CM * AU2CM;
     // Kérlek, ellenőrizd, melyik a helyes dimenziómentesítés a te modellben!
-    // A fenti verziót használtam, mert az tűnik konzisztensebbnek azzal, ahogy a G_CGS-t is használtad.
+    // A fenti verziót használtam, mert az tűnik konzisztensebbnek azzal, ahogy a G_GRAV_CONST-t is használtad.
 
     fprintf(stderr, "DEBUG [disk_param_be]: Calculated PDENSITY = %.2e, PDENSITYDIMLESS = %.2e.\n",
            disk_params->PDENSITY, disk_params->PDENSITYDIMLESS);
@@ -89,8 +57,11 @@ void Initial_Profile(disk_t *disk_params){		/*	initial profile of sigma		*/
   
   	for(i = 1; i <= disk_params->NGRID; i++) {
     		disk_params->sigmavec[i] = disk_params->SIGMA0 * pow(disk_params->rvec[i],disk_params->SIGMAP_EXP);		/*	sigma0*r^x (x could be eg. -1/2)	*/
+
+            printf(" DEBUG :::: SIG0: %lg R %lg    SIG %lg  \n",disk_params->SIGMA0 ,disk_params->rvec[i],disk_params->sigmavec[i]);
     }
   
+
   	Perem(disk_params->sigmavec,disk_params);
 
 }
@@ -114,6 +85,7 @@ void Initial_dPress(disk_t *disk_params){		/*	initial profile of pressure		*/
             (void*)disk_params, disk_params->FLIND, disk_params->HASP);
 
 	dpress(disk_params);
+
    	Perem(disk_params->dpressvec,disk_params);
 
 

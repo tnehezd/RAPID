@@ -18,7 +18,7 @@
 
 
 /*	alpha turbulens paraméter kiszámolása --> alfa csökkentése alpha_r-rel	*/
-double alpha_turb(double r, const disk_t *disk_params) {
+double calculate_turbulent_alpha(double r, const disk_t *disk_params) {
     double alpha_r;
     alpha_r = 1.0 - 0.5 * (1.0 - disk_params->a_mod) * (tanh((r - disk_params->r_dze_i) / disk_params->Dr_dze_i) + tanh((disk_params->r_dze_o - r) / disk_params->Dr_dze_o));
     return alpha_r * disk_params->alpha_visc;
@@ -38,7 +38,7 @@ double visc(double r, const disk_t *disk_params) {
     H = scale_height(r,disk_params);
     cs = c_sound(r,disk_params);
 
-    nu = alpha_turb(r, disk_params) * cs * H;
+    nu = calculate_turbulent_alpha(r, disk_params) * cs * H;
     return nu;
 }
 
@@ -243,7 +243,7 @@ double a_turb(double sigma, double r, double rho_p, const disk_t *disk_params) {
     c_s = c_sound(r,disk_params); // / CMPSECTOAUPYRP2PI; // Komment ki, ha a c_sound már megfelelő mértékegységben van
     c_s2 = c_s * c_s;
 
-    s_frag = disk_params->fFrag * 2.0 / (3.0 * M_PI) * Sigma_cgs / (rho_p * alpha_turb(r,disk_params)) * u_frag2 / c_s2;
+    s_frag = disk_params->fFrag * 2.0 / (3.0 * M_PI) * Sigma_cgs / (rho_p * calculate_turbulent_alpha(r,disk_params)) * u_frag2 / c_s2;
 
     return s_frag;
 }

@@ -296,12 +296,6 @@ int main(int argc, const char **argv) {
 
     // --- End of initial profile handling ---
 
-    // Initialize pressure and gas velocity profiles
-    fprintf(stderr, "DEBUG [main]: Initializing pressure and gas velocity profiles...\n");
-    Initial_Press(&disk_params);
-    Initial_dPress(&disk_params);
-    Initial_Ugas(&disk_params);
-    fprintf(stderr, "DEBUG [main]: Pressure and gas velocity profiles initialized.\n");
 
     // Print current information
     fprintf(stderr, "DEBUG [main]: Calling infoCurrent...\n");
