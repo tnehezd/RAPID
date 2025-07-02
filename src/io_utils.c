@@ -128,45 +128,64 @@ void sigIn(disk_t *disk_params, const char *filename) {
     char line[512];
 
     // Fejléc sorok átugrása
+    // Addig olvassuk a sorokat, amíg komment (#) karakterrel kezdődnek
+    // VAGY amíg nem a '---' elválasztó sort találjuk, ami a valódi adatok kezdetét jelzi
     while (fgets(line, sizeof(line), fp) != NULL) {
-        if (line[0] == '#') {
-            continue;
+        // Ellenőrizzük, hogy a sor komment-e vagy a '---' elválasztó
+        if (line[0] == '#' || strncmp(line, "---", 3) == 0) { // strncmp "---" karakterekre
+            continue; // Ugrás a következő sorra
         } else {
-            fseek(fp, -strlen(line), SEEK_CUR);
+            // Ez az első valós adatsor. Visszaállítjuk a fájlmutatót a sor elejére.
+            fseek(fp, -strlen(line), SEEK_CUR); 
             break;
         }
     }
 
-    if (feof(fp) && line[0] == '#') {
-        fprintf(stderr, "ERROR [sigIn]: File '%s' is empty or only contains comments.\n", input_filename);
+    // Ha a fájl üres vagy csak kommenteket tartalmaz
+    if (feof(fp) && (line[0] == '#' || strncmp(line, "---", 3) == 0)) {
+        fprintf(stderr, "ERROR [sigIn]: File '%s' is empty or only contains comments/headers.\n", input_filename);
         fclose(fp);
         exit(EXIT_FAILURE);
     }
 
-    int i_read;
-    double r_read;
-    long double repmass_pop1_read;
-    long double repmass_pop2_read;
-    double max_part_size_read;
-    double micro_size_read;
+    double r_val;
+    double sigma_gas_val;
+    double pressure_gas_val;
+    double dpressure_dr_val;
 
+    // A ciklus disk_params->NGRID-ig megy
     for (int i = 0; i < disk_params->NGRID; i++) {
-        if (fscanf(fp, "%d %lf %Lg %Lg %lf %lf",
-                   &i_read, &r_read, &repmass_pop1_read, &repmass_pop2_read,
-                   &max_part_size_read, &micro_size_read) != 6) {
-            fprintf(stderr, "ERROR [sigIn]: Failed to read data for particle %d from file '%s'. Expected 6 values.\n", i, input_filename);
+        // MOST MÁR PONTOSAN A FÁJLOD FORMÁTUMÁT OLVASSUK BE:
+        // Radius_AU, GasSurfDensity, GasPressure, GasPressureDeriv (4 oszlop, mind double)
+        if (fscanf(fp, "%lf %lf %lf %lf",
+                         &r_val, &sigma_gas_val, &pressure_gas_val, &dpressure_dr_val) != 4) {
+            // Hiba kezelése, ha nem tudunk 4 double értéket beolvasni
+            fprintf(stderr, "ERROR [sigIn]: Failed to read 4 values for row %d from file '%s'. File may be malformed or ended unexpectedly.\n", i, input_filename);
             fclose(fp);
             exit(EXIT_FAILURE);
         }
 
-        // Adjust index for 1-based indexing in array (if NGRID is 0-based for loops)
-        // Your code uses 1-based indexing for r_arr and disk_params->sigmavec
-        if ((i_read + 1) >= 0 && (i_read + 1) <= disk_params->NGRID) {
-             disk_params->sigmavec[i_read + 1] = r_read;
-             disk_params->sigmavec[i_read + 1] = repmass_pop1_read + repmass_pop2_read;
+        // DEBUG: Olvasott adatok ellenőrzése közvetlenül a beolvasás után
+        fprintf(stderr, "DEBUG [sigIn]: Read raw (row %d): R=%.7e, SigmaGas=%.7e, PGas=%.7e, dP/dR=%.7e\n",
+                i, r_val, sigma_gas_val, pressure_gas_val, dpressure_dr_val);
+
+        // Hozzárendelés a disk_params tömbökhöz
+        // Az indexelés 'i + 1' a 0-ás indexű szellemcella miatt (ahogy a disk_t definíciója és a Perem függvény valószínűsíti).
+        // Fontos: ellenőrizzük, hogy az 'i + 1' index a tömb határain belül van-e.
+        // A tömbök mérete disk_params->NGRID + 2, tehát az érvényes indexek 0-tól NGRID+1-ig mennek.
+        // A "valós" adatok 1-től NGRID-ig kerülnek, a 0 és NGRID+1 pedig a Perem-hez.
+        if ((i + 1) >= 0 && (i + 1) <= disk_params->NGRID + 1) { 
+            disk_params->rvec[i + 1] = r_val;
+            disk_params->sigmavec[i + 1] = sigma_gas_val;
+            disk_params->pressvec[i + 1] = pressure_gas_val;
+            disk_params->dpressvec[i + 1] = dpressure_dr_val;
         } else {
-            fprintf(stderr, "WARNING [sigIn]: Skipping data for out-of-bounds index %d.\n", i_read);
+            fprintf(stderr, "WARNING [sigIn]: Attempted to write to out-of-bounds index %d. Max allowed index: %d (NGRID+1).\n", i + 1, disk_params->NGRID + 1);
         }
+
+        // DEBUG: A disk_params tömbbe írt értékek ellenőrzése
+        fprintf(stderr, "DEBUG [sigIn]: Wrote to disk_params[%d]: R=%.7e, Sigma=%.7e, P=%.7e, dP/dR=%.7e\n",
+                i + 1, disk_params->rvec[i+1], disk_params->sigmavec[i+1], disk_params->pressvec[i+1], disk_params->dpressvec[i+1]);
     }
 
     fclose(fp);

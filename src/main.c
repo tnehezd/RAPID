@@ -69,6 +69,8 @@ int main(int argc, const char **argv) {
  // DEBUG: Show def.output_dir_name BEFORE it's used to populate sim_opts.output_dir_name
  fprintf(stderr, "DEBUG [main]: def.output_dir_name BEFORE sim_opts population: '%s'\n", def.output_dir_name);
 
+fprintf(stderr, "DEBUG [main]: Evolution (sim_opts.evol=%.2f) or drift (sim_opts.drift=%.2f) is ON. Starting main simulation loop.\n", sim_opts.evol, sim_opts.drift);
+
  
 
  // --- Populate disk_t with parameters from 'def' ---
@@ -210,10 +212,14 @@ int main(int argc, const char **argv) {
   fprintf(stderr, "DEBUG [main]: run_init_tool completed. disk_params allocated and populated.\n");
 
   // Most current_inputsig_file a generált fájlra mutat az initial_dir_path-ban
-  snprintf(current_inputsig_file, sizeof(current_inputsig_file), "%s/%s", initial_dir_path, FILENAME_INIT_PROFILE);
-  fprintf(stderr, "DEBUG [main]: Generated profile will be loaded from '%s'.\n", current_inputsig_file);
+  // VÁLTOZTATÁS ITT: FILENAME_INIT_PROFILE -> FILENAME_INIT_GAS_PROFILE
+  snprintf(current_inputsig_file, sizeof(current_inputsig_file), "%s/%s", initial_dir_path, FILENAME_INIT_GAS_PROFILE);
+  fprintf(stderr, "DEBUG [main]: Generated GAS profile will be loaded from '%s'.\n", current_inputsig_file);
+
 
   // --- NGRID frissítése a generált fájlból (kritikus a sigIn méretezéséhez) ---
+  // Fontos: Itt a FILENAME_INIT_GAS_PROFILE-ból kellene olvasni a sorok számát,
+  // amennyiben az init_tool_module.c is ezt a fájlt hozza létre.
   disk_params.NGRID = reszecskek_szama(current_inputsig_file);
 
   if (disk_params.NGRID > 1) {
@@ -229,9 +235,19 @@ int main(int argc, const char **argv) {
 
  // --- KRITIKUS LÉPÉS: Most, hogy current_inputsig_file be van állítva,
  //     másoljuk át sim_opts.input_filename-be a tIntegrate számára. ---
+ // Ez a gázprofil fájlneve, amit a sigIn olvas.
  strncpy(sim_opts.input_filename, current_inputsig_file, MAX_PATH_LEN - 1);
  sim_opts.input_filename[MAX_PATH_LEN - 1] = '\0'; // Null-terminálás biztosítása
- fprintf(stderr, "DEBUG [main]: sim_opts.input_filename set to '%s' for tIntegrate.\n", sim_opts.input_filename);
+ fprintf(stderr, "DEBUG [main]: sim_opts.input_filename set to '%s' for tIntegrate (gas profile).\n", sim_opts.input_filename);
+
+ // --- ÚJ RÉSZ: A porprofil fájlnevének beállítása a sim_opts.dust_input_filename-be ---
+ // Ez a porprofil fájlneve, amit a por_be olvas a tIntegrate-en belül.
+ char current_inputdust_file[MAX_PATH_LEN];
+ snprintf(current_inputdust_file, sizeof(current_inputdust_file), "%s/%s", initial_dir_path, FILENAME_INIT_DUST_PROFILE);
+ strncpy(sim_opts.dust_input_filename, current_inputdust_file, MAX_PATH_LEN - 1);
+ sim_opts.dust_input_filename[MAX_PATH_LEN - 1] = '\0'; // Null-terminálás biztosítása
+ fprintf(stderr, "DEBUG [main]: sim_opts.dust_input_filename set to '%s' for tIntegrate (dust profile).\n", sim_opts.dust_input_filename);
+
 
  // --- KRITIKUS LÉPÉS: Győződjünk meg róla, hogy a globális PARTICLE_NUMBER egyezik disk_params.NGRID-del ---
  PARTICLE_NUMBER = disk_params.NGRID;
@@ -277,7 +293,7 @@ int main(int argc, const char **argv) {
   printf("A megadott opciok szerint nem szamol sem sigmat, sem driftet, ezert a program kilep!\n\nA kezdeti file-ok a %s mappaban talalhatoak!\n", initial_dir_path);
 
   char dens_name_initial[MAX_PATH_LEN];
-  snprintf(dens_name_initial, sizeof(dens_name_initial), "%s/%s", initial_dir_path,INITIAL_SURFACE_DENSITY_FILE);
+  snprintf(dens_name_initial, sizeof(dens_name_initial), "%s/%s", initial_dir_path,FILENAME_INIT_GAS_PROFILE);
   fprintf(stderr, "DEBUG [main]: Printing initial surface density to %s.\n", dens_name_initial);
 
   // Special handling for Print_Sigma when only initial output is needed

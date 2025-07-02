@@ -163,8 +163,8 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
 
     // A globális PARTICLE_NUMBER változó beállítása a szimulációs opciók alapján
     if(sim_opts->drift == 1.) {
-        fprintf(stderr, "DEBUG [tIntegrate]: Particle drift is ON. Counting particles from '%s'.\n", sim_opts->input_filename);
-        PARTICLE_NUMBER = reszecskek_szama(sim_opts->input_filename);
+        fprintf(stderr, "DEBUG [tIntegrate]: Particle drift is ON. Counting particles from '%s'.\n", sim_opts->dust_input_filename);
+        PARTICLE_NUMBER = reszecskek_szama(sim_opts->dust_input_filename);
         fprintf(stderr, "DEBUG [tIntegrate]: PARTICLE_NUMBER set to %d.\n", PARTICLE_NUMBER);
     } else {
         fprintf(stderr, "DEBUG [tIntegrate]: Particle drift is OFF. PARTICLE_NUMBER set to 0.\n");
@@ -238,8 +238,8 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
 
 /* A részecskék adatainak beolvasása fájlból, ha a drift opció értéke 1, egyébként nem számol a program driftet */
     if(sim_opts->drift == 1.) {
-        fprintf(stderr, "DEBUG [tIntegrate]: Reading particle data from file '%s'.\n", sim_opts->input_filename);
-        por_be(radius, radiusmicr, massvec, massmicrvec, sim_opts->input_filename);    /* porrészecskék adatainak beolvasása */
+        fprintf(stderr, "DEBUG [tIntegrate]: Reading particle data from file '%s'.\n", sim_opts->dust_input_filename);
+        por_be(radius, radiusmicr, massvec, massmicrvec, sim_opts->dust_input_filename);    /* porrészecskék adatainak beolvasása */
 
         // --- ELTÁVOLÍTVA: A 'cp' parancs, ami duplikálta az initial_dust_profile.dat fájlt ---
         // Ez a másolás szükségtelen, mivel az init_tool már a megfelelő helyre generálja a fájlt.
@@ -247,7 +247,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
         // --- ELTÁVOLÍTÁS VÉGE ---
 
 
-/* az aktuális mappában a dust_particle_evolution.dat fájl létrehozása: ebbe kerül be a porrészecske távolsága és indexe, valamint az adott időlépés */
+/* az aktuális mappában a dust_particle_evolution.dat fájl létrehozása: ebbe kerül be a porrészecske távolsága és if(sim_opts->drift == 1.)dexe, valamint az adott időlépés */
         snprintf(porout,MAX_PATH_LEN,"%s/%s/dust_particle_evolution.dat",sim_opts->output_dir_name,LOGS_DIR);
 
 
@@ -308,14 +308,22 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
     double t_integration = sim_opts->TMAX * 2.0 * M_PI;  // TMAX a sim_opts-ból
     double deltat = time_step(disk_params) / 5.0; // rvec a disk_params-ból.
 
-    printf("DEBUG [tIntegrate]: Initial t_integration=%.2e, deltat=%.2e\n", t_integration, deltat);
+    printf("DEBUG [tIntegrate]: Initial t_integration=%.2e, calculated deltat=%.2e\n", t_integration, deltat);
 
-    if(sim_opts->DT <= deltat && sim_opts->DT != 0) { // DT a sim_opts-ból
-        deltat = sim_opts->DT;
-        printf("DEBUG [tIntegrate]: DT (%.2e) is smaller than calculated deltat. Using DT.\n", sim_opts->DT);
+    // Döntés az időlépésről:
+    // Ha a fixed_time_step (sim_opts->DT) pozitív ÉS kisebb, mint a számított deltat,
+    // AKKOR a sim_opts->DT-t használjuk.
+    if(sim_opts->DT > 0.0 && sim_opts->DT < deltat) {
+        // sim_opts->DT már eleve a helyes, kisebb, pozitív értéket tartalmazza a configból.
+        // Nincs szükség felülírásra, a deltat változó itt nem releváns a továbbiakban.
+        printf("DEBUG [tIntegrate]: Using fixed time step from config (sim_opts->DT=%.2e).\n", sim_opts->DT);
     } else {
-        printf("DEBUG [tIntegrate]: Using calculated deltat (%.2e).\n", deltat);
+        // Ha a fixed_time_step 0, vagy nagyobb/egyenlő a számított deltat-tal,
+        // AKKOR a számított deltat-ot használjuk, és BEÁLLÍTJUK a sim_opts->DT-t erre az értékre.
+        ((simulation_options_t *)sim_opts)->DT = deltat; // Itt frissítjük a sim_opts->DT-t!
+        printf("DEBUG [tIntegrate]: Fixed time step is 0 or too large. Using calculated deltat (sim_opts->DT=%.2e).\n", sim_opts->DT);
     }
+
 
     double L = 0.;
     double masstempiin = 0, massmtempiin = 0, masstempoin = 0, massmtempoin = 0; // a külső és belső dze-n felgyülemlett por mennyisége -- bemeneti adat (Print_Mass függvénybe)
@@ -500,7 +508,8 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                         fprintf(stderr, "DEBUG [tIntegrate]: Calling Print_Sigma.\n");
                         Print_Sigma(disk_params, output_files);
                         fprintf(stderr, "DEBUG [tIntegrate]: Print_Sigma completed.\n");
-                    }
+
+                    } 
 
 /* Ha számol a futás driftet, itt írja ki a részecskék távolságát és méretét */
                     if(sim_opts->drift == 1) {

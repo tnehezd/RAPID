@@ -2,11 +2,7 @@
 #include "config.h"
 #include "simulation_types.h"
 
-
 int PARTICLE_NUMBER;
-
-
-
 
 // --- Global File Pointer Definitions ---
 FILE *fmo = NULL;
@@ -24,13 +20,17 @@ const char *inputsig = NULL;
 // --- Global Filename Definitions (Constant Pointers) ---
 // Using const char * const for truly constant string literals.
 // These cannot be modified at runtime.
-const char * const FILENAME_INIT_PROFILE = "initial_dust_profile.dat";
+
+// CRITICAL CHANGE: Define separate names for gas and dust profiles
+const char * const FILENAME_INIT_GAS_PROFILE = "initial_gas_profile.dat";   // This is the one you need for sigIn!
+const char * const FILENAME_INIT_DUST_PROFILE = "initial_dust_profile.dat"; // This is your existing dust file
+
+// You can now remove 'FILENAME_INIT_PROFILE' as it's redundant/conflicting
+// with the more specific names above, unless it serves another generic purpose.
+// If you keep it, make sure its usage is unambiguous.
+
 const char * const FILENAME_DISK_PARAM = "disk_config.dat";
-const char * const INITIAL_SURFACE_DENSITY_FILE = "initial_gas_surface_density.dat";
+
 
 const char * const LOGS_DIR = "LOGS";
 const char * const CONFIG_DIR = "config";
-
-
-
-

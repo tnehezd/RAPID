@@ -48,19 +48,19 @@ extern FILE *fil;
 
 
 // --- Global Filename Declarations (extern) ---
-extern const char * const FILENAME_INIT_PROFILE;
+// Define distinct names for gas and dust initial profiles
+extern const char * const FILENAME_INIT_GAS_PROFILE;   // NEW: For initial gas profile
+extern const char * const FILENAME_INIT_DUST_PROFILE;  // NEW: For initial dust profile
+// You can remove or repurpose FILENAME_INIT_PROFILE if it's no longer generic.
+// For clarity, I recommend using the more specific names above.
+
 extern const char * const FILENAME_DISK_PARAM;
-extern const char * const INITIAL_SURFACE_DENSITY_FILE;
 
 extern const char * const LOGS_DIR;
 extern const char * const CONFIG_DIR;
 
+extern const char *inputsig; // Parameter controls
 
-// Parameter controls
-extern const char *inputsig;
-
-
-// Function Declaration (if this function is implemented in a .c file and used elsewhere)
 void initialize_derived_config_variables();
 
 #endif // CONFIG_H
