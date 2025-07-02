@@ -179,55 +179,55 @@ fprintf(stderr, "DEBUG [main]: Evolution (sim_opts.evol=%.2f) or drift (sim_opts
 
  } else {
   // Ha NINCS input fájl megadva:
-  fprintf(stderr, "DEBUG [main]: No input file specified (-i flag not used). Generating default grid and profile.\n");
+    fprintf(stderr, "DEBUG [main]: No input file specified (-i flag not used). Generating default grid and profile.\n");
 
   // init_tool_options_t feltöltése a 'def' (parancssori) értékekből
-  init_tool_params.n_grid_points = disk_params.NGRID;
-  init_tool_params.r_inner= disk_params.RMIN;
-  init_tool_params.r_outer = disk_params.RMAX;
-  init_tool_params.sigma0_gas_au = disk_params.SIGMA0;
-  init_tool_params.sigma_exponent = disk_params.SIGMAP_EXP;
-  init_tool_params.deadzone_r_inner = disk_params.r_dze_i;
-  init_tool_params.deadzone_r_outer = disk_params.r_dze_o;
-  init_tool_params.deadzone_dr_inner = disk_params.Dr_dze_i;
-  init_tool_params.deadzone_dr_outer = disk_params.Dr_dze_o;
-  init_tool_params.alpha_viscosity = disk_params.alpha_visc;
-  init_tool_params.deadzone_alpha_mod = disk_params.a_mod;
-  init_tool_params.aspect_ratio = disk_params.HASP;
-  init_tool_params.flaring_index = disk_params.FLIND;
-  init_tool_params.star_mass = disk_params.STAR_MASS;
-  init_tool_params.dust_to_gas_ratio = def.eps_val;
-  init_tool_params.two_pop_ratio = def.ratio_val;
-  init_tool_params.micro_size_cm = def.mic_val;
-  init_tool_params.one_size_particle_cm = def.onesize_val;
-  init_tool_params.dust_density_g_cm3 = def.pdensity_val;
-  fprintf(stderr, "DEBUG [main]: init_tool_options_t (init_tool_params) structure populated for profile generation.\n");
+    init_tool_params.n_grid_points = disk_params.NGRID;
+    init_tool_params.r_inner= disk_params.RMIN;
+    init_tool_params.r_outer = disk_params.RMAX;
+    init_tool_params.sigma0_gas_au = disk_params.SIGMA0;
+    init_tool_params.sigma_exponent = disk_params.SIGMAP_EXP;
+    init_tool_params.deadzone_r_inner = disk_params.r_dze_i;
+    init_tool_params.deadzone_r_outer = disk_params.r_dze_o;
+    init_tool_params.deadzone_dr_inner = disk_params.Dr_dze_i;
+    init_tool_params.deadzone_dr_outer = disk_params.Dr_dze_o;
+    init_tool_params.alpha_viscosity = disk_params.alpha_visc;
+    init_tool_params.deadzone_alpha_mod = disk_params.a_mod;
+    init_tool_params.aspect_ratio = disk_params.HASP;
+    init_tool_params.flaring_index = disk_params.FLIND;
+    init_tool_params.star_mass = disk_params.STAR_MASS;
+    init_tool_params.dust_to_gas_ratio = def.eps_val;
+    init_tool_params.two_pop_ratio = def.ratio_val;
+    init_tool_params.micro_size_cm = def.mic_val;
+    init_tool_params.one_size_particle_cm = def.onesize_val;
+    init_tool_params.dust_density_g_cm3 = def.pdensity_val;
+    fprintf(stderr, "DEBUG [main]: init_tool_options_t (init_tool_params) structure populated for profile generation.\n");
 
   // --- Profil generálása közvetlenül az 'initial' könyvtárba ---
-  fprintf(stderr, "DEBUG [main]: Calling run_init_tool(&init_tool_params, &disk_params)...\n");
-  strncpy(init_tool_params.output_base_path, initial_dir_path, MAX_PATH_LEN - 1);
-  init_tool_params.output_base_path[MAX_PATH_LEN - 1] = '\0';
+    fprintf(stderr, "DEBUG [main]: Calling run_init_tool(&init_tool_params, &disk_params)...\n");
+    strncpy(init_tool_params.output_base_path, initial_dir_path, MAX_PATH_LEN - 1);
+    init_tool_params.output_base_path[MAX_PATH_LEN - 1] = '\0';
   // A run_init_tool felelős a disk_params tagjainak allokálásáért és feltöltéséért
-  run_init_tool(&init_tool_params, &disk_params);
-  fprintf(stderr, "DEBUG [main]: run_init_tool completed. disk_params allocated and populated.\n");
+    run_init_tool(&init_tool_params, &disk_params);
+    fprintf(stderr, "DEBUG [main]: run_init_tool completed. disk_params allocated and populated.\n");
 
   // Most current_inputsig_file a generált fájlra mutat az initial_dir_path-ban
   // VÁLTOZTATÁS ITT: FILENAME_INIT_PROFILE -> FILENAME_INIT_GAS_PROFILE
-  snprintf(current_inputsig_file, sizeof(current_inputsig_file), "%s/%s", initial_dir_path, FILENAME_INIT_GAS_PROFILE);
-  fprintf(stderr, "DEBUG [main]: Generated GAS profile will be loaded from '%s'.\n", current_inputsig_file);
+    snprintf(current_inputsig_file, sizeof(current_inputsig_file), "%s/%s", initial_dir_path, FILENAME_INIT_GAS_PROFILE);
+    fprintf(stderr, "DEBUG [main]: Generated GAS profile will be loaded from '%s'.\n", current_inputsig_file);
 
 
   // --- NGRID frissítése a generált fájlból (kritikus a sigIn méretezéséhez) ---
   // Fontos: Itt a FILENAME_INIT_GAS_PROFILE-ból kellene olvasni a sorok számát,
   // amennyiben az init_tool_module.c is ezt a fájlt hozza létre.
-  disk_params.NGRID = reszecskek_szama(current_inputsig_file);
+    disk_params.NGRID = reszecskek_szama(current_inputsig_file);
 
-  if (disk_params.NGRID > 1) {
-   disk_params.DD = (disk_params.RMAX - disk_params.RMIN) / (disk_params.NGRID - 1.0);
-  } else {
-   disk_params.DD = 0.0;
-  }
-  fprintf(stderr, "DEBUG [main]: NGRID updated from generated file: %d. DD calculated as %.4e.\n", disk_params.NGRID, disk_params.DD);
+    if (disk_params.NGRID > 1) {
+        disk_params.DD = (disk_params.RMAX - disk_params.RMIN) / (disk_params.NGRID - 1.0);
+    } else {
+        disk_params.DD = 0.0;
+    }
+    fprintf(stderr, "DEBUG [main]: NGRID updated from generated file: %d. DD calculated as %.4e.\n", disk_params.NGRID, disk_params.DD);
 
   // Itt nem kell 'cp' a FILENAME_DISK_PARAM vagy FILENAME_INIT_PROFILE-ra,
   // mivel a run_init_tool közvetlenül az initial_dir_path-ba hozta létre őket.
@@ -267,24 +267,7 @@ fprintf(stderr, "DEBUG [main]: Evolution (sim_opts.evol=%.2f) or drift (sim_opts
  fprintf(stderr, "DEBUG [main]: Calling infoCurrent...\n");
  // Itt a def.output_dir_name-t adjuk át, ami már a számozott mappa nevét tartalmazza
  infoCurrent(def.output_dir_name, &disk_params, &sim_opts);
- fprintf(stderr, "DEBUG [main]: infoCurrent completed.\n");
 
- // --- Final Debug Check before main simulation loop ---
- fprintf(stderr, "DEBUG [main]: Final check before tIntegrate:\n");
- // Itt sim_opts.output_dir_name még az eredeti, számozatlan nevet tartalmazza!
- fprintf(stderr, "DEBUG [main]: sim_opts.output_dir_name = '%s' (NOTE: This may be the unnumbered name!)\n", sim_opts.output_dir_name);
- fprintf(stderr, "DEBUG [main]: def.output_dir_name = '%s' (NOTE: This should be the numbered name!)\n", def.output_dir_name);
- fprintf(stderr, "DEBUG [main]: disk_params.RMIN = %.2f, RMAX = %.2f, NGRID = %d, DD = %.2e\n",
-   disk_params.RMIN, disk_params.RMAX, disk_params.NGRID, disk_params.DD);
- fprintf(stderr, "DEBUG [main]: disk_params.SIGMA0 = %.2e, SIGMAP_EXP = %.2f, alpha_visc = %.2e\n",
-   disk_params.SIGMA0, disk_params.SIGMAP_EXP, disk_params.alpha_visc);
- fprintf(stderr, "DEBUG [main]: disk_params.STAR_MASS = %.2f, HASP = %.2f, FLIND = %.2f\n",
-   disk_params.STAR_MASS, disk_params.HASP, disk_params.FLIND);
- fprintf(stderr, "DEBUG [main]: disk_params.PDENSITY = %.2e, PDENSITYDIMLESS = %.2e\n",
-   disk_params.PDENSITY, disk_params.PDENSITYDIMLESS);
- fprintf(stderr, "DEBUG [main]: disk_params.rvec[0] = %.2e (sample first rvec element)\n",
-   disk_params.rvec ? disk_params.rvec[0] : -999.9);
- // --- END Final Debug Check ---
 
 
  // Run simulation or exit based on options

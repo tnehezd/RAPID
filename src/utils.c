@@ -161,9 +161,6 @@ double find_zero(int i, const double *rvec, const double *dp) {
 void find_r_annulus(const double *rvec, double rin, double *ind_ii, double *ind_io, double rout, double *ind_oi, double *ind_oo, const simulation_options_t *sim_opts, const disk_t *disk_params) {
 
     // Debug kiírás a függvény belépéskor, hogy ellenőrizzük a disk_params érvényességét
-    fprintf(stderr, "DEBUG [find_r_annulus]: Belépés. disk_params címe=%p, FLIND=%.2f, HASP=%.2f\n",
-            (void*)disk_params, disk_params->FLIND, disk_params->HASP);
-
     int i;
     double rmid, rtemp;
     double roimH;
@@ -191,13 +188,6 @@ void find_r_annulus(const double *rvec, double rin, double *ind_ii, double *ind_
     roomH = (rout + scale_height(rout, disk_params)) - disk_params->DD / 2.0;
     roopH = (rout + scale_height(rout, disk_params)) + disk_params->DD / 2.0;
     // --- KRITIKUS JAVÍTÁS VÉGE ---
-
-    // Debug kiírások a számított értékekről (opcionális, de jó az ellenőrzéshez)
-    fprintf(stderr, "DEBUG [find_r_annulus]: rin=%.2e, rout=%.2e\n", rin, rout);
-    fprintf(stderr, "DEBUG [find_r_annulus]: riimH=%.2e, riipH=%.2e, riomH=%.2e, riopH=%.2e\n",
-            riimH, riipH, riomH, riopH);
-    fprintf(stderr, "DEBUG [find_r_annulus]: roimH=%.2e, roipH=%.2e, roomH=%.2e, roopH=%.2e\n",
-            roimH, roipH, roomH, roopH);
 
 
     for(i = 1; i <= disk_params->NGRID; i++) {
@@ -236,8 +226,6 @@ void find_r_annulus(const double *rvec, double rin, double *ind_ii, double *ind_
         if(rvec[i] > roopH) break;
 
     }
-    fprintf(stderr, "DEBUG [find_r_annulus]: Kilépés. disk_params címe=%p, FLIND=%.2f, HASP=%.2f\n",
-            (void*)disk_params, disk_params->FLIND, disk_params->HASP);
 }
 
 

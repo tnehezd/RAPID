@@ -165,10 +165,6 @@ void sigIn(disk_t *disk_params, const char *filename) {
             exit(EXIT_FAILURE);
         }
 
-        // DEBUG: Olvasott adatok ellenőrzése közvetlenül a beolvasás után
-        fprintf(stderr, "DEBUG [sigIn]: Read raw (row %d): R=%.7e, SigmaGas=%.7e, PGas=%.7e, dP/dR=%.7e\n",
-                i, r_val, sigma_gas_val, pressure_gas_val, dpressure_dr_val);
-
         // Hozzárendelés a disk_params tömbökhöz
         // Az indexelés 'i + 1' a 0-ás indexű szellemcella miatt (ahogy a disk_t definíciója és a Perem függvény valószínűsíti).
         // Fontos: ellenőrizzük, hogy az 'i + 1' index a tömb határain belül van-e.
@@ -183,13 +179,10 @@ void sigIn(disk_t *disk_params, const char *filename) {
             fprintf(stderr, "WARNING [sigIn]: Attempted to write to out-of-bounds index %d. Max allowed index: %d (NGRID+1).\n", i + 1, disk_params->NGRID + 1);
         }
 
-        // DEBUG: A disk_params tömbbe írt értékek ellenőrzése
-        fprintf(stderr, "DEBUG [sigIn]: Wrote to disk_params[%d]: R=%.7e, Sigma=%.7e, P=%.7e, dP/dR=%.7e\n",
-                i + 1, disk_params->rvec[i+1], disk_params->sigmavec[i+1], disk_params->pressvec[i+1], disk_params->dpressvec[i+1]);
     }
 
     fclose(fp);
-    fprintf(stderr, "DEBUG [sigIn]: Successfully loaded profile from %s.\n", input_filename);
+
 }
 
 
@@ -426,8 +419,9 @@ void Print_Sigma(const disk_t *disk_params, output_files_t *output_files) {
         return;
     }
 
+//%-15.6e %-15.6Lg %-15.6e %-15.6e\n",
     for(i = 1; i <= disk_params->NGRID; i++) { // Using disk_params->NGRID
-        fprintf(output_files->surface_file, "%lg %lg %lg %lg\n", disk_params->rvec[i], disk_params->sigmavec[i], disk_params->pressvec[i], disk_params->dpressvec[i]);
+        fprintf(output_files->surface_file, "%-15.6e %-15.6lg %-15.6e %15.6e\n", disk_params->rvec[i], disk_params->sigmavec[i], disk_params->pressvec[i], disk_params->dpressvec[i]);
     }
 
     fflush(output_files->surface_file);

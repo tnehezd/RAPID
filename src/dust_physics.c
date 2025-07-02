@@ -452,7 +452,6 @@ void Get_Radius(const char *nev, int opt, double radius[][2], const double *sigm
                     double current_drdt_val = (fabs(y_out - y) / (deltat));
                     // Azért kell a critical szekció, mert az fout2 fájlba írunk.
                     // Ez a critical szekció biztosítja, hogy egyszerre csak egy szál írjon a fájlba.
-                    printf("DEBUG: [dust_physics/Get_Radius]: y: %lg y_out: %lg, dt: %lg\n",y,y_out,current_drdt_val);
 
                     #pragma omp critical(fout2_write)
                     {
