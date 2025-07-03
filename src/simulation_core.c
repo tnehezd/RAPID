@@ -517,7 +517,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                     masstempoout = 0;
                     massmtempoout = 0;
                     fprintf(stderr, "DEBUG [tIntegrate]: Calling Print_Mass.\n");
-                    Print_Mass(L, disk_params->rvec, partmassind, partmassmicrind, partmasssecind, disk_params->dpressvec, masstempiin, masstempoin,massmtempiin, massmtempoin, &masstempiout, &masstempoout, &massmtempiout, &massmtempoout,&tavin, &tavout, disk_params, sim_opts, output_files);
+                    Print_Mass(L, partmassind, partmassmicrind, partmasssecind, masstempiin, masstempoin,massmtempiin, massmtempoin, &masstempiout, &masstempoout, &massmtempiout, &massmtempoout,&tavin, &tavout, disk_params, sim_opts, output_files);
                     fprintf(stderr, "DEBUG [tIntegrate]: Print_Mass completed. Outputs: masstempiout=%.2e, massmtempiout=%.2e\n", masstempiout, massmtempiout);
 
                     if(disk_params->r_dze_i != tavin) { // r_dze_i a disk_params-ból

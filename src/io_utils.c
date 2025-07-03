@@ -253,8 +253,8 @@ void infoCurrent(const char *nev, const disk_t *disk_params, const simulation_op
 
 
 /* Függvény a tömegfájl kiíratására */
-void Print_Mass(double step, const double *rvec, double (*partmassind)[4], double (*partmassmicrind)[4],
-                double (*partmasssecind)[4], const double *dpressvec,
+void Print_Mass(double step, double (*partmassind)[4], double (*partmassmicrind)[4],
+                double (*partmasssecind)[4],
                 double massbtempii, double massbtempoi, double massmtempii, double massmtempoi,
                 double *massbtempio, double *massbtempoo, double *massmtempio, double *massmtempoo,
                 double *tavin, double *tavout,
@@ -294,7 +294,7 @@ void Print_Mass(double step, const double *rvec, double (*partmassind)[4], doubl
 
     if(dim != 0) {
         for(i = 0; i < disk_params->NGRID; i++) { // Using disk_params->NGRID
-            temp_new = find_zero(i,rvec,dpressvec); // Assuming find_zero is const-correct
+            temp_new = find_zero(i,disk_params->rvec,disk_params->dpressvec); // Assuming find_zero is const-correct
 
             if(temp != temp_new && i > 3 && temp_new != 0.0) {
                 if (j < dim) { // Prevent out-of-bounds write if dim calculation is off

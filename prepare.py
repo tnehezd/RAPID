@@ -2,8 +2,8 @@ import pandas as pd
 import numpy as np
 
 # --- Beállítások ---
-input_file_path = 'output_0017/LOGS/dust_particle_evolution.dat'
-output_file_path = 'output_0017/LOGS/dust_particle_evolution_prepared.dat' # Ideiglenes fájl a Gnuplotnak
+input_file_path = 'output_0001/LOGS/dust_particle_evolution.dat'
+output_file_path = 'output_0001/LOGS/dust_particle_evolution_prepared.dat' # Ideiglenes fájl a Gnuplotnak
 
 # --- Adatok beolvasása ---
 try:

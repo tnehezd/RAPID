@@ -33,8 +33,8 @@ void infoCurrent(const char *nev, const disk_t *disk_params, const simulation_op
 
 /* Fuggveny a tomegfile kiiratasara */
 // FIX: The original was missing 'const disk_t *disk_params' and 'const simulation_options_t *sim_opts'.
-void Print_Mass(double step, const double *rvec, double (*partmassind)[4], double (*partmassmicrind)[4],
-                double (*partmasssecind)[4], const double *dpressvec,
+void Print_Mass(double step, double (*partmassind)[4], double (*partmassmicrind)[4],
+                double (*partmasssecind)[4],
                 double massbtempii, double massbtempoi, double massmtempii, double massmtempoi,
                 double *massbtempio, double *massbtempoo, double *massmtempio, double *massmtempoo,
                 double *tavin, double *tavout,

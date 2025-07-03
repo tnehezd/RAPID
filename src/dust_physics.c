@@ -149,7 +149,7 @@ void GetMass(int n, double partmassind[][4], int indii, int indio, double tavi, 
             index_i = partmassind[i][1];
 
             if (tavi != dzei) { // Double összehasonlítások veszélyesek lehetnek, de itt a logikai feltétel.
-                if ((index_i >= (double)indii) && (index_i <= (double)indio) && (partmassind[i][3] == 0.0)) {
+                if ((index_i >= (int)indii) && (index_i <= (int)indio) && (partmassind[i][3] == 0.0)) {
                     // Itt fontos, hogy a partmassind[i][3] módosítása egy critical szekcióban legyen,
                     // ha ez a módosítás befolyásolja más szálak munkáját,
                     // vagy ha a [3] index valójában egy "flag", amit csak egyszer állítunk be.
@@ -158,30 +158,30 @@ void GetMass(int n, double partmassind[][4], int indii, int indio, double tavi, 
                     // Feltételezve, hogy ez egy egyszeri jelölés a tömeg számlálásakor:
                     #pragma omp critical(partmassind_update)
                     {
-                        if (partmassind[i][3] == 0.0) { // Double check in critical section
+//                        if (partmassind[i][3] == 0.0) { // Double check in critical section
                             partmassind[i][3] = 1.0;
                             massitemp = massitemp + partmassind[i][0];
-                        }
+  //                      }
                     }
                 }
             } else {
-                if ((index_i >= (double)indii) && (index_i <= (double)indio)) {
+                if ((index_i >= (int)indii) && (index_i <= (int)indio)) {
                     massitemp = massitemp + partmassind[i][0]; // Itt nincs módosítás partmassind[i][3]-on
                 }
             }
 
             if (tavo != dzeo) { // Double összehasonlítások veszélyesek lehetnek
-                if ((index_i >= (double)indoi) && (index_i <= (double)indoo) && (partmassind[i][3] == 0.0)) {
+                if ((index_i >= (int)indoi) && (index_i <= (int)indoo) && (partmassind[i][3] == 0.0)) {
                     #pragma omp critical(partmassind_update)
                     {
-                        if (partmassind[i][3] == 0.0) { // Double check in critical section
+//                        if (partmassind[i][3] == 0.0) { // Double check in critical section
                             partmassind[i][3] = 1.0;
                             massotemp = massotemp + partmassind[i][0];
-                        }
+  //                      }
                     }
                 }
             } else {
-                if ((index_i >= (double)indoi) && (index_i <= (double)indoo)) {
+                if ((index_i >= (int)indoi) && (index_i <= (int)indoo)) {
                     massotemp = massotemp + partmassind[i][0]; // Itt nincs módosítás partmassind[i][3]-on
                 }
             }
@@ -192,13 +192,13 @@ void GetMass(int n, double partmassind[][4], int indii, int indio, double tavi, 
             index_i = partmassind[i][1];
 
             if (tavo != dzeo) { // Double összehasonlítások veszélyesek lehetnek
-                if ((index_i >= (double)indoi) && (index_i <= (double)indoo) && (partmassind[i][3] == 0.0)) {
+                if ((index_i >= (int)indoi) && (index_i <= (int)indoo) && (partmassind[i][3] == 0.0)) {
                     #pragma omp critical(partmassind_update)
                     {
-                        if (partmassind[i][3] == 0.0) { // Double check in critical section
+//                        if (partmassind[i][3] == 0.0) { // Double check in critical section
                             partmassind[i][3] = 1.0;
                             massotemp = massotemp + partmassind[i][0];
-                        }
+//                        }
                     }
                 }
             } else {
