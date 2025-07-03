@@ -16,6 +16,8 @@
 #include "dust_physics.h" // For Count_Mass, secondaryGrowth, find_max, find_min, Get_Sigmad, Get_Radius
 #include "utils.h"        // For time_step, Get_Sigma_P_dP, and potentially other utility functions
 #include "simulation_core.h"
+#include "particle_data.h" // Új include
+
 
 /*	Kiszamolja az 1D-s driftet	*/
 /*  	dr/dt = St/(1+St*St)*H(r)/r*dlnP/dlnr*cs = St/(1+St*St) * (H/r) * (r/P) * (dP/dr) * cs		*/
@@ -156,65 +158,23 @@ void int_step(double time, double prad, const double *sigmad, const double *rdve
 void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, output_files_t *output_files) {
 
     
+    // Deklaráljuk a ParticleData_t struktúrát
+    ParticleData_t p_data;
+
     // A globális PARTICLE_NUMBER változó beállítása a szimulációs opciók alapján
     if(sim_opts->drift == 1.) {
-        PARTICLE_NUMBER = reszecskek_szama(sim_opts->dust_input_filename);
+        PARTICLE_NUMBER = reszecskek_szama(sim_opts->dust_input_filename); // Feltételezve, hogy ez a fv létezik
     } else {
         fprintf(stderr, "ERROR [tIntegrate]: Particle drift is OFF. PARTICLE_NUMBER set to 0.\n");
         PARTICLE_NUMBER = 0;
     }
 
-    // --- DINAMIKUS MEMÓRIAFOGLALÁS A RÉSZECSKE ADATOKNAK ---
-    // These declarations are crucial for 'radius' to be known.
-    double (*radius)[2] = NULL;
-    double (*radiusmicr)[2] = NULL;
-    double (*radiussec)[2] = NULL;
-    double (*radius_rec)[2] = NULL; // Temp array for inverse radii calculations
-    double *massvec = NULL;
-    double *massmicrvec = NULL;
-    double *masssecvec = NULL;
-    double (*partmassind)[5] = NULL;
-    double (*partmassmicrind)[5] = NULL;
-    double (*partmasssecind)[5] = NULL;
-    double *sigmad = NULL;
-    double *sigmadm = NULL;
-    double *sigmads = NULL; // Surface density for secondary particles
-    double *rdvec = NULL;
-    double *rmicvec = NULL;
-    double *rsvec = NULL; // Radii for secondary particle surface density
-
-    // Csak akkor foglalunk memóriát, ha van részecskeszám
-    if (PARTICLE_NUMBER > 0) {
-        radius = malloc(PARTICLE_NUMBER * sizeof(*radius));
-        radiusmicr = malloc(PARTICLE_NUMBER * sizeof(*radiusmicr));
-        radius_rec = malloc(PARTICLE_NUMBER * sizeof(*radius_rec));
-        massvec = malloc(PARTICLE_NUMBER * sizeof(double));
-        massmicrvec = malloc(PARTICLE_NUMBER * sizeof(double));
-        partmassind = malloc(PARTICLE_NUMBER * sizeof(*partmassind));
-        partmassmicrind = malloc(PARTICLE_NUMBER * sizeof(*partmassmicrind));
-        sigmad = malloc(PARTICLE_NUMBER * sizeof(double));
-        sigmadm = malloc(PARTICLE_NUMBER * sizeof(double));
-        rdvec = malloc(PARTICLE_NUMBER * sizeof(double));
-        rmicvec = malloc(PARTICLE_NUMBER * sizeof(double));
-
-        // A secondary particles tömbök mérete 4*PARTICLE_NUMBER (ha two-pop van és növekedés)
-        // A malloc hívások mérete a num_particles paramétertől függ a Get_Radius-ban
-        radiussec = malloc(4 * PARTICLE_NUMBER * sizeof(*radiussec));
-        masssecvec = malloc(4 * PARTICLE_NUMBER * sizeof(double));
-        partmasssecind = malloc(4 * PARTICLE_NUMBER * sizeof(*partmasssecind));
-        sigmads = malloc(4 * PARTICLE_NUMBER * sizeof(double));
-        rsvec = malloc(4 * PARTICLE_NUMBER * sizeof(double));
-
-
-        // Hibaellenőrzés minden malloc hívás után
-        if (!radius || !radiusmicr || !radius_rec || !massvec || !massmicrvec ||
-            !partmassind || !partmassmicrind || !sigmad || !sigmadm || !rdvec || !rmicvec ||
-            !radiussec || !masssecvec || !partmasssecind || !sigmads || !rsvec) {
-            fprintf(stderr, "ERROR: Memory allocation failed in tIntegrate! Exiting.\n");
-            exit(EXIT_FAILURE);
-        }
-    } else {
-        fprintf(stderr, "DEBUG [tIntegrate]: PARTICLE_NUMBER is 0. No particle arrays allocated.\n");
+    // --- DINAMIKUS MEMÓRIAFOGLALÁS A RÉSZECSKE ADATOKNAK (Most egyetlen hívással) ---
+    // A sim_opts->twopop valószínűleg double, de bool-ként használjuk itt.
+    // Figyelj arra, hogy a twopop értéke 1.0 (true) vagy 0.0 (false) legyen.
+    if (allocate_particle_data(&p_data, PARTICLE_NUMBER, (int)sim_opts->twopop) != 0) {
+        fprintf(stderr, "ERROR: Failed to allocate particle data. Exiting.\n");
+        exit(EXIT_FAILURE);
     }
 
 
@@ -241,7 +201,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
 
 /* A részecskék adatainak beolvasása fájlból, ha a drift opció értéke 1, egyébként nem számol a program driftet */
     if(sim_opts->drift == 1.) {
-        por_be(radius, radiusmicr, massvec, massmicrvec, sim_opts->dust_input_filename);    /* porrészecskék adatainak beolvasása */
+        por_be(p_data.radius, p_data.radiusmicr, p_data.massvec, p_data.massmicrvec, sim_opts->dust_input_filename);    /* porrészecskék adatainak beolvasása */
 
 /* az aktuális mappában a FILE_DUST_EVOLUTION fájl létrehozása: ebbe kerül be a porrészecske távolsága és if(sim_opts->drift == 1.)dexe, valamint az adott időlépés */
         snprintf(porout,MAX_PATH_LEN,"%s/%s/%s",sim_opts->output_dir_name,LOGS_DIR,FILE_DUST_EVOLUTION);
@@ -302,48 +262,50 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
 
 
     // A secondary particles inicializálása
-    if (PARTICLE_NUMBER > 0) {
+    if (sim_opts->twopop == 1.0 && PARTICLE_NUMBER > 0) {
         for(i = 0; i < 4*PARTICLE_NUMBER; i++) {
-            radiussec[i][0] = 0;
-            radiussec[i][1] = 0;
-            partmasssecind[i][0] = 0;
-            partmasssecind[i][1] = 0;
-            masssecvec[i] = 0;
-            sigmads[i] = 0;
-            rsvec[i] = 0;
+            p_data.radiussec[i][0] = 0;
+            p_data.radiussec[i][1] = 0;
+            p_data.partmasssecind[i][0] = 0;
+            p_data.partmasssecind[i][1] = 0;
+            p_data.masssecvec[i] = 0;
+            p_data.sigmads[i] = 0;
+            p_data.rsvec[i] = 0;
         }
 
+    }
+
         // Ha nincs két populáció, a mikronos részecsketömbök nullázása
-        if(sim_opts->twopop == 0) {
-            for(i = 0; i < PARTICLE_NUMBER; i++) {
-                radiusmicr[i][0] = 0;
-                radiusmicr[i][1] = 0;
-                partmassmicrind[i][0] = 0;
-                partmassmicrind[i][1] = 0;
-                massmicrvec[i] = 0;
-            }
+    if(sim_opts->twopop == 0 && PARTICLE_NUMBER > 0) { // Hozzáadtam a PARTICLE_NUMBER > 0 feltételt ide is
+        for(i = 0; i < PARTICLE_NUMBER; i++) {
+            p_data.radiusmicr[i][0] = 0;
+            p_data.radiusmicr[i][1] = 0;
+            p_data.partmassmicrind[i][0] = 0;
+            p_data.partmassmicrind[i][1] = 0;
+            p_data.massmicrvec[i] = 0;
         }
     }
+    
 
     do {
 /* Ha van drift: */
         if(sim_opts->drift == 1.) {
             if(sim_opts->twopop == 1) {
                 fprintf(stderr, "DEBUG [tIntegrate]: sim_opts->twopop is ON. Calling secondaryGrowth.\n");
-                secondaryGrowth(radius,radiusmicr,radiussec,partmassmicrind,partmasssecind,massmicrvec,masssecvec,disk_params);
+                secondaryGrowth(p_data.radius,p_data.radiusmicr,p_data.radiussec,p_data.partmassmicrind,p_data.partmasssecind,p_data.massmicrvec,p_data.masssecvec,disk_params);
                 fprintf(stderr, "DEBUG [tIntegrate]: secondaryGrowth completed.\n");
             }
 /* A minimum kereséshez létrehozza a cm-es részecskék távolságának reciprokát */
             for (i=0; i < PARTICLE_NUMBER; i++) {
-                if (radius[i][0] > 0. && radius[i][0] > disk_params->RMIN) { // RMIN a disk_params-ból
-                    radius_rec[i][0] = 1. / radius[i][0];
+                if (p_data.radius[i][0] > 0. && p_data.radius[i][0] > disk_params->RMIN) { // RMIN a disk_params-ból
+                    p_data.radius_rec[i][0] = 1. / p_data.radius[i][0];
                 } else {
-                    radius_rec[i][0] = 0.;
+                    p_data.radius_rec[i][0] = 0.;
                 }
             }
 
-            max = find_max(radius,PARTICLE_NUMBER);     /* Megkeresi, hogy melyik a legtávolabbi cm-es részecske a központi csillagtól */
-            min = find_max(radius_rec,PARTICLE_NUMBER);     /* Megkeresi a távolság reciprokának maximumát, azaz a legkisebb távolságra lévő cm-es részecskét */
+            max = find_max(p_data.radius,PARTICLE_NUMBER);     /* Megkeresi, hogy melyik a legtávolabbi cm-es részecske a központi csillagtól */
+            min = find_max(p_data.radius_rec,PARTICLE_NUMBER);     /* Megkeresi a távolság reciprokának maximumát, azaz a legkisebb távolságra lévő cm-es részecskét */
             min = 1. / min;
 
             double mint, maxt;
@@ -351,15 +313,15 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
 /* ha 2 populációs a szimuláció, a fentihez hasonlóan megkeresi a legnagyobb és a legkisebb távolságra lévő mikronos részecskét */
             if(sim_opts->twopop == 1) {
                 for (i=0; i < PARTICLE_NUMBER; i++) {
-                    if (radiusmicr[i][0] > 0. && radiusmicr[i][0] > disk_params->RMIN) { // RMIN a disk_params-ból
-                        radius_rec[i][0] = 1. / radiusmicr[i][0];
+                    if (p_data.radiusmicr[i][0] > 0. && p_data.radiusmicr[i][0] > disk_params->RMIN) { // RMIN a disk_params-ból
+                        p_data.radius_rec[i][0] = 1. / p_data.radiusmicr[i][0];
                     } else {
-                        radius_rec[i][0] = 0.;
+                        p_data.radius_rec[i][0] = 0.;
                     }
                 }
 
-                max2 = find_max(radiusmicr,PARTICLE_NUMBER);    /* Megkeresi, hogy melyik a legtávolabbi részecske a központi csillagtól */
-                min2 = find_max(radius_rec,PARTICLE_NUMBER);
+                max2 = find_max(p_data.radiusmicr,PARTICLE_NUMBER);    /* Megkeresi, hogy melyik a legtávolabbi részecske a központi csillagtól */
+                min2 = find_max(p_data.radius_rec,PARTICLE_NUMBER);
                 min2 = 1. / min2;
 
 /* megnézi, hogy mely részecske van a legközelebb, illetve legtávolabb (mikronos, vagy cm-es) */
@@ -459,16 +421,16 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                     if(t==0) {
 //                        fprintf(stderr, "DEBUG [tIntegrate]: Initializing mass for t=0.\n");
 /* A részecskék tömegét tartalmazó tömb inicializálása */
-                        Count_Mass(radius,partmassind,massvec,t,PARTICLE_NUMBER,disk_params);
-                        if(sim_opts->twopop==1) Count_Mass(radiusmicr,partmassmicrind,massmicrvec,t,PARTICLE_NUMBER,disk_params);
-                        if(sim_opts->twopop==1) Count_Mass(radiussec,partmasssecind,masssecvec,t,4*PARTICLE_NUMBER,disk_params);
+                        Count_Mass(p_data.radius,p_data.partmassind,p_data.massvec,t,PARTICLE_NUMBER,disk_params);
+                        if(sim_opts->twopop==1) Count_Mass(p_data.radiusmicr,p_data.partmassmicrind,p_data.massmicrvec,t,PARTICLE_NUMBER,disk_params);
+                        if(sim_opts->twopop==1) Count_Mass(p_data.radiussec,p_data.partmasssecind,p_data.masssecvec,t,4*PARTICLE_NUMBER,disk_params);
 //                        fprintf(stderr, "DEBUG [tIntegrate]: Count_Mass completed for t=0.\n");
 
 /* Ha van tömegnövekedés, akkor a por felületsűrűségének kiszámolása itt történik */
                         if(sim_opts->growth == 1.) {
 //                            fprintf(stderr, "DEBUG [tIntegrate]: sim_opts->growth is ON. Calling Get_Sigmad for t=0.\n");
                             // JAVÍTVA: A Get_Sigmad függvény paraméterezése
-                            Get_Sigmad(max, min, radius, radiusmicr, radiussec, sigmad, sigmadm, sigmads, massvec, massmicrvec, masssecvec, rdvec, rmicvec, rsvec, sim_opts, disk_params);
+                            Get_Sigmad(max, min, p_data.radius, p_data.radiusmicr, p_data.radiussec, p_data.sigmad, p_data.sigmadm, p_data.sigmads, p_data.massvec, p_data.massmicrvec, p_data.masssecvec, p_data.rdvec, p_data.rmicvec, p_data.rsvec, sim_opts, disk_params);
 //                             fprintf(stderr, "DEBUG [tIntegrate]: Get_Sigmad completed for t=0.\n");
                         }
                     }
@@ -481,7 +443,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
 /* Ha számol a futás driftet, itt írja ki a részecskék távolságát és méretét */
                     if(sim_opts->drift == 1) {
                         fprintf(stderr, "DEBUG [tIntegrate]: sim_opts->drift is ON. Calling Print_Pormozg_Size.\n");
-                        Print_Pormozg_Size(size_name, (int)L, radius, radiusmicr, disk_params, sim_opts, output_files);
+                        Print_Pormozg_Size(size_name, (int)L, p_data.radius, p_data.radiusmicr, disk_params, sim_opts, output_files);
                         fprintf(stderr, "DEBUG [tIntegrate]: Print_Pormozg_Size completed.\n");
                     }
 
@@ -496,23 +458,23 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                     // IDŐLÉPÉS ELŐKÉSZÍTÉSE ÉS FLAGEK RESETELÉSE
                     if (sim_opts->dzone == 1.0) { // CSAK akkor reseteljük, ha dinamikus DZE van
                         for (int i = 0; i < PARTICLE_NUMBER; i++) {
-                            partmassind[i][3] = 0.0; // Belső DZE flag reset
-                            partmassind[i][4] = 0.0; // Külső DZE flag reset
+                            p_data.partmassind[i][3] = 0.0; // Belső DZE flag reset
+                            p_data.partmassind[i][4] = 0.0; // Külső DZE flag reset
                         }
                         if (sim_opts->twopop == 1) { // Ha van második és mikron populáció
                             for (int i = 0; i < 4 * PARTICLE_NUMBER; i++) { // Feltételezve, hogy a secind 4x akkora
-                                partmasssecind[i][3] = 0.0;
-                                partmasssecind[i][4] = 0.0;
+                                p_data.partmasssecind[i][3] = 0.0;
+                                p_data.partmasssecind[i][4] = 0.0;
                             }
                             for (int i = 0; i < PARTICLE_NUMBER; i++) {
-                                partmassmicrind[i][3] = 0.0;
-                                partmassmicrind[i][4] = 0.0;
+                                p_data.partmassmicrind[i][3] = 0.0;
+                                p_data.partmassmicrind[i][4] = 0.0;
                             }
                         }
                     }
 
 
-                    Print_Mass(L, partmassind, partmassmicrind, partmasssecind, t, masstempiin, masstempoin, massmtempiin, massmtempoin, &masstempiout, &masstempoout, &massmtempiout, &massmtempoout, &tavin, &tavout, disk_params, sim_opts, output_files);
+                    Print_Mass(L, p_data.partmassind, p_data.partmassmicrind, p_data.partmasssecind, t, masstempiin, masstempoin, massmtempiin, massmtempoin, &masstempiout, &masstempoout, &massmtempiout, &massmtempoout, &tavin, &tavout, disk_params, sim_opts, output_files);
 
                     fprintf(stderr, "DEBUG [tIntegrate]: Print_Mass completed. Outputs: masstempiout=%.2e, massmtempiout=%.2e\n", masstempiout, massmtempiout);
 
@@ -531,7 +493,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                     if(sim_opts->growth == 1.) {
                         fprintf(stderr, "DEBUG [tIntegrate]: sim_opts->growth is ON. Calling Print_Sigmad (refreshing).\n");
                         // JAVÍTVA: A Print_Sigmad függvény paraméterezése
-                        Print_Sigmad(rdvec, rmicvec, sigmad, sigmadm, disk_params, sim_opts, output_files);
+                        Print_Sigmad(p_data.rdvec, p_data.rmicvec, p_data.sigmad, p_data.sigmadm, disk_params, sim_opts, output_files);
                         fprintf(stderr, "DEBUG [tIntegrate]: Print_Sigmad (refreshing) completed.\n");
                     }
 
@@ -556,20 +518,20 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                 }
 
 /* A részecskék tömegét tartalmazó tömb adatainak frissítése */
-                Count_Mass(radius,partmassind,massvec,t,PARTICLE_NUMBER,disk_params);
-                if(sim_opts->twopop==1) Count_Mass(radiusmicr,partmassmicrind,massmicrvec,t,PARTICLE_NUMBER,disk_params);
-                if(sim_opts->twopop==1) Count_Mass(radiussec,partmasssecind,masssecvec,t,4*PARTICLE_NUMBER,disk_params);
+                Count_Mass(p_data.radius,p_data.partmassind,p_data.massvec,t,PARTICLE_NUMBER,disk_params);
+                if(sim_opts->twopop==1) Count_Mass(p_data.radiusmicr,p_data.partmassmicrind,p_data.massmicrvec,t,PARTICLE_NUMBER,disk_params);
+                if(sim_opts->twopop==1) Count_Mass(p_data.radiussec,p_data.partmasssecind,p_data.masssecvec,t,4*PARTICLE_NUMBER,disk_params);
 
 /* Ha van részecskenövekedés, akkor kiszámolja a por felületsűrűségét */
                 if(sim_opts->growth == 1.) {
                     // JAVÍTVA: A Get_Sigmad függvény paraméterezése
-                    Get_Sigmad(max, min, radius, radiusmicr, radiussec, sigmad, sigmadm, sigmads, massvec, massmicrvec, masssecvec, rdvec, rmicvec, rsvec, sim_opts, disk_params);
+                    Get_Sigmad(max, min, p_data.radius, p_data.radiusmicr, p_data.radiussec, p_data.sigmad, p_data.sigmadm, p_data.sigmads, p_data.massvec, p_data.massmicrvec, p_data.masssecvec, p_data.rdvec, p_data.rmicvec, p_data.rsvec, sim_opts, disk_params);
                 }
 
                 int optsize = 0;
 /* A cm-es részecskék esetén az optsize értéke 0 */
 /* Itt számolja ki a program a cm-es részecskék új távolságát (és méretét, ha kell) */
-                Get_Radius(sim_opts->output_dir_name,optsize,radius,sigmad,rdvec,deltat,t,PARTICLE_NUMBER,sim_opts,disk_params); // output_dir_name a sim_opts-ból
+                Get_Radius(sim_opts->output_dir_name,optsize,p_data.radius,p_data.sigmad,p_data.rdvec,deltat,t,PARTICLE_NUMBER,sim_opts,disk_params); // output_dir_name a sim_opts-ból
 
 /* Ha a futás 2 populációs, akkor az optsize értéke 1 */
 /* Itt számolja ki a program a mikronos részecskék új távolságát */
@@ -577,12 +539,12 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                     optsize = 1;
                     printf("DEBUG [tIntegrate]: sim_opts->twopop is ON. Calling Get_Radius for Micron particles (optsize=%d, PARTICLE_NUMBER=%d).\n", optsize, PARTICLE_NUMBER);
                     // JAVÍTVA: radiusmicr és sigmadm használata
-                    Get_Radius(sim_opts->output_dir_name,optsize,radiusmicr,sigmadm,rmicvec,deltat,t,PARTICLE_NUMBER,sim_opts,disk_params);
+                    Get_Radius(sim_opts->output_dir_name,optsize,p_data.radiusmicr,p_data.sigmadm,p_data.rmicvec,deltat,t,PARTICLE_NUMBER,sim_opts,disk_params);
                     printf("DEBUG [tIntegrate]: Get_Radius for Micron particles completed.\n");
                     optsize = 2;
                     printf("DEBUG [tIntegrate]: Calling Get_Radius for Secondary particles (optsize=%d, PARTICLE_NUMBER=%d).\n", optsize, 4 * PARTICLE_NUMBER);
                     // JAVÍTVA: radiussec és sigmads használata
-                    Get_Radius(sim_opts->output_dir_name,optsize,radiussec,sigmads,rsvec,deltat,t,4 * PARTICLE_NUMBER,sim_opts,disk_params);
+                    Get_Radius(sim_opts->output_dir_name,optsize,p_data.radiussec,p_data.sigmads,p_data.rsvec,deltat,t,4 * PARTICLE_NUMBER,sim_opts,disk_params);
                     printf("DEBUG [tIntegrate]: Get_Radius for Secondary particles completed.\n");
                 }
 
@@ -650,23 +612,23 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
 /* Az időléptetés leteltével a program sikeresen kilép */
     // Memória felszabadítása
     if (PARTICLE_NUMBER > 0) {
-        free(radius);
-        free(radiusmicr);
-        free(radius_rec);
-        free(massvec);
-        free(massmicrvec);
-        free(partmassind);
-        free(partmassmicrind);
-        free(sigmad);
-        free(sigmadm);
-        free(rdvec);
-        free(rmicvec);
+        free(p_data.radius);
+        free(p_data.radiusmicr);
+        free(p_data.radius_rec);
+        free(p_data.massvec);
+        free(p_data.massmicrvec);
+        free(p_data.partmassind);
+        free(p_data.partmassmicrind);
+        free(p_data.sigmad);
+        free(p_data.sigmadm);
+        free(p_data.rdvec);
+        free(p_data.rmicvec);
 
-        free(radiussec);
-        free(masssecvec);
-        free(partmasssecind);
-        free(sigmads);
-        free(rsvec);
+        free(p_data.radiussec);
+        free(p_data.masssecvec);
+        free(p_data.partmasssecind);
+        free(p_data.sigmads);
+        free(p_data.rsvec);
 
         fprintf(stderr, "DEBUG [tIntegrate]: All dynamically allocated particle arrays freed.\n");
     }

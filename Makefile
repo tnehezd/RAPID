@@ -17,7 +17,8 @@ SRCS = $(SRC_DIR)/main.c \
        $(SRC_DIR)/simulation_core.c \
        $(SRC_DIR)/utils.c \
        $(SRC_DIR)/init_tool_module.c \
-       $(SRC_DIR)/parser.c # <-- Add parser.c here!
+       $(SRC_DIR)/parser.c \
+       $(SRC_DIR)/particle_data.c
 
 # Objektumfájlok listája
 OBJS = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRCS))
