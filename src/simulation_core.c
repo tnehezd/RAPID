@@ -520,16 +520,16 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                     Print_Mass(L, partmassind, partmassmicrind, partmasssecind, masstempiin, masstempoin,massmtempiin, massmtempoin, &masstempiout, &masstempoout, &massmtempiout, &massmtempoout,&tavin, &tavout, disk_params, sim_opts, output_files);
                     fprintf(stderr, "DEBUG [tIntegrate]: Print_Mass completed. Outputs: masstempiout=%.2e, massmtempiout=%.2e\n", masstempiout, massmtempiout);
 
-                    if(disk_params->r_dze_i != tavin) { // r_dze_i a disk_params-ból
+//                    if(disk_params->r_dze_i != tavin) { // r_dze_i a disk_params-ból
                         masstempiin = masstempiout;
                         massmtempiin = massmtempiout;
                         fprintf(stderr, "DEBUG [tIntegrate]: r_dze_i (%.2f) != tavin (%.2f). Updating masstempiin/massmtempiin.\n", disk_params->r_dze_i, tavin);
-                    }
-                    if(disk_params->r_dze_o != tavout) { // r_dze_o a disk_params-ból
+//                    }
+//                     if(disk_params->r_dze_o != tavout) { // r_dze_o a disk_params-ból
                         masstempoin = masstempoout;
                         massmtempoin = massmtempoout;
                         fprintf(stderr, "DEBUG [tIntegrate]: r_dze_o (%.2f) != tavout (%.2f). Updating masstempoin/massmtempoin.\n", disk_params->r_dze_o, tavout);
-                    }
+//                    }
 
 /* Ha van pornövekedés, kiírja a por felületsűrűségét egy fájlba --> a pornövekedéshez szükséges egyáltalán ezt kiszámolni! */
                     if(sim_opts->growth == 1.) {

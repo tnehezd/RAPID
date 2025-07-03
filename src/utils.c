@@ -148,9 +148,12 @@ double find_zero(int i, const double *rvec, const double *dp) {
 	
 	if(((dp[i] * dp[i+1]) <= 0.) && (dp[i] > dp[i+1])) {		/*	Ha a ket pont szorzata negativ --> elojel valtas a dp-ben, nyomasi min/max. Maximum hely ott van, ahol pozitivbol negativba valt az ertek	*/
 		r = find_r_zero(rvec[i],rvec[i+1],dp[i],dp[i+1]);	/*	Ha elojel valtas tortenik es nyomasi maximum van, akkor kiszamolja a ket pont kozott, hogy hol lenne a zerus hely pontosan	*/
+
 	} else {
 		r = 0.0;
 	}
+
+
 
 	return r;
 
@@ -158,7 +161,7 @@ double find_zero(int i, const double *rvec, const double *dp) {
 
 
 /*	A nyomasi maximum korul 1H tavolsagban jeloli ki a korgyurut	*/
-void find_r_annulus(const double *rvec, double rin, double *ind_ii, double *ind_io, double rout, double *ind_oi, double *ind_oo, const simulation_options_t *sim_opts, const disk_t *disk_params) {
+void find_r_annulus(double rin, double *ind_ii, double *ind_io, double rout, double *ind_oi, double *ind_oo, const simulation_options_t *sim_opts, const disk_t *disk_params) {
 
     // Debug kiírás a függvény belépéskor, hogy ellenőrizzük a disk_params érvényességét
     int i;
@@ -194,15 +197,15 @@ void find_r_annulus(const double *rvec, double rin, double *ind_ii, double *ind_
 
         if(sim_opts->dzone == 1) {
             /* Ha az r távolság a kijelölt határok között van, akkor az adott változó visszakapja r értékét */
-            if(rvec[i] > riimH && rvec[i] < riipH) {
+            if(disk_params->rvec[i] > riimH && disk_params->rvec[i] < riipH) {
                 rmid = (disk_params->rvec[i] - disk_params->RMIN)/ disk_params->DD;
                 rtemp = (int) floor(rmid + 0.5);
                 *ind_ii = rtemp;
             }
                 
             /* Ha az r távolság a kijelölt határok között van, akkor az adott változó visszakapja r értékét */
-            if(rvec[i] > riomH && rvec[i] < riopH) {
-                rmid = (rvec[i] - disk_params->RMIN)/ disk_params->DD;
+            if(disk_params->rvec[i] > riomH && disk_params->rvec[i] < riopH) {
+                rmid = (disk_params->rvec[i] - disk_params->RMIN)/ disk_params->DD;
                 rtemp = (int) floor(rmid + 0.5);
                 *ind_io = rtemp;
             }
@@ -210,20 +213,20 @@ void find_r_annulus(const double *rvec, double rin, double *ind_ii, double *ind_
 
 
         /* Ha az r távolság a kijelölt határok között van, akkor az adott változó visszakapja r értékét */
-        if(rvec[i] > roimH && rvec[i] < roipH) {
-            rmid = (rvec[i] - disk_params->RMIN)/ disk_params->DD;
+        if(disk_params->rvec[i] > roimH && disk_params->rvec[i] < roipH) {
+            rmid = (disk_params->rvec[i] - disk_params->RMIN)/ disk_params->DD;
             rtemp = (int) floor(rmid + 0.5);
             *ind_oi = rtemp;
         }
                 
         /* Ha az r távolság a kijelölt határok között van, akkor az adott változó visszakapja r értékét */
-        if(rvec[i] > roomH && rvec[i] < roopH) {
-            rmid = (rvec[i] - disk_params->RMIN)/ disk_params->DD;
+        if(disk_params->rvec[i] > roomH && disk_params->rvec[i] < roopH) {
+            rmid = (disk_params->rvec[i] - disk_params->RMIN)/ disk_params->DD;
             rtemp = (int) floor(rmid + 0.5);
             *ind_oo = rtemp;
         }
 
-        if(rvec[i] > roopH) break;
+        if(disk_params->rvec[i] > roopH) break;
 
     }
 }

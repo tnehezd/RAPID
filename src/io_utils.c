@@ -274,7 +274,6 @@ void Print_Mass(double step, double (*partmassind)[4], double (*partmassmicrind)
     int dim = find_num_zero(disk_params); // Assuming find_num_zero is const-correct
 //    fprintf(stderr, "DEBUG [Print_Mass]: After find_num_zero. dim=%d. disk_params address=%p, FLIND=%.2f, HASP=%.2f\n",
 //            dim, (void*)disk_params, disk_params->FLIND, disk_params->HASP);
-
     // double r_count[dim]; // VLA - C99 standard. If compiling with C11 or later and not using GNU extensions, consider dynamic allocation.
     double *r_count = (double *)malloc(sizeof(double) * dim); // Safer for larger dim
 //    fprintf(stderr, "DEBUG [Print_Mass]: After malloc for r_count (size %zu). r_count address=%p. disk_params address=%p, FLIND=%.2f, HASP=%.2f\n",
@@ -287,6 +286,8 @@ void Print_Mass(double step, double (*partmassind)[4], double (*partmassmicrind)
 
     double temp_new = 0.;
     double temp = 0.;
+    double rin = disk_params->r_dze_i;
+    double rout = disk_params->r_dze_o;
     double rin_new = 0.0;
     double rout_new = 0.0;
 
@@ -295,7 +296,6 @@ void Print_Mass(double step, double (*partmassind)[4], double (*partmassmicrind)
     if(dim != 0) {
         for(i = 0; i < disk_params->NGRID; i++) { // Using disk_params->NGRID
             temp_new = find_zero(i,disk_params->rvec,disk_params->dpressvec); // Assuming find_zero is const-correct
-
             if(temp != temp_new && i > 3 && temp_new != 0.0) {
                 if (j < dim) { // Prevent out-of-bounds write if dim calculation is off
                     r_count[j] = temp_new;
@@ -321,7 +321,7 @@ void Print_Mass(double step, double (*partmassind)[4], double (*partmassmicrind)
         if(dim > 0) {
             if (dim == 1) {
                 rin_new = r_count[0];
-                rout_new = tav; // Using tav (disk_params->r_dze_o)
+                rout_new = rout; // Using tav (disk_params->r_dze_o)
             } else if (dim >= 2) { // Ensure there are at least two elements
                 rin_new = r_count[0];
                 rout_new = r_count[1];
@@ -332,8 +332,8 @@ void Print_Mass(double step, double (*partmassind)[4], double (*partmassmicrind)
             }
         }
         if(dim == 0) {
-            rin_new = tav2; // Using tav2 (disk_params->r_dze_i)
-            rout_new = tav; // Using tav (disk_params->r_dze_o)
+            rin_new = rin; // Using tav2 (disk_params->r_dze_i)
+            rout_new = rout; // Using tav (disk_params->r_dze_o)
         }
     }
 //    fprintf(stderr, "DEBUG [Print_Mass]: After dzone logic. disk_params address=%p, FLIND=%.2f, HASP=%.2f\n",
@@ -341,19 +341,20 @@ void Print_Mass(double step, double (*partmassind)[4], double (*partmassmicrind)
 
 
     // The rin and rout variables are now consistently updated
-    double rin_current = rin_new;
-    if(sim_opts->dzone == 0.0) rin_current = 0;
+    rin = rin_new;
+    if(sim_opts->dzone == 0.0) rin = 0;
     double rout_current = rout_new;
-    *tavin = rin_current; // Update output parameter directly
-    *tavout = rout_current; // Update output parameter directly
+    tav2 = rin; // Update output parameter directly
+    tav = rout_new; // Update output parameter directly
 
 //    fprintf(stderr, "DEBUG [Print_Mass]: Before find_r_annulus call. disk_params address=%p, FLIND=%.2f, HASP=%.2f\n",
 //            (void*)disk_params, disk_params->FLIND, disk_params->HASP);
     // Passing updated tav2 and tav to find_r_annulus
-    find_r_annulus(disk_params->rvec,*tavin,&ind_ii,&ind_io,*tavout,&ind_oi,&ind_oo,sim_opts,disk_params);
+    find_r_annulus(tav2,&ind_ii,&ind_io,tav,&ind_oi,&ind_oo,sim_opts,disk_params);
 //    fprintf(stderr, "DEBUG [Print_Mass]: After find_r_annulus call. disk_params address=%p, FLIND=%.2f, HASP=%.2f\n",
 //            (void*)disk_params, disk_params->FLIND, disk_params->HASP);
 
+    printf("tav%lg   tavo%lg\n", tav2,tav);
 
     double massii = 0, massoi = 0;
     double massiim = 0,massoim = 0;
@@ -363,36 +364,42 @@ void Print_Mass(double step, double (*partmassind)[4], double (*partmassmicrind)
     // So the problem is likely before or in find_r_annulus.
     // The following calls are not reached during the crash.
 
-    GetMass(PARTICLE_NUMBER,partmassind,(int)ind_ii,(int)ind_io,*tavin,disk_params->r_dze_i,&massii,(int)ind_oi,(int)ind_oo,*tavout,disk_params->r_dze_o,&massoi, sim_opts);
+    GetMass(PARTICLE_NUMBER,partmassind,(int)ind_ii,(int)ind_io,tav2,disk_params->r_dze_i,&massii,(int)ind_oi,(int)ind_oo,tav,disk_params->r_dze_o,&massoi, sim_opts);
     if(sim_opts->twopop == 1.0) {
-        GetMass(4*PARTICLE_NUMBER,partmasssecind,(int)ind_ii,(int)ind_io,*tavin,disk_params->r_dze_i,&massis,(int)ind_oi,(int)ind_oo,*tavout,disk_params->r_dze_o,&massos,sim_opts);
-        GetMass(PARTICLE_NUMBER,partmassmicrind,(int)ind_ii,(int)ind_io,*tavin,disk_params->r_dze_i,&massiim,(int)ind_oi,(int)ind_oo,*tavout,disk_params->r_dze_o,&massoim,sim_opts);
+        GetMass(4*PARTICLE_NUMBER,partmasssecind,(int)ind_ii,(int)ind_io,tav2,disk_params->r_dze_i,&massis,(int)ind_oi,(int)ind_oo,tav,disk_params->r_dze_o,&massos,sim_opts);
+        GetMass(PARTICLE_NUMBER,partmassmicrind,(int)ind_ii,(int)ind_io,tav2,disk_params->r_dze_i,&massiim,(int)ind_oi,(int)ind_oo,tav,disk_params->r_dze_o,&massoim,sim_opts);
     }
 
     double massi, massim, masso, massom;
 
-    if(*tavin != disk_params->r_dze_i) {
+    if(tav2 != disk_params->r_dze_i) {
         massi = massii + massbtempii + massis;
         massim = massiim + massmtempii;
     } else {
         massi = massii + massis;
         massim = massiim;
     }
-    if(*tavout != disk_params->r_dze_o) {
+//    if(tav != disk_params->r_dze_o) {
         masso = massoi + massbtempoi + massos;
         massom = massoim + massmtempoi;
-    } else {
-        masso = massoi + massos;
-        massom = massoim;
-    }
+//    } else {
+//       masso = massoi + massos;
+//        massom = massoim;
+//    }
 
     *massbtempio = massi;
     *massbtempoo = masso;
     *massmtempio = massim; // FIX: Corrected typo from massmtempiout to massmtempio
     *massmtempoo = massom;
 
+
+    *tavin = tav2;
+    *tavout = tav;
+
+    printf("\n\n\n\n\n\n\n\nTAV2 %lg     TAV %lg\n\n\n\n\n\n\n\n\n\n\n\n", tav2,tav);
+
     if (output_files->mass_file != NULL) {
-        fprintf(output_files->mass_file, "%lg %lg %lg %lg %lg\n", step, *tavin, massi + massim, *tavout, masso + massom);
+        fprintf(output_files->mass_file, "%lg %lg %lg %lg %lg\n", step, tav2,massi+massim,tav,masso+massom);
     } else {
         fprintf(stderr, "WARNING: output_files->mass_file is NULL in Print_Mass. Cannot write mass data.\n");
     }
