@@ -49,10 +49,8 @@ double Coeff_3(double sigma, double r); // Feltételezve, hogy Coeff_3 a dust_ph
 void u_gas(disk_t *disk_params); // disk_params nem const, mert módosítva van az ugvec tagja
 
 // GetMass függvény prototípusa
-void GetMass(int n, double partmassind[][4], int indii, int indio, double tavi, double dzei, double *massiout,
-             int indoi, int indoo, double tavo, double dzeo, double *massoout, const simulation_options_t *sim_opts);
+void GetMass(int n, double (*partmassind)[5], int indii, int indio, int indoi, int indoo, double *massiout, double *massoout, const simulation_options_t *sim_opts);
 
-// Reprezentatív részecske méretek meghatározása
 double a_drift(double sigmad, double r, double p, double dp, double rho_p, const disk_t *disk_params);
 double a_turb(double sigma, double r, double rho_p, const disk_t *disk_params);
 double a_df(double sigma, double r, double p, double dp, double rho_p, const disk_t *disk_params);

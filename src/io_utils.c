@@ -252,32 +252,23 @@ void infoCurrent(const char *nev, const disk_t *disk_params, const simulation_op
 }
 
 
-/* Függvény a tömegfájl kiíratására */
-void Print_Mass(double step, double (*partmassind)[4], double (*partmassmicrind)[4],
-                double (*partmasssecind)[4],
-                double massbtempii, double massbtempoi, double massmtempii, double massmtempoi,
-                double *massbtempio, double *massbtempoo, double *massmtempio, double *massmtempoo,
-                double *tavin, double *tavout,
+void Print_Mass(double step, 
+                double (*partmassind)[5], double (*partmassmicrind)[5], 
+                double (*partmasssecind)[5], 
+                double t, // Ezt továbbra is meghagyjuk
+                double massbtempii, double massbtempoi, double massmtempii, double massmtempoi, 
+                double *massbtempio, double *massbtempoo, double *massmtempio, double *massmtempoo, 
+                double *tavin, double *tavout, 
                 const disk_t *disk_params, const simulation_options_t *sim_opts,
                 output_files_t *output_files) {
-
-//    fprintf(stderr, "DEBUG [Print_Mass]: Entry. disk_params address=%p, FLIND=%.2f, HASP=%.2f\n",
-//            (void*)disk_params, disk_params->FLIND, disk_params->HASP);
 
     double ind_ii, ind_io, ind_oi, ind_oo, tav, tav2;
 
     tav = disk_params->r_dze_o;
     tav2 = disk_params->r_dze_i;
 
-//    fprintf(stderr, "DEBUG [Print_Mass]: Before find_num_zero. disk_params address=%p, FLIND=%.2f, HASP=%.2f\n",
-//            (void*)disk_params, disk_params->FLIND, disk_params->HASP);
-    int dim = find_num_zero(disk_params); // Assuming find_num_zero is const-correct
-//    fprintf(stderr, "DEBUG [Print_Mass]: After find_num_zero. dim=%d. disk_params address=%p, FLIND=%.2f, HASP=%.2f\n",
-//            dim, (void*)disk_params, disk_params->FLIND, disk_params->HASP);
-    // double r_count[dim]; // VLA - C99 standard. If compiling with C11 or later and not using GNU extensions, consider dynamic allocation.
-    double *r_count = (double *)malloc(sizeof(double) * dim); // Safer for larger dim
-//    fprintf(stderr, "DEBUG [Print_Mass]: After malloc for r_count (size %zu). r_count address=%p. disk_params address=%p, FLIND=%.2f, HASP=%.2f\n",
-//            sizeof(double) * dim, (void*)r_count, (void*)disk_params, disk_params->FLIND, disk_params->HASP);
+    int dim = find_num_zero(disk_params); 
+    double *r_count = (double *)malloc(sizeof(double) * dim); 
 
     if (dim > 0 && r_count == NULL) {
         fprintf(stderr, "ERROR [Print_Mass]: Failed to allocate memory for r_count. Exiting.\n");
@@ -294,18 +285,18 @@ void Print_Mass(double step, double (*partmassind)[4], double (*partmassmicrind)
     int j = 0, i;
 
     if(dim != 0) {
-        for(i = 0; i < disk_params->NGRID; i++) { // Using disk_params->NGRID
-            temp_new = find_zero(i,disk_params->rvec,disk_params->dpressvec); // Assuming find_zero is const-correct
+        for(i = 0; i < disk_params->NGRID; i++) {
+            // Itt a find_zero valószínűleg disk_params->rvec és disk_params->dpressvec-et használ
+            temp_new = find_zero(i,disk_params->rvec,disk_params->dpressvec); 
             if(temp != temp_new && i > 3 && temp_new != 0.0) {
-                if (j < dim) { // Prevent out-of-bounds write if dim calculation is off
+                if (j < dim) { 
                     r_count[j] = temp_new;
                     j++;
                 } else {
                     fprintf(stderr, "WARNING [Print_Mass]: r_count array overflow, skipping data. dim: %d, j: %d\n", dim, j);
                 }
             }
-
-            if(sim_opts->dzone == 0.0) { // Using sim_opts->dzone
+            if(sim_opts->dzone == 0.0) { 
                 if(temp_new > 0.) {
                     temp = temp_new;
                     rout_new = temp;
@@ -313,108 +304,81 @@ void Print_Mass(double step, double (*partmassind)[4], double (*partmassmicrind)
             }
         }
     }
-//    fprintf(stderr, "DEBUG [Print_Mass]: After r_count population loop. disk_params address=%p, FLIND=%.2f, HASP=%.2f\n",
-//            (void*)disk_params, disk_params->FLIND, disk_params->HASP);
 
-
-    if(sim_opts->dzone == 1.0) { // Using sim_opts->dzone
+    if(sim_opts->dzone == 1.0) {
         if(dim > 0) {
-            if (dim == 1) {
-                rin_new = r_count[0];
-                rout_new = rout; // Using tav (disk_params->r_dze_o)
-            } else if (dim >= 2) { // Ensure there are at least two elements
-                rin_new = r_count[0];
-                rout_new = r_count[1];
-            } else { // Should not happen if dim > 0 and not 1
-                fprintf(stderr, "WARNING [Print_Mass]: Unexpected dim value %d for sim_opts->dzone == 1.0. Using default r_dze_i/o.\n", dim);
-                rin_new = tav2;
-                rout_new = tav;
-            }
+            if (dim == 1) { rin_new = r_count[0]; rout_new = rout; } 
+            else if (dim >= 2) { rin_new = r_count[0]; rout_new = r_count[1]; } 
+            else { fprintf(stderr, "WARNING [Print_Mass]: Unexpected dim value %d for sim_opts->dzone == 1.0. Using default r_dze_i/o.\n", dim); rin_new = tav2; rout_new = tav; }
         }
-        if(dim == 0) {
-            rin_new = rin; // Using tav2 (disk_params->r_dze_i)
-            rout_new = rout; // Using tav (disk_params->r_dze_o)
-        }
+        if(dim == 0) { rin_new = rin; rout_new = rout; }
     }
-//    fprintf(stderr, "DEBUG [Print_Mass]: After dzone logic. disk_params address=%p, FLIND=%.2f, HASP=%.2f\n",
-//            (void*)disk_params, disk_params->FLIND, disk_params->HASP);
 
-
-    // The rin and rout variables are now consistently updated
     rin = rin_new;
     if(sim_opts->dzone == 0.0) rin = 0;
     double rout_current = rout_new;
-    tav2 = rin; // Update output parameter directly
-    tav = rout_new; // Update output parameter directly
+    
+    *tavin = rin;  
+    *tavout = rout_current; 
 
-//    fprintf(stderr, "DEBUG [Print_Mass]: Before find_r_annulus call. disk_params address=%p, FLIND=%.2f, HASP=%.2f\n",
-//            (void*)disk_params, disk_params->FLIND, disk_params->HASP);
-    // Passing updated tav2 and tav to find_r_annulus
-    find_r_annulus(tav2,&ind_ii,&ind_io,tav,&ind_oi,&ind_oo,sim_opts,disk_params);
-//    fprintf(stderr, "DEBUG [Print_Mass]: After find_r_annulus call. disk_params address=%p, FLIND=%.2f, HASP=%.2f\n",
-//            (void*)disk_params, disk_params->FLIND, disk_params->HASP);
+    // find_r_annulus hívása: EZ KISZÁMOLJA AZ INDEX-HATÁROKAT AZ AKTUÁLIS SUGARAK ALAPJÁN
+    // Ezt már a disk_params->rvec és disk_params->dpressvec alapján kellene, nem pedig külön paraméterekből.
+    // Ha a find_r_annulus is disk_params-ot kapott, akkor rendben van.
+    find_r_annulus(*tavin, &ind_ii, &ind_io, *tavout, &ind_oi, &ind_oo, sim_opts, disk_params);
 
-    printf("tav%lg   tavo%lg\n", tav2,tav);
+    printf("tav%lg   tavo%lg\n", *tavin, *tavout);
 
     double massii = 0, massoi = 0;
-    double massiim = 0,massoim = 0;
+    double massiim = 0, massoim = 0;
     double massis = 0, massos = 0;
 
-    // The crash occurred on the *first* call to scale_height which is within find_r_annulus.
-    // So the problem is likely before or in find_r_annulus.
-    // The following calls are not reached during the crash.
+    GetMass(PARTICLE_NUMBER, partmassind, 
+            (int)ind_ii, (int)ind_io, 
+            (int)ind_oi, (int)ind_oo, 
+            &massii, &massoi, sim_opts); 
 
-    GetMass(PARTICLE_NUMBER,partmassind,(int)ind_ii,(int)ind_io,tav2,disk_params->r_dze_i,&massii,(int)ind_oi,(int)ind_oo,tav,disk_params->r_dze_o,&massoi, sim_opts);
     if(sim_opts->twopop == 1.0) {
-        GetMass(4*PARTICLE_NUMBER,partmasssecind,(int)ind_ii,(int)ind_io,tav2,disk_params->r_dze_i,&massis,(int)ind_oi,(int)ind_oo,tav,disk_params->r_dze_o,&massos,sim_opts);
-        GetMass(PARTICLE_NUMBER,partmassmicrind,(int)ind_ii,(int)ind_io,tav2,disk_params->r_dze_i,&massiim,(int)ind_oi,(int)ind_oo,tav,disk_params->r_dze_o,&massoim,sim_opts);
+        GetMass(4*PARTICLE_NUMBER, partmasssecind, 
+                (int)ind_ii, (int)ind_io, 
+                (int)ind_oi, (int)ind_oo, 
+                &massis, &massos, sim_opts); 
+        GetMass(PARTICLE_NUMBER, partmassmicrind, 
+                (int)ind_ii, (int)ind_io, 
+                (int)ind_oi, (int)ind_oo, 
+                &massiim, &massoim, sim_opts);
     }
 
     double massi, massim, masso, massom;
 
-    if(tav2 != disk_params->r_dze_i) {
-        massi = massii + massbtempii + massis;
-        massim = massiim + massmtempii;
-    } else {
+    if(sim_opts->dzone == 1.0) { 
         massi = massii + massis;
         massim = massiim;
-    }
-//    if(tav != disk_params->r_dze_o) {
+        masso = massoi + massos;
+        massom = massoim;
+    } else { 
+        massi = massii + massbtempii + massis;
+        massim = massiim + massmtempii;
         masso = massoi + massbtempoi + massos;
         massom = massoim + massmtempoi;
-//    } else {
-//       masso = massoi + massos;
-//        massom = massoim;
-//    }
+    }
 
     *massbtempio = massi;
     *massbtempoo = masso;
-    *massmtempio = massim; // FIX: Corrected typo from massmtempiout to massmtempio
+    *massmtempio = massim;
     *massmtempoo = massom;
 
-
-    *tavin = tav2;
-    *tavout = tav;
-
-    printf("\n\n\n\n\n\n\n\nTAV2 %lg     TAV %lg\n\n\n\n\n\n\n\n\n\n\n\n", tav2,tav);
-
     if (output_files->mass_file != NULL) {
-        fprintf(output_files->mass_file, "%lg %lg %lg %lg %lg\n", step, tav2,massi+massim,tav,masso+massom);
-    } else {
-        fprintf(stderr, "WARNING: output_files->mass_file is NULL in Print_Mass. Cannot write mass data.\n");
-    }
-
-    if (output_files->mass_file != NULL) {
+        fprintf(output_files->mass_file, "%lg %lg %lg %lg %lg\n", step, *tavin, massi+massim, *tavout, masso+massom);
         fflush(output_files->mass_file);
     } else {
-        fprintf(stderr, "WARNING: Cannot fflush output_files->mass_file, as it is NULL.\n");
+        fprintf(stderr, "WARNING: output_files->mass_file is NULL in Print_Mass. Cannot write mass data or fflush.\n");
     }
 
-    // Free dynamically allocated memory for r_count if it was allocated
     if (dim > 0) {
         free(r_count);
     }
 }
+
 
 /* Függvény a sigma, p, dp kiíratására */
 void Print_Sigma(const disk_t *disk_params, output_files_t *output_files) {
@@ -523,4 +487,98 @@ void timePar(double tMax_val, double stepping_val, double current_val, simulatio
     sim_opts->TMAX = tMax_val;
     sim_opts->WO = tMax_val / stepping_val;
     sim_opts->TCURR = current_val;
+}
+
+
+// Függvény a fájl fejlécek kiírására
+void print_file_header(FILE *file, FileType_e file_type, const HeaderData_t *header_data) {
+    if (file == NULL) {
+        fprintf(stderr, "ERROR [print_file_header]: Attempted to write header to a NULL file pointer!\n");
+        return;
+    }
+
+    fprintf(file, "# Generated by Dust Drift Simulation (Date: %s %s)\n", __DATE__, __TIME__);
+
+    switch (file_type) {
+        case FILE_TYPE_DUST_MOTION:
+            fprintf(file, "# Main Dust Particle Motion and Properties\n");
+            fprintf(file, "# Columns: 1. Time Step (Simulation Time), 2. Particle Index, 3. Radius [AU]\n");
+            break;
+
+        case FILE_TYPE_MICRON_MOTION:
+            fprintf(file, "# Micron Dust Particle Motion and Properties\n");
+            fprintf(file, "# Columns: 1. Time Step (Simulation Time), 2. Particle Index, 3. Radius [AU]\n");
+            fprintf(file, "# (Two-Population Model)\n");
+            break;
+
+        case FILE_TYPE_MASS_ACCUMULATION:
+            fprintf(file, "# This file contains the time evolution of dust mass within specified disk regions.\n");
+            fprintf(file, "# Columns:\n");
+            fprintf(file, "# 1. Time [years]\n");
+            fprintf(file, "# 2. Inner Boundary Radius (R_in) of the inner region [AU] (%.2f)\n", header_data ? header_data->R_in : 0.0);
+            fprintf(file, "# 3. Total Dust Mass (non-micron + micron) within R < R_in [M_Jupiter]\n");
+            fprintf(file, "# 4. Outer Boundary Radius (R_out) of the outer region [AU] (%.2f)\n", header_data ? header_data->R_out : 0.0);
+            fprintf(file, "# 5. Total Dust Mass (non-micron + micron) within R > R_out [M_Jupiter]\n");
+            fprintf(file, "# All masses include both 'cm-sized' (larger) and 'micron-sized' dust populations.\n");
+            break;
+
+        case FILE_TYPE_GAS_DENSITY:
+            // Kiegészítő infók, ha t=0 (is_initial_data)
+            if (header_data && header_data->is_initial_data) {
+                fprintf(file, "# Initial gas profile\n", header_data->current_time);
+            } else {
+                fprintf(file, "# Time: %e years\n", header_data ? header_data->current_time : 0.0);
+            }
+            // A fejléc az init_tool_module-ból, módosítva a HeaderData_t használatára
+            fprintf(file, "#--------------------------------------------------------------------------\n");
+            fprintf(file, "# %-15s %-15s %-15s %-15s\n",
+                    "Radius_AU", "GasSurfDensity", "GasPressure", "GasPressureDeriv");
+            fprintf(file, "#--------------------------------------------------------------------------\n");
+
+            break;
+
+        case FILE_TYPE_DUST_DENSITY:
+            fprintf(file, "# Main Dust Surface Density Profile\n");
+            fprintf(file, "# Time: %e years\n", header_data ? header_data->current_time : 0.0);
+            fprintf(file, "# Columns: 1. Radius [AU], 2. Sigma_dust [M_Sun/AU^2]\n");
+            break;
+
+        case FILE_TYPE_DUST_MICRON_DENSITY:
+            fprintf(file, "# Micron Dust Surface Density Profile\n");
+            fprintf(file, "# Time: %e years\n", header_data ? header_data->current_time : 0.0);
+            fprintf(file, "# Columns: 1. Radius [AU], 2. Sigma_micron_dust [M_Sun/AU^2]\n");
+            break;
+
+        case FILE_TYPE_PARTICLE_SIZE:
+            // A fejléc az init_tool_module-ból, módosítva a HeaderData_t használatára
+            // Kiegészítő infók, ha t=0 (is_initial_data)
+            if (header_data && header_data->is_initial_data) {
+                fprintf(file, "# Initial particle distribution\n", header_data->current_time);
+            } else {
+                fprintf(file, "# Particle distribution, Time: %e years\n", header_data ? header_data->current_time : 0.0);
+            }
+            fprintf(file, "#--------------------------------------------------------------------------\n");
+            fprintf(file, "# %-5s %-15s %-20s %-20s %-15s %-15s\n",
+                    "Index", "Radius_AU", "RepMass_Pop1_Msun", "RepMass_Pop2_Msun", "MaxPartSize_cm", "MicroSize_cm");
+            fprintf(file, "#--------------------------------------------------------------------------\n");
+
+            break;
+
+        case FILE_TYPE_DISK_PARAM:
+            // A fejléc az init_tool_module-ból, módosítva a HeaderData_t használatára
+            fprintf(file, "# Disk Parameters\n");
+            fprintf(file, "#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
+            fprintf(file, "# %-15s %-15s %-10s %-15s %-20s %-15s %-15s %-15s %-20s %-20s %-15s %-15s %-15s %-15s %-15s\n",
+                    "R_Min_AU", "R_Max_AU", "N_Grid", "SigmaExp", "Sigma0_gas_Msun_AU2",
+                    "G_GravConst", "DzR_Inner_AU", "DzR_Outer_AU", "DzDr_Inner_Calc_AU", "DzDr_Outer_Calc_AU",
+                    "DzAlphaMod", "DustDensity_g_cm3", "AlphaViscosity", "StarMass_Msun", "FlaringIndex");
+            fprintf(file, "#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
+            // A tényleges paraméter értékeket nem a fejlécbe írjuk, hanem a fő adatsorba.
+            break;
+
+        default:
+            fprintf(stderr, "WARNING [print_file_header]: Unknown file type for header generation: %d!\n", file_type);
+            break;
+    }
+    fflush(file);
 }

@@ -47,7 +47,8 @@ void kerekit(double in[][3], int n, const disk_t *disk_params);
 
 void contract(double in[][3], double dd, int n, const disk_t *disk_params); 
 
-void Count_Mass(double radin[][2], double partmassindin[][4], double *massvecin, double t, int n, const disk_t *disk_params);
+void Count_Mass(double radin[][2], double partmassindin[][5], double *massvecin, double t, int n, const disk_t *disk_params);
+
 
 // Ide kerülhetnek majd a jövőbeni egyéb általános segédfüggvények deklarációi is.
 // Például:

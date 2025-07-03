@@ -1,7 +1,7 @@
 #include "utils.h"    // Ezt kell includolni, mert ebben lesz a Parabola deklarációja
 #include "config.h"   // Szükséges a RMIN és DD makrók miatt, amiket a Parabola használ
 #include <math.h>     // Bár a Parabola most nem használ math.h függvényt,
-                      // más utility függvényeknek szüksége lehet rá.
+#include <stdlib.h>                      // más utility függvényeknek szüksége lehet rá.
                       // Jó gyakorlat ide tenni.
 
 #include "simulation_types.h" 
@@ -163,74 +163,45 @@ double find_zero(int i, const double *rvec, const double *dp) {
 /*	A nyomasi maximum korul 1H tavolsagban jeloli ki a korgyurut	*/
 void find_r_annulus(double rin, double *ind_ii, double *ind_io, double rout, double *ind_oi, double *ind_oo, const simulation_options_t *sim_opts, const disk_t *disk_params) {
 
-    // Debug kiírás a függvény belépéskor, hogy ellenőrizzük a disk_params érvényességét
-    int i;
-    double rmid, rtemp;
-    double roimH;
-    double roipH;
-    double roomH;
-    double roopH;
-    double riimH;
-    double riipH;
-    double riomH;
-    double riopH;
+    double r_val;
 
-    if(sim_opts->dzone == 0) {
-        *ind_ii = 0;
-        *ind_io = 0;
+    // Segédfüggvény a radiális érték indexé konvertálásához
+    // disk_params->rvec[index] ~ disk_params->RMIN + index * disk_params->DD
+    // index = (r_val - RMIN) / DD
+    auto double r_to_index(double r_coord) {
+        if (r_coord < disk_params->RMIN) return 0.0; // Ha kisebb a minimum sugárnál, 0. index
+        // Clamp to avoid going out of bounds, max index is NGRID-1
+        return fmax(0.0, fmin((double)(disk_params->NGRID -1), floor((r_coord - disk_params->RMIN) / disk_params->DD + 0.5)));
     }
 
-    // --- KRITIKUS JAVÍTÁS: Add hozzá a disk_params-t a scale_height hívásokhoz ---
-    riimH = (rin - scale_height(rin, disk_params)) - disk_params->DD / 2.0;
-    riipH = (rin - scale_height(rin, disk_params)) + disk_params->DD / 2.0;
-    riomH = (rin + scale_height(rin, disk_params)) - disk_params->DD / 2.0;
-    riopH = (rin + scale_height(rin, disk_params)) + disk_params->DD / 2.0;
 
-    roimH = (rout - scale_height(rout, disk_params)) - disk_params->DD / 2.0;
-    roipH = (rout - scale_height(rout, disk_params)) + disk_params->DD / 2.0;
-    roomH = (rout + scale_height(rout, disk_params)) - disk_params->DD / 2.0;
-    roopH = (rout + scale_height(rout, disk_params)) + disk_params->DD / 2.0;
-    // --- KRITIKUS JAVÍTÁS VÉGE ---
+    if(sim_opts->dzone == 0) { // Fix DZE: A zóna határait a rin és rout adja
+        *ind_ii = r_to_index(rin); // Belső zóna belső határa
+        *ind_io = r_to_index(rout); // Belső zóna külső határa
+        // Fix DZE esetén a "külső" zóna általában ugyanaz, vagy nincs értelmezve.
+        // Mivel a GetMass is megkapja ezeket, beállítjuk őket ugyanarra, mint a belsőt.
+        *ind_oi = *ind_ii;
+        *ind_oo = *ind_io;
+    } else { // Dinamikus DZE (sim_opts->dzone == 1): H a nyomásmaximum körüli távolság
+        // RIN körüli belső zóna határai
+        r_val = rin - scale_height(rin, disk_params) - disk_params->DD / 2.0;
+        *ind_ii = r_to_index(r_val);
 
+        r_val = rin + scale_height(rin, disk_params) + disk_params->DD / 2.0;
+        *ind_io = r_to_index(r_val);
 
-    for(i = 1; i <= disk_params->NGRID; i++) {
+        // ROUT körüli külső zóna határai
+        r_val = rout - scale_height(rout, disk_params) - disk_params->DD / 2.0;
+        *ind_oi = r_to_index(r_val);
 
-        if(sim_opts->dzone == 1) {
-            /* Ha az r távolság a kijelölt határok között van, akkor az adott változó visszakapja r értékét */
-            if(disk_params->rvec[i] > riimH && disk_params->rvec[i] < riipH) {
-                rmid = (disk_params->rvec[i] - disk_params->RMIN)/ disk_params->DD;
-                rtemp = (int) floor(rmid + 0.5);
-                *ind_ii = rtemp;
-            }
-                
-            /* Ha az r távolság a kijelölt határok között van, akkor az adott változó visszakapja r értékét */
-            if(disk_params->rvec[i] > riomH && disk_params->rvec[i] < riopH) {
-                rmid = (disk_params->rvec[i] - disk_params->RMIN)/ disk_params->DD;
-                rtemp = (int) floor(rmid + 0.5);
-                *ind_io = rtemp;
-            }
-        }
-
-
-        /* Ha az r távolság a kijelölt határok között van, akkor az adott változó visszakapja r értékét */
-        if(disk_params->rvec[i] > roimH && disk_params->rvec[i] < roipH) {
-            rmid = (disk_params->rvec[i] - disk_params->RMIN)/ disk_params->DD;
-            rtemp = (int) floor(rmid + 0.5);
-            *ind_oi = rtemp;
-        }
-                
-        /* Ha az r távolság a kijelölt határok között van, akkor az adott változó visszakapja r értékét */
-        if(disk_params->rvec[i] > roomH && disk_params->rvec[i] < roopH) {
-            rmid = (disk_params->rvec[i] - disk_params->RMIN)/ disk_params->DD;
-            rtemp = (int) floor(rmid + 0.5);
-            *ind_oo = rtemp;
-        }
-
-        if(disk_params->rvec[i] > roopH) break;
-
+        r_val = rout + scale_height(rout, disk_params) + disk_params->DD / 2.0;
+        *ind_oo = r_to_index(r_val);
     }
+    
+    // Debug kiírás az indexek ellenőrzéséhez
+    // fprintf(stderr, "DEBUG_FIRA: rin=%lg, rout=%lg, indices: inner=[%lg, %lg], outer=[%lg, %lg]\n", rin, rout, *ind_ii, *ind_io, *ind_oi, *ind_oo);
+
 }
-
 
 
 /*	fuggveny egy tomb elemeinek sorbarendezesere --> ezt jelenleg nem hasznalja sehol a program	*/
@@ -399,18 +370,19 @@ void contract(double in[][3], double dd, int n, const disk_t *disk_params) {
 
 }
 
-/*	fuggveny a reszecskek tomegenek, indexenek es r_indexenek (a reszecske tavolsagaban levo gridcella indexe) frissitesere	*/
-void Count_Mass(double radin[][2], double partmassindin[][4], double *massvecin, double t, int n, const disk_t *disk_params) {
+void Count_Mass(double radin[][2], double partmassindin[][5], double *massvecin, double t, int n, const disk_t *disk_params) {
 
-	int i, rindex;
-	double rmid;	
+    int i, rindex;
+    double rmid;  
 
-	for (i = 0; i < n; i++) {	
 
-  		rmid = (radin[i][0] - disk_params->RMIN) / disk_params->DD;     						/* 	The integer part of this gives at which index is the body			*/
-		rindex = (int) floor(rmid+0.5);							/* 	Ez az rmid egesz resze --> floor egeszreszre kerekit lefele, a +0.5-el elerheto, hogy .5 felett felfele, .5 alatt lefele kerekitsen						*/
-		if(rmid < 0) rindex = 0;
-		if(isnan(rmid)) rindex = 0;	/*	neha az indexre - ha az mar RMIN-en belul van, nan-t ad, ezert abban az esetben is 0 lesz a rindex	 */
+    for (i = 0; i < n; i++) {   
+        // A részecske aktuális sugara radin[i][0]-ban van
+        rmid = (radin[i][0] - disk_params->RMIN) / disk_params->DD; 
+        rindex = (int) floor(rmid+0.5);
+        if(rmid < 0) rindex = 0;
+        if(isnan(rmid)) rindex = 0;
+
 
 		if(n == PARTICLE_NUMBER) partmassindin[i][0] = massvecin[i];							/*	mass of the particles				*/
 		partmassindin[i][1] = rindex;							/*	initial distance of the particles				*/
@@ -418,5 +390,7 @@ void Count_Mass(double radin[][2], double partmassindin[][4], double *massvecin,
 			partmassindin[i][2] = partmassindin[i][0];							/*	initial distance of the particles				*/
 			partmassindin[i][3] = 0;
 		}
- 	}
+ 	
+	}
+
 }

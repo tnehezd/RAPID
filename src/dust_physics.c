@@ -132,77 +132,81 @@ void u_gas(disk_t *disk_params) {
 
 
 
-void GetMass(int n, double partmassind[][4], int indii, int indio, double tavi, double dzei, double *massiout, int indoi, int indoo, double tavo, double dzeo, double *massoout, const simulation_options_t *sim_opts) {
+void GetMass(int n, double (*partmassind)[5], int indii, int indio, int indoi, int indoo, double *massiout, double *massoout, const simulation_options_t *sim_opts) {
 
+    // Debug üzenet frissítve az indexekre
+    fprintf(stderr, "\n--- DEBUG_GM: Step Start. Inner DZE INDEX: [%d, %d], Outer DZE INDEX: [%d, %d] ---\n", indii, indio, indoi, indoo);
+
+    double massitemp = 0.0;
+    double massotemp = 0.0;
     int i;
-    double index_i;
-    double massitemp = 0., massotemp = 0;
 
-    // A GetMass függvény nem alkalmas egyszerű "parallel for" direktívára,
-    // mert a `massitemp` és `massotemp` változókhoz `+=` operátorral adunk hozzá,
-    // ami race condition-t okozhat. Ehhez `reduction` vagy `critical` szekció szükséges.
-    // Mivel a GetMass célja a tömeg összegzése, a reduction a legjobb megoldás.
-
-    if (sim_opts->dzone == 1.0) { // Használjunk double összehasonlítást
-        #pragma omp parallel for private(i, index_i) reduction(+:massitemp, massotemp)
+    // sim_opts->dzone (ez helyettesíti az optdze-t): 1.0 = dinamikus DZE (flag-elt), 0.0 = fix DZE (nem flag-elt)
+    if(sim_opts->dzone == 1.0) { // Dinamikus DZE: flag-ek használatával (partmassind[i][3] és [4])
+        #pragma omp parallel for private(i) reduction(+:massitemp, massotemp)
         for (i = 0; i < n; i++) {
-            index_i = partmassind[i][1];
+            // A részecske aktuális grid indexe (partmassind[i][1]-ből)
+            int current_r_index = (int)partmassind[i][1]; 
 
-            if (tavi != dzei) { // Double összehasonlítások veszélyesek lehetnek, de itt a logikai feltétel.
-                if ((index_i >= (int)indii) && (index_i <= (int)indio) && (partmassind[i][3] == 0.0)) {
-                    // Itt fontos, hogy a partmassind[i][3] módosítása egy critical szekcióban legyen,
-                    // ha ez a módosítás befolyásolja más szálak munkáját,
-                    // vagy ha a [3] index valójában egy "flag", amit csak egyszer állítunk be.
-                    // Ha ez csak egy lokális flag a számlálás idejére, akkor oké.
-                    // De ha állandó változás, akkor critical.
-                    // Feltételezve, hogy ez egy egyszeri jelölés a tömeg számlálásakor:
-                    #pragma omp critical(partmassind_update)
-                    {
-//                        if (partmassind[i][3] == 0.0) { // Double check in critical section
-                            partmassind[i][3] = 1.0;
-                            massitemp = massitemp + partmassind[i][0];
-  //                      }
-                    }
+            // --- Belső DZE ---
+            // Ellenőrizzük, hogy a részecske grid indexe a belső DZE tartományában van-e
+            if ((current_r_index >= indii) && (current_r_index <= indio)) {
+                if (i < 10) { 
+                    fprintf(stderr, "DEBUG_GM: Inner DZE check for Part %d (r_idx=%d, mass=%lg). Index Range: [%d, %d]. Flag[3]=%lg. Condition (flag==0): %d\n",
+                            i, current_r_index, partmassind[i][0], indii, indio, partmassind[i][3], (partmassind[i][3] == 0.0));
                 }
-            } else {
-                if ((index_i >= (int)indii) && (index_i <= (int)indio)) {
-                    massitemp = massitemp + partmassind[i][0]; // Itt nincs módosítás partmassind[i][3]-on
+                if (partmassind[i][3] == 0.0) { // Belső DZE flag ellenőrzése
+                    #pragma omp critical(inner_dze_update)
+                    {
+                        partmassind[i][3] = 1.0;
+                        massitemp = massitemp + partmassind[i][0]; // Tömeg hozzáadása a [0] indexről
+                        if (i < 10) {
+                            fprintf(stderr, "DEBUG_GM: Part %d (r_idx=%d) ADDED to INNER DZE. Current inner mass: %lg\n",
+                                    i, current_r_index, massitemp);
+                        }
+                    }
                 }
             }
 
-            if (tavo != dzeo) { // Double összehasonlítások veszélyesek lehetnek
-                if ((index_i >= (int)indoi) && (index_i <= (int)indoo) && (partmassind[i][3] == 0.0)) {
-                    #pragma omp critical(partmassind_update)
-                    {
-//                        if (partmassind[i][3] == 0.0) { // Double check in critical section
-                            partmassind[i][3] = 1.0;
-                            massotemp = massotemp + partmassind[i][0];
-  //                      }
-                    }
+            // --- Külső DZE ---
+            // Ellenőrizzük, hogy a részecske grid indexe a külső DZE tartományában van-e
+            if ((current_r_index >= indoi) && (current_r_index <= indoo)) {
+                if (i < 10) {
+                    fprintf(stderr, "DEBUG_GM: Outer DZE check for Part %d (r_idx=%d, mass=%lg). Index Range: [%d, %d]. Flag[4]=%lg. Condition (flag==0): %d\n",
+                            i, current_r_index, partmassind[i][0], indoi, indoo, partmassind[i][4], (partmassind[i][4] == 0.0)); // Flag[4] használata
                 }
-            } else {
-                if ((index_i >= (int)indoi) && (index_i <= (int)indoo)) {
-                    massotemp = massotemp + partmassind[i][0]; // Itt nincs módosítás partmassind[i][3]-on
+                if (partmassind[i][4] == 0.0) { // Külső DZE flag ellenőrzése (Flag[4])
+                    #pragma omp critical(outer_dze_update)
+                    {
+                        partmassind[i][4] = 1.0;
+                        massotemp = massotemp + partmassind[i][0]; // Tömeg hozzáadása a [0] indexről
+                        if (i < 10) {
+                            fprintf(stderr, "DEBUG_GM: Part %d (r_idx=%d) ADDED to OUTER DZE. Current outer mass: %lg\n",
+                                    i, current_r_index, massotemp);
+                        }
+                    }
                 }
             }
         }
-    } else { // sim_opts->dzone == 0.0
-        #pragma omp parallel for private(i, index_i) reduction(+:massotemp)
+    } else { // Fix DZE (sim_opts->dzone == 0.0): Nincsenek flag-ek a tömeg felhalmozáshoz
+        #pragma omp parallel for private(i) reduction(+:massitemp, massotemp)
         for (i = 0; i < n; i++) {
-            index_i = partmassind[i][1];
+            int current_r_index = (int)partmassind[i][1]; // A részecske grid indexe
 
-            if (tavo != dzeo) { // Double összehasonlítások veszélyesek lehetnek
-                if ((index_i >= (int)indoi) && (index_i <= (int)indoo) && (partmassind[i][3] == 0.0)) {
-                    #pragma omp critical(partmassind_update)
-                    {
-//                        if (partmassind[i][3] == 0.0) { // Double check in critical section
-                            partmassind[i][3] = 1.0;
-                            massotemp = massotemp + partmassind[i][0];
-//                        }
-                    }
+            // --- Belső DZE (Fix) ---
+            // Az eredeti kódod else ága nem tartalmazta a belső DZE gyűjtését. 
+            // Ha szeretnéd, akkor ide kell tenni a logikát:
+            if ((current_r_index >= indii) && (current_r_index <= indio)) {
+                #pragma omp critical(inner_dze_update_fixed)
+                {
+                    massitemp = massitemp + partmassind[i][0]; 
                 }
-            } else {
-                if ((index_i >= (double)indoi) && (index_i <= (double)indoo)) {
+            }
+
+            // --- Külső DZE (Fix) ---
+            if ((current_r_index >= indoi) && (current_r_index <= indoo)) {
+                #pragma omp critical(outer_dze_update_fixed)
+                {
                     massotemp = massotemp + partmassind[i][0];
                 }
             }
@@ -211,6 +215,7 @@ void GetMass(int n, double partmassind[][4], int indii, int indio, double tavi, 
 
     *massiout = massitemp;
     *massoout = massotemp;
+    fprintf(stderr, "--- DEBUG_GM: Step End. Returning massiout=%lg, massoout=%lg ---\n\n", *massiout, *massoout);
 }
 
 

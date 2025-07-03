@@ -33,11 +33,13 @@ void infoCurrent(const char *nev, const disk_t *disk_params, const simulation_op
 
 /* Fuggveny a tomegfile kiiratasara */
 // FIX: The original was missing 'const disk_t *disk_params' and 'const simulation_options_t *sim_opts'.
-void Print_Mass(double step, double (*partmassind)[4], double (*partmassmicrind)[4],
-                double (*partmasssecind)[4],
-                double massbtempii, double massbtempoi, double massmtempii, double massmtempoi,
-                double *massbtempio, double *massbtempoo, double *massmtempio, double *massmtempoo,
-                double *tavin, double *tavout,
+void Print_Mass(double step, 
+                double (*partmassind)[5], double (*partmassmicrind)[5], 
+                double (*partmasssecind)[5], 
+                double t, // Ezt továbbra is meghagyjuk, ha az időre szükség van
+                double massbtempii, double massbtempoi, double massmtempii, double massmtempoi, 
+                double *massbtempio, double *massbtempoo, double *massmtempio, double *massmtempoo, 
+                double *tavin, double *tavout, 
                 const disk_t *disk_params, const simulation_options_t *sim_opts,
                 output_files_t *output_files);
 
@@ -60,4 +62,52 @@ void Print_Pormozg_Size(char *size_name, int step, double (*rad)[2], double (*ra
 // FIX: The original was missing 'simulation_options_t *sim_opts'.
 void timePar(double tMax_val, double stepping_val, double current_val, simulation_options_t *sim_opts);
 
+
+
+
+
+// Enumeráció a fájltípusok azonosítására
+typedef enum {
+    FILE_TYPE_DUST_MOTION,
+    FILE_TYPE_MICRON_MOTION,
+    FILE_TYPE_MASS_ACCUMULATION,
+    FILE_TYPE_GAS_DENSITY,
+    FILE_TYPE_DUST_DENSITY,
+    FILE_TYPE_DUST_MICRON_DENSITY,
+    FILE_TYPE_PARTICLE_SIZE,
+    FILE_TYPE_DISK_PARAM // ÚJ: a disk_config.dat fájlhoz
+
+} FileType_e;
+
+// Struktúra a fejléc-specifikus adatoknak
+typedef struct {
+    double current_time;    // Jelenlegi szimulációs idő (pl. években)
+    int is_initial_data;    // 1, ha t=0, 0, ha szimulált időpont
+    // Ide tehetsz más adatokat is, ami a fejléchez kellhet, pl. R_in, R_out
+    double R_in;
+    double R_out;
+    double sigma_exponent; // Kellhet a disk_param fejlécbe
+    long double sigma0_gas_au; // Kellhet a disk_param fejlécbe
+    double grav_const; // Kellhet a disk_param fejlécbe
+    double dz_r_inner; // Kellhet a disk_param fejlécbe
+    double dz_r_outer; // Kellhet a disk_param fejlécbe
+    double dz_dr_inner_calc; // Kellhet a disk_param fejlécbe
+    double dz_dr_outer_calc; // Kellhet a disk_param fejlécbe
+    double dz_alpha_mod; // Kellhet a disk_param fejlécbe
+    double dust_density_g_cm3; // Kellhet a disk_param fejlécbe
+    double alpha_viscosity; // Kellhet a disk_param fejlécbe
+    double star_mass; // Kellhet a disk_param fejlécbe
+    double flaring_index; // Kellhet a disk_param fejlécbe
+    int n_grid_points; // Kellhet a disk_param fejlécbe
+} HeaderData_t;
+
+
+// Függvény a fejlécek kiírására
+// Az 'header_data' opcionális lehet (NULL is átadható), ha az adott fájltípushoz nem kell
+void print_file_header(FILE *file, FileType_e file_type, const HeaderData_t *header_data);
+
+
+
+
 #endif // IO_UTILS_H
+
