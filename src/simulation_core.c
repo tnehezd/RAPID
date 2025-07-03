@@ -243,8 +243,8 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
     if(sim_opts->drift == 1.) {
         por_be(radius, radiusmicr, massvec, massmicrvec, sim_opts->dust_input_filename);    /* porrészecskék adatainak beolvasása */
 
-/* az aktuális mappában a dust_particle_evolution.dat fájl létrehozása: ebbe kerül be a porrészecske távolsága és if(sim_opts->drift == 1.)dexe, valamint az adott időlépés */
-        snprintf(porout,MAX_PATH_LEN,"%s/%s/dust_particle_evolution.dat",sim_opts->output_dir_name,LOGS_DIR);
+/* az aktuális mappában a FILE_DUST_EVOLUTION fájl létrehozása: ebbe kerül be a porrészecske távolsága és if(sim_opts->drift == 1.)dexe, valamint az adott időlépés */
+        snprintf(porout,MAX_PATH_LEN,"%s/%s/%s",sim_opts->output_dir_name,LOGS_DIR,FILE_DUST_EVOLUTION);
 
 
 /* ha 2 populációs a futás, akkor a mikronos pornak is létrehoz egy pormozgás fájlt, ebbe kerül be a távolság, index és az idő */
@@ -253,7 +253,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
         }
 /* tömegnövekedési fájl létrehozása az aktuális mappába - ez lehet, hogy egy külön opció lesz a kimeneti adatok méretének csökkentésére */
         
-        snprintf(massout,MAX_PATH_LEN,"%s/%s/mass_accumulation_dze_edge.dat",sim_opts->output_dir_name,LOGS_DIR);
+        snprintf(massout,MAX_PATH_LEN,"%s/%s/%s.dat",sim_opts->output_dir_name,LOGS_DIR,FILE_MASS_ACCUMULATE);
 
         fprintf(stderr, "DEBUG [tIntegrate]: Opening output files: %s, %s (if 2pop), %s\n", porout, poroutmicr, massout);
 
@@ -381,7 +381,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                 /* Az adatok kiírásához szükséges fájlok neveinek elmentése */
                 if (t!=0) {
                     if(sim_opts->evol == 1) {
-                        snprintf(dens_name,MAX_PATH_LEN,"%s/%s/density_profile_%08d.dat",sim_opts->output_dir_name,LOGS_DIR,(int)L);
+                        snprintf(dens_name,MAX_PATH_LEN,"%s/%s/%s_%08d.dat",sim_opts->output_dir_name,LOGS_DIR,FILE_DENS_PREFIX,(int)L);
                     }
                 }
 
@@ -602,18 +602,10 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                 printf("\n--- Simulation Time: %.2e years (Internal time: %.2e, L: %.2e) ---\n", time, t, L);
 
                 printf("DEBUG [tIntegrate]: Outputting data for gas-only simulation at time %.2e. L=%.2e\n", time, L);
-                if (t==0) {
-                    // Itt eredetileg az initial surface density fájlra mutatott, de a feladat szerint a Logs mappába kerül most.
-                    // Az if (t!=0) ágban már egységesítettük a density_profile_%08d.dat nevet.
-                    // Most is ezt használjuk, de az első időpontra vonatkozó fejlécet a print_file_header kezeli.
-                    snprintf(dens_name,MAX_PATH_LEN,"%s/%s/density_profile_%08d.dat",sim_opts->output_dir_name,LOGS_DIR,(int)L);
-                    fprintf(stderr, "DEBUG [tIntegrate]: Outputting initial gas surface density for t=0 to %s.\n", dens_name);
-                } else {
                     // --- MÓDOSÍTÁS: dens.X.dat a LOGS mappába (gáz-only ág, 8 vezető nullával) ---
-                    snprintf(dens_name,MAX_PATH_LEN,"%s/%s/density_profile_%08d.dat",sim_opts->output_dir_name,LOGS_DIR,(int)L);
+                    snprintf(dens_name,MAX_PATH_LEN,"%s/%s/%s_%08d.dat",sim_opts->output_dir_name,LOGS_DIR,FILE_DENS_PREFIX,(int)L);
                     // --- MÓDOSÍTÁS VÉGE ---
-                    fprintf(stderr, "DEBUG [tIntegrate]: Outputting density_profile_%08d.dat to %s.\n", (int)L, dens_name);
-                }
+                    fprintf(stderr, "DEBUG [tIntegrate]: Outputting %s_%08d.dat to %s.\n", FILE_DENS_PREFIX,(int)L, dens_name);
 
                 output_files->surface_file = fopen(dens_name, "w"); // Fájl megnyitása a Print_Sigma hívása előtt
                 if (output_files->surface_file == NULL) {
@@ -682,7 +674,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
     // Fájlok bezárása, amelyek az integrációs ciklus elején nyíltak meg (egyszer).
     if (output_files->por_motion_file != NULL) {
         fclose(output_files->por_motion_file);
-        fprintf(stderr, "DEBUG [tIntegrate]: Closed dust_particle_evolution.dat\n");
+        fprintf(stderr, "DEBUG [tIntegrate]: Closed %s\n",FILE_DUST_EVOLUTION);
     }
     if (sim_opts->twopop == 1 && output_files->micron_motion_file != NULL) {
         fclose(output_files->micron_motion_file);
@@ -690,7 +682,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
     }
     if (output_files->mass_file != NULL) {
         fclose(output_files->mass_file);
-        fprintf(stderr, "DEBUG [tIntegrate]: Closed mass_accumulation_dze_edge.dat\n");
+        fprintf(stderr, "DEBUG [tIntegrate]: Closed %s\n",FILE_MASS_ACCUMULATE);
     }
     // Az itt bezárandó fájlok listájából KIVETTÜK a surface/dens, dust, size fájlokat,
     // mivel azok már be lettek zárva minden iteráció végén a ciklusban, amikor az adatok kiírásra kerültek.

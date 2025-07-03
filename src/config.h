@@ -54,6 +54,10 @@ extern const char * const FILENAME_INIT_DUST_PROFILE;  // NEW: For initial dust 
 // You can remove or repurpose FILENAME_INIT_PROFILE if it's no longer generic.
 // For clarity, I recommend using the more specific names above.
 
+extern const char * const FILE_DENS_PREFIX;
+extern const char * const FILE_MASS_ACCUMULATE;
+extern const char * const FILE_DUST_EVOLUTION;
+
 extern const char * const FILENAME_DISK_PARAM;
 
 extern const char * const LOGS_DIR;

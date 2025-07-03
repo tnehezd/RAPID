@@ -29,7 +29,14 @@ const char * const FILENAME_INIT_DUST_PROFILE = "initial_dust_profile.dat"; // T
 // with the more specific names above, unless it serves another generic purpose.
 // If you keep it, make sure its usage is unambiguous.
 
+const char * const FILE_DENS_PREFIX = "density_profile";
+const char * const FILE_MASS_ACCUMULATE = "mass_accumulation_dze_edge.dat";
+const char * const FILE_DUST_EVOLUTION = "dust_particle_evolution.dat";
+
+
+
 const char * const FILENAME_DISK_PARAM = "disk_config.dat";
+
 
 
 const char * const LOGS_DIR = "LOGS";
