@@ -218,17 +218,12 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
     }
 
 
-
-
-
         // Hozd létre és töltsd fel a header_data struktúrát
     HeaderData_t header_data_for_files;
     header_data_for_files.current_time = 0.0; // Kezdeti idő a szimuláció elején
     header_data_for_files.is_initial_data = 1; // Ez a kezdeti beolvasás
     header_data_for_files.R_in = disk_params->RMIN; // Példa R_in és R_out
     header_data_for_files.R_out = disk_params->RMAX;
-
-
 
 
 
@@ -246,15 +241,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
 
 /* A részecskék adatainak beolvasása fájlból, ha a drift opció értéke 1, egyébként nem számol a program driftet */
     if(sim_opts->drift == 1.) {
-        fprintf(stderr, "DEBUG [tIntegrate]: Reading particle data from file '%s'.\n", sim_opts->dust_input_filename);
         por_be(radius, radiusmicr, massvec, massmicrvec, sim_opts->dust_input_filename);    /* porrészecskék adatainak beolvasása */
-
-        // --- ADD THESE DEBUG PRINTS *HERE*, AFTER por_be and array allocation ---
-        if (PARTICLE_NUMBER > 0) {
-            fprintf(stderr, "DEBUG [tIntegrate]: AFTER por_be: radius[0][0] = %lg, radius[1][0] = %lg\n", radius[0][1], radius[1][1]);
-        }
-
-
 
 /* az aktuális mappában a dust_particle_evolution.dat fájl létrehozása: ebbe kerül be a porrészecske távolsága és if(sim_opts->drift == 1.)dexe, valamint az adott időlépés */
         snprintf(porout,MAX_PATH_LEN,"%s/%s/dust_particle_evolution.dat",sim_opts->output_dir_name,LOGS_DIR);
@@ -294,7 +281,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
 
     }
 
-    
+
     double t = 0.0;
     double t_integration = sim_opts->TMAX * 2.0 * M_PI;  // TMAX a sim_opts-ból
     double deltat = time_step(disk_params) / 5.0; // rvec a disk_params-ból.
@@ -388,66 +375,85 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
             if(maxt >= disk_params->RMIN && mint != maxt) { // RMIN a disk_params-ból
                 double time = t / 2.0 / M_PI;
 
-                if((fmod(time, (sim_opts->TMAX/sim_opts->WO)) < deltat || time == 0) && L-time < deltat){ // TMAX és WO a sim_opts-ból
-                    printf("\n--- Simulation Time: %.2e years (Internal time: %.2e, L: %.2e) ---\n", time, t, L);
+            if((fmod(time, (sim_opts->TMAX/sim_opts->WO)) < deltat || time == 0) && L-time < deltat){ // TMAX és WO a sim_opts-ból
+                printf("\n--- Simulation Time: %.2e years (Internal time: %.2e, L: %.2e) ---\n", time, t, L);
 
-/* Az adatok kiírásához szükséges fájlok neveinek elmentése */
-                    if (t!=0) {
-                        if(sim_opts->evol == 1) {
-                            snprintf(dens_name,MAX_PATH_LEN,"%s/%s/density_profile_%08d.dat",sim_opts->output_dir_name,LOGS_DIR,(int)L);
-                        }
+                /* Az adatok kiírásához szükséges fájlok neveinek elmentése */
+                if (t!=0) {
+                    if(sim_opts->evol == 1) {
+                        snprintf(dens_name,MAX_PATH_LEN,"%s/%s/density_profile_%08d.dat",sim_opts->output_dir_name,LOGS_DIR,(int)L);
                     }
+                }
 
-                    // --- MÓDOSÍTÁS: dust.X.dat és dustmic.X.dat a LOGS mappába ---
-                    snprintf(dust_name,MAX_PATH_LEN,"%s/%s/dust.%i.dat",sim_opts->output_dir_name,LOGS_DIR,(int)L);
-                    snprintf(dust_name2,MAX_PATH_LEN,"%s/%s/dustmic.%i.dat",sim_opts->output_dir_name,LOGS_DIR,(int)L);
+                // --- MÓDOSÍTÁS: dust.X.dat és dustmic.X.dat a LOGS mappába ---
+                snprintf(dust_name,MAX_PATH_LEN,"%s/%s/dust.%i.dat",sim_opts->output_dir_name,LOGS_DIR,(int)L);
+                snprintf(dust_name2,MAX_PATH_LEN,"%s/%s/dustmic.%i.dat",sim_opts->output_dir_name,LOGS_DIR,(int)L);
+                // --- MÓDOSÍTÁS VÉGE ---
+
+                // --- MÓDOSÍTÁS: size.X.dat a LOGS mappába ---
+                snprintf(size_name,MAX_PATH_LEN,"%s/%s/size.%d.dat",sim_opts->output_dir_name,LOGS_DIR,(int)L);
+                // --- MÓDOSÍTÁS VÉGE ---
+
+                fprintf(stderr, "DEBUG [tIntegrate]: Output file names set: %s, %s, %s.\n", dust_name, dust_name2, size_name);
+
+                // *******************************************************************
+                // FÁJLOK MEGNYITÁSA AZ ADATKIÍRÁSHOZ
+                // *******************************************************************
+                output_files->surface_file = fopen(dens_name, "w");
+                if (output_files->surface_file == NULL) {
+                    fprintf(stderr, "ERROR: Could not open %s for writing.\n", dens_name);
+                    // exit(EXIT_FAILURE); // Fontos lehet!
+                } else {
+                    fprintf(stderr, "DEBUG [tIntegrate]: Opened %s for writing.\n", dens_name);
+                    // FEJLÉC Hozzáadása ide
+                    // --- MÓDOSÍTÁS: Használd a print_file_header-t a gáz sűrűség fájlhoz ---
+                    HeaderData_t gas_header_data;
+                    gas_header_data.current_time = time;
+                    gas_header_data.is_initial_data = (time == 0.0); // 1 ha az első kiírás, különben 0
+                    // Ide további, specifikus adatok jöhetnek, ha a gáz sűrűség fejléce igényli őket, pl. sim_opts->R_in, sim_opts->R_out
+                    // Ha nincsenek, hagyd őket inicializálatlanul vagy 0-val, ha a print_file_header kezeli
+                    print_file_header(output_files->surface_file, FILE_TYPE_GAS_DENSITY, &gas_header_data);
                     // --- MÓDOSÍTÁS VÉGE ---
+                }
 
-                    // --- MÓDOSÍTÁS: size.X.dat a LOGS mappába ---
-                    snprintf(size_name,MAX_PATH_LEN,"%s/%s/size.%d.dat",sim_opts->output_dir_name,LOGS_DIR,(int)L);
+                output_files->dust_file = fopen(dust_name, "w");
+                if (output_files->dust_file == NULL) {
+                    fprintf(stderr, "ERROR: Could not open %s for writing.\n", dust_name);
+                    // exit(EXIT_FAILURE); // Fontos lehet!
+                } else {
+                    fprintf(stderr, "DEBUG [tIntegrate]: Opened %s for writing.\n", dust_name);
+                    // --- MÓDOSÍTÁS: Használd a print_file_header-t a fő porfájlhoz ---
+                    HeaderData_t dust_header_data;
+                    dust_header_data.current_time = time;
+                    dust_header_data.is_initial_data = (time == 0.0);
+                    // Ha a dust.X.dat fejlécében kellenek R_in, R_out, akkor sim_opts-ból szedd ki
+                    // dust_header_data.R_in = sim_opts->r_inner;
+                    // dust_header_data.R_out = sim_opts->r_outer;
+                    print_file_header(output_files->dust_file, FILE_TYPE_DUST_MOTION, &dust_header_data);
                     // --- MÓDOSÍTÁS VÉGE ---
+                }
 
-                    fprintf(stderr, "DEBUG [tIntegrate]: Output file names set: %s, %s, %s.\n", dust_name, dust_name2, size_name);
-
-                    // *******************************************************************
-                    // FÁJLOK MEGNYITÁSA AZ ADATKIÍRÁSHOZ
-                    // *******************************************************************
-                    output_files->surface_file = fopen(dens_name, "w");
-                    if (output_files->surface_file == NULL) {
-                        fprintf(stderr, "ERROR: Could not open %s for writing.\n", dens_name);
+                if(sim_opts->twopop == 1.) {
+                    output_files->micron_dust_file = fopen(dust_name2, "w");
+                    if (output_files->micron_dust_file == NULL) {
+                        fprintf(stderr, "ERROR: Could not open %s for writing.\n", dust_name2);
                         // exit(EXIT_FAILURE); // Fontos lehet!
                     } else {
-                        fprintf(stderr, "DEBUG [tIntegrate]: Opened %s for writing.\n", dens_name);
-                        // FEJLÉC Hozzáadása ide
-                        fprintf(output_files->surface_file, "# Gas Surface Density Data at t = %lg years\n",time);
-                        fprintf(output_files->surface_file, "# Generated by init_tool_module (Date: %s %s)\n", __DATE__, __TIME__);
-                        fprintf(output_files->surface_file, "#--------------------------------------------------------------------------\n");
-                        fprintf(output_files->surface_file, "# %-15s %-15s %-15s %-15s\n",
-             "Radius_AU", "GasSurfDensity", "GasPressure", "GasPressureDeriv");
-                        fprintf(output_files->surface_file, "#--------------------------------------------------------------------------\n");
-                        fflush(output_files->surface_file); // Frissítsd a fájlt azonnal
+                        fprintf(stderr, "DEBUG [tIntegrate]: Opened %s for writing.\n", dust_name2);
+                        // --- MÓDOSÍTÁS: Használd a print_file_header-t a mikron porfájlhoz ---
+                        HeaderData_t micron_dust_header_data;
+                        micron_dust_header_data.current_time = time;
+                        micron_dust_header_data.is_initial_data = (time == 0.0);
+                        // Ha a dustmic.X.dat fejlécében kellenek R_in, R_out, akkor sim_opts-ból szedd ki
+                        // micron_dust_header_data.R_in = sim_opts->r_inner;
+                        // micron_dust_header_data.R_out = sim_opts->r_outer;
+                        print_file_header(output_files->micron_dust_file, FILE_TYPE_MICRON_MOTION, &micron_dust_header_data);
+                        // --- MÓDOSÍTÁS VÉGE ---
                     }
-
-                    output_files->dust_file = fopen(dust_name, "w");
-                    if (output_files->dust_file == NULL) {
-                        fprintf(stderr, "ERROR: Could not open %s for writing.\n", dust_name);
-                        // exit(EXIT_FAILURE); // Fontos lehet!
-                    } else {
-                        fprintf(stderr, "DEBUG [tIntegrate]: Opened %s for writing.\n", dust_name);
-                    }
-
-                    if(sim_opts->twopop == 1.) {
-                        output_files->micron_dust_file = fopen(dust_name2, "w");
-                        if (output_files->micron_dust_file == NULL) {
-                            fprintf(stderr, "ERROR: Could not open %s for writing.\n", dust_name2);
-                            // exit(EXIT_FAILURE); // Fontos lehet!
-                        } else {
-                            fprintf(stderr, "DEBUG [tIntegrate]: Opened %s for writing.\n", dust_name2);
-                        }
-                    }
-                    // *******************************************************************
-                    // FÁJL MEGNYITÁS VÉGE
-                    // *******************************************************************
+                }
+                // *******************************************************************
+                // FÁJL MEGNYITÁS VÉGE
+                // *******************************************************************
 
 
                     if(t==0) {
@@ -597,10 +603,11 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
 
                 printf("DEBUG [tIntegrate]: Outputting data for gas-only simulation at time %.2e. L=%.2e\n", time, L);
                 if (t==0) {
-                    // --- MÓDOSÍTÁS: dens_name az initial surface density fájlra mutat CONFIG_DIR-ban (gáz-only ág) ---
-//                    snprintf(dens_name,MAX_PATH_LEN,"%s/%s/%s",sim_opts->output_dir_name,CONFIG_DIR,INITIAL_SURFACE_DENSITY_FILE);
-                    // --- MÓDOSÍTÁS VÉGE ---
-//                    fprintf(stderr, "DEBUG [tIntegrate]: Outputting initial gas surface density for t=0 to %s.\n", dens_name);
+                    // Itt eredetileg az initial surface density fájlra mutatott, de a feladat szerint a Logs mappába kerül most.
+                    // Az if (t!=0) ágban már egységesítettük a density_profile_%08d.dat nevet.
+                    // Most is ezt használjuk, de az első időpontra vonatkozó fejlécet a print_file_header kezeli.
+                    snprintf(dens_name,MAX_PATH_LEN,"%s/%s/density_profile_%08d.dat",sim_opts->output_dir_name,LOGS_DIR,(int)L);
+                    fprintf(stderr, "DEBUG [tIntegrate]: Outputting initial gas surface density for t=0 to %s.\n", dens_name);
                 } else {
                     // --- MÓDOSÍTÁS: dens.X.dat a LOGS mappába (gáz-only ág, 8 vezető nullával) ---
                     snprintf(dens_name,MAX_PATH_LEN,"%s/%s/density_profile_%08d.dat",sim_opts->output_dir_name,LOGS_DIR,(int)L);
@@ -614,13 +621,15 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                 } else {
                     fprintf(stderr, "DEBUG [tIntegrate]: Opened %s for writing in gas-only branch.\n", dens_name);
                     // FEJLÉC Hozzáadása ide
-                    fprintf(output_files->surface_file, "# Gas Surface Density Data at t = %lg years\n",time);
-                    fprintf(output_files->surface_file, "# Generated by init_tool_module (Date: %s %s)\n", __DATE__, __TIME__);
-                    fprintf(output_files->surface_file, "#--------------------------------------------------------------------------\n");
-                    fprintf(output_files->surface_file, "# %-15s %-15s %-15s %-15s\n",
-             "Radius_AU", "GasSurfDensity", "GasPressure", "GasPressureDeriv");
-                    fprintf(output_files->surface_file, "#--------------------------------------------------------------------------\n");
-                    fflush(output_files->surface_file); // Frissítsd a fájlt azonnal
+                    // --- MÓDOSÍTÁS: Használd a print_file_header-t a gáz sűrűség fájlhoz (gáz-only ág) ---
+                    HeaderData_t gas_header_data;
+                    gas_header_data.current_time = time;
+                    gas_header_data.is_initial_data = (time == 0.0); // 1, ha t=0, különben 0
+                    // Itt is hozzáadhatók R_in, R_out, ha a gas_density fejléc igényli
+                    // gas_header_data.R_in = sim_opts->r_inner;
+                    // gas_header_data.R_out = sim_opts->r_outer;
+                    print_file_header(output_files->surface_file, FILE_TYPE_GAS_DENSITY, &gas_header_data);
+                    // --- MÓDOSÍTÁS VÉGE ---
                 }
 
                 Print_Sigma(disk_params, output_files);
@@ -639,7 +648,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
             printf("DEBUG [tIntegrate]: Calling Get_Sigma_P_dP for gas-only evolution.\n");
             Get_Sigma_P_dP(sim_opts, disk_params);
             printf("DEBUG [tIntegrate]: Get_Sigma_P_dP completed.\n");
-            t = t + deltat;     /* Időléptetés */
+            t = t + deltat;    /* Időléptetés */
 //            printf("DEBUG [tIntegrate]: Time advanced to t=%.2e.\n", t);
         }
 
