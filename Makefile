@@ -1,6 +1,6 @@
 # Makefile
 CC = gcc
-CFLAGS = -Wall -Wextra -std=c99 -g -O0 -fopenmp 	# Add -O0 -g for easier debugging
+CFLAGS = -Wall -Wextra -std=c99 -g -O0 -fopenmp -Iinclude -D_GNU_SOURCE
 LDFLAGS = -lm -fopenmp -g 		# Added -g here explicitly for linking
 
 BIN_DIR = bin
