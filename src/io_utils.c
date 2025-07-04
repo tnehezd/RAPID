@@ -694,16 +694,13 @@ void close_snapshot_files(output_files_t *output_files, const char *dens_name, c
     if (output_files->surface_file != NULL) {
         fclose(output_files->surface_file);
         output_files->surface_file = NULL;
-        fprintf(stderr, "DEBUG [close_snapshot_files]: Closed %s.\n", dens_name);
     }
     if (output_files->dust_file != NULL) {
         fclose(output_files->dust_file);
         output_files->dust_file = NULL;
-        fprintf(stderr, "DEBUG [close_snapshot_files]: Closed %s.\n", dust_name);
     }
     if (sim_opts->twopop == 1 && output_files->micron_dust_file != NULL) {
         fclose(output_files->micron_dust_file);
         output_files->micron_dust_file = NULL;
-        fprintf(stderr, "DEBUG [close_snapshot_files]: Closed %s.\n", dust_name2);
     }
 }

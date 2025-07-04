@@ -163,9 +163,6 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
         fprintf(stderr, "ERROR [tIntegrate]: disk_params_ptr is NULL!\n");
         exit(1); // Program leállítása, ha kritikus hiba van
     }
-    fprintf(stderr, "DEBUG_TINTEGRATE_DISK_PARAMS_PTR: Address of disk_params_ptr: %p\n", (void*)disk_params);
-    fprintf(stderr, "DEBUG_TINTEGRATE_DISK_PARAMS_H_F: HASP=%.10lg, FLIND=%.10lg\n",
-            disk_params->HASP, disk_params->FLIND);
 
     // --- Inicializálási szakasz ---
     if (sim_opts->drift == 1.) {
@@ -286,14 +283,11 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                 snprintf(dust_name2, MAX_PATH_LEN, "%s/%s/dustmic.%i.dat", sim_opts->output_dir_name, LOGS_DIR, (int)L);
                 snprintf(size_name, MAX_PATH_LEN, "%s/%s/size.%d.dat", sim_opts->output_dir_name, LOGS_DIR, (int)L);
 
-                fprintf(stderr, "DEBUG [tIntegrate]: Output file names set: %s, %s, %s.\n", dust_name, dust_name2, size_name);
-
                 // Fájlok megnyitása és fejlécek írása
                 output_files->surface_file = fopen(dens_name, "w");
                 if (output_files->surface_file == NULL) {
                     fprintf(stderr, "ERROR: Could not open %s for writing.\n", dens_name);
                 } else {
-                    fprintf(stderr, "DEBUG [tIntegrate]: Opened %s for writing.\n", dens_name);
                     HeaderData_t gas_header_data = {.current_time = current_time_years, .is_initial_data = (current_time_years == 0.0)};
                     print_file_header(output_files->surface_file, FILE_TYPE_GAS_DENSITY, &gas_header_data);
                 }
@@ -302,7 +296,6 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                 if (output_files->dust_file == NULL) {
                     fprintf(stderr, "ERROR: Could not open %s for writing.\n", dust_name);
                 } else {
-                    fprintf(stderr, "DEBUG [tIntegrate]: Opened %s for writing.\n", dust_name);
                     HeaderData_t dust_header_data = {.current_time = current_time_years, .is_initial_data = (current_time_years == 0.0)};
                     print_file_header(output_files->dust_file, FILE_TYPE_DUST_MOTION, &dust_header_data);
                 }
@@ -312,7 +305,6 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                     if (output_files->micron_dust_file == NULL) {
                         fprintf(stderr, "ERROR: Could not open %s for writing.\n", dust_name2);
                     } else {
-                        fprintf(stderr, "DEBUG [tIntegrate]: Opened %s for writing.\n", dust_name2);
                         HeaderData_t micron_dust_header_data = {.current_time = current_time_years, .is_initial_data = (current_time_years == 0.0)};
                         print_file_header(output_files->micron_dust_file, FILE_TYPE_MICRON_MOTION, &micron_dust_header_data);
                     }
@@ -335,9 +327,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
 
                 // Particle position and size output
                 if (sim_opts->drift == 1) {
-                    fprintf(stderr, "DEBUG [tIntegrate]: sim_opts->drift is ON. Calling Print_Pormozg_Size.\n");
                     Print_Pormozg_Size(size_name, (int)L, p_data.radius, p_data.radiusmicr, disk_params, sim_opts, output_files);
-                    fprintf(stderr, "DEBUG [tIntegrate]: Print_Pormozg_Size completed.\n");
                 }
 
                 // Reset mass accumulation variables for next interval
@@ -356,14 +346,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                     
                 }
 
-                fprintf(stderr, "DEBUG [tIntegrate]: Calling Print_Mass.\n");
-
                 Print_Mass(L, p_data.partmassind, p_data.partmassmicrind, t, masstempiin, masstempoin, massmtempiin, massmtempoin, &masstempiout, &masstempoout, &massmtempiout, &massmtempoout, &tavin, &tavout, disk_params, sim_opts, output_files);
-
-                fprintf(stderr, "DEBUG [tIntegrate]: Print_Mass completed. Outputs: masstempiout=%.2e, massmtempiout=%.2e\n", masstempiout, massmtempiout);
-
-                printf("masstempiin %lg mtempiin %lg oin %lg  moin %lg ue o-ra: %lg  %lg  %lg  %lg tavin %lg out %lg\n", masstempiin, massmtempiin, masstempoin, massmtempoin,masstempiout, massmtempiout, masstempoout, massmtempoout,tavin, tavout);
-
                 // Update input mass for next Print_Mass call
                 masstempiin = masstempiout;
                 massmtempiin = massmtempiout;
@@ -371,14 +354,11 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                 massmtempoin = massmtempoout;
 
                 if (sim_opts->growth == 1.) {
-                    fprintf(stderr, "DEBUG [tIntegrate]: sim_opts->growth is ON. Calling Print_Sigmad (refreshing).\n");
                     Print_Sigmad(p_data.rdvec, p_data.rmicvec, p_data.sigmad, p_data.sigmadm, disk_params, sim_opts, output_files);
-                    fprintf(stderr, "DEBUG [tIntegrate]: Print_Sigmad (refreshing) completed.\n");
                 }
 
                 L = L + (double)(sim_opts->TMAX / sim_opts->WO);
-                printf("DEBUG [tIntegrate]: Updated L to %.2e.\n", L);
-
+                fprintf(stderr,"L set to %lg\n",L);
                 // Fájlok bezárása, amelyek csak ezen időintervallumban voltak nyitva
                 close_snapshot_files(output_files, dens_name, dust_name, dust_name2, sim_opts);
             }

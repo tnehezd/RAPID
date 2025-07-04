@@ -180,13 +180,7 @@ void find_r_annulus(double rin, double *ind_ii, double *ind_io,
         fprintf(stderr, "ERROR [find_r_annulus]: disk_params is NULL!\n");
         exit(1); // Program leállítása
     }
-    fprintf(stderr, "DEBUG_FIND_R_ANNULUS_DISK_PARAMS_PTR: Address of disk_params: %p\n", (void*)disk_params);
 
-    // --- FIGYELEM: EZ A SOR MÓDOSULT, NINCS BENNE TÖBBÉ scale_height HÍVÁS ---
-    // Ez a sor most csak a várt érték ellenőrzésére szolgál, a direkt pow() számítással
-    fprintf(stderr, "DEBUG_FIND_R_ANNULUS_DISK_PARAMS_H_F_POW_CHECK: HASP=%.10lg, FLIND=%.10lg rin: %lg rout: %lg SCH_POW_EXPECTED: %.10lg ACTUAL: %lg\n",
-                disk_params->HASP, disk_params->FLIND, rin, rout,
-                pow(rin, 1. + disk_params->FLIND) * disk_params->HASP, scale_height(rin,disk_params));
 
     // Lokális változók deklarálása
     int i;
@@ -200,15 +194,10 @@ void find_r_annulus(double rin, double *ind_ii, double *ind_io,
     *ind_oi = 0.0;
     *ind_oo = 0.0;
 
-    // Debug kiírás az sim_opts->dzone értékéről
-    fprintf(stderr, "DEBUG_FIRA_INIT: sim_opts->dzone = %lg\n", sim_opts->dzone);
-
     // --- ITT HÍVJUK MEG A scale_height-et EGYSZER, ÉS MENTSÜK EL AZ EREDMÉNYT ---
     double h_rin = scale_height(rin, disk_params); // Első hívás, eredmény mentése
-    fprintf(stderr, "DEBUG_FIRA_ASSIGNED_H_RIN: h_rin_val=%.10lg\n", h_rin); // Azonnali ellenőrzés
 
     double h_rout = scale_height(rout, disk_params); // Rout-ra is számoljuk ki egyszer
-    fprintf(stderr, "DEBUG_FIRA_ASSIGNED_H_ROUT: h_rout_val=%.10lg\n", h_rout); // Azonnali ellenőrzés
 
     // Számítsuk ki a határokhoz szükséges "rin +/- h_rin" és "rout +/- h_rout" értékeket
     // Ezeket a változókat használjuk majd a riimH, roimH stb. számításoknál
@@ -216,13 +205,6 @@ void find_r_annulus(double rin, double *ind_ii, double *ind_io,
     double rin_plus_h_rin = rin + h_rin;
     double rout_minus_h_rout = rout - h_rout;
     double rout_plus_h_rout = rout + h_rout;
-
-
-    // --- DEBUG: Ellenőrizzük ezeket az értékeket a számítások előtt ---
-    fprintf(stderr, "DEBUG_FIRA_PRE_BOUND_CALC: rin_minus_h_rin=%.10lg, rin_plus_h_rin=%.10lg\n",
-            rin_minus_h_rin, rin_plus_h_rin);
-    fprintf(stderr, "DEBUG_FIRA_PRE_BOUND_CALC: rout_minus_h_rout=%.10lg, rout_plus_h_rout=%.10lg\n",
-            rout_minus_h_rout, rout_plus_h_rout);
 
 
     // Határok kiszámítása: HASZNÁLJUK A MENTETT h_rin ÉS h_rout VÁLTOZÓKAT!
@@ -236,12 +218,6 @@ void find_r_annulus(double rin, double *ind_ii, double *ind_io,
     roipH = rout_minus_h_rout + disk_params->DD / 2.0;
     roomH = rout_plus_h_rout - disk_params->DD / 2.0;
     roopH = rout_plus_h_rout + disk_params->DD / 2.0;
-
-    // --- DEBUG: A SZÁMÍTOTT HATÁRÉRTÉKEK KIÍRÁSA ---
-    fprintf(stderr, "DEBUG_FIRA_BOUNDS_CALCULATED: riimH=%.10lg, riipH=%.10lg, riomH=%.10lg, riopH=%.10lg\n",
-            riimH, riipH, riomH, riopH);
-    fprintf(stderr, "DEBUG_FIRA_BOUNDS_CALCULATED: roimH=%.10lg, roipH=%.10lg, roomH=%.10lg, roopH=%.10lg\n",
-            roimH, roipH, roomH, roopH);
 
 
     // Iteráció az rvec tömbön
@@ -282,9 +258,6 @@ void find_r_annulus(double rin, double *ind_ii, double *ind_io,
         if (disk_params->rvec[i] > roopH) break;
     }
 
-    // DEBUG kiírás a függvény végén
-    fprintf(stderr, "DEBUG_FIRA_FINAL: rin=%lg, rout=%lg, indices: inner=[%lg, %lg], outer=[%lg, %lg]\n",
-                rin, rout, *ind_ii, *ind_io, *ind_oi, *ind_oo);
 
 }
 
