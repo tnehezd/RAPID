@@ -93,6 +93,8 @@ fprintf(stderr, "DEBUG [main]: Evolution (sim_opts.evol=%.2f) or drift (sim_opts
  disk_params.fDrift = 0.55;  // set by Birnstiel 2012
  disk_params.PDENSITY = def.pdensity_val;
 
+
+
  // Set sim_opts->dzone based on dead zone radii from disk_params
  sim_opts.dzone = (disk_params.r_dze_i > 0.0 || disk_params.r_dze_o > 0.0) ? 1.0 : 0.0;
 
@@ -147,6 +149,8 @@ fprintf(stderr, "DEBUG [main]: Evolution (sim_opts.evol=%.2f) or drift (sim_opts
    disk_params.DD = 0.0;
   }
   fprintf(stderr, "DEBUG [main]: NGRID set from input file: %d. DD calculated as %.4e.\n", disk_params.NGRID, disk_params.DD);
+
+ 
 
   // --- Dinamikus Memória Allokáció a Disk Tömbjeinek ---
   // CSAK ITT történik meg, mert a run_init_tool nem hívódik!

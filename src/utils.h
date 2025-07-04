@@ -29,9 +29,11 @@ double find_r_zero(double r1, double r2, double dp1, double dp2);
 // Nulla pont meghatározása lineáris interpolációval
 double find_zero(int i, const double *rvec, const double *dp);
 
+double calculate_index_from_radius(double r_coord, disk_t *disk_params);
+
 /* A nyomasi maximum korul 1H tavolsagban jeloli ki a korgyurut */
 // Feltehetően a disk_model.h tartalmazza a scale_height deklarációját.
-void find_r_annulus(double rin_val, double *ind_ii, double *ind_io, double rout_val, double *ind_oi, double *ind_oo, const simulation_options_t *sim_opts, const disk_t *disk_params);
+void find_r_annulus(double rin_val, double *ind_ii, double *ind_io, double rout_val, double *ind_oi, double *ind_oo, const simulation_options_t *sim_opts, disk_t *disk_params);
 
 //fuggveny egy tomb elemeinek sorbarendezesere --> ezt jelenleg nem hasznalja sehol a program	
 void sort(double *rv,int n);

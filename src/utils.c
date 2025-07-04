@@ -5,6 +5,7 @@
                       // Jó gyakorlat ide tenni.
 
 #include "simulation_types.h" 
+#include "dust_physics.h"
 
 /*	Parabola illesztés a peremen	*/
 void Parabola(double *vec, int i1, int i2, int i3, double *a, double *b, double *c, double dd, const disk_t *disk_params) {
@@ -159,50 +160,133 @@ double find_zero(int i, const double *rvec, const double *dp) {
 
 }
 
-
-/*	A nyomasi maximum korul 1H tavolsagban jeloli ki a korgyurut	*/
-void find_r_annulus(double rin, double *ind_ii, double *ind_io, double rout, double *ind_oi, double *ind_oo, const simulation_options_t *sim_opts, const disk_t *disk_params) {
-
-    double r_val;
-
-    // Segédfüggvény a radiális érték indexé konvertálásához
-    // disk_params->rvec[index] ~ disk_params->RMIN + index * disk_params->DD
-    // index = (r_val - RMIN) / DD
-    auto double r_to_index(double r_coord) {
-        if (r_coord < disk_params->RMIN) return 0.0; // Ha kisebb a minimum sugárnál, 0. index
-        // Clamp to avoid going out of bounds, max index is NGRID-1
-        return fmax(0.0, fmin((double)(disk_params->NGRID -1), floor((r_coord - disk_params->RMIN) / disk_params->DD + 0.5)));
-    }
-
-
-    if(sim_opts->dzone == 0) { // Fix DZE: A zóna határait a rin és rout adja
-        *ind_ii = r_to_index(rin); // Belső zóna belső határa
-        *ind_io = r_to_index(rout); // Belső zóna külső határa
-        // Fix DZE esetén a "külső" zóna általában ugyanaz, vagy nincs értelmezve.
-        // Mivel a GetMass is megkapja ezeket, beállítjuk őket ugyanarra, mint a belsőt.
-        *ind_oi = *ind_ii;
-        *ind_oo = *ind_io;
-    } else { // Dinamikus DZE (sim_opts->dzone == 1): H a nyomásmaximum körüli távolság
-        // RIN körüli belső zóna határai
-        r_val = rin - scale_height(rin, disk_params) - disk_params->DD / 2.0;
-        *ind_ii = r_to_index(r_val);
-
-        r_val = rin + scale_height(rin, disk_params) + disk_params->DD / 2.0;
-        *ind_io = r_to_index(r_val);
-
-        // ROUT körüli külső zóna határai
-        r_val = rout - scale_height(rout, disk_params) - disk_params->DD / 2.0;
-        *ind_oi = r_to_index(r_val);
-
-        r_val = rout + scale_height(rout, disk_params) + disk_params->DD / 2.0;
-        *ind_oo = r_to_index(r_val);
-    }
-    
-    // Debug kiírás az indexek ellenőrzéséhez
-    // fprintf(stderr, "DEBUG_FIRA: rin=%lg, rout=%lg, indices: inner=[%lg, %lg], outer=[%lg, %lg]\n", rin, rout, *ind_ii, *ind_io, *ind_oi, *ind_oo);
-
+// calculate_index_from_radius függvény (melyet korábban megbeszéltünk, valahol globálisan)
+double calculate_index_from_radius(double r_coord, disk_t *disk_params) {
+    if (r_coord < disk_params->RMIN) return 0.0;
+    return fmax(0.0, fmin((double)(disk_params->NGRID - 1), floor((r_coord - disk_params->RMIN) / disk_params->DD + 0.5)));
 }
 
+// Az átalakított find_r_annulus függvény
+// Paraméterek módosítva a struktúrák átadására és a konstansok használatára
+/*	A nyomasi maximum korul 1H tavolsagban jeloli ki a korgyurut	*/
+void find_r_annulus(double rin, double *ind_ii, double *ind_io,
+                            double rout, double *ind_oi, double *ind_oo,
+                            const simulation_options_t *sim_opts, disk_t *disk_params) {
+
+	    volatile int debug_marker = 0; // Adj hozzá ezt a sort
+
+
+    if (disk_params == NULL) {
+        fprintf(stderr, "ERROR [find_r_annulus]: disk_params is NULL!\n");
+        exit(1); // Program leállítása
+    }
+    fprintf(stderr, "DEBUG_FIND_R_ANNULUS_DISK_PARAMS_PTR: Address of disk_params: %p\n", (void*)disk_params);
+
+    // --- FIGYELEM: EZ A SOR MÓDOSULT, NINCS BENNE TÖBBÉ scale_height HÍVÁS ---
+    // Ez a sor most csak a várt érték ellenőrzésére szolgál, a direkt pow() számítással
+    fprintf(stderr, "DEBUG_FIND_R_ANNULUS_DISK_PARAMS_H_F_POW_CHECK: HASP=%.10lg, FLIND=%.10lg rin: %lg rout: %lg SCH_POW_EXPECTED: %.10lg ACTUAL: %lg\n",
+                disk_params->HASP, disk_params->FLIND, rin, rout,
+                pow(rin, 1. + disk_params->FLIND) * disk_params->HASP, scale_height(rin,disk_params));
+
+    // Lokális változók deklarálása
+    int i;
+    double rmid, rtemp;
+    double roimH, roipH, roomH, roopH;
+    double riimH, riipH, riomH, riopH;
+
+    // --- FONTOS: Inicializáljuk az összes kimeneti indexet a ciklus ELŐTT! ---
+    *ind_ii = 0.0;
+    *ind_io = 0.0;
+    *ind_oi = 0.0;
+    *ind_oo = 0.0;
+
+    // Debug kiírás az sim_opts->dzone értékéről
+    fprintf(stderr, "DEBUG_FIRA_INIT: sim_opts->dzone = %lg\n", sim_opts->dzone);
+
+    // --- ITT HÍVJUK MEG A scale_height-et EGYSZER, ÉS MENTSÜK EL AZ EREDMÉNYT ---
+    double h_rin = scale_height(rin, disk_params); // Első hívás, eredmény mentése
+    fprintf(stderr, "DEBUG_FIRA_ASSIGNED_H_RIN: h_rin_val=%.10lg\n", h_rin); // Azonnali ellenőrzés
+
+    double h_rout = scale_height(rout, disk_params); // Rout-ra is számoljuk ki egyszer
+    fprintf(stderr, "DEBUG_FIRA_ASSIGNED_H_ROUT: h_rout_val=%.10lg\n", h_rout); // Azonnali ellenőrzés
+
+    // Számítsuk ki a határokhoz szükséges "rin +/- h_rin" és "rout +/- h_rout" értékeket
+    // Ezeket a változókat használjuk majd a riimH, roimH stb. számításoknál
+    double rin_minus_h_rin = rin - h_rin;
+    double rin_plus_h_rin = rin + h_rin;
+    double rout_minus_h_rout = rout - h_rout;
+    double rout_plus_h_rout = rout + h_rout;
+
+
+    // --- DEBUG: Ellenőrizzük ezeket az értékeket a számítások előtt ---
+    fprintf(stderr, "DEBUG_FIRA_PRE_BOUND_CALC: rin_minus_h_rin=%.10lg, rin_plus_h_rin=%.10lg\n",
+            rin_minus_h_rin, rin_plus_h_rin);
+    fprintf(stderr, "DEBUG_FIRA_PRE_BOUND_CALC: rout_minus_h_rout=%.10lg, rout_plus_h_rout=%.10lg\n",
+            rout_minus_h_rout, rout_plus_h_rout);
+
+
+    // Határok kiszámítása: HASZNÁLJUK A MENTETT h_rin ÉS h_rout VÁLTOZÓKAT!
+    // Ez kritikus, az eredeti elírásokat javítja.
+    riimH = rin_minus_h_rin - disk_params->DD / 2.0;
+    riipH = rin_minus_h_rin + disk_params->DD / 2.0;
+    riomH = rin_plus_h_rin - disk_params->DD / 2.0;
+    riopH = rin_plus_h_rin + disk_params->DD / 2.0;
+
+    roimH = rout_minus_h_rout - disk_params->DD / 2.0;
+    roipH = rout_minus_h_rout + disk_params->DD / 2.0;
+    roomH = rout_plus_h_rout - disk_params->DD / 2.0;
+    roopH = rout_plus_h_rout + disk_params->DD / 2.0;
+
+    // --- DEBUG: A SZÁMÍTOTT HATÁRÉRTÉKEK KIÍRÁSA ---
+    fprintf(stderr, "DEBUG_FIRA_BOUNDS_CALCULATED: riimH=%.10lg, riipH=%.10lg, riomH=%.10lg, riopH=%.10lg\n",
+            riimH, riipH, riomH, riopH);
+    fprintf(stderr, "DEBUG_FIRA_BOUNDS_CALCULATED: roimH=%.10lg, roipH=%.10lg, roomH=%.10lg, roopH=%.10lg\n",
+            roimH, roipH, roomH, roopH);
+
+
+    // Iteráció az rvec tömbön
+    for (i = 0; i < disk_params->NGRID; i++) {
+        // Ezen a ponton érdemes ellenőrizni disk_params->rvec[i] értékét
+        // fprintf(stderr, "DEBUG_FIRA_LOOP: i=%d, rvec[i]=%.10lg\n", i, disk_params->rvec[i]);
+
+        // Ez az if blokk csak akkor aktív, ha sim_opts->dzone == 1
+        if (sim_opts->dzone == 1) {
+            // INNER (RIN) határok
+            if (disk_params->rvec[i] > riimH && disk_params->rvec[i] < riipH) {
+                rmid = (disk_params->rvec[i] - disk_params->RMIN) / disk_params->DD;
+                rtemp = floor(rmid + 0.5);
+                *ind_ii = rtemp;
+            }
+
+            if (disk_params->rvec[i] > riomH && disk_params->rvec[i] < riopH) {
+                rmid = (disk_params->rvec[i] - disk_params->RMIN) / disk_params->DD;
+                rtemp = floor(rmid + 0.5);
+                *ind_io = rtemp;
+            }
+        }
+
+        // OUTER (ROUT) határok
+        if (disk_params->rvec[i] > roimH && disk_params->rvec[i] < roipH) {
+            rmid = (disk_params->rvec[i] - disk_params->RMIN) / disk_params->DD;
+            rtemp = floor(rmid + 0.5);
+            *ind_oi = rtemp;
+        }
+
+        if (disk_params->rvec[i] > roomH && disk_params->rvec[i] < roopH) {
+            rmid = (disk_params->rvec[i] - disk_params->RMIN) / disk_params->DD;
+            rtemp = floor(rmid + 0.5);
+            *ind_oo = rtemp;
+        }
+
+        // KILÉPÉS feltétele
+        if (disk_params->rvec[i] > roopH) break;
+    }
+
+    // DEBUG kiírás a függvény végén
+    fprintf(stderr, "DEBUG_FIRA_FINAL: rin=%lg, rout=%lg, indices: inner=[%lg, %lg], outer=[%lg, %lg]\n",
+                rin, rout, *ind_ii, *ind_io, *ind_oi, *ind_oo);
+
+}
 
 /*	fuggveny egy tomb elemeinek sorbarendezesere --> ezt jelenleg nem hasznalja sehol a program	*/
 void sort(double *rv,int n) {

@@ -5,6 +5,7 @@
 #include <stdbool.h>
 
 #include "simulation_types.h"
+#include "particle_data.h"
 
 // Globális változók deklarációi, ha az io_utils.c fájlban definiálva vannak.
 // Ezeknek EGYEZNIÜK KELL a src/config.h-ban lévő extern deklarációkkal.
@@ -107,6 +108,14 @@ typedef struct {
 void print_file_header(FILE *file, FileType_e file_type, const HeaderData_t *header_data);
 
 
+// Függvény a kezdeti kimeneti fájlok beállítására és fejlécek írására
+int setup_initial_output_files(output_files_t *output_files, const simulation_options_t *sim_opts,
+                               const disk_t *disk_params, HeaderData_t *header_data_for_files);
+
+
+void cleanup_simulation_resources(ParticleData_t *p_data, output_files_t *output_files, const simulation_options_t *sim_opts);
+
+void close_snapshot_files(output_files_t *output_files, const char *dens_name, const char *dust_name, const char *dust_name2, const simulation_options_t *sim_opts);
 
 
 #endif // IO_UTILS_H

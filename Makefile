@@ -1,7 +1,7 @@
 # Makefile
 CC = gcc
 CFLAGS = -Wall -Wextra -std=c99 -g -O0 -fopenmp 	# Add -O0 -g for easier debugging
-LDFLAGS = -lm -fopenmp             		# Add -fopenmp here
+LDFLAGS = -lm -fopenmp -g 		# Added -g here explicitly for linking
 
 BIN_DIR = bin
 OBJ_DIR = obj
@@ -33,7 +33,7 @@ all: $(BIN_DIR)/simulation
 
 $(BIN_DIR)/simulation: $(OBJS)
 	@mkdir -p $(BIN_DIR)
-	$(CC) $(CFLAGS) $(OBJS) -o $@
+	$(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) -o $@
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(HEADERS)
 	@mkdir -p $(OBJ_DIR)

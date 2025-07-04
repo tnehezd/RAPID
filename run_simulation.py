@@ -36,19 +36,24 @@ def run_c_program(executable_path, params, arg_mapping, program_name="C Program"
     print(f"\n--- Running: {program_name} ---")
     print(f"Command: {' '.join(cmd_args)}")
 
+    # >>>>> IDE JÖN A VÁLTOZTATÁS <<<<<
+    # Jelenlegi környezeti változók másolása
+    current_env = os.environ.copy()
+    # Beállítja az OMP_NUM_THREADS-et 1-re
+    current_env["OMP_NUM_THREADS"] = "1"
+    print(f"Setting OMP_NUM_THREADS={current_env['OMP_NUM_THREADS']} for this run.")
+    # >>>>> VÉGE A VÁLTOZTATÁSNAK <<<<<
+
     try:
-        # Key change: Specify encoding for subprocess output.
-        # 'cp1252' (Windows Latin-1) is a common encoding for Central European characters
-        # that might not be correctly encoded as UTF-8.
-        # If issues persist, try 'latin-1' or 'utf-8' with errors='ignore'.
         process = subprocess.Popen(
             cmd_args,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-            text=True, # This implies encoding='locale' by default, which can be an issue
-            encoding='cp1252', # <--- ADD THIS LINE
-            errors='replace',  # <--- ADD THIS LINE: Replace problematic chars instead of failing
-            bufsize=1
+            text=True,
+            encoding='cp1252',
+            errors='replace',
+            bufsize=1,
+            env=current_env # <--- FONTOS: Átadjuk a módosított környezeti változókat
         )
         for line in process.stdout:
             print(line, end='') # Print output in real-time

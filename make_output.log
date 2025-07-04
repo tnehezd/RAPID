@@ -1,0 +1,321 @@
+gcc -Wall -Wextra -std=c99 -g -O0 -fopenmp 	 -Iinclude -c src/main.c -o obj/main.o
+In file included from /usr/local/Cellar/gcc@13/13.4.0/lib/gcc/13/gcc/x86_64-apple-darwin23/13/include-fixed/stdio.h:433,
+                 from src/config.h:4,
+                 from src/main.c:7:
+src/main.c: In function 'main':
+src/main.c:111:55: warning: '__builtin_snprintf' output may be truncated before the last format character [-Wformat-truncation=]
+  111 |  snprintf(initial_dir_path, sizeof(initial_dir_path), "%s/%s", def.output_dir_name, CONFIG_DIR);
+      |                                                       ^~~~~~~
+src/main.c:111:61: note: format string is defined here
+  111 |  snprintf(initial_dir_path, sizeof(initial_dir_path), "%s/%s", def.output_dir_name, CONFIG_DIR);
+      |                                                             ^
+src/main.c:111:2: note: '__builtin_snprintf' output 2 or more bytes (assuming 8193) into a destination of size 8192
+  111 |  snprintf(initial_dir_path, sizeof(initial_dir_path), "%s/%s", def.output_dir_name, CONFIG_DIR);
+      |  ^~~~~~~~
+src/main.c:115:49: warning: '__builtin_snprintf' output may be truncated before the last format character [-Wformat-truncation=]
+  115 |  snprintf(logs_dir_path, sizeof(logs_dir_path), "%s/%s", def.output_dir_name, LOGS_DIR);
+      |                                                 ^~~~~~~
+src/main.c:115:55: note: format string is defined here
+  115 |  snprintf(logs_dir_path, sizeof(logs_dir_path), "%s/%s", def.output_dir_name, LOGS_DIR);
+      |                                                       ^
+src/main.c:115:2: note: '__builtin_snprintf' output 2 or more bytes (assuming 8193) into a destination of size 8192
+  115 |  snprintf(logs_dir_path, sizeof(logs_dir_path), "%s/%s", def.output_dir_name, LOGS_DIR);
+      |  ^~~~~~~~
+src/main.c:175:44: warning: '%s' directive output may be truncated writing up to 8191 bytes into a region of size between 8189 and 16380 [-Wformat-truncation=]
+  175 |   snprintf(cmd_buffer, sizeof(cmd_buffer), "cp %s %s/", current_inputsig_file, initial_dir_path);
+      |                                            ^~~~~~~~~~~                         ~~~~~~~~~~~~~~~~
+src/main.c:175:51: note: format string is defined here
+  175 |   snprintf(cmd_buffer, sizeof(cmd_buffer), "cp %s %s/", current_inputsig_file, initial_dir_path);
+      |                                                   ^~
+src/main.c:175:3: note: '__builtin_snprintf' output between 6 and 16388 bytes into a destination of size 16384
+  175 |   snprintf(cmd_buffer, sizeof(cmd_buffer), "cp %s %s/", current_inputsig_file, initial_dir_path);
+      |   ^~~~~~~~
+src/main.c:220:68: warning: '__builtin_snprintf' output may be truncated before the last format character [-Wformat-truncation=]
+  220 |     snprintf(current_inputsig_file, sizeof(current_inputsig_file), "%s/%s", initial_dir_path, FILENAME_INIT_GAS_PROFILE);
+      |                                                                    ^~~~~~~
+src/main.c:220:74: note: format string is defined here
+  220 |     snprintf(current_inputsig_file, sizeof(current_inputsig_file), "%s/%s", initial_dir_path, FILENAME_INIT_GAS_PROFILE);
+      |                                                                          ^
+src/main.c:220:5: note: '__builtin_snprintf' output 2 or more bytes (assuming 8193) into a destination of size 8192
+  220 |     snprintf(current_inputsig_file, sizeof(current_inputsig_file), "%s/%s", initial_dir_path, FILENAME_INIT_GAS_PROFILE);
+      |     ^~~~~~~~
+src/main.c:250:67: warning: '__builtin_snprintf' output may be truncated before the last format character [-Wformat-truncation=]
+  250 |  snprintf(current_inputdust_file, sizeof(current_inputdust_file), "%s/%s", initial_dir_path, FILENAME_INIT_DUST_PROFILE);
+      |                                                                   ^~~~~~~
+src/main.c:250:73: note: format string is defined here
+  250 |  snprintf(current_inputdust_file, sizeof(current_inputdust_file), "%s/%s", initial_dir_path, FILENAME_INIT_DUST_PROFILE);
+      |                                                                         ^
+src/main.c:250:2: note: '__builtin_snprintf' output 2 or more bytes (assuming 8193) into a destination of size 8192
+  250 |  snprintf(current_inputdust_file, sizeof(current_inputdust_file), "%s/%s", initial_dir_path, FILENAME_INIT_DUST_PROFILE);
+      |  ^~~~~~~~
+src/main.c:283:58: warning: '__builtin_snprintf' output may be truncated before the last format character [-Wformat-truncation=]
+  283 |   snprintf(dens_name_initial, sizeof(dens_name_initial), "%s/%s", initial_dir_path,FILENAME_INIT_GAS_PROFILE);
+      |                                                          ^~~~~~~
+src/main.c:283:64: note: format string is defined here
+  283 |   snprintf(dens_name_initial, sizeof(dens_name_initial), "%s/%s", initial_dir_path,FILENAME_INIT_GAS_PROFILE);
+      |                                                                ^
+src/main.c:283:3: note: '__builtin_snprintf' output 2 or more bytes (assuming 8193) into a destination of size 8192
+  283 |   snprintf(dens_name_initial, sizeof(dens_name_initial), "%s/%s", initial_dir_path,FILENAME_INIT_GAS_PROFILE);
+      |   ^~~~~~~~
+gcc -Wall -Wextra -std=c99 -g -O0 -fopenmp 	 -Iinclude -c src/config.c -o obj/config.o
+gcc -Wall -Wextra -std=c99 -g -O0 -fopenmp 	 -Iinclude -c src/disk_model.c -o obj/disk_model.o
+gcc -Wall -Wextra -std=c99 -g -O0 -fopenmp 	 -Iinclude -c src/dust_physics.c -o obj/dust_physics.o
+src/dust_physics.c: In function 'Get_Radius':
+src/dust_physics.c:438:38: warning: unused parameter 'opt' [-Wunused-parameter]
+  438 | void Get_Radius(const char *nev, int opt, double radius[][2], const double *sigmad, const double *rdvec,
+      |                                  ~~~~^~~
+gcc -Wall -Wextra -std=c99 -g -O0 -fopenmp 	 -Iinclude -c src/io_utils.c -o obj/io_utils.o
+src/io_utils.c: In function 'Mk_Dir':
+src/io_utils.c:14:30: warning: implicit declaration of function 'mkdir'; did you mean 'Mk_Dir'? [-Wimplicit-function-declaration]
+   14 |     #define MKDIR_CALL(path) mkdir(path, 0755)
+      |                              ^~~~~
+src/io_utils.c:205:18: note: in expansion of macro 'MKDIR_CALL'
+  205 |     int result = MKDIR_CALL(tmp_path);
+      |                  ^~~~~~~~~~
+src/io_utils.c: In function 'Print_Mass':
+src/io_utils.c:336:77: warning: passing argument 8 of 'find_r_annulus' discards 'const' qualifier from pointer target type [-Wdiscarded-qualifiers]
+  336 |     find_r_annulus(tav2, &ind_ii, &ind_io, tav, &ind_oi, &ind_oo, sim_opts, disk_params);
+      |                                                                             ^~~~~~~~~~~
+In file included from src/io_utils.c:21:
+src/utils.h:36:164: note: expected 'disk_t *' but argument is of type 'const disk_t *'
+   36 | void find_r_annulus(double rin_val, double *ind_ii, double *ind_io, double rout_val, double *ind_oi, double *ind_oo, const simulation_options_t *sim_opts, disk_t *disk_params);
+      |                                                                                                                                                            ~~~~~~~~^~~~~~~~~~~
+src/io_utils.c:392:93: warning: format '%lg' expects a matching 'double' argument [-Wformat=]
+  392 |     fprintf(stderr,"\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n%lg    %lg     masses: %lg  %lg   %lg %lg %lg\n",tav2, tav, massi, massii, massbtempii);
+      |                                                                                           ~~^
+      |                                                                                             |
+      |                                                                                             double
+src/io_utils.c:392:97: warning: format '%lg' expects a matching 'double' argument [-Wformat=]
+  392 |     fprintf(stderr,"\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n%lg    %lg     masses: %lg  %lg   %lg %lg %lg\n",tav2, tav, massi, massii, massbtempii);
+      |                                                                                               ~~^
+      |                                                                                                 |
+      |                                                                                                 double
+src/io_utils.c:255:122: warning: unused parameter 't' [-Wunused-parameter]
+  255 | void Print_Mass(double step, double (*partmassind)[5], double (*partmassmicrind)[5], double (*partmasssecind)[5], double t, double massbtempii, double massbtempoi, double massmtempii, double massmtempoi,
+      |                                                                                                                   ~~~~~~~^
+src/io_utils.c: In function 'print_file_header':
+src/io_utils.c:560:31: warning: too many arguments for format [-Wformat-extra-args]
+  560 |                 fprintf(file, "# Initial gas profile\n", header_data->current_time);
+      |                               ^~~~~~~~~~~~~~~~~~~~~~~~~
+src/io_utils.c:588:31: warning: too many arguments for format [-Wformat-extra-args]
+  588 |                 fprintf(file, "# Initial particle distribution\n", header_data->current_time);
+      |                               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /usr/local/Cellar/gcc@13/13.4.0/lib/gcc/13/gcc/x86_64-apple-darwin23/13/include-fixed/stdio.h:433,
+                 from src/io_utils.c:1:
+src/io_utils.c: In function 'setup_initial_output_files':
+src/io_utils.c:634:36: warning: '/' directive output may be truncated writing 1 byte into a region of size between 0 and 8191 [-Wformat-truncation=]
+  634 |     snprintf(porout, MAX_PATH_LEN, "%s/%s/%s", sim_opts->output_dir_name, LOGS_DIR, FILE_DUST_EVOLUTION);
+      |                                    ^~~~~~~~~~
+src/io_utils.c:634:42: note: format string is defined here
+  634 |     snprintf(porout, MAX_PATH_LEN, "%s/%s/%s", sim_opts->output_dir_name, LOGS_DIR, FILE_DUST_EVOLUTION);
+      |                                          ^
+src/io_utils.c:634:5: note: '__builtin_snprintf' output 3 or more bytes (assuming 8194) into a destination of size 8192
+  634 |     snprintf(porout, MAX_PATH_LEN, "%s/%s/%s", sim_opts->output_dir_name, LOGS_DIR, FILE_DUST_EVOLUTION);
+      |     ^~~~~~~~
+src/io_utils.c:637:44: warning: '/micron_particle_evolution.dat' directive output may be truncated writing 30 bytes into a region of size between 0 and 8191 [-Wformat-truncation=]
+  637 |         snprintf(poroutmicr, MAX_PATH_LEN, "%s/%s/micron_particle_evolution.dat", sim_opts->output_dir_name, LOGS_DIR);
+      |                                            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src/io_utils.c:637:50: note: format string is defined here
+  637 |         snprintf(poroutmicr, MAX_PATH_LEN, "%s/%s/micron_particle_evolution.dat", sim_opts->output_dir_name, LOGS_DIR);
+      |                                                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src/io_utils.c:637:9: note: '__builtin_snprintf' output 32 or more bytes (assuming 8223) into a destination of size 8192
+  637 |         snprintf(poroutmicr, MAX_PATH_LEN, "%s/%s/micron_particle_evolution.dat", sim_opts->output_dir_name, LOGS_DIR);
+      |         ^~~~~~~~
+src/io_utils.c:639:37: warning: '/' directive output may be truncated writing 1 byte into a region of size between 0 and 8191 [-Wformat-truncation=]
+  639 |     snprintf(massout, MAX_PATH_LEN, "%s/%s/%s.dat", sim_opts->output_dir_name, LOGS_DIR, FILE_MASS_ACCUMULATE);
+      |                                     ^~~~~~~~~~~~~~
+src/io_utils.c:639:43: note: format string is defined here
+  639 |     snprintf(massout, MAX_PATH_LEN, "%s/%s/%s.dat", sim_opts->output_dir_name, LOGS_DIR, FILE_MASS_ACCUMULATE);
+      |                                           ^
+src/io_utils.c:639:5: note: '__builtin_snprintf' output 7 or more bytes (assuming 8198) into a destination of size 8192
+  639 |     snprintf(massout, MAX_PATH_LEN, "%s/%s/%s.dat", sim_opts->output_dir_name, LOGS_DIR, FILE_MASS_ACCUMULATE);
+      |     ^~~~~~~~
+gcc -Wall -Wextra -std=c99 -g -O0 -fopenmp 	 -Iinclude -c src/simulation_core.c -o obj/simulation_core.o
+src/simulation_core.c: In function 'eqrhs':
+src/simulation_core.c:30:38: warning: passing argument 3 of 'Stokes_Number' discards 'const' qualifier from pointer target type [-Wdiscarded-qualifiers]
+   30 |     St = Stokes_Number(pradius,sigma,disk_params);
+      |                                      ^~~~~~~~~~~
+In file included from src/simulation_core.c:16:
+src/dust_physics.h:19:60: note: expected 'disk_t *' but argument is of type 'const disk_t *'
+   19 | double Stokes_Number(double pradius, double sigma, disk_t *disk_params);
+      |                                                    ~~~~~~~~^~~~~~~~~~~
+src/simulation_core.c: In function 'tIntegrate':
+src/simulation_core.c:247:91: warning: passing argument 4 of 'secondaryGrowth' from incompatible pointer type [-Wincompatible-pointer-types]
+  247 |                 secondaryGrowth(p_data.radius, p_data.radiusmicr, p_data.radiussec, p_data.partmassmicrind, p_data.partmasssecind, p_data.massmicrvec, p_data.masssecvec, disk_params);
+      |                                                                                     ~~~~~~^~~~~~~~~~~~~~~~
+      |                                                                                           |
+      |                                                                                           double (*)[5]
+In file included from src/simulation_core.c:18:
+src/simulation_core.h:80:87: note: expected 'double (*)[4]' but argument is of type 'double (*)[5]'
+   80 | void secondaryGrowth(double rad[][2], double radmicr[][2], double radsec[][2], double partmicind[][4], double partsecind[][4], double *massmicvec, double *masssecvec, const disk_t *disk_params);
+      |                                                                                ~~~~~~~^~~~~~~~~~~~~~~
+src/simulation_core.c:247:115: warning: passing argument 5 of 'secondaryGrowth' from incompatible pointer type [-Wincompatible-pointer-types]
+  247 |                 secondaryGrowth(p_data.radius, p_data.radiusmicr, p_data.radiussec, p_data.partmassmicrind, p_data.partmasssecind, p_data.massmicrvec, p_data.masssecvec, disk_params);
+      |                                                                                                             ~~~~~~^~~~~~~~~~~~~~~
+      |                                                                                                                   |
+      |                                                                                                                   double (*)[5]
+src/simulation_core.h:80:111: note: expected 'double (*)[4]' but argument is of type 'double (*)[5]'
+   80 | void secondaryGrowth(double rad[][2], double radmicr[][2], double radsec[][2], double partmicind[][4], double partsecind[][4], double *massmicvec, double *masssecvec, const disk_t *disk_params);
+      |                                                                                                        ~~~~~~~^~~~~~~~~~~~~~~
+src/simulation_core.c: In function 'secondaryGrowth':
+src/simulation_core.c:557:39: warning: passing argument 4 of 'histogram' discards 'const' qualifier from pointer target type [-Wdiscarded-qualifiers]
+  557 |             histogram(temp[i],hist,dd,disk_params);
+      |                                       ^~~~~~~~~~~
+In file included from src/simulation_core.c:17:
+src/utils.h:41:56: note: expected 'disk_t *' but argument is of type 'const disk_t *'
+   41 | void histogram(double r, int *hist, double dd, disk_t *disk_params);
+      |                                                ~~~~~~~~^~~~~~~~~~~
+src/simulation_core.c:561:45: warning: passing argument 4 of 'histogram' discards 'const' qualifier from pointer target type [-Wdiscarded-qualifiers]
+  561 |             histogram(tempmic[i],histmic,dd,disk_params);
+      |                                             ^~~~~~~~~~~
+src/utils.h:41:56: note: expected 'disk_t *' but argument is of type 'const disk_t *'
+   41 | void histogram(double r, int *hist, double dd, disk_t *disk_params);
+      |                                                ~~~~~~~~^~~~~~~~~~~
+src/simulation_core.c:565:43: warning: passing argument 4 of 'histogram' discards 'const' qualifier from pointer target type [-Wdiscarded-qualifiers]
+  565 |             histogram(temp2ch1[i],hist,dd,disk_params);
+      |                                           ^~~~~~~~~~~
+src/utils.h:41:56: note: expected 'disk_t *' but argument is of type 'const disk_t *'
+   41 | void histogram(double r, int *hist, double dd, disk_t *disk_params);
+      |                                                ~~~~~~~~^~~~~~~~~~~
+src/simulation_core.c:569:43: warning: passing argument 4 of 'histogram' discards 'const' qualifier from pointer target type [-Wdiscarded-qualifiers]
+  569 |             histogram(temp2ch2[i],hist,dd,disk_params);
+      |                                           ^~~~~~~~~~~
+src/utils.h:41:56: note: expected 'disk_t *' but argument is of type 'const disk_t *'
+   41 | void histogram(double r, int *hist, double dd, disk_t *disk_params);
+      |                                                ~~~~~~~~^~~~~~~~~~~
+src/simulation_core.c:573:43: warning: passing argument 4 of 'histogram' discards 'const' qualifier from pointer target type [-Wdiscarded-qualifiers]
+  573 |             histogram(temp2ch3[i],hist,dd,disk_params);
+      |                                           ^~~~~~~~~~~
+src/utils.h:41:56: note: expected 'disk_t *' but argument is of type 'const disk_t *'
+   41 | void histogram(double r, int *hist, double dd, disk_t *disk_params);
+      |                                                ~~~~~~~~^~~~~~~~~~~
+src/simulation_core.c:577:43: warning: passing argument 4 of 'histogram' discards 'const' qualifier from pointer target type [-Wdiscarded-qualifiers]
+  577 |             histogram(temp2ch4[i],hist,dd,disk_params);
+      |                                           ^~~~~~~~~~~
+src/utils.h:41:56: note: expected 'disk_t *' but argument is of type 'const disk_t *'
+   41 | void histogram(double r, int *hist, double dd, disk_t *disk_params);
+      |                                                ~~~~~~~~^~~~~~~~~~~
+In file included from /usr/local/Cellar/gcc@13/13.4.0/lib/gcc/13/gcc/x86_64-apple-darwin23/13/include-fixed/stdio.h:433,
+                 from src/simulation_core.c:5:
+src/simulation_core.c: In function 'tIntegrate':
+src/simulation_core.c:459:51: warning: '/' directive output may be truncated writing 1 byte into a region of size between 0 and 8191 [-Wformat-truncation=]
+  459 |                 snprintf(dens_name, MAX_PATH_LEN, "%s/%s/%s_%08d.dat", sim_opts->output_dir_name, LOGS_DIR, FILE_DENS_PREFIX, (int)L);
+      |                                                   ^~~~~~~~~~~~~~~~~~~
+src/simulation_core.c:459:57: note: format string is defined here
+  459 |                 snprintf(dens_name, MAX_PATH_LEN, "%s/%s/%s_%08d.dat", sim_opts->output_dir_name, LOGS_DIR, FILE_DENS_PREFIX, (int)L);
+      |                                                         ^
+src/simulation_core.c:459:17: note: '__builtin_snprintf' output 16 or more bytes (assuming 8207) into a destination of size 8192
+  459 |                 snprintf(dens_name, MAX_PATH_LEN, "%s/%s/%s_%08d.dat", sim_opts->output_dir_name, LOGS_DIR, FILE_DENS_PREFIX, (int)L);
+      |                 ^~~~~~~~
+src/simulation_core.c:297:59: warning: '/' directive output may be truncated writing 1 byte into a region of size between 0 and 8191 [-Wformat-truncation=]
+  297 |                         snprintf(dens_name, MAX_PATH_LEN, "%s/%s/%s_%08d.dat", sim_opts->output_dir_name, LOGS_DIR, FILE_DENS_PREFIX, (int)L);
+      |                                                           ^~~~~~~~~~~~~~~~~~~
+src/simulation_core.c:297:65: note: format string is defined here
+  297 |                         snprintf(dens_name, MAX_PATH_LEN, "%s/%s/%s_%08d.dat", sim_opts->output_dir_name, LOGS_DIR, FILE_DENS_PREFIX, (int)L);
+      |                                                                 ^
+src/simulation_core.c:297:25: note: '__builtin_snprintf' output 16 or more bytes (assuming 8207) into a destination of size 8192
+  297 |                         snprintf(dens_name, MAX_PATH_LEN, "%s/%s/%s_%08d.dat", sim_opts->output_dir_name, LOGS_DIR, FILE_DENS_PREFIX, (int)L);
+      |                         ^~~~~~~~
+src/simulation_core.c:301:51: warning: '/dust.' directive output may be truncated writing 6 bytes into a region of size between 0 and 8191 [-Wformat-truncation=]
+  301 |                 snprintf(dust_name, MAX_PATH_LEN, "%s/%s/dust.%i.dat", sim_opts->output_dir_name, LOGS_DIR, (int)L);
+      |                                                   ^~~~~~~~~~~~~~~~~~~
+src/simulation_core.c:301:57: note: format string is defined here
+  301 |                 snprintf(dust_name, MAX_PATH_LEN, "%s/%s/dust.%i.dat", sim_opts->output_dir_name, LOGS_DIR, (int)L);
+      |                                                         ^~~~~~
+src/simulation_core.c:301:17: note: '__builtin_snprintf' output 13 or more bytes (assuming 8204) into a destination of size 8192
+  301 |                 snprintf(dust_name, MAX_PATH_LEN, "%s/%s/dust.%i.dat", sim_opts->output_dir_name, LOGS_DIR, (int)L);
+      |                 ^~~~~~~~
+src/simulation_core.c:302:52: warning: '/dustmic.' directive output may be truncated writing 9 bytes into a region of size between 0 and 8191 [-Wformat-truncation=]
+  302 |                 snprintf(dust_name2, MAX_PATH_LEN, "%s/%s/dustmic.%i.dat", sim_opts->output_dir_name, LOGS_DIR, (int)L);
+      |                                                    ^~~~~~~~~~~~~~~~~~~~~~
+src/simulation_core.c:302:58: note: format string is defined here
+  302 |                 snprintf(dust_name2, MAX_PATH_LEN, "%s/%s/dustmic.%i.dat", sim_opts->output_dir_name, LOGS_DIR, (int)L);
+      |                                                          ^~~~~~~~~
+src/simulation_core.c:302:17: note: '__builtin_snprintf' output 16 or more bytes (assuming 8207) into a destination of size 8192
+  302 |                 snprintf(dust_name2, MAX_PATH_LEN, "%s/%s/dustmic.%i.dat", sim_opts->output_dir_name, LOGS_DIR, (int)L);
+      |                 ^~~~~~~~
+src/simulation_core.c:303:51: warning: '/size.' directive output may be truncated writing 6 bytes into a region of size between 0 and 8191 [-Wformat-truncation=]
+  303 |                 snprintf(size_name, MAX_PATH_LEN, "%s/%s/size.%d.dat", sim_opts->output_dir_name, LOGS_DIR, (int)L);
+      |                                                   ^~~~~~~~~~~~~~~~~~~
+src/simulation_core.c:303:57: note: format string is defined here
+  303 |                 snprintf(size_name, MAX_PATH_LEN, "%s/%s/size.%d.dat", sim_opts->output_dir_name, LOGS_DIR, (int)L);
+      |                                                         ^~~~~~
+src/simulation_core.c:303:17: note: '__builtin_snprintf' output 13 or more bytes (assuming 8204) into a destination of size 8192
+  303 |                 snprintf(size_name, MAX_PATH_LEN, "%s/%s/size.%d.dat", sim_opts->output_dir_name, LOGS_DIR, (int)L);
+      |                 ^~~~~~~~
+gcc -Wall -Wextra -std=c99 -g -O0 -fopenmp 	 -Iinclude -c src/utils.c -o obj/utils.o
+src/utils.c: In function 'Perem':
+src/utils.c:38:22: warning: unused variable 'c' [-Wunused-variable]
+   38 |         double a, b, c;
+      |                      ^
+src/utils.c:38:19: warning: unused variable 'b' [-Wunused-variable]
+   38 |         double a, b, c;
+      |                   ^
+src/utils.c:38:16: warning: unused variable 'a' [-Wunused-variable]
+   38 |         double a, b, c;
+      |                ^
+src/utils.c: In function 'find_r_annulus':
+src/utils.c:207:20: warning: implicit declaration of function 'scale_height' [-Wimplicit-function-declaration]
+  207 |     double h_rin = scale_height(rin, disk_params); // Első hívás, eredmény mentése
+      |                    ^~~~~~~~~~~~
+src/utils.c:175:26: warning: unused variable 'debug_marker' [-Wunused-variable]
+  175 |             volatile int debug_marker = 0; // Adj hozzá ezt a sort
+      |                          ^~~~~~~~~~~~
+src/utils.c: In function 'sort':
+src/utils.c:296:22: warning: unused variable 'temp2' [-Wunused-variable]
+  296 |         double temp, temp2;
+      |                      ^~~~~
+gcc -Wall -Wextra -std=c99 -g -O0 -fopenmp 	 -Iinclude -c src/init_tool_module.c -o obj/init_tool_module.o
+src/init_tool_module.c: In function 'run_init_tool':
+src/init_tool_module.c:331:101: warning: passing argument 2 of 'calculate_turbulent_alpha' from incompatible pointer type [-Wincompatible-pointer-types]
+  331 |                             (opts->dust_density_g_cm3 * calculate_turbulent_alpha(r_cell_center_au, opts)) *
+      |                                                                                                     ^~~~
+      |                                                                                                     |
+      |                                                                                                     init_tool_options_t * {aka struct init_tool_options *}
+In file included from src/init_tool_module.c:4:
+src/dust_physics.h:16:58: note: expected 'const disk_t *' but argument is of type 'init_tool_options_t *' {aka 'struct init_tool_options *'}
+   16 | double calculate_turbulent_alpha(double r, const disk_t *disk_params);
+      |                                            ~~~~~~~~~~~~~~^~~~~~~~~~~
+src/init_tool_module.c:293:20: warning: unused variable 'rho_midplane_gas_local' [-Wunused-variable]
+  293 |             double rho_midplane_gas_local = rho_mp((double)sigma_gas_local, r_cell_center_au, disk_params);
+      |                    ^~~~~~~~~~~~~~~~~~~~~~
+src/init_tool_module.c:282:20: warning: unused variable 'omega_yr2pi' [-Wunused-variable]
+  282 |             double omega_yr2pi = kep_freq(r_cell_center_au, disk_params);
+      |                    ^~~~~~~~~~~
+src/init_tool_module.c:280:20: warning: unused variable 'H_au' [-Wunused-variable]
+  280 |             double H_au = scale_height(r_cell_center_au, disk_params);
+      |                    ^~~~
+In file included from /usr/local/Cellar/gcc@13/13.4.0/lib/gcc/13/gcc/x86_64-apple-darwin23/13/include-fixed/stdio.h:433,
+                 from src/simulation_types.h:4,
+                 from src/init_tool_module.h:7,
+                 from src/init_tool_module.c:1:
+src/init_tool_module.c:141:80: warning: '__builtin_snprintf' output may be truncated before the last format character [-Wformat-truncation=]
+  141 |     snprintf(full_init_dust_profile_path, sizeof(full_init_dust_profile_path), "%s/%s", opts->output_base_path, FILENAME_INIT_DUST_PROFILE);
+      |                                                                                ^~~~~~~
+src/init_tool_module.c:141:86: note: format string is defined here
+  141 |     snprintf(full_init_dust_profile_path, sizeof(full_init_dust_profile_path), "%s/%s", opts->output_base_path, FILENAME_INIT_DUST_PROFILE);
+      |                                                                                      ^
+src/init_tool_module.c:141:5: note: '__builtin_snprintf' output 2 or more bytes (assuming 8193) into a destination of size 8192
+  141 |     snprintf(full_init_dust_profile_path, sizeof(full_init_dust_profile_path), "%s/%s", opts->output_base_path, FILENAME_INIT_DUST_PROFILE);
+      |     ^~~~~~~~
+src/init_tool_module.c:142:66: warning: '__builtin_snprintf' output may be truncated before the last format character [-Wformat-truncation=]
+  142 |     snprintf(full_disk_param_path, sizeof(full_disk_param_path), "%s/%s", opts->output_base_path, FILENAME_DISK_PARAM);
+      |                                                                  ^~~~~~~
+src/init_tool_module.c:142:72: note: format string is defined here
+  142 |     snprintf(full_disk_param_path, sizeof(full_disk_param_path), "%s/%s", opts->output_base_path, FILENAME_DISK_PARAM);
+      |                                                                        ^
+src/init_tool_module.c:142:5: note: '__builtin_snprintf' output 2 or more bytes (assuming 8193) into a destination of size 8192
+  142 |     snprintf(full_disk_param_path, sizeof(full_disk_param_path), "%s/%s", opts->output_base_path, FILENAME_DISK_PARAM);
+      |     ^~~~~~~~
+src/init_tool_module.c:143:70: warning: '__builtin_snprintf' output may be truncated before the last format character [-Wformat-truncation=]
+  143 |     snprintf(full_init_density_path, sizeof(full_init_density_path), "%s/%s", opts->output_base_path, FILENAME_INIT_GAS_PROFILE);
+      |                                                                      ^~~~~~~
+src/init_tool_module.c:143:76: note: format string is defined here
+  143 |     snprintf(full_init_density_path, sizeof(full_init_density_path), "%s/%s", opts->output_base_path, FILENAME_INIT_GAS_PROFILE);
+      |                                                                            ^
+src/init_tool_module.c:143:5: note: '__builtin_snprintf' output 2 or more bytes (assuming 8193) into a destination of size 8192
+  143 |     snprintf(full_init_density_path, sizeof(full_init_density_path), "%s/%s", opts->output_base_path, FILENAME_INIT_GAS_PROFILE);
+      |     ^~~~~~~~
+gcc -Wall -Wextra -std=c99 -g -O0 -fopenmp 	 -Iinclude -c src/parser.c -o obj/parser.o
+gcc -Wall -Wextra -std=c99 -g -O0 -fopenmp 	 -Iinclude -c src/particle_data.c -o obj/particle_data.o
+gcc -Wall -Wextra -std=c99 -g -O0 -fopenmp 	  obj/main.o  obj/config.o  obj/disk_model.o  obj/dust_physics.o  obj/io_utils.o  obj/simulation_core.o  obj/utils.o  obj/init_tool_module.o  obj/parser.o  obj/particle_data.o -o bin/simulation

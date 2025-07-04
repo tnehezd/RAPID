@@ -252,15 +252,10 @@ void infoCurrent(const char *nev, const disk_t *disk_params, const simulation_op
 }
 
 
-void Print_Mass(double step, 
-                double (*partmassind)[5], double (*partmassmicrind)[5], 
-                double (*partmasssecind)[5], 
-                double t, // Ezt továbbra is meghagyjuk
-                double massbtempii, double massbtempoi, double massmtempii, double massmtempoi, 
-                double *massbtempio, double *massbtempoo, double *massmtempio, double *massmtempoo, 
-                double *tavin, double *tavout, 
-                const disk_t *disk_params, const simulation_options_t *sim_opts,
-                output_files_t *output_files) {
+void Print_Mass(double step, double (*partmassind)[5], double (*partmassmicrind)[5], double (*partmasssecind)[5], double t, double massbtempii, double massbtempoi, double massmtempii, double massmtempoi, 
+                double *massbtempio, double *massbtempoo, double *massmtempio, double *massmtempoo, double *tavin, double *tavout, 
+                const disk_t *disk_params, const simulation_options_t *sim_opts,output_files_t *output_files) {
+
 
     double ind_ii, ind_io, ind_oi, ind_oo, tav, tav2;
 
@@ -281,6 +276,9 @@ void Print_Mass(double step,
     double rout = disk_params->r_dze_o;
     double rin_new = 0.0;
     double rout_new = 0.0;
+
+
+
 
     int j = 0, i;
 
@@ -307,26 +305,35 @@ void Print_Mass(double step,
 
     if(sim_opts->dzone == 1.0) {
         if(dim > 0) {
-            if (dim == 1) { rin_new = r_count[0]; rout_new = rout; } 
-            else if (dim >= 2) { rin_new = r_count[0]; rout_new = r_count[1]; } 
-            else { fprintf(stderr, "WARNING [Print_Mass]: Unexpected dim value %d for sim_opts->dzone == 1.0. Using default r_dze_i/o.\n", dim); rin_new = tav2; rout_new = tav; }
+            if (dim == 1) { 
+                rin_new = r_count[0]; 
+                rout_new = rout; 
+            } else {
+                rin_new = r_count[0]; 
+                rout_new = r_count[1]; 
+            } 
         }
-        if(dim == 0) { rin_new = rin; rout_new = rout; }
+        if(dim == 0) { 
+            rin_new = rin; 
+            rout_new = rout; 
+        }
     }
 
     rin = rin_new;
     if(sim_opts->dzone == 0.0) rin = 0;
-    double rout_current = rout_new;
+//    double rout_current = rout_new;
+    rout = rout_new;
     
-    *tavin = rin;  
-    *tavout = rout_current; 
+//    *tavin = rin;  
+//    *tavout = rout_current; 
+
+    tav2 = rin;
+    tav = rout;
 
     // find_r_annulus hívása: EZ KISZÁMOLJA AZ INDEX-HATÁROKAT AZ AKTUÁLIS SUGARAK ALAPJÁN
     // Ezt már a disk_params->rvec és disk_params->dpressvec alapján kellene, nem pedig külön paraméterekből.
     // Ha a find_r_annulus is disk_params-ot kapott, akkor rendben van.
-    find_r_annulus(*tavin, &ind_ii, &ind_io, *tavout, &ind_oi, &ind_oo, sim_opts, disk_params);
-
-    printf("tav%lg   tavo%lg\n", *tavin, *tavout);
+    find_r_annulus(tav2, &ind_ii, &ind_io, tav, &ind_oi, &ind_oo, sim_opts, disk_params);
 
     double massii = 0, massoi = 0;
     double massiim = 0, massoim = 0;
@@ -350,22 +357,28 @@ void Print_Mass(double step,
 
     double massi, massim, masso, massom;
 
-    if(sim_opts->dzone == 1.0) { 
-        massi = massii + massis;
-        massim = massiim;
-        masso = massoi + massos;
-        massom = massoim;
-    } else { 
+    if(tav2 != disk_params->r_dze_i) {
         massi = massii + massbtempii + massis;
         massim = massiim + massmtempii;
+    } else {
+        massi = massii + massis;
+        massim = massiim;
+    }
+    if(tav != disk_params->r_dze_o) {
         masso = massoi + massbtempoi + massos;
         massom = massoim + massmtempoi;
+    } else {
+        masso = massoi + massos;
+        massom = massoim;
     }
 
     *massbtempio = massi;
     *massbtempoo = masso;
     *massmtempio = massim;
     *massmtempoo = massom;
+
+    *tavin = tav2;
+    *tavout = tav;
 
     if (output_files->mass_file != NULL) {
         fprintf(output_files->mass_file, "%lg %lg %lg %lg %lg\n", step, *tavin, massi+massim, *tavout, masso+massom);
@@ -581,4 +594,129 @@ void print_file_header(FILE *file, FileType_e file_type, const HeaderData_t *hea
             break;
     }
     fflush(file);
+}
+
+
+
+
+int setup_initial_output_files(output_files_t *output_files, const simulation_options_t *sim_opts,
+                               const disk_t *disk_params, HeaderData_t *header_data_for_files) {
+    char porout[MAX_PATH_LEN] = "";
+    char poroutmicr[MAX_PATH_LEN] = "";
+    char massout[MAX_PATH_LEN] = "";
+
+    // Készítsük elő a header_data_for_files struktúrát a specifikus adatokkal
+    header_data_for_files->current_time = 0.0;
+    header_data_for_files->is_initial_data = 1;
+    header_data_for_files->R_in = disk_params->RMIN;
+    header_data_for_files->R_out = disk_params->RMAX;
+
+    // Fájlnevek generálása
+    snprintf(porout, MAX_PATH_LEN, "%s/%s/%s", sim_opts->output_dir_name, LOGS_DIR, FILE_DUST_EVOLUTION);
+
+    if (sim_opts->twopop == 1.0) {
+        snprintf(poroutmicr, MAX_PATH_LEN, "%s/%s/micron_particle_evolution.dat", sim_opts->output_dir_name, LOGS_DIR);
+    }
+    snprintf(massout, MAX_PATH_LEN, "%s/%s/%s.dat", sim_opts->output_dir_name, LOGS_DIR, FILE_MASS_ACCUMULATE);
+
+    fprintf(stderr, "DEBUG [setup_initial_output_files]: Opening output files: %s, %s (if 2pop), %s\n", porout, poroutmicr, massout);
+
+    // Fájlok megnyitása és fejlécek írása
+    output_files->por_motion_file = fopen(porout, "w");
+    if (output_files->por_motion_file == NULL) {
+        fprintf(stderr, "ERROR: Could not open %s\n", porout);
+        return 1; // Hiba
+    }
+    print_file_header(output_files->por_motion_file, FILE_TYPE_DUST_MOTION, header_data_for_files);
+
+    if (sim_opts->twopop == 1.0) {
+        output_files->micron_motion_file = fopen(poroutmicr, "w");
+        if (output_files->micron_motion_file == NULL) {
+            fprintf(stderr, "ERROR: Could not open %s\n", poroutmicr);
+            // Itt fontos lehet, hogy felszabadítsuk az eddig megnyitott fájlokat
+            fclose(output_files->por_motion_file);
+            output_files->por_motion_file = NULL;
+            return 1; // Hiba
+        }
+        print_file_header(output_files->micron_motion_file, FILE_TYPE_MICRON_MOTION, header_data_for_files);
+    }
+
+    output_files->mass_file = fopen(massout, "w");
+    if (output_files->mass_file == NULL) {
+        fprintf(stderr, "ERROR: Could not open %s\n", massout);
+        // Itt is felszabadítjuk a már megnyitott fájlokat
+        fclose(output_files->por_motion_file);
+        output_files->por_motion_file = NULL;
+        if (sim_opts->twopop == 1.0 && output_files->micron_motion_file != NULL) {
+            fclose(output_files->micron_motion_file);
+            output_files->micron_motion_file = NULL;
+        }
+        return 1; // Hiba
+    }
+    print_file_header(output_files->mass_file, FILE_TYPE_MASS_ACCUMULATION, header_data_for_files);
+
+    return 0; // Siker
+}
+
+
+void cleanup_simulation_resources(ParticleData_t *p_data, output_files_t *output_files, const simulation_options_t *sim_opts) {
+    if (PARTICLE_NUMBER > 0) {
+        free(p_data->radius); p_data->radius = NULL;
+        free(p_data->radiusmicr); p_data->radiusmicr = NULL;
+        free(p_data->radius_rec); p_data->radius_rec = NULL;
+        free(p_data->massvec); p_data->massvec = NULL;
+        free(p_data->massmicrvec); p_data->massmicrvec = NULL;
+        free(p_data->partmassind); p_data->partmassind = NULL;
+        free(p_data->partmassmicrind); p_data->partmassmicrind = NULL;
+        free(p_data->sigmad); p_data->sigmad = NULL;
+        free(p_data->sigmadm); p_data->sigmadm = NULL;
+        free(p_data->rdvec); p_data->rdvec = NULL;
+        free(p_data->rmicvec); p_data->rmicvec = NULL;
+
+        // Csak akkor szabadítjuk fel, ha twopop módban vannak allokálva
+        if (sim_opts->twopop == 1) { // Feltételezve, hogy twopop == 1 esetén vannak ezek allokálva 4*PARTICLE_NUMBER méretben
+            free(p_data->radiussec); p_data->radiussec = NULL;
+            free(p_data->masssecvec); p_data->masssecvec = NULL;
+            free(p_data->partmasssecind); p_data->partmasssecind = NULL;
+            free(p_data->sigmads); p_data->sigmads = NULL;
+            free(p_data->rsvec); p_data->rsvec = NULL;
+        }
+
+        fprintf(stderr, "DEBUG [cleanup_simulation_resources]: All dynamically allocated particle arrays freed.\n");
+    }
+
+    if (output_files->por_motion_file != NULL) {
+        fclose(output_files->por_motion_file);
+        output_files->por_motion_file = NULL;
+        fprintf(stderr, "DEBUG [cleanup_simulation_resources]: Closed %s\n", FILE_DUST_EVOLUTION);
+    }
+    if (output_files->micron_motion_file != NULL) { // Ellenőrzés twopop-ra itt is
+        fclose(output_files->micron_motion_file);
+        output_files->micron_motion_file = NULL;
+        fprintf(stderr, "DEBUG [cleanup_simulation_resources]: Closed micron_particle_evolution.dat\n");
+    }
+    if (output_files->mass_file != NULL) {
+        fclose(output_files->mass_file);
+        output_files->mass_file = NULL;
+        fprintf(stderr, "DEBUG [cleanup_simulation_resources]: Closed %s\n", FILE_MASS_ACCUMULATE);
+    }
+}
+
+// Segédfüggvény a pillanatfelvételek fájljainak bezárására
+void close_snapshot_files(output_files_t *output_files, const char *dens_name, const char *dust_name, const char *dust_name2, const simulation_options_t *sim_opts) {
+    if (output_files->surface_file != NULL) {
+        fclose(output_files->surface_file);
+        output_files->surface_file = NULL;
+        fprintf(stderr, "DEBUG [close_snapshot_files]: Closed %s.\n", dens_name);
+    }
+    if (output_files->dust_file != NULL) {
+        fclose(output_files->dust_file);
+        output_files->dust_file = NULL;
+        fprintf(stderr, "DEBUG [close_snapshot_files]: Closed %s.\n", dust_name);
+    }
+    if (sim_opts->twopop == 1 && output_files->micron_dust_file != NULL) {
+        fclose(output_files->micron_dust_file);
+        output_files->micron_dust_file = NULL;
+        fprintf(stderr, "DEBUG [close_snapshot_files]: Closed %s.\n", dust_name2);
+    }
 }

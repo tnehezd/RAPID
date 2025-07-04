@@ -44,9 +44,15 @@ double visc(double r, const disk_t *disk_params) {
 
 /*	local scale height	*/
 double scale_height(double r, const disk_t *disk_params) {
-//	fprintf(stderr, "DEBUG [scale_height]: Called with r=%.2e, disk_params address=%p, FLIND=%.2f, HASP=%.2f\n",
-//            r, (void*)disk_params, disk_params->FLIND, disk_params->HASP);
-    return pow(r, 1. + disk_params->FLIND) * disk_params->HASP;
+
+    if (disk_params == NULL) {
+        fprintf(stderr, "ERROR [scale_height]: disk_params is NULL!\n");
+        return 0.0; // Vagy valamilyen hibakód/NaN
+    }
+
+    // Itt van az eredeti számítás
+    double calculated_result = pow(r, 1. + disk_params->FLIND) * disk_params->HASP;
+    return calculated_result;
 }
 
 /*	lokális kepleri sebesség	*/
@@ -135,7 +141,6 @@ void u_gas(disk_t *disk_params) {
 void GetMass(int n, double (*partmassind)[5], int indii, int indio, int indoi, int indoo, double *massiout, double *massoout, const simulation_options_t *sim_opts) {
 
     // Debug üzenet frissítve az indexekre
-    fprintf(stderr, "\n--- DEBUG_GM: Step Start. Inner DZE INDEX: [%d, %d], Outer DZE INDEX: [%d, %d] ---\n", indii, indio, indoi, indoo);
 
     double massitemp = 0.0;
     double massotemp = 0.0;
@@ -151,19 +156,11 @@ void GetMass(int n, double (*partmassind)[5], int indii, int indio, int indoi, i
             // --- Belső DZE ---
             // Ellenőrizzük, hogy a részecske grid indexe a belső DZE tartományában van-e
             if ((current_r_index >= indii) && (current_r_index <= indio)) {
-                if (i < 10) { 
-                    fprintf(stderr, "DEBUG_GM: Inner DZE check for Part %d (r_idx=%d, mass=%lg). Index Range: [%d, %d]. Flag[3]=%lg. Condition (flag==0): %d\n",
-                            i, current_r_index, partmassind[i][0], indii, indio, partmassind[i][3], (partmassind[i][3] == 0.0));
-                }
                 if (partmassind[i][3] == 0.0) { // Belső DZE flag ellenőrzése
                     #pragma omp critical(inner_dze_update)
                     {
                         partmassind[i][3] = 1.0;
                         massitemp = massitemp + partmassind[i][0]; // Tömeg hozzáadása a [0] indexről
-                        if (i < 10) {
-                            fprintf(stderr, "DEBUG_GM: Part %d (r_idx=%d) ADDED to INNER DZE. Current inner mass: %lg\n",
-                                    i, current_r_index, massitemp);
-                        }
                     }
                 }
             }
@@ -171,19 +168,11 @@ void GetMass(int n, double (*partmassind)[5], int indii, int indio, int indoi, i
             // --- Külső DZE ---
             // Ellenőrizzük, hogy a részecske grid indexe a külső DZE tartományában van-e
             if ((current_r_index >= indoi) && (current_r_index <= indoo)) {
-                if (i < 10) {
-                    fprintf(stderr, "DEBUG_GM: Outer DZE check for Part %d (r_idx=%d, mass=%lg). Index Range: [%d, %d]. Flag[4]=%lg. Condition (flag==0): %d\n",
-                            i, current_r_index, partmassind[i][0], indoi, indoo, partmassind[i][4], (partmassind[i][4] == 0.0)); // Flag[4] használata
-                }
                 if (partmassind[i][4] == 0.0) { // Külső DZE flag ellenőrzése (Flag[4])
                     #pragma omp critical(outer_dze_update)
                     {
                         partmassind[i][4] = 1.0;
                         massotemp = massotemp + partmassind[i][0]; // Tömeg hozzáadása a [0] indexről
-                        if (i < 10) {
-                            fprintf(stderr, "DEBUG_GM: Part %d (r_idx=%d) ADDED to OUTER DZE. Current outer mass: %lg\n",
-                                    i, current_r_index, massotemp);
-                        }
                     }
                 }
             }
@@ -215,7 +204,6 @@ void GetMass(int n, double (*partmassind)[5], int indii, int indio, int indoi, i
 
     *massiout = massitemp;
     *massoout = massotemp;
-    fprintf(stderr, "--- DEBUG_GM: Step End. Returning massiout=%lg, massoout=%lg ---\n\n", *massiout, *massoout);
 }
 
 
