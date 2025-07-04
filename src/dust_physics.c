@@ -291,17 +291,13 @@ double getSize(double prad, double pdens, double sigma, double sigmad, double y,
 
 
 
-void Get_Sigmad(double max_param, double min_param, double rad[][2], double radmicr[][2], double radsec[][2],
-                double *sigma_d, double *sigma_dm, double *sigma_ds, double *massvec, double *massmicrvec, double *masssecvec, 
-                double *rd, double *rmic, double *rs, const simulation_options_t *sim_opts, const disk_t *disk_params) {
+void Get_Sigmad(double max_param, double min_param, double rad[][2], double radmicr[][2], 
+                double *sigma_d, double *sigma_dm,  double *massvec, double *massmicrvec,  
+                double *rd, double *rmic, const simulation_options_t *sim_opts, const disk_t *disk_params) {
 
     // Suppress unused parameter warnings
     (void)max_param;
     (void)min_param;
-    (void)radsec;
-    (void)sigma_ds;
-    (void)masssecvec;
-    (void)rs;
 
     double dd = (disk_params->RMAX - disk_params->RMIN) / (PARTICLE_NUMBER - 1);
     int i;

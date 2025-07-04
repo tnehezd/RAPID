@@ -9,20 +9,15 @@
 typedef struct {
     double (*radius)[2];
     double (*radiusmicr)[2];
-    double (*radiussec)[2];
     double (*radius_rec)[2]; // Temp array for inverse radii calculations
     double *massvec;
     double *massmicrvec;
-    double *masssecvec;
     double (*partmassind)[5];
     double (*partmassmicrind)[5];
-    double (*partmasssecind)[5];
     double *sigmad;
     double *sigmadm;
-    double *sigmads; // Surface density for secondary particles
     double *rdvec;
     double *rmicvec;
-    double *rsvec;
     size_t allocated_particle_number; // Az aktuálisan allokált részecskék száma
 } ParticleData_t;
 

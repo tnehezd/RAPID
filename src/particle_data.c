@@ -13,20 +13,15 @@ int allocate_particle_data(ParticleData_t *p_data, size_t particle_count, int is
     // Inicializálás NULL-ra
     p_data->radius = NULL;
     p_data->radiusmicr = NULL;
-    p_data->radiussec = NULL;
     p_data->radius_rec = NULL;
     p_data->massvec = NULL;
     p_data->massmicrvec = NULL;
-    p_data->masssecvec = NULL;
     p_data->partmassind = NULL;
     p_data->partmassmicrind = NULL;
-    p_data->partmasssecind = NULL;
     p_data->sigmad = NULL;
     p_data->sigmadm = NULL;
-    p_data->sigmads = NULL;
     p_data->rdvec = NULL;
     p_data->rmicvec = NULL;
-    p_data->rsvec = NULL;
     p_data->allocated_particle_number = 0;
 
     if (particle_count == 0) {
@@ -59,17 +54,7 @@ int allocate_particle_data(ParticleData_t *p_data, size_t particle_count, int is
     // Secondary particles (csak ha twopop engedélyezve van, feltételezve, hogy a growth ehhez kapcsolódik)
     // A 4-szeres méretet a Get_Radius függvényben látottak alapján vettem.
     if (is_twopop_enabled) {
-        p_data->radiussec = malloc(4 * particle_count * sizeof(*p_data->radiussec));
-        p_data->masssecvec = malloc(4 * particle_count * sizeof(double));
-        p_data->partmasssecind = malloc(4 * particle_count * sizeof(*p_data->partmasssecind));
-        p_data->sigmads = malloc(4 * particle_count * sizeof(double));
-        p_data->rsvec = malloc(4 * particle_count * sizeof(double));
 
-        if (!p_data->radiussec || !p_data->masssecvec || !p_data->partmasssecind || !p_data->sigmads || !p_data->rsvec) {
-            fprintf(stderr, "ERROR [allocate_particle_data]: Secondary particle array allocation failed!\n");
-            free_particle_data(p_data); // Felszabadítás, ha valami elszállt
-            return 1; // Hiba
-        }
     } else {
         fprintf(stderr, "DEBUG [allocate_particle_data]: Two-population model is OFF. Secondary particle arrays not allocated.\n");
     }

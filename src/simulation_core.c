@@ -324,7 +324,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                     if (sim_opts->twopop == 1) Count_Mass(p_data.radiusmicr, p_data.partmassmicrind, p_data.massmicrvec, t, PARTICLE_NUMBER, disk_params);
 
                     if (sim_opts->growth == 1.) {
-                        Get_Sigmad(max, min, p_data.radius, p_data.radiusmicr, p_data.radiussec, p_data.sigmad, p_data.sigmadm, p_data.sigmads, p_data.massvec, p_data.massmicrvec, p_data.masssecvec, p_data.rdvec, p_data.rmicvec, p_data.rsvec, sim_opts, disk_params);
+                        Get_Sigmad(max, min, p_data.radius, p_data.radiusmicr, p_data.sigmad, p_data.sigmadm, p_data.massvec, p_data.massmicrvec, p_data.rdvec, p_data.rmicvec, sim_opts, disk_params);
                     }
                 }
 
@@ -358,7 +358,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
 
                 fprintf(stderr, "DEBUG [tIntegrate]: Calling Print_Mass.\n");
 
-                Print_Mass(L, p_data.partmassind, p_data.partmassmicrind, p_data.partmasssecind, t, masstempiin, masstempoin, massmtempiin, massmtempoin, &masstempiout, &masstempoout, &massmtempiout, &massmtempoout, &tavin, &tavout, disk_params, sim_opts, output_files);
+                Print_Mass(L, p_data.partmassind, p_data.partmassmicrind, t, masstempiin, masstempoin, massmtempiin, massmtempoin, &masstempiout, &masstempoout, &massmtempiout, &massmtempoout, &tavin, &tavout, disk_params, sim_opts, output_files);
 
                 fprintf(stderr, "DEBUG [tIntegrate]: Print_Mass completed. Outputs: masstempiout=%.2e, massmtempiout=%.2e\n", masstempiout, massmtempiout);
 
@@ -393,7 +393,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
             if (sim_opts->twopop == 1) Count_Mass(p_data.radiusmicr, p_data.partmassmicrind, p_data.massmicrvec, t, PARTICLE_NUMBER, disk_params);
 
             if (sim_opts->growth == 1.) {
-                Get_Sigmad(max, min, p_data.radius, p_data.radiusmicr, p_data.radiussec, p_data.sigmad, p_data.sigmadm, p_data.sigmads, p_data.massvec, p_data.massmicrvec, p_data.masssecvec, p_data.rdvec, p_data.rmicvec, p_data.rsvec, sim_opts, disk_params);
+                Get_Sigmad(max, min, p_data.radius, p_data.radiusmicr, p_data.sigmad, p_data.sigmadm, p_data.massvec, p_data.massmicrvec, p_data.rdvec, p_data.rmicvec, sim_opts, disk_params);
             }
 
             // Get radii for next step

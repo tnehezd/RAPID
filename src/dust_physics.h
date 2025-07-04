@@ -62,9 +62,9 @@ double tauGr(double r, double eps, const disk_t *disk_params);
 double getSize(double prad, double pdens, double sigma, double sigmad, double y, double p, double dpress_val, double dt, const disk_t *disk_params);
 
 // Porkorong sűrűségének számítása
-void Get_Sigmad(double max_param, double min_param, double rad[][2], double radmicr[][2], double radsec[][2],
-                double *sigma_d, double *sigma_dm, double *sigma_ds, double *massvec,
-                double *massmicrvec, double *masssecvec, double *rd, double *rmic, double *rs,
+void Get_Sigmad(double max_param, double min_param, double rad[][2], double radmicr[][2],
+                double *sigma_d, double *sigma_dm, double *massvec,
+                double *massmicrvec,double *rd, double *rmic,
                 const simulation_options_t *sim_opts, const disk_t *disk_params);
 
 /*	Fuggveny a sigma, p, dp kiszamolasara	*/

@@ -252,7 +252,7 @@ void infoCurrent(const char *nev, const disk_t *disk_params, const simulation_op
 }
 
 
-void Print_Mass(double step, double (*partmassind)[5], double (*partmassmicrind)[5], double (*partmasssecind)[5], double t, double massbtempii, double massbtempoi, double massmtempii, double massmtempoi, 
+void Print_Mass(double step, double (*partmassind)[5], double (*partmassmicrind)[5], double t, double massbtempii, double massbtempoi, double massmtempii, double massmtempoi, 
                 double *massbtempio, double *massbtempoo, double *massmtempio, double *massmtempoo, double *tavin, double *tavout, 
                 const disk_t *disk_params, const simulation_options_t *sim_opts,output_files_t *output_files) {
 
@@ -345,10 +345,6 @@ void Print_Mass(double step, double (*partmassind)[5], double (*partmassmicrind)
             &massii, &massoi, sim_opts); 
 
     if(sim_opts->twopop == 1.0) {
-        GetMass(4*PARTICLE_NUMBER, partmasssecind, 
-                (int)ind_ii, (int)ind_io, 
-                (int)ind_oi, (int)ind_oo, 
-                &massis, &massos, sim_opts); 
         GetMass(PARTICLE_NUMBER, partmassmicrind, 
                 (int)ind_ii, (int)ind_io, 
                 (int)ind_oi, (int)ind_oo, 
@@ -672,15 +668,6 @@ void cleanup_simulation_resources(ParticleData_t *p_data, output_files_t *output
         free(p_data->sigmadm); p_data->sigmadm = NULL;
         free(p_data->rdvec); p_data->rdvec = NULL;
         free(p_data->rmicvec); p_data->rmicvec = NULL;
-
-        // Csak akkor szabadítjuk fel, ha twopop módban vannak allokálva
-        if (sim_opts->twopop == 1) { // Feltételezve, hogy twopop == 1 esetén vannak ezek allokálva 4*PARTICLE_NUMBER méretben
-            free(p_data->radiussec); p_data->radiussec = NULL;
-            free(p_data->masssecvec); p_data->masssecvec = NULL;
-            free(p_data->partmasssecind); p_data->partmasssecind = NULL;
-            free(p_data->sigmads); p_data->sigmads = NULL;
-            free(p_data->rsvec); p_data->rsvec = NULL;
-        }
 
         fprintf(stderr, "DEBUG [cleanup_simulation_resources]: All dynamically allocated particle arrays freed.\n");
     }
