@@ -2,3 +2,12 @@
 
 output/
 output_*/
+
+
+*.o
+*.a
+*.so
+*.dylib
+*.exe
+bin/
+obj/
