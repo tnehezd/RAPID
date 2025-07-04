@@ -77,6 +77,5 @@ void int_step(double time, double prad, const double *sigmad, const double *rdve
 void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, output_files_t *output_files);
 
 
-void secondaryGrowth(double rad[][2], double radmicr[][2], double radsec[][2], double partmicind[][4], double partsecind[][4], double *massmicvec, double *masssecvec, const disk_t *disk_params);
 
 #endif // SIMULATION_CORE_H

@@ -218,18 +218,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
     double tavin = 0, tavout = 0; // Távolságok a Print_Mass-hoz
 
 
-    // Részecsketömbök inicializálása nullákkal (a sim_opts->twopop alapján)
-    if (sim_opts->twopop == 1.0 && PARTICLE_NUMBER > 0) {
-        for (i = 0; i < 4 * PARTICLE_NUMBER; i++) {
-            p_data.radiussec[i][0] = 0;
-            p_data.radiussec[i][1] = 0;
-            p_data.partmasssecind[i][0] = 0;
-            p_data.partmasssecind[i][1] = 0;
-            p_data.masssecvec[i] = 0;
-            p_data.sigmads[i] = 0;
-            p_data.rsvec[i] = 0;
-        }
-    } else if (sim_opts->twopop == 0 && PARTICLE_NUMBER > 0) {
+    if (sim_opts->twopop == 0 && PARTICLE_NUMBER > 0) {
         for (i = 0; i < PARTICLE_NUMBER; i++) {
             p_data.radiusmicr[i][0] = 0;
             p_data.radiusmicr[i][1] = 0;
@@ -242,9 +231,6 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
     // --- Fő szimulációs ciklus ---
     do {
         if (sim_opts->drift == 1.) {
-            if (sim_opts->twopop == 1) {
-                secondaryGrowth(p_data.radius, p_data.radiusmicr, p_data.radiussec, p_data.partmassmicrind, p_data.partmasssecind, p_data.massmicrvec, p_data.masssecvec, disk_params);
-            }
 
             // Radius reciprok számítása a min/max kereséshez
             for (i = 0; i < PARTICLE_NUMBER; i++) {
@@ -336,7 +322,6 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                 if (current_time_years == 0) {
                     Count_Mass(p_data.radius, p_data.partmassind, p_data.massvec, t, PARTICLE_NUMBER, disk_params);
                     if (sim_opts->twopop == 1) Count_Mass(p_data.radiusmicr, p_data.partmassmicrind, p_data.massmicrvec, t, PARTICLE_NUMBER, disk_params);
-                    if (sim_opts->twopop == 1) Count_Mass(p_data.radiussec, p_data.partmasssecind, p_data.masssecvec, t, 4 * PARTICLE_NUMBER, disk_params);
 
                     if (sim_opts->growth == 1.) {
                         Get_Sigmad(max, min, p_data.radius, p_data.radiusmicr, p_data.radiussec, p_data.sigmad, p_data.sigmadm, p_data.sigmads, p_data.massvec, p_data.massmicrvec, p_data.masssecvec, p_data.rdvec, p_data.rmicvec, p_data.rsvec, sim_opts, disk_params);
@@ -368,16 +353,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                         p_data.partmassind[k][3] = 0.0;
                         p_data.partmassind[k][4] = 0.0;
                     }
-                    if (sim_opts->twopop == 1) {
-                        for (int k = 0; k < 4 * PARTICLE_NUMBER; k++) { // 4*PARTICLE_NUMBER a radiussec-hez
-                            p_data.partmasssecind[k][3] = 0.0;
-                            p_data.partmasssecind[k][4] = 0.0;
-                        }
-                        for (int k = 0; k < PARTICLE_NUMBER; k++) {
-                            p_data.partmassmicrind[k][3] = 0.0;
-                            p_data.partmassmicrind[k][4] = 0.0;
-                        }
-                    }
+                    
                 }
 
                 fprintf(stderr, "DEBUG [tIntegrate]: Calling Print_Mass.\n");
@@ -415,7 +391,6 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
             // Count masses and get sigma_d for the next step (always done)
             Count_Mass(p_data.radius, p_data.partmassind, p_data.massvec, t, PARTICLE_NUMBER, disk_params);
             if (sim_opts->twopop == 1) Count_Mass(p_data.radiusmicr, p_data.partmassmicrind, p_data.massmicrvec, t, PARTICLE_NUMBER, disk_params);
-            if (sim_opts->twopop == 1) Count_Mass(p_data.radiussec, p_data.partmasssecind, p_data.masssecvec, t, 4 * PARTICLE_NUMBER, disk_params);
 
             if (sim_opts->growth == 1.) {
                 Get_Sigmad(max, min, p_data.radius, p_data.radiusmicr, p_data.radiussec, p_data.sigmad, p_data.sigmadm, p_data.sigmads, p_data.massvec, p_data.massmicrvec, p_data.masssecvec, p_data.rdvec, p_data.rmicvec, p_data.rsvec, sim_opts, disk_params);
@@ -429,10 +404,6 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                 optsize = 1;
                 Get_Radius(sim_opts->output_dir_name, optsize, p_data.radiusmicr, p_data.sigmadm, p_data.rmicvec, deltat, t, PARTICLE_NUMBER, sim_opts, disk_params);
 
-                optsize = 2;
-//                printf("DEBUG [tIntegrate]: Calling Get_Radius for Secondary particles (optsize=%d, PARTICLE_NUMBER=%d).\n", optsize, 4 * PARTICLE_NUMBER);
-                Get_Radius(sim_opts->output_dir_name, optsize, p_data.radiussec, p_data.sigmads, p_data.rsvec, deltat, t, 4 * PARTICLE_NUMBER, sim_opts, disk_params);
-//                printf("DEBUG [tIntegrate]: Get_Radius for Secondary particles completed.\n");
             }
 
             t = t + deltat;
@@ -494,165 +465,3 @@ cleanup:
     printf("DEBUG [tIntegrate]: Cleanup completed.\n");
 }
 
-void secondaryGrowth(double rad[][2], double radmicr[][2], double radsec[][2], double partmicind[][4], double partsecind[][4], double *massmicvec, double *masssecvec, const disk_t *disk_params) {
-//    printf("DEBUG [secondaryGrowth]: Entering secondaryGrowth function.\n");
-//    fprintf(stderr, "DEBUG [secondaryGrowth]: Function entry. disk_params address=%p\n", (void*)disk_params);
-//    fprintf(stderr, "DEBUG [secondaryGrowth]:   disk_params->FLIND = %.2f, disk_params->HASP = %.2f\n",
-//            disk_params->FLIND, disk_params->HASP);
-
-    int i, j; //, k=0;
-    int step = 0;
-    double temp[PARTICLE_NUMBER], temp2[4*PARTICLE_NUMBER], tempmic[PARTICLE_NUMBER], temp2ch1[PARTICLE_NUMBER], temp2ch2[PARTICLE_NUMBER], temp2ch3[PARTICLE_NUMBER], temp2ch4[PARTICLE_NUMBER];
-    int hist[PARTICLE_NUMBER], histmic[PARTICLE_NUMBER];
-//    printf("DEBUG [secondaryGrowth]: Declared local arrays (hist, temp, etc.) based on PARTICLE_NUMBER: %d.\n", PARTICLE_NUMBER);
-
-/*	A porszemcse generalo program gridfelbontasa -- nem feltetlen egyezik meg a jelenlegi gridfelbontassal!	*/
-    double dd = (disk_params->RMAX - disk_params->RMIN) / (PARTICLE_NUMBER-1), rtempvec[PARTICLE_NUMBER];
-    double temptemp[4*PARTICLE_NUMBER], masstemp[4*PARTICLE_NUMBER][2], sizetemp[4*PARTICLE_NUMBER],mtp[4*PARTICLE_NUMBER], indtemp[4*PARTICLE_NUMBER][2];
-//    printf("DEBUG [secondaryGrowth]: Calculated dd=%.2e based on RMAX=%.2f, RMIN=%.2f, PARTICLE_NUMBER=%d.\n", dd, disk_params->RMAX, disk_params->RMIN, PARTICLE_NUMBER);
-
-//    printf("DEBUG [secondaryGrowth]: Initializing radsec, partsecind, masssecvec, sizetemp, mtp, indtemp arrays.\n");
-    for(i=0; i < 4*PARTICLE_NUMBER; i++) {	
-        temp2[i] = radsec[i][0];			// masodlagosan novesztett porszemcsek tavolsaga
-        sizetemp[i] = radsec[i][1];
-        temptemp[i] = 0;				// atmeneti vektor, amely elmeni, hogy hol noveszt uj reszecsket a program
-        masstemp[i][0] = 0;				// atemeneti tomb, amely a novesztett reszecske tomeget tarolja el
-        masstemp[i][1] = 0;				// atmeneti tomb, amely a novesztett reszecske tavolsagat tarolja el
-        mtp[i] = masssecvec[i];
-        if(temp2[i] != 0) step++;			// megszamolja, hogy hany novesztett reszecske van a fuggvenybe valo belepeskor
-        indtemp[i][0] = partsecind[i][3];
-    }
-//    printf("DEBUG [secondaryGrowth]: Initial step (count of existing secondary particles) = %d.\n", step);
-
-//    printf("DEBUG [secondaryGrowth]: Initializing temp, tempmic, rtempvec, hist, histmic, temp2chX arrays.\n");
-
-    #pragma omp parallel for
-
-    for(i=0; i < PARTICLE_NUMBER; i++) {
-        temp[i] = rad[i][0];				// cm-es porszemcsek tavolsaga
-        tempmic[i] = radmicr[i][0];			// mikoronos porszemcsek tavolsaga
-        rtempvec[i] = disk_params->RMIN + i * dd;			// atmeneti r vektor
-        rtempvec[i] = rtempvec[i] + dd / 2.0;		// ez adja a reszecskek eredeti helyet (a generalo programban ide helyeztuk el a reszecskeket	
-        hist[i] = 0;					// cm-es porszemcsek hisztogramja
-        histmic[i] = 0;					// mikoronos porszemcsek hisztogramja
-
-        temp2ch1[i] = temp2[i];
-        temp2ch2[i] = temp2[i+PARTICLE_NUMBER];
-        temp2ch3[i] = temp2[i+2*PARTICLE_NUMBER];
-        temp2ch4[i] = temp2[i+3*PARTICLE_NUMBER];
-    }
-//    printf("DEBUG [secondaryGrowth]: Array initializations complete.\n");
-
-
-/*	Megvizsgalja, hogy az adott tavolsagon hany reszecske talalhato	*/
-/*	Valamiert csak ugy ad jo kepet, ha az if-es felteleket beirom.	*/
-//    printf("DEBUG [secondaryGrowth]: Calling histogram for various particle types.\n");
-    for(i=0;i<PARTICLE_NUMBER;i++) {
-        if(temp[i] != 0) {
-            // printf("DEBUG [secondaryGrowth]: Calling histogram for temp[%d]=%.2e\n", i, temp[i]);
-            histogram(temp[i],hist,dd,disk_params);
-        }
-        if(tempmic[i] != 0) {
-            // printf("DEBUG [secondaryGrowth]: Calling histogram for tempmic[%d]=%.2e\n", i, tempmic[i]);
-            histogram(tempmic[i],histmic,dd,disk_params);
-        }
-        if(temp2ch1[i] != 0) {
-            // printf("DEBUG [secondaryGrowth]: Calling histogram for temp2ch1[%d]=%.2e\n", i, temp2ch1[i]);
-            histogram(temp2ch1[i],hist,dd,disk_params);
-        }
-        if(temp2ch2[i] != 0) {
-            // printf("DEBUG [secondaryGrowth]: Calling histogram for temp2ch2[%d]=%.2e\n", i, temp2ch2[i]);
-            histogram(temp2ch2[i],hist,dd,disk_params);
-        }
-        if(temp2ch3[i] != 0) {
-            // printf("DEBUG [secondaryGrowth]: Calling histogram for temp2ch3[%d]=%.2e\n", i, temp2ch3[i]);
-            histogram(temp2ch3[i],hist,dd,disk_params);
-        }
-        if(temp2ch4[i] != 0) {
-            // printf("DEBUG [secondaryGrowth]: Calling histogram for temp2ch4[%d]=%.2e\n", i, temp2ch4[i]);
-            histogram(temp2ch4[i],hist,dd,disk_params);
-        }
-    }
-//    printf("DEBUG [secondaryGrowth]: All histogram calls completed.\n");
-
-    j=0;
-//    printf("DEBUG [secondaryGrowth]: Checking for new particle growth conditions.\n");
-    for(i=0;i<PARTICLE_NUMBER;i++) {
-/*	Megvizsgalja, hogy kifogyott-e az adott tavolsagrol a cm-es por. Ha igen, viszont az adott tavolsagon van mikronos, akkor novel egy ujabb reszecsket, ha a mikronos por altal kepviselt tomeg az eredeti helyen levo tomeg szazadanal nagyobb	*/
-        if(hist[i] == 0 && histmic[i] != 0) {
-            // printf("DEBUG [secondaryGrowth]: Condition met for i=%d (hist[i]=%d, histmic[i]=%d).\n", i, hist[i], histmic[i]);
-            if(rtempvec[i] != 0) {
-                double sigcurr, siginit;
-                sigcurr = partmicind[i][0]/(2.0 * M_PI * dd * (temp[i] - dd/2.));
-                siginit = partmicind[i][2]/(2.0 * M_PI * dd * (temp[i] - dd/2.));
-                // printf("DEBUG [secondaryGrowth]: sigcurr=%.2e, siginit=%.2e\n", sigcurr, siginit);
-                if(sigcurr >= siginit / 100.) {
-//                    printf("DEBUG [secondaryGrowth]: New particle grown at rtempvec[%d]=%.2e. j=%d\n", i, rtempvec[i], j);
-/*	Uj reszecske novelese --> az adott helyen levo mikronos reszecske tomegenek 75%-at kapja az uj reszecske, ezzel egyutt a mikronos reszecske altal kepviselt reszecske tomege 75%-kal csokken	*/
-                    massmicvec[i] = partmicind[i][0] * (1.-.75);	// a mikronos reszecske tomegenek csokkentese
-                    masstemp[j][1] = partmicind[i][0] * .75;	// novesztett reszecske altal kepviselt tomeg
-                    masstemp[j][0] = rtempvec[i];			// novesztett reszecske altal kepviselt tavolsag
-                    temptemp[j] = -1*rtempvec[i];			// atmeneti vektor, amely elmenti, hogy mely helyen noveszt uj reszecsket a program
-                    j++;
-                }
-            }
-        }
-    }
-//    printf("DEBUG [secondaryGrowth]: Particle growth checks completed. Total new particles tracked by j=%d.\n", j);
-
-/*	A novesztett reszecske tavolsagat tartalmazo atmeneti vektor sorbarendezese	*/
-//    printf("DEBUG [secondaryGrowth]: Calling sort for temptemp (4*PARTICLE_NUMBER = %d).\n", 4 * PARTICLE_NUMBER);
-    sort(temptemp,4*PARTICLE_NUMBER);	
-//    printf("DEBUG [secondaryGrowth]: Sort completed.\n");
-
-//    printf("DEBUG [secondaryGrowth]: Processing sorted temptemp to radsec.\n");
-
-    #pragma omp parallel for
-    for(i=0; i < 4*PARTICLE_NUMBER-step; i++) {
-        if((temptemp[i] != 0)) {
-            radsec[i][0] = -1. * temptemp[i];
-            // printf("DEBUG [secondaryGrowth]: Moving temptemp[%d]=%.2e to radsec[%d][0]=%.2e\n", i, temptemp[i], i, radsec[i][0]);
-            temptemp[i] = 0;
-        } else {
-            radsec[i][0] = 0;
-            radsec[i][1] = 0;
-        }
-    }
-//    printf("DEBUG [secondaryGrowth]: First pass of radsec population completed.\n");
-
-//    printf("DEBUG [secondaryGrowth]: Copying radsec to temptemp and re-sorting.\n");
-
-    #pragma omp parallel for
-
-    for(i=0; i < 4*PARTICLE_NUMBER; i++) {
-        temptemp[i] = radsec[i][0];
-        radsec[i][0] = 0;
-        radsec[i][1] = 0;
-    }
-
-    sort(temptemp,4*PARTICLE_NUMBER);
-//    printf("DEBUG [secondaryGrowth]: Re-sort of temptemp completed.\n");
-//	double index = find_max(indtemp,4*PARTICLE_NUMBER);
-
-//    printf("DEBUG [secondaryGrowth]: Final population of radsec and masssecvec.\n");
-    for(i=0; i < 4*PARTICLE_NUMBER; i++) {
-        if(temptemp[i] >= disk_params->RMIN) {
-            radsec[i][0] = temptemp[i];
-            for(j = 0; j < 4*PARTICLE_NUMBER; j++) {
-                if(masstemp[j][0] == radsec[i][0]) {
-                    masssecvec[i] = masstemp[j][1];
-                    partsecind[i][0] = masssecvec[i];
-                }
-                if(temp2[j] == radsec[i][0]) {
-                    masssecvec[i] = mtp[j];
-                    radsec[i][1] = sizetemp[j];
-                    partsecind[i][3] = indtemp[j][0];
-                    partsecind[i][0] = masssecvec[i];
-                } else {
-                    radsec[i][1] = 1e-6/AU2CM; // This will overwrite if the previous condition wasn't met.
-                }
-            }
-        }
-    }
-//    printf("DEBUG [secondaryGrowth]: Exiting secondaryGrowth function.\n");
-}

@@ -40,7 +40,7 @@ def run_c_program(executable_path, params, arg_mapping, program_name="C Program"
     # Jelenlegi környezeti változók másolása
     current_env = os.environ.copy()
     # Beállítja az OMP_NUM_THREADS-et 1-re
-    current_env["OMP_NUM_THREADS"] = "1"
+    current_env["OMP_NUM_THREADS"] = "4"
     print(f"Setting OMP_NUM_THREADS={current_env['OMP_NUM_THREADS']} for this run.")
     # >>>>> VÉGE A VÁLTOZTATÁSNAK <<<<<
 

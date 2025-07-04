@@ -86,38 +86,28 @@ void free_particle_data(ParticleData_t *p_data) {
 
     free(p_data->radius);
     free(p_data->radiusmicr);
-    free(p_data->radiussec);
     free(p_data->radius_rec);
     free(p_data->massvec);
     free(p_data->massmicrvec);
-    free(p_data->masssecvec);
     free(p_data->partmassind);
     free(p_data->partmassmicrind);
-    free(p_data->partmasssecind);
     free(p_data->sigmad);
     free(p_data->sigmadm);
-    free(p_data->sigmads);
     free(p_data->rdvec);
     free(p_data->rmicvec);
-    free(p_data->rsvec);
 
     // Fontos: a pointereket NULL-ra állítjuk felszabadítás után, hogy elkerüljük a dangling pointereket
     p_data->radius = NULL;
     p_data->radiusmicr = NULL;
-    p_data->radiussec = NULL;
     p_data->radius_rec = NULL;
     p_data->massvec = NULL;
     p_data->massmicrvec = NULL;
-    p_data->masssecvec = NULL;
     p_data->partmassind = NULL;
     p_data->partmassmicrind = NULL;
-    p_data->partmasssecind = NULL;
     p_data->sigmad = NULL;
     p_data->sigmadm = NULL;
-    p_data->sigmads = NULL;
     p_data->rdvec = NULL;
     p_data->rmicvec = NULL;
-    p_data->rsvec = NULL;
     p_data->allocated_particle_number = 0;
 
     fprintf(stderr, "DEBUG [free_particle_data]: Particle arrays freed.\n");
