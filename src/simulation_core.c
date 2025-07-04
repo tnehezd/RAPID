@@ -273,6 +273,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
             if ((fmod(current_time_years, (sim_opts->TMAX / sim_opts->WO)) < deltat || current_time_years == 0) && L - current_time_years < deltat) {
                 printf("\n--- Simulation Time: %.2e years (Internal time: %.2e, L: %.2e) ---\n", current_time_years, t, L);
 
+
                 if (current_time_years != 0) {
                     if (sim_opts->evol == 1) {
                         snprintf(dens_name, MAX_PATH_LEN, "%s/%s/%s_%08d.dat", sim_opts->output_dir_name, LOGS_DIR, FILE_DENS_PREFIX, (int)L);
@@ -285,11 +286,13 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
 
                 // Fájlok megnyitása és fejlécek írása
                 output_files->surface_file = fopen(dens_name, "w");
-                if (output_files->surface_file == NULL) {
-                    fprintf(stderr, "ERROR: Could not open %s for writing.\n", dens_name);
-                } else {
-                    HeaderData_t gas_header_data = {.current_time = current_time_years, .is_initial_data = (current_time_years == 0.0)};
-                    print_file_header(output_files->surface_file, FILE_TYPE_GAS_DENSITY, &gas_header_data);
+                if(L != 0) {
+                    if (output_files->surface_file == NULL) {
+                        fprintf(stderr, "ERROR: Could not open %s for writing.\n", dens_name);
+                    } else {
+                        HeaderData_t gas_header_data = {.current_time = current_time_years, .is_initial_data = (current_time_years == 0.0)};
+                        print_file_header(output_files->surface_file, FILE_TYPE_GAS_DENSITY, &gas_header_data);
+                    }
                 }
 
                 output_files->dust_file = fopen(dust_name, "w");
@@ -322,7 +325,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
 
                 // Gas density output
                 if (sim_opts->evol == 1 || current_time_years == 0) {
-                    Print_Sigma(disk_params, output_files);
+                    if(L != 0) Print_Sigma(disk_params, output_files);
                 }
 
                 // Particle position and size output
