@@ -243,9 +243,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
     do {
         if (sim_opts->drift == 1.) {
             if (sim_opts->twopop == 1) {
-                fprintf(stderr, "DEBUG [tIntegrate]: sim_opts->twopop is ON. Calling secondaryGrowth.\n");
                 secondaryGrowth(p_data.radius, p_data.radiusmicr, p_data.radiussec, p_data.partmassmicrind, p_data.partmasssecind, p_data.massmicrvec, p_data.masssecvec, disk_params);
-                fprintf(stderr, "DEBUG [tIntegrate]: secondaryGrowth completed.\n");
             }
 
             // Radius reciprok számítása a min/max kereséshez
@@ -429,14 +427,12 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
 
             if (sim_opts->twopop == 1.) {
                 optsize = 1;
-                printf("DEBUG [tIntegrate]: sim_opts->twopop is ON. Calling Get_Radius for Micron particles (optsize=%d, PARTICLE_NUMBER=%d).\n", optsize, PARTICLE_NUMBER);
                 Get_Radius(sim_opts->output_dir_name, optsize, p_data.radiusmicr, p_data.sigmadm, p_data.rmicvec, deltat, t, PARTICLE_NUMBER, sim_opts, disk_params);
-                printf("DEBUG [tIntegrate]: Get_Radius for Micron particles completed.\n");
 
                 optsize = 2;
-                printf("DEBUG [tIntegrate]: Calling Get_Radius for Secondary particles (optsize=%d, PARTICLE_NUMBER=%d).\n", optsize, 4 * PARTICLE_NUMBER);
+//                printf("DEBUG [tIntegrate]: Calling Get_Radius for Secondary particles (optsize=%d, PARTICLE_NUMBER=%d).\n", optsize, 4 * PARTICLE_NUMBER);
                 Get_Radius(sim_opts->output_dir_name, optsize, p_data.radiussec, p_data.sigmads, p_data.rsvec, deltat, t, 4 * PARTICLE_NUMBER, sim_opts, disk_params);
-                printf("DEBUG [tIntegrate]: Get_Radius for Secondary particles completed.\n");
+//                printf("DEBUG [tIntegrate]: Get_Radius for Secondary particles completed.\n");
             }
 
             t = t + deltat;

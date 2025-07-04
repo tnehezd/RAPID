@@ -5,7 +5,7 @@
 simulation_parameters:
   # Simulation Control Options (now with boolean flags for clarity)
   enable_dust_drift: true            # Corresponds to 'drift' in C (1.0 for true, 0.0 for false)
-  enable_dust_growth: false           # Corresponds to 'growth' in C
+  enable_dust_growth: true           # Corresponds to 'growth' in C
   enable_gas_evolution: true         # Corresponds to 'evol' in C
   enable_two_dust_populations: true # Corresponds to 'twopop' in C
   fragmentation_velocity: 1000.0     # Corresponds to 'ufrag' in C
