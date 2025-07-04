@@ -83,6 +83,7 @@ void por_be(double radius[][2], double radiusmicr[][2], double *mass, double *ma
         exit(EXIT_FAILURE);
     }
 
+
     char line_buffer[1024];
     for (int k = 0; k < INIT_DATA_HEADER_LINES; k++) {
         if (fgets(line_buffer, sizeof(line_buffer), fin1) == NULL) {
@@ -91,6 +92,7 @@ void por_be(double radius[][2], double radiusmicr[][2], double *mass, double *ma
             exit(EXIT_FAILURE);
         }
     }
+
 
     for (i = 0; i < PARTICLE_NUMBER; i++) {
         if(fscanf(fin1,"%d %lg %Lg %Lg %lg %lg",&dummy,&distance,&reprmass,&reprmassmicr,&particle_radius,&radmicr) == 6) {
@@ -111,7 +113,6 @@ void por_be(double radius[][2], double radiusmicr[][2], double *mass, double *ma
     }
 
     fclose(fin1);
-    printf("\n\n ******* A file beolvasasa sikerult!     ******* \n ******* Uss egy ENTER-t a folytatashoz! ******* \n\n ");
 }
 
 
@@ -491,7 +492,6 @@ void Print_Pormozg_Size(char *size_name, int step, double (*rad)[2], double (*ra
 /* Az időt tartalmazó fájl paramétereinek beolvasása (vagy beállítása) */
 void timePar(double tMax_val, double stepping_val, double current_val, simulation_options_t *sim_opts) {
 
-    printf("\n\n *********** A korong parameterei sikeresen beolvasva!  *********** \n      tmax: %lg, a program %lg evenként írja ki a file-okat\n\n\n", tMax_val, stepping_val);
 
     sim_opts->TMAX = tMax_val;
     sim_opts->WO = tMax_val / stepping_val;

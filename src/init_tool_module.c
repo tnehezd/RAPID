@@ -121,18 +121,16 @@ int run_init_tool(init_tool_options_t *opts, disk_t *disk_params) {
     const double DEFAULT_DISK_MASS_DUST = 0.01;
     if (fabs(opts->disk_mass_dust - DEFAULT_DISK_MASS_DUST) > 1e-9) {
         current_sigma0_gas = calculate_sigma0_from_disk_mass(opts);
-        printf("Sigma0 calculated from total dust disk mass (Md): %Lg M_Sun/AU^2\n", current_sigma0_gas);
+        fprintf(stderr,"Sigma0 calculated from total dust disk mass (Md): %Lg M_Sun/AU^2\n", current_sigma0_gas);
     } else {
         current_sigma0_gas = opts->sigma0_gas_au;
-        printf("Using explicit Sigma0 (gas surface density at 1 AU): %Lg M_Sun/AU^2\n", current_sigma0_gas);
+        fprintf(stderr,"Using explicit Sigma0 (gas surface density at 1 AU): %Lg M_Sun/AU^2\n", current_sigma0_gas);
     }
 
     const double DEFAULT_ONE_SIZE = 1.0;
     if (fabs(opts->one_size_particle_cm - DEFAULT_ONE_SIZE) > 1e-9 && opts->one_size_particle_cm > 0) {
         opts->two_pop_ratio = 1.0;
     }
-
-    printf("Surface density profile exponent: %lg\n", -opts->sigma_exponent);
 
     char full_init_dust_profile_path[MAX_PATH_LEN];
     char full_disk_param_path[MAX_PATH_LEN];
@@ -166,18 +164,18 @@ int run_init_tool(init_tool_options_t *opts, disk_t *disk_params) {
 
     double delta_r_grid = (opts->r_outer - opts->r_inner) / ((double)opts->n_grid_points - 1.0);
 
-    printf("\n--- Simulation Parameters ---\n");
-    printf("Total dust disk mass (Solar Mass): %lg\n", opts->disk_mass_dust);
-    printf("Inner disk edge (AU): %lg\n", opts->r_inner);
-    printf("Outer disk edge (AU): %lg\n", opts->r_outer);
-    printf("Surface density profile exponent: %lg\n", -opts->sigma_exponent);
-    printf("Snowline position (AU): %lg\n", SNOWLINE);
-    printf("Ice factor beyond snowline: %lg\n", ICEFACTOR);
-    printf("Gas surface density at 1 AU (Solar Mass/AU^2): %Lg\n", current_sigma0_gas);
-    printf("Dust to gas ratio: %lg\n", opts->dust_to_gas_ratio);
-    printf("Number of representative particles: %d\n", opts->n_grid_points);
-    printf("Dust particle density (g/cm^3): %lg\n", opts->dust_density_g_cm3);
-    printf("------------------------------\n\n");
+    fprintf(stderr,"\n--- Simulation Parameters ---\n");
+    fprintf(stderr,"Total dust disk mass (Solar Mass): %lg\n", opts->disk_mass_dust);
+    fprintf(stderr,"Inner disk edge (AU): %lg\n", opts->r_inner);
+    fprintf(stderr,"Outer disk edge (AU): %lg\n", opts->r_outer);
+    fprintf(stderr,"Surface density profile exponent: %lg\n", -opts->sigma_exponent);
+    fprintf(stderr,"Snowline position (AU): %lg\n", SNOWLINE);
+    fprintf(stderr,"Ice factor beyond snowline: %lg\n", ICEFACTOR);
+    fprintf(stderr,"Gas surface density at 1 AU (Solar Mass/AU^2): %Lg\n", current_sigma0_gas);
+    fprintf(stderr,"Dust to gas ratio: %lg\n", opts->dust_to_gas_ratio);
+    fprintf(stderr,"Number of representative particles: %d\n", opts->n_grid_points);
+    fprintf(stderr,"Dust particle density (g/cm^3): %lg\n", opts->dust_density_g_cm3);
+    fprintf(stderr,"------------------------------\n\n");
 
     // --- Prepare HeaderData_t for initial files ---
     HeaderData_t initial_header_data;
@@ -370,7 +368,7 @@ int run_init_tool(init_tool_options_t *opts, disk_t *disk_params) {
     fclose(fout_dens);
     fout_dens = NULL;
 
-    printf("Particle data file created (%s). Writing disk parameters file!\n\n", full_init_dust_profile_path);
+    fprintf(stderr,"Particle data file created (%s). Writing disk parameters file!\n\n", full_init_dust_profile_path);
 
     // Write parameters to FILENAME_DISK_PARAM (fout_params)
     // JAVÍTÁS: A SigmaExp értékét negáljuk, hogy a fájlba a valódi, negatív kitevő kerüljön.
@@ -386,7 +384,7 @@ int run_init_tool(init_tool_options_t *opts, disk_t *disk_params) {
     fclose(fout_params);
     fout_params = NULL;
 
-    printf("Disk parameters file created (%s).\n\n", full_disk_param_path);
+    fprintf(stderr,"Disk parameters file created (%s).\n\n", full_disk_param_path);
 
     return 0;
 }

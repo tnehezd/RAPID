@@ -277,7 +277,6 @@ fprintf(stderr, "DEBUG [main]: Evolution (sim_opts.evol=%.2f) or drift (sim_opts
  // Run simulation or exit based on options
  if(sim_opts.evol == 0. && sim_opts.drift == 0.) {
   fprintf(stderr, "DEBUG [main]: Evolution (sim_opts.evol=%.2f) and drift (sim_opts.drift=%.2f) are OFF.\n", sim_opts.evol, sim_opts.drift);
-  printf("A megadott opciok szerint nem szamol sem sigmat, sem driftet, ezert a program kilep!\n\nA kezdeti file-ok a %s mappaban talalhatoak!\n", initial_dir_path);
 
   char dens_name_initial[MAX_PATH_LEN];
   snprintf(dens_name_initial, sizeof(dens_name_initial), "%s/%s", initial_dir_path,FILENAME_INIT_GAS_PROFILE);
