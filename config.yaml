@@ -8,7 +8,7 @@ simulation_parameters:
   enable_dust_growth: true           # Corresponds to 'growth' in C
   enable_gas_evolution: true         # Corresponds to 'evol' in C
   enable_two_dust_populations: true # Corresponds to 'twopop' in C
-  fragmentation_velocity: 1000.0     # Corresponds to 'ufrag' in C
+  fragmentation_velocity: 300.0     # Corresponds to 'ufrag' in C
   fragmentation_factor: 0.37         # Corresponds to 'ffrag' in C
 
   # Grid and Disk Initial Parameters (used if no input_file is provided)
