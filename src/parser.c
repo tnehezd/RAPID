@@ -20,6 +20,7 @@ void create_default_options(options_t *opt) {
 
     // Core disk parameters (also serve as init_tool defaults)
     opt->ngrid_val       = 2000;
+    opt->ndust_val       = 5000;
     opt->rmin_val        = 1.0;
     opt->rmax_val        = 100.0;
     // ADJUST THESE DEFAULTS FOR REALISTIC VALUES, AS DISCUSSED PREVIOUSLY!
@@ -95,6 +96,7 @@ void print_usage() {
     fprintf(stderr, "  -ratio <val>   Ratio of Pop1 dust mass to total dust mass (default: 0.85)\n");
     fprintf(stderr, "  -mic <val>     Micro-sized particle radius (cm, default: 1e-4)\n");
     fprintf(stderr, "  -onesize <val> Use one size particles (0 for distribution, 1 for mic_val, default: 0.0)\n");
+    fprintf(stderr, "  -ndust <val>   The number of the particles, default: 5000)\n");
     // NEW: PDENSITY usage message
     fprintf(stderr, "Other:\n");
     fprintf(stderr, "  -pdensity <val> Dust particle density (g/cm^3, default: 1.6)\n"); // NEW usage line
@@ -148,6 +150,10 @@ int parse_options(int argc, const char **argv, options_t *opt){
             i++;
             if (i < argc) opt->ngrid_val = atoi(argv[i]); else { fprintf(stderr, "Error: Missing value for -n.\n"); return 1; }
 //            fprintf(stderr, "DEBUG [parse_options]:   -n (NGRID) set to %d\n", opt->ngrid_val);
+        }
+        else if (strcmp(argv[i], "-ndust") == 0) { 
+            i++;
+            if (i < argc) opt->ndust_val = atoi(argv[i]); else { fprintf(stderr, "Error: Missing value for -ndust.\n"); return 1; }
         }
         else if (strcmp(argv[i], "-i") == 0) {
             i++;

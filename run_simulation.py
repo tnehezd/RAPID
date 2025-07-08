@@ -36,13 +36,11 @@ def run_c_program(executable_path, params, arg_mapping, program_name="C Program"
     print(f"\n--- Running: {program_name} ---")
     print(f"Command: {' '.join(cmd_args)}")
 
-    # >>>>> IDE JÖN A VÁLTOZTATÁS <<<<<
-    # Jelenlegi környezeti változók másolása
+    # Current environment variables are copied
     current_env = os.environ.copy()
-    # Beállítja az OMP_NUM_THREADS-et 1-re
+    # Set OMP_NUM_THREADS to 1
     current_env["OMP_NUM_THREADS"] = "1"
     print(f"Setting OMP_NUM_THREADS={current_env['OMP_NUM_THREADS']} for this run.")
-    # >>>>> VÉGE A VÁLTOZTATÁSNAK <<<<<
 
     try:
         process = subprocess.Popen(
@@ -53,7 +51,7 @@ def run_c_program(executable_path, params, arg_mapping, program_name="C Program"
             encoding='cp1252',
             errors='replace',
             bufsize=1,
-            env=current_env # <--- FONTOS: Átadjuk a módosított környezeti változókat
+            env=current_env # Pass the modified environment variables
         )
         for line in process.stdout:
             print(line, end='') # Print output in real-time
@@ -108,10 +106,11 @@ def main():
 
         # Core Disk Parameters (also serve as init_tool defaults if no input file)
         "ngrid_val": 2000,
+        "ndust_val": 5000, # <--- MODIFIED: Changed key to 'ndust_val' to match C struct
         "rmin_val": 1.0,
         "rmax_val": 100.0,
         "sigma0_val": 1.0,
-        "sigmap_exp_val": 0.5, # KORRIGÁLVA a C kód alapértelmezettjéhez
+        "sigmap_exp_val": 0.5,
         "alpha_visc_val": 0.01,
         "star_val": 1.0,
         "hasp_val": 0.05,
@@ -137,7 +136,7 @@ def main():
         "ratio_val": 0.85,
         "mic_val": 1e-4,
         "onesize_val": 0.0,
-        "pdensity_val": 1.6, # NEW: PDENSITY alapértelmezett érték
+        "pdensity_val": 1.6,
     }
 
     all_params = default_options.copy()
@@ -158,6 +157,7 @@ def main():
 
             # Grid and Disk Initial Parameters (new names)
             "number_of_grid_points": "ngrid_val",
+            "number_of_dust_particles": "ndust_val", # <--- MODIFIED: Mapped to 'ndust_val'
             "inner_radius_au": "rmin_val",
             "outer_radius_au": "rmax_val",
             "initial_gas_sigma0_msun_per_au2": "sigma0_val",
@@ -179,7 +179,7 @@ def main():
             "population_one_mass_ratio": "ratio_val",
             "micro_particle_size_cm": "mic_val",
             "one_size_particle_value_cm": "onesize_val",
-            "dust_particle_density_g_cm3": "pdensity_val", # NEW: PDENSITY hozzáadva a mappinghez
+            "dust_particle_density_g_cm3": "pdensity_val",
 
             # File I/O Parameters (new names)
             "input_file_path": "input_file",
@@ -199,7 +199,7 @@ def main():
         print("Warning: 'simulation_parameters' section missing from YAML. Using defaults.")
 
     # C program argument mapping
-    # These keys are the keys in the Python `all_params` dictionary (the C struct member names),
+    # These keys are the keys in the Python `all_params` dictionary (now matching C struct member names),
     # and the values are the C program's command-line flags.
     c_arg_mapping = {
         # Simulation Control (C flags are unchanged)
@@ -207,19 +207,20 @@ def main():
         "ufrag": "-ufrag", "ffrag": "-ffrag",
 
         # Grid and Disk Initial Parameters
-        "ngrid_val": "-n", "rmin_val": "-ri", "rmax_val": "-ro",
+        "ngrid_val": "-n", "ndust_val": "-ndust", # <--- MODIFIED: Key is now 'ndust_val'
+        "rmin_val": "-ri", "rmax_val": "-ro",
         "sigma0_val": "-sigma0_init", "sigmap_exp_val": "-index_init",
         "alpha_visc_val": "-alpha_init", "star_val": "-m0_init",
         "hasp_val": "-h_init", "flind_val": "-flind_init",
 
         # Dead Zone Parameters
         "r_dze_i_val": "-rdzei", "r_dze_o_val": "-rdzeo",
-        "dr_dze_i_val": "-drdzei", "dr_dze_o_val": "-drdzeo", # <- Changed typo: -dr_dze_o for consistency
+        "dr_dze_i_val": "-drdzei", "dr_dze_o_val": "-drdzeo",
         "a_mod_val": "-amod",
 
         # Dust Initialization Parameters
         "eps_val": "-eps", "ratio_val": "-ratio", "mic_val": "-mic", "onesize_val": "-onesize",
-        "pdensity_val": "-pdensity", # NEW: PDENSITY parancssori flag
+        "pdensity_val": "-pdensity",
 
         # File I/O Parameters
         "input_file": "-i", "output_dir_name": "-o",

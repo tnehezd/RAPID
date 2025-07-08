@@ -10,7 +10,8 @@ simulation_parameters:
   enable_two_dust_populations: true # Corresponds to 'twopop' in C
   fragmentation_velocity: 300.0     # Corresponds to 'ufrag' in C
   fragmentation_factor: 0.37         # Corresponds to 'ffrag' in C
-
+  number_of_dust_particles: 5000
+ 
   # Grid and Disk Initial Parameters (used if no input_file is provided)
   number_of_grid_points: 1000    # Corresponds to 'ngrid_val' (-n)
   inner_radius_au: 1.0           # Corresponds to 'rmin_val' (-ri)
@@ -23,7 +24,7 @@ simulation_parameters:
   flaring_index: 0.0             # Corresponds to 'flind_val' (-flind_init)
 
   # Dead Zone Parameters
-  deadzone_inner_radius_au: 5.0      # Corresponds to 'r_dze_i_val' (-rdzei)
+  deadzone_inner_radius_au: 2.7      # Corresponds to 'r_dze_i_val' (-rdzei)
   deadzone_outer_radius_au: 24.0      # Corresponds to 'r_dze_o_val' (-rdzeo)
   deadzone_inner_transition_width_mult: 0.1 # Corresponds to 'dr_dze_i_val' (-drdzei)
   deadzone_outer_transition_width_mult: 0.5 # Corresponds to 'dr_dze_o_val' (-drdzeo)
