@@ -41,7 +41,7 @@ void create_default_init_tool_options(init_tool_options_t *def) {
 
     // Dust Parameters
     def->dust_to_gas_ratio = 0.01; // Initial dust-to-gas ratio (epsilon)
-    def->disk_mass_dust = 0.01; // Total dust disk mass [M_Sun]
+    def->disk_mass_dust = 0.0100000001; // Total dust disk mass [M_Sun]
     def->one_size_particle_cm = 1.0; // If > 0, particles are fixed to this size
     def->two_pop_ratio = 0.85; // Ratio of mass in larger particles for two-population model
     def->micro_size_cm = 1e-4; // Size of micron-sized particles for two-population model
