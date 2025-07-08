@@ -95,6 +95,8 @@ typedef struct {
     double WO;      // Write-out interval (TMAX/WO)
     double TCURR;
 
+    int num_dust_particles;
+
     char input_filename[MAX_PATH_LEN];  // Input fájl neve (pl. init_data.dat)
     char output_dir_name[MAX_PATH_LEN]; // Kimeneti könyvtár neve
     char dust_input_filename[MAX_PATH_LEN]; // NEW: Input file for dust particles (e.g., initial_dust_profile.dat for por_be)

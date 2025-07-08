@@ -11,6 +11,8 @@
 typedef struct init_tool_options {
     // Grid and Physical Parameters
     int     n_grid_points;
+    int     n_dust_particles;  // NEW: Number of initial dust particles written to file header
+
     double  r_inner;
     double  r_outer;
     double  sigma0_gas_au;      // Gas surface density at 1 AU [M_Sun/AU^2]
