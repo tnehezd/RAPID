@@ -11,13 +11,13 @@
 
 // Your Project Header Includes
 #include "config.h"       // For PARTICLE_NUMBER, TMAX, WO, RMIN, DT, optdr, sim_opts->twopop, sim_opts->growth, optev, r_dze_i, r_dze_o
-#include "io_utils.h"     // For timePar (though not called in tIntegrate, it's io-related), reszecskek_szama, por_be, Print_Sigma, Print_Pormozg_Size, Print_Mass, Print_Sigmad. Also for globals: filenev1, filenev3, fout, foutmicr, massfil
+#include "io_utils.h"     // For timePar (though not called in tIntegrate, it's io-related), reszecskek_szama, ReadDustFile, Print_Sigma, Print_Pormozg_Size, Print_Mass, Print_Sigmad. Also for globals: filenev1, filenev3, fout, foutmicr, massfil
 #include "disk_model.h"   // If any disk_model functions are called (e.g., Perem indirectly if sigma/press depend on it) - Though not directly visible in tIntegrate, often needed for global disk parameters. Add if you hit implicit declaration for disk_model functions.
 #include "dust_physics.h" // For Count_Mass, secondaryGrowth, find_max, find_min, Get_Sigmad, Get_Radius
 #include "utils.h"        // For time_step, Get_Sigma_P_dP, and potentially other utility functions
 #include "simulation_core.h"
 #include "particle_data.h" // Új include
-
+#include "globals.h"
 
 /*	Kiszamolja az 1D-s driftet	*/
 /*  	dr/dt = St/(1+St*St)*H(r)/r*dlnP/dlnr*cs = St/(1+St*St) * (H/r) * (r/P) * (dP/dr) * cs		*/
@@ -161,8 +161,8 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
             fprintf(stderr, "ERROR: Failed to set up initial output files. Exiting.\n");
             exit(EXIT_FAILURE);
         }
-        // por_be hívása a részecskeadatok beolvasására
-        por_be(p_data.radius, p_data.radiusmicr, p_data.massvec, p_data.massmicrvec, sim_opts->dust_input_filename);
+        // ReadDustFile hívása a részecskeadatok beolvasására
+        ReadDustFile(p_data.radius, p_data.radiusmicr, p_data.massvec, p_data.massmicrvec, sim_opts->dust_input_filename);
     }
 
     // További inicializálások

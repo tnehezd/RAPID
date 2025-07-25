@@ -6,10 +6,12 @@
 
 #include "simulation_types.h"
 #include "particle_data.h"
+#include "config.h"
+#include "globals.h"
 
 // Globális változók deklarációi, ha az io_utils.c fájlban definiálva vannak.
 // Ezeknek EGYEZNIÜK KELL a src/config.h-ban lévő extern deklarációkkal.
-extern FILE *fin1, *fin2, *fmo, *fout, *foutmicr, *fout3, *massfil, *jelfut;
+extern FILE *fin1, *fin2, *fout, *foutmicr, *fout3, *massfil, *jelfut;
 
 // --- FÜGGVÉNY DEKLARÁCIÓK ---
 
@@ -17,12 +19,10 @@ extern FILE *fin1, *fin2, *fmo, *fout, *foutmicr, *fout3, *massfil, *jelfut;
 int reszecskek_szama(const char *filenev);
 
 /* A porreszecskek adatainak beolvasasa */
-// FIX: The original had 'void por_be(double radius[][2], double radiusmicr[][2], double *mass, double *massmicr);'
-// You are missing the 'const char *filename' parameter in the .h file.
-void por_be(double radius[][2], double radiusmicr[][2], double *mass, double *massmicr, const char *filename);
+void ReadDustFile(double radius[][2], double radiusmicr[][2], double *mass, double *massmicr, const char *filename);
 
 /* A sigmat tartalmazo file parametereinek beolvasasa */
-void sigIn(disk_t *disk_params, const char *filename);
+void ReadSigmaFile(disk_t *disk_params, const char *filename);
 
 /* Fuggveny az adott futashoz mappa letrehozasara */
 void Mk_Dir(char *dir_path);

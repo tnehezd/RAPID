@@ -1,0 +1,79 @@
+# Doxyfile - Optimized for Read the Docs with Sphinx and Breathe
+
+# --- Project related tags ---
+PROJECT_NAME           = "RAPID: Representative
+Approach for Particle-Integrated Disks"
+PROJECT_BRIEF          = "Description of the code"
+PROJECT_NUMBER         = 1.0
+
+# --- Build related tags ---
+# Doxygen's primary role here is to generate XML for Breathe.
+OUTPUT_DIRECTORY       = .          # Output to the current directory (docs/)
+GENERATE_HTML          = NO         # No HTML directly from Doxygen
+GENERATE_LATEX         = NO         # No LaTeX
+GENERATE_RTF           = NO         # No RTF
+GENERATE_MAN           = NO         # No Man pages
+GENERATE_XML           = YES        # XML for Breathe
+XML_OUTPUT             = xml        # XML will go into 'docs/xml'
+
+# --- Input related tags ---
+# Specify where Doxygen should look for C source files.
+# This path is relative to the Doxyfile's location (which is in 'docs/').
+INPUT                  = ../src     
+RECURSIVE              = YES        
+FILE_PATTERNS          = *.c *.h    
+
+# Exclude specific patterns or directories from processing to save time and avoid unwanted docs.
+EXCLUDE_PATTERNS       = */build/* \
+                         *~ \
+                         *.bak \
+                         *.bck \
+
+# --- Source Browse related tags ---
+# These settings determine what content Doxygen extracts from the code.
+# Keep them generally broad to capture all relevant API info.
+EXTRACT_ALL            = NO        # Extract all entities, even if not explicitly documented (good for starting)
+EXTRACT_PRIVATE        = NO        # Include private members (e.g., static functions in C)
+EXTRACT_STATIC         = NO        # Include static members
+HIDE_UNDOC_MEMBERS     = YES
+HIDE_UNDOC_MEMBERS     = YES
+HIDE_UNDOC_CLASSES     = YES
+HIDE_FRIEND_COMPOUNDS  = YES
+HIDE_IN_BODY_DOCS      = YES
+
+# --- Warning and quality control ---
+# Useful for identifying parts of the code that still need documentation.
+WARN_NO_PARAMDOC       = YES        # Warn if function parameters aren't documented
+WARN_IF_UNDOCUMENTED   = YES        # Warn if any element is undocumented
+
+# --- Graphviz related tags (turned off as requested) ---
+# Disabling these to minimize output and focus on API documentation.
+HAVE_DOT               = NO         
+GRAPH_LEGEND           = NO
+COLLABORATION_GRAPH    = NO
+CALL_GRAPH             = NO
+CALLER_GRAPH           = NO
+DIRECTORY_GRAPH        = NO
+DOT_FONTNAME           = Helvetica
+DOT_FONTSIZE           = 10
+DOT_PATH               =
+
+# --- Other general settings ---
+INPUT_ENCODING         = UTF-8      
+OUTPUT_LANGUAGE        = English    
+OPTIMIZE_OUTPUT_FOR_C  = YES        # C-specific optimizations for Doxygen output
+MACRO_EXPANSION        = YES        
+EXPAND_ONLY_PREDEF     = NO
+PREDEFINED             =             # Add any project-specific predefined macros here (e.g., MY_DEFINE=1)
+
+# Markdown support using Markdown syntax within the Doxygen comments.
+MARKDOWN_SUPPORT       = YES
+AUTOLINK_SUPPORT       = YES
+
+# Disable source code Browse within Doxygen's own output, as Sphinx will handle this if needed.
+SOURCE_BROWSER         = NO
+INLINE_SOURCES         = NO
+VERBATIM_HEADERS       = NO
+
+# Other minor settings
+DOXYFILE_ENCODING      = UTF-8

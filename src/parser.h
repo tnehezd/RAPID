@@ -4,7 +4,7 @@
 #include <stdbool.h>      // For bool type
 #include "config.h"       // Keep this for other config definitions if needed
 #include "simulation_types.h" // CRITICAL: This line provides MAX_PATH_LEN
-
+#include "globals.h"
 // Define a maximum length for the output directory name
 // Use MAX_PATH_LEN from simulation_types.h for consistency
 #define MAX_OUTPUT_DIR_LEN MAX_PATH_LEN

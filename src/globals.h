@@ -1,31 +1,8 @@
-#ifndef CONFIG_H
-#define CONFIG_H
+#ifndef GLOBALS_H
+#define GLOBALS_H
 
 #include <stdio.h> // Required for FILE* type
 #include <math.h>  // Required for M_PI (for TWOPI macro)
-
-// --- Global Variable Declarations (extern) ---
-// Disk parameters
-
-
-
-// Dust parameters
-extern int PARTICLE_NUMBER;
-
-
-// --- Global File Pointer Declarations (extern) ---
-extern FILE *fmo;
-extern FILE *fout;
-extern FILE *fout2;
-extern FILE *fout3;
-extern FILE *foutmicr;
-extern FILE *massfil;
-extern FILE *jelfut;
-extern FILE *fin1;
-extern FILE *fin2;
-extern FILE *fil;
-
-#include "simulation_types.h"
 
 // --- Physical Constants (Macros) ---
 // These constants have been moved here from init_tool.c for global access,
@@ -46,25 +23,4 @@ extern FILE *fil;
 #define TWOPI (2.0 * M_PI)        // Added parentheses for safety with expressions
 #define KEREK 1.0                 // Make sure this value is correct for your physics model!
 
-
-// --- Global Filename Declarations (extern) ---
-// Define distinct names for gas and dust initial profiles
-extern const char * const FILENAME_INIT_GAS_PROFILE;   // NEW: For initial gas profile
-extern const char * const FILENAME_INIT_DUST_PROFILE;  // NEW: For initial dust profile
-// You can remove or repurpose FILENAME_INIT_PROFILE if it's no longer generic.
-// For clarity, I recommend using the more specific names above.
-
-extern const char * const FILE_DENS_PREFIX;
-extern const char * const FILE_MASS_ACCUMULATE;
-extern const char * const FILE_DUST_EVOLUTION;
-
-extern const char * const FILENAME_DISK_PARAM;
-
-extern const char * const LOGS_DIR;
-extern const char * const CONFIG_DIR;
-
-extern const char *inputsig; // Parameter controls
-
-void initialize_derived_config_variables();
-
-#endif // CONFIG_H
+#endif // GLOBALS_H

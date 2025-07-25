@@ -16,11 +16,12 @@
 
 // Local includes
 #include "io_utils.h"
-#include "config.h"         // Defines PARTICLE_NUMBER, AU2CM, FILENAME_INIT_PROFILE, and declares extern FILE *fin1, extern FILE *jelfut
+#include "config.h"         // Defines PARTICLE_NUMBER, AU2CM, FILENAME_INIT_PROFILE, and declares extern FILE *fin1, extern FILE *info_current_file
 #include "dust_physics.h"   // If needed for any specific function interactions
 #include "utils.h"          // For find_num_zero, find_zero, find_r_annulus
 #include "simulation_types.h" // For disk_t, simulation_options_t, output_files_t
-
+#include "config.h"
+#include "globals.h"
 
 #define INIT_DATA_HEADER_LINES 5
 // --- GLOBAL FILE POINTERS ---
@@ -67,7 +68,7 @@ int reszecskek_szama(const char *filenev) {
 }
 
 /* A porreszecskek adatainak beolvasasa */
-void por_be(double radius[][2], double radiusmicr[][2], double *mass, double *massmicr, const char *filename) {
+void ReadDustFile(double radius[][2], double radiusmicr[][2], double *mass, double *massmicr, const char *filename) {
 
     int i, dummy;
     double distance, particle_radius, radmicr;
@@ -78,7 +79,7 @@ void por_be(double radius[][2], double radiusmicr[][2], double *mass, double *ma
     fin1 = fopen(filename,"r"); // Use the passed filename
 
     if (fin1 == NULL) {
-        fprintf(stderr, "ERROR [por_be]: Could not open file '%s'.\n", filename);
+        fprintf(stderr, "ERROR [ReadDustFile]: Could not open file '%s'.\n", filename);
         perror("Reason");
         exit(EXIT_FAILURE);
     }
@@ -87,7 +88,7 @@ void por_be(double radius[][2], double radiusmicr[][2], double *mass, double *ma
     char line_buffer[1024];
     for (int k = 0; k < INIT_DATA_HEADER_LINES; k++) {
         if (fgets(line_buffer, sizeof(line_buffer), fin1) == NULL) {
-            fprintf(stderr, "ERROR [por_be]: Unexpected end of file while skipping headers in '%s'.\n", filename);
+            fprintf(stderr, "ERROR [ReadDustFile]: Unexpected end of file while skipping headers in '%s'.\n", filename);
             fclose(fin1);
             exit(EXIT_FAILURE);
         }
@@ -116,12 +117,12 @@ void por_be(double radius[][2], double radiusmicr[][2], double *mass, double *ma
 }
 
 
-void sigIn(disk_t *disk_params, const char *filename) {
+void ReadSigmaFile(disk_t *disk_params, const char *filename) {
     const char *input_filename = filename;
 
     FILE *fp = fopen(input_filename, "r");
     if (fp == NULL) {
-        fprintf(stderr, "ERROR [sigIn]: Could not open input file '%s'.\n", input_filename);
+        fprintf(stderr, "ERROR [ReadSigmaFile]: Could not open input file '%s'.\n", input_filename);
         perror("Reason");
         exit(EXIT_FAILURE);
     }
@@ -144,7 +145,7 @@ void sigIn(disk_t *disk_params, const char *filename) {
 
     // Ha a fájl üres vagy csak kommenteket tartalmaz
     if (feof(fp) && (line[0] == '#' || strncmp(line, "---", 3) == 0)) {
-        fprintf(stderr, "ERROR [sigIn]: File '%s' is empty or only contains comments/headers.\n", input_filename);
+        fprintf(stderr, "ERROR [ReadSigmaFile]: File '%s' is empty or only contains comments/headers.\n", input_filename);
         fclose(fp);
         exit(EXIT_FAILURE);
     }
@@ -161,7 +162,7 @@ void sigIn(disk_t *disk_params, const char *filename) {
         if (fscanf(fp, "%lf %lf %lf %lf",
                          &r_val, &sigma_gas_val, &pressure_gas_val, &dpressure_dr_val) != 4) {
             // Hiba kezelése, ha nem tudunk 4 double értéket beolvasni
-            fprintf(stderr, "ERROR [sigIn]: Failed to read 4 values for row %d from file '%s'. File may be malformed or ended unexpectedly.\n", i, input_filename);
+            fprintf(stderr, "ERROR [ReadSigmaFile]: Failed to read 4 values for row %d from file '%s'. File may be malformed or ended unexpectedly.\n", i, input_filename);
             fclose(fp);
             exit(EXIT_FAILURE);
         }
@@ -177,7 +178,7 @@ void sigIn(disk_t *disk_params, const char *filename) {
             disk_params->pressvec[i + 1] = pressure_gas_val;
             disk_params->dpressvec[i + 1] = dpressure_dr_val;
         } else {
-            fprintf(stderr, "WARNING [sigIn]: Attempted to write to out-of-bounds index %d. Max allowed index: %d (NGRID+1).\n", i + 1, disk_params->NGRID + 1);
+            fprintf(stderr, "WARNING [ReadSigmaFile]: Attempted to write to out-of-bounds index %d. Max allowed index: %d (NGRID+1).\n", i + 1, disk_params->NGRID + 1);
         }
 
     }
@@ -219,38 +220,74 @@ void Mk_Dir(char *dir_path) {
     fflush(stderr);
 }
 
-/* Elkészít egy fájlt, ami tartalmazza a jelenlegi futás paramétereit,
- * és hogy melyik mappában találhatóak a fájlok */
-void infoCurrent(const char *nev, const disk_t *disk_params, const simulation_options_t *sim_opts) {
+/**
+ * @brief Generates a summary log file for the current simulation run.
+ * @details This function creates a file (named `summary.dat`)
+ * within the specified output directory. It logs the initial simulation parameters,
+ * including disk properties, central star mass, and Dead Zone Edge (DZE) configurations.
+ *
+ * @param output_dir_name [in] The name of the main output directory for this simulation run.
+ * This directory is typically located under the `LOGS_DIR`.
+ * @param disk_params [in] A pointer to the `disk_t` structure containing disk-specific parameters.
+ * @param sim_opts [in] A pointer to the `simulation_options_t` structure, containing
+ * general simulation options.
+ *
+ * @note This function uses the global `info_current_file` file pointer, which is declared in `config.h`
+ * and defined in `config.c`.
+ */
+void infoCurrent(const char *output_dir_name, const disk_t *disk_params, const simulation_options_t *sim_opts) {
 
-    char full_path[MAX_PATH_LEN]; // Használjuk a MAX_PATH_LEN-t a biztonságos puffereléshez
-    char file_name[100]; // Csak a fájlnév, pl. "run_0.dat"
+    char full_path[MAX_PATH_LEN];
+    char file_name[100];
 
-    sprintf(file_name, "run_%i.dat", (int)sim_opts->TCURR);
     
-    // Építsük fel a teljes elérési utat: <nev>/<file_name>
-    snprintf(full_path, sizeof(full_path), "%s/%s", nev, file_name);
+    sprintf(file_name, "summary.dat");
+    snprintf(full_path, sizeof(full_path), "%s/%s", output_dir_name, file_name);
+
 
     fprintf(stderr, "DEBUG [infoCurrent]: Attempting to open file: '%s'\n", full_path);
 
-    jelfut = fopen(full_path, "w"); // Most már a teljes elérési utat használja
+    // Open the file using the global info_current_file pointer
+    info_current_file = fopen(full_path, "w");
 
-    if (jelfut == NULL) {
+    if (info_current_file == NULL) {
         fprintf(stderr, "ERROR [infoCurrent]: Could not open file '%s'.\n", full_path);
-        perror("Reason");
-        // Don't exit here, it's not critical, just warn and return
+        perror("Reason"); // Prints system error message
+        // Don't exit here, as specified, just warn and return
         return;
     }
 
-    fprintf(jelfut,"A jelenlegi futás a %s mappaban taláható!\n",nev);
-    fprintf(jelfut,"\n\nA korong paraméterei:\nRMIN: %lg, RMAX: %lg\nSIGMA0: %lg, SIGMA_EXP: %lg, flaring index: %lg\nALPHA_VISC: %lg, ALPHA_MOD: %lg\nR_DZE_I: %lg, R_DZE_O: %lg, DR_DZEI: %lg, DR_DZE_O: %lg   (*** R_DZE_I/O = 0, akkor azt a DZE-t nem szimulálja a futás! ***)\n\n\n",
-              disk_params->RMIN, disk_params->RMAX,
-              disk_params->SIGMA0, disk_params->SIGMAP_EXP, disk_params->FLIND,
-              disk_params->alpha_visc, disk_params->a_mod,
-              disk_params->r_dze_i, disk_params->r_dze_o, disk_params->Dr_dze_i, disk_params->Dr_dze_o);
-    fprintf(jelfut,"A központi csillag tömege: %lg M_Sun\n", disk_params->STAR_MASS);
-    fclose(jelfut);
+    // --- Write Simulation Summary to File (English and Formatted) ---
+    fprintf(info_current_file, "--- Simulation Configuration Summary ---\n");
+    fprintf(info_current_file, "Timestamp: %s %s\n", __DATE__, __TIME__); // Add compilation date/time
+    fprintf(info_current_file, "Output files for this run are located in: %s\n\n", output_dir_name);
+
+    fprintf(info_current_file, "--- Disk Parameters ---\n");
+    fprintf(info_current_file, "  Inner Radius (RMIN): %.4g AU\n", disk_params->RMIN);
+    fprintf(info_current_file, "  Outer Radius (RMAX): %.4g AU\n", disk_params->RMAX);
+    fprintf(info_current_file, "  Surface Density at R=1 AU (SIGMA0): %.4e\n", disk_params->SIGMA0);
+    fprintf(info_current_file, "  Surface Density Exponent (SIGMA_EXP): %.4g\n", disk_params->SIGMAP_EXP); // Note: SIGMAP_EXP for disk_params
+    fprintf(info_current_file, "  Flaring Index: %.4g\n", disk_params->FLIND); // Note: FLIND for disk_params
+    fprintf(info_current_file, "  Alpha Viscosity (ALPHA_VISC): %.4g\n", disk_params->alpha_visc);
+    fprintf(info_current_file, "  Alpha Modified (ALPHA_MOD): %.4g\n", disk_params->a_mod);
+    fprintf(info_current_file, "\n");
+
+    fprintf(info_current_file, "--- Dead Zone Edge (DZE) Parameters ---\n");
+    fprintf(info_current_file, "  Inner DZE Radius (R_DZE_I): %.4g AU\n", disk_params->r_dze_i);
+    fprintf(info_current_file, "  Outer DZE Radius (R_DZE_O): %.4g AU\n", disk_params->r_dze_o);
+    fprintf(info_current_file, "  Inner DZE Width (DR_DZEI): %.4g AU\n", disk_params->Dr_dze_i);
+    fprintf(info_current_file, "  Outer DZE Width (DR_DZE_O): %.4g AU\n", disk_params->Dr_dze_o);
+    fprintf(info_current_file, "  Note: R_DZE_I/O = 0 indicates that the corresponding DZE is not simulated.\n");
+    fprintf(info_current_file, "\n");
+
+    fprintf(info_current_file, "--- Central Star Parameters ---\n");
+    fprintf(info_current_file, "  Central Star Mass: %.4g Solar Masses\n", disk_params->STAR_MASS);
+    fprintf(info_current_file, "\n");
+
+    // Close the file
+    fclose(info_current_file);
 }
+
 
 
 void Print_Mass(double step, double (*partmassind)[5], double (*partmassmicrind)[5], double t, double massbtempii, double massbtempoi, double massmtempii, double massmtempoi, 

@@ -10,6 +10,7 @@
 // jó gyakorlat, ha egy header is jelzi a függőségeit, ha a benne lévő deklarációk függenek tőlük.
 #include "config.h"
 #include "simulation_types.h" // Feltételezve, hogy itt található a disk_t definíciója
+#include "globals.h"
 
 // Funkciódeklarációk a disk_model.c-ből
 void disk_param_be(disk_t *disk_params);

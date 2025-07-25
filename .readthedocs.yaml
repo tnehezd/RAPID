@@ -1,0 +1,28 @@
+# .readthedocs.yml
+# This file is located in your_project_root/.readthedocs.yml
+
+version: 2
+
+# Specify the build environment
+build:
+  os: ubuntu-22.04 # Or a newer version like ubuntu-24.04 when available
+  tools:
+    python: "3.9"    # Or the Python version you use (e.g., "3.10", "3.11")
+    doxygen: "1.9.1" # The Doxygen version to use for the build
+
+# Specify Sphinx configuration
+sphinx:
+  configuration: docs/conf.py # Path to your Sphinx conf.py relative to project root
+
+# Specify Python dependencies for the build
+python:
+  install:
+    - requirements: docs/requirements.txt # Installs sphinx, breathe, etc.
+
+# Commands to run *before* Sphinx builds the documentation
+# This is where Doxygen will be executed to generate the XML
+commands:
+  - doxygen docs/Doxyfile # Run Doxygen using the Doxyfile in the 'docs' folder
+
+# Do not build other formats (like PDF/ePub) unless explicitly needed
+formats: []

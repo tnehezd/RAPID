@@ -11,7 +11,7 @@
 #include "dust_physics.h"     // Functions from dust_physics.c
 #include "simulation_core.h"  // Functions from simulation_core.c
 #include "utils.h"            // Functions from utils.h
-
+#include "globals.h"
 // NEW: Include your simulation_types.h and parser.h
 #include "simulation_types.h"
 #include "parser.h"           // Now includes function declarations for parsing
@@ -216,7 +216,7 @@ int main(int argc, const char **argv) {
         snprintf(current_inputsig_file, sizeof(current_inputsig_file), "%s/%s", initial_dir_path, FILENAME_INIT_GAS_PROFILE);
         fprintf(stderr, "DEBUG [main]: Generated GAS profile will be loaded from '%s'.\n", current_inputsig_file);
 
-        // --- Update NGRID from the generated file (critical for sigIn sizing) ---
+        // --- Update NGRID from the generated file (critical for ReadSigmaFile sizing) ---
         // Important: Here, the number of lines should be read from FILENAME_INIT_GAS_PROFILE,
         // provided that init_tool_module.c creates this file.
         disk_params.NGRID = reszecskek_szama(current_inputsig_file);
@@ -234,13 +234,13 @@ int main(int argc, const char **argv) {
 
     // --- CRITICAL STEP: Now that current_inputsig_file is set,
     //     copy it to sim_opts.input_filename for tIntegrate. ---
-    // This is the gas profile filename that sigIn reads.
+    // This is the gas profile filename that ReadSigmaFile reads.
     strncpy(sim_opts.input_filename, current_inputsig_file, MAX_PATH_LEN - 1);
     sim_opts.input_filename[MAX_PATH_LEN - 1] = '\0'; // Ensure null-termination
     fprintf(stderr, "DEBUG [main]: sim_opts.input_filename set to '%s' for tIntegrate (gas profile).\n", sim_opts.input_filename);
 
     // --- NEW PART: Set the dust profile filename in sim_opts.dust_input_filename ---
-    // This is the dust profile filename that por_be reads within tIntegrate.
+    // This is the dust profile filename that ReadDustFile reads within tIntegrate.
     char current_inputdust_file[MAX_PATH_LEN];
     snprintf(current_inputdust_file, sizeof(current_inputdust_file), "%s/%s", initial_dir_path, FILENAME_INIT_DUST_PROFILE);
     strncpy(sim_opts.dust_input_filename, current_inputdust_file, MAX_PATH_LEN - 1);
@@ -255,9 +255,9 @@ int main(int argc, const char **argv) {
     // The disk_param_be call has already occurred in the appropriate branch (if using input file)
     // or was called by run_init_tool (if generating).
 
-    fprintf(stderr, "DEBUG [main]: Initial profile loading for sigIn...\n");
-    sigIn(&disk_params, current_inputsig_file); // This populates disk_params.sigmavec and rvec
-    fprintf(stderr, "DEBUG [main]: sigIn completed. Calling Perem for disk_params.rvec and disk_params.sigmavec...\n");
+    fprintf(stderr, "DEBUG [main]: Initial profile loading for ReadSigmaFile...\n");
+    ReadSigmaFile(&disk_params, current_inputsig_file); // This populates disk_params.sigmavec and rvec
+    fprintf(stderr, "DEBUG [main]: ReadSigmaFile completed. Calling Perem for disk_params.rvec and disk_params.sigmavec...\n");
     Perem(disk_params.rvec, &disk_params);
     Perem(disk_params.sigmavec, &disk_params);
     fprintf(stderr, "DEBUG [main]: Perem calls completed for initial profile.\n");

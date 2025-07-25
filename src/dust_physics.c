@@ -2,7 +2,7 @@
 #include "dust_physics.h" // A saját headerjét mindig includolni kell
 #include "config.h"       // Szükséges lehet a globális konstansokhoz (pl. PARTICLE_NUMBER, AU2CM, RMIN, RMAX, NGRID, G_GRAV_CONST, STAR, SDCONV, CMPSECTOAUPYRP2PI, uFrag, fFrag, PDENSITYDIMLESS, HASP, M_PI, DD, sim_opts->dzone, sim_opts->twopop, RMIN, RMAX, FLIND, alpha_visc, a_mod, r_dze_i, r_dze_o, Dr_dze_i, Dr_dze_o)
 #include "simulation_types.h" // Például output_files_t, disk_t struktúrákhoz
-
+#include "globals.h"
 #include "simulation_core.h" // int_step, Perem, find_num_zero, find_zero, find_r_annulus függvényekhez
 #include "utils.h"           // find_min függvényhez
 #include <stdio.h>

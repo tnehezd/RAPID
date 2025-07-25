@@ -3,9 +3,9 @@
 #include "disk_model.h"   // Saját header
 #include "config.h"       // Globális változók és konstansok
 #include "simulation_types.h"
-
+#include "globals.h"
 #include "dust_physics.h" // press, dpress, u_gas függvények deklarációi
-#include "io_utils.h"     // sigIn és egyéb I/O függvények deklarációi (ha használja)
+#include "io_utils.h"     // ReadSigmaFile és egyéb I/O függvények deklarációi (ha használja)
 #include "utils.h" // Hogy a disk_model.c lássa a Parabola prototípusát
 
 #include <stdio.h>
