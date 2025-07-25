@@ -1,0 +1,319 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.14.0" xml:lang="en-US">
+  <compounddef id="disk__model_8c" kind="file" language="C++">
+    <compoundname>disk_model.c</compoundname>
+    <includes refid="disk__model_8h" local="yes">disk_model.h</includes>
+    <includes refid="config_8h" local="yes">config.h</includes>
+    <includes refid="simulation__types_8h" local="yes">simulation_types.h</includes>
+    <includes refid="globals_8h" local="yes">globals.h</includes>
+    <includes refid="dust__physics_8h" local="yes">dust_physics.h</includes>
+    <includes refid="io__utils_8h" local="yes">io_utils.h</includes>
+    <includes refid="utils_8h" local="yes">utils.h</includes>
+    <includes local="no">stdio.h</includes>
+    <includes local="no">stdlib.h</includes>
+    <includes local="no">math.h</includes>
+    <includes local="no">string.h</includes>
+    <incdepgraph>
+      <node id="2">
+        <label>config.h</label>
+        <link refid="config_8h"/>
+        <childnode refid="3" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+      </node>
+      <node id="1">
+        <label>/Users/tnehezd/Documents/Munka/dust_drift/src/disk_model.c</label>
+        <link refid="disk__model_8c"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+        <childnode refid="3" relation="include">
+        </childnode>
+        <childnode refid="5" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+        <childnode refid="6" relation="include">
+        </childnode>
+      </node>
+      <node id="4">
+        <label>math.h</label>
+      </node>
+      <node id="3">
+        <label>stdio.h</label>
+      </node>
+      <node id="5">
+        <label>stdlib.h</label>
+      </node>
+      <node id="6">
+        <label>string.h</label>
+      </node>
+    </incdepgraph>
+    <sectiondef kind="func">
+      <memberdef kind="function" id="disk__model_8c_1abf140e9d7043217c9ffee933a6544484" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void disk_param_be</definition>
+        <argsstring>(disk_t *disk_params)</argsstring>
+        <name>disk_param_be</name>
+        <param>
+          <type>disk_t *</type>
+          <declname>disk_params</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/disk_model.c" line="19" column="6" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/disk_model.c" bodystart="19" bodyend="39"/>
+      </memberdef>
+      <memberdef kind="function" id="disk__model_8c_1a44b53a42e5e3d66860cd187ad5dbae70" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void load_R</definition>
+        <argsstring>(disk_t *disk_params)</argsstring>
+        <name>load_R</name>
+        <param>
+          <type>disk_t *</type>
+          <declname>disk_params</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/disk_model.c" line="45" column="6" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/disk_model.c" bodystart="45" bodyend="52"/>
+      </memberdef>
+      <memberdef kind="function" id="disk__model_8c_1a094064c9bdcbb84c5bb2ca0ea0257ddb" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void Initial_Profile</definition>
+        <argsstring>(disk_t *disk_params)</argsstring>
+        <name>Initial_Profile</name>
+        <param>
+          <type>disk_t *</type>
+          <declname>disk_params</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/disk_model.c" line="55" column="6" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/disk_model.c" bodystart="55" bodyend="66"/>
+      </memberdef>
+      <memberdef kind="function" id="disk__model_8c_1a11b794b27ee10d5d7ce0f4f42970964e" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void Initial_Press</definition>
+        <argsstring>(disk_t *disk_params)</argsstring>
+        <name>Initial_Press</name>
+        <param>
+          <type>disk_t *</type>
+          <declname>disk_params</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/disk_model.c" line="68" column="6" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/disk_model.c" bodystart="68" bodyend="78"/>
+      </memberdef>
+      <memberdef kind="function" id="disk__model_8c_1a3356a7c5350cf3d8ea7b0eb31fc5d023" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void Initial_dPress</definition>
+        <argsstring>(disk_t *disk_params)</argsstring>
+        <name>Initial_dPress</name>
+        <param>
+          <type>disk_t *</type>
+          <declname>disk_params</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/disk_model.c" line="80" column="6" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/disk_model.c" bodystart="80" bodyend="86"/>
+      </memberdef>
+      <memberdef kind="function" id="disk__model_8c_1a086a5cec0a9a1b68ba017556afcfafb8" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void Initial_Ugas</definition>
+        <argsstring>(disk_t *disk_params)</argsstring>
+        <name>Initial_Ugas</name>
+        <param>
+          <type>disk_t *</type>
+          <declname>disk_params</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/disk_model.c" line="89" column="6" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/disk_model.c" bodystart="89" bodyend="93"/>
+      </memberdef>
+      <memberdef kind="function" id="disk__model_8c_1a913539bf723cb2cab11596e3b1969638" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void loadSigDust</definition>
+        <argsstring>(double radin[][2], double *massin, double out[][3], int n, const disk_t *disk_params)</argsstring>
+        <name>loadSigDust</name>
+        <param>
+          <type>double</type>
+          <declname>radin</declname>
+          <array>[][2]</array>
+        </param>
+        <param>
+          <type>double *</type>
+          <declname>massin</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>out</declname>
+          <array>[][3]</array>
+        </param>
+        <param>
+          <type>int</type>
+          <declname>n</declname>
+        </param>
+        <param>
+          <type>const disk_t *</type>
+          <declname>disk_params</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/disk_model.c" line="97" column="6" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/disk_model.c" bodystart="97" bodyend="120"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"><highlight class="comment">//<sp/>src/disk_model.c</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="2"><highlight class="normal"></highlight></codeline>
+<codeline lineno="3"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;disk_model.h&quot;</highlight><highlight class="normal"><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Saját<sp/>header</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="4"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;<ref refid="config_8h" kindref="compound">config.h</ref>&quot;</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Globális<sp/>változók<sp/>és<sp/>konstansok</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="5"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;simulation_types.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="6"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;globals.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="7"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;dust_physics.h&quot;</highlight><highlight class="normal"><sp/></highlight><highlight class="comment">//<sp/>press,<sp/>dpress,<sp/>u_gas<sp/>függvények<sp/>deklarációi</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="8"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;io_utils.h&quot;</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>ReadSigmaFile<sp/>és<sp/>egyéb<sp/>I/O<sp/>függvények<sp/>deklarációi<sp/>(ha<sp/>használja)</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="9"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;utils.h&quot;</highlight><highlight class="normal"><sp/></highlight><highlight class="comment">//<sp/>Hogy<sp/>a<sp/>disk_model.c<sp/>lássa<sp/>a<sp/>Parabola<sp/>prototípusát</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="10"><highlight class="normal"></highlight></codeline>
+<codeline lineno="11"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;stdio.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="12"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;stdlib.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="13"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;math.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="14"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;string.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="15"><highlight class="normal"></highlight></codeline>
+<codeline lineno="16"><highlight class="normal"></highlight></codeline>
+<codeline lineno="17"><highlight class="normal"></highlight></codeline>
+<codeline lineno="18"><highlight class="normal"></highlight><highlight class="comment">/*<sp/><sp/>A<sp/>korong<sp/>parametereinek<sp/>beolvasasa<sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="19"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>disk_param_be(disk_t<sp/>*disk_params)<sp/>{</highlight></codeline>
+<codeline lineno="20"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Ellenőrzés,<sp/>ha<sp/>a<sp/>pointer<sp/>NULL<sp/>(jó<sp/>gyakorlat)</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="21"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(disk_params<sp/>==<sp/>NULL)<sp/>{</highlight></codeline>
+<codeline lineno="22"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>fprintf(stderr,<sp/></highlight><highlight class="stringliteral">&quot;ERROR<sp/>[disk_param_be]:<sp/>Received<sp/>NULL<sp/>disk_params<sp/>pointer.\n&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="23"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>exit(EXIT_FAILURE);</highlight></codeline>
+<codeline lineno="24"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="25"><highlight class="normal"></highlight></codeline>
+<codeline lineno="26"><highlight class="normal"><sp/><sp/><sp/><sp/>fprintf(stderr,<sp/></highlight><highlight class="stringliteral">&quot;DEBUG<sp/>[disk_param_be]:<sp/>Calculating<sp/>derived<sp/>disk<sp/>parameters<sp/>and<sp/>writing<sp/>to<sp/>output<sp/>file.\n&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="27"><highlight class="normal"></highlight></codeline>
+<codeline lineno="28"><highlight class="normal"></highlight></codeline>
+<codeline lineno="29"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>A<sp/>PDENSITYDIMLESS<sp/>számítása<sp/>a<sp/>PDENSITY,<sp/>csillagtömeg<sp/>és<sp/>más<sp/>konstansok<sp/>alapján</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="30"><highlight class="normal"><sp/><sp/><sp/><sp/>disk_params-&gt;PDENSITYDIMLESS<sp/>=<sp/>disk_params-&gt;PDENSITY<sp/>/<sp/>SUN2GR<sp/>*<sp/>AU2CM<sp/>*<sp/>AU2CM<sp/>*<sp/>AU2CM;</highlight></codeline>
+<codeline lineno="31"><highlight class="normal"></highlight></codeline>
+<codeline lineno="32"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Az<sp/>eredeti<sp/>kódodban<sp/>volt<sp/>egy<sp/>másik<sp/>képlet<sp/>is,<sp/>ami<sp/>a<sp/>SUN2GR-t<sp/>használta:</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="33"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>disk_params-&gt;PDENSITYDIMLESS<sp/>=<sp/>disk_params-&gt;PDENSITY<sp/>/<sp/>SUN2GR<sp/>*<sp/>AU2CM<sp/>*<sp/>AU2CM<sp/>*<sp/>AU2CM;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="34"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Kérlek,<sp/>ellenőrizd,<sp/>melyik<sp/>a<sp/>helyes<sp/>dimenziómentesítés<sp/>a<sp/>te<sp/>modellben!</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="35"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>A<sp/>fenti<sp/>verziót<sp/>használtam,<sp/>mert<sp/>az<sp/>tűnik<sp/>konzisztensebbnek<sp/>azzal,<sp/>ahogy<sp/>a<sp/>G_GRAV_CONST-t<sp/>is<sp/>használtad.</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="36"><highlight class="normal"></highlight></codeline>
+<codeline lineno="37"><highlight class="normal"><sp/><sp/><sp/><sp/>fprintf(stderr,<sp/></highlight><highlight class="stringliteral">&quot;DEBUG<sp/>[disk_param_be]:<sp/>Calculated<sp/>PDENSITY<sp/>=<sp/>%.2e,<sp/>PDENSITYDIMLESS<sp/>=<sp/>%.2e.\n&quot;</highlight><highlight class="normal">,</highlight></codeline>
+<codeline lineno="38"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>disk_params-&gt;PDENSITY,<sp/>disk_params-&gt;PDENSITYDIMLESS);</highlight></codeline>
+<codeline lineno="39"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="40"><highlight class="normal"></highlight></codeline>
+<codeline lineno="41"><highlight class="normal"></highlight></codeline>
+<codeline lineno="42"><highlight class="normal"></highlight></codeline>
+<codeline lineno="43"><highlight class="normal"></highlight></codeline>
+<codeline lineno="44"><highlight class="normal"></highlight><highlight class="comment">/*<sp/><sp/>r<sp/>vektor<sp/>(gridcellák)<sp/>inicializálása<sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="45"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>load_R(disk_t<sp/>*disk_params)<sp/>{</highlight></codeline>
+<codeline lineno="46"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="47"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>i;</highlight></codeline>
+<codeline lineno="48"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">for</highlight><highlight class="normal">(i<sp/>=<sp/>0;<sp/>i<sp/>&lt;=<sp/>disk_params-&gt;NGRID+1;<sp/>i++)<sp/>{<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/><sp/>load<sp/>an<sp/>array<sp/>of<sp/>radii<sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="49"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>disk_params-&gt;rvec[i]<sp/>=<sp/>disk_params-&gt;RMIN<sp/>+<sp/>(i-1)<sp/>*<sp/>disk_params-&gt;DD;</highlight></codeline>
+<codeline lineno="50"><highlight class="normal"></highlight><highlight class="comment">//<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>fprintf(stderr,<sp/>&quot;DEBUG<sp/>[load_R]:<sp/>r:<sp/>%lg\n&quot;,<sp/>disk_params-&gt;rvec[i]);</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="51"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="52"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="53"><highlight class="normal"></highlight></codeline>
+<codeline lineno="54"><highlight class="normal"></highlight><highlight class="comment">/*<sp/><sp/>a<sp/>sigmara<sp/>kezdeti<sp/>profil<sp/>betoltese<sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="55"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>Initial_Profile(disk_t<sp/>*disk_params){<sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/><sp/>initial<sp/>profile<sp/>of<sp/>sigma<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="56"><highlight class="normal"></highlight></codeline>
+<codeline lineno="57"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>i;</highlight></codeline>
+<codeline lineno="58"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="59"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">for</highlight><highlight class="normal">(i<sp/>=<sp/>1;<sp/>i<sp/>&lt;=<sp/>disk_params-&gt;NGRID;<sp/>i++)<sp/>{</highlight></codeline>
+<codeline lineno="60"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>disk_params-&gt;sigmavec[i]<sp/>=<sp/>disk_params-&gt;SIGMA0<sp/>*<sp/>pow(disk_params-&gt;rvec[i],disk_params-&gt;SIGMAP_EXP);<sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/><sp/>sigma0*r^x<sp/>(x<sp/>could<sp/>be<sp/>eg.<sp/>-1/2)<sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="61"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="62"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="63"><highlight class="normal"></highlight></codeline>
+<codeline lineno="64"><highlight class="normal"><sp/><sp/><sp/><sp/>Perem(disk_params-&gt;sigmavec,disk_params);</highlight></codeline>
+<codeline lineno="65"><highlight class="normal"></highlight></codeline>
+<codeline lineno="66"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="67"><highlight class="normal"></highlight></codeline>
+<codeline lineno="68"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>Initial_Press(disk_t<sp/>*disk_params){<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/><sp/>initial<sp/>profile<sp/>of<sp/>pressure<sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="69"><highlight class="normal"></highlight></codeline>
+<codeline lineno="70"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>i;</highlight></codeline>
+<codeline lineno="71"><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="72"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">for</highlight><highlight class="normal">(i<sp/>=<sp/>1;<sp/>i<sp/>&lt;=<sp/>disk_params-&gt;NGRID;<sp/>i++)<sp/>{</highlight></codeline>
+<codeline lineno="73"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>disk_params-&gt;pressvec[i]<sp/>=<sp/>press(disk_params-&gt;sigmavec[i],disk_params-&gt;rvec[i],disk_params);</highlight></codeline>
+<codeline lineno="74"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="75"><highlight class="normal"><sp/><sp/><sp/><sp/>Perem(disk_params-&gt;pressvec,disk_params);</highlight></codeline>
+<codeline lineno="76"><highlight class="normal"></highlight></codeline>
+<codeline lineno="77"><highlight class="normal"></highlight></codeline>
+<codeline lineno="78"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="79"><highlight class="normal"></highlight></codeline>
+<codeline lineno="80"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>Initial_dPress(disk_t<sp/>*disk_params){<sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/><sp/>initial<sp/>profile<sp/>of<sp/>pressure<sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="81"><highlight class="normal"></highlight></codeline>
+<codeline lineno="82"><highlight class="normal"><sp/><sp/><sp/><sp/>dpress(disk_params);</highlight></codeline>
+<codeline lineno="83"><highlight class="normal"><sp/><sp/><sp/><sp/>Perem(disk_params-&gt;dpressvec,disk_params);</highlight></codeline>
+<codeline lineno="84"><highlight class="normal"></highlight></codeline>
+<codeline lineno="85"><highlight class="normal"></highlight></codeline>
+<codeline lineno="86"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="87"><highlight class="normal"></highlight></codeline>
+<codeline lineno="88"><highlight class="normal"></highlight><highlight class="comment">/*<sp/><sp/>ug<sp/>vektor<sp/>feltoltese<sp/>az<sp/>u_gas<sp/>ertekevel<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="89"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>Initial_Ugas(disk_t<sp/>*disk_params){<sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/><sp/>initial<sp/>profile<sp/>of<sp/>pressure<sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="90"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="91"><highlight class="normal"><sp/><sp/><sp/><sp/>u_gas(disk_params);</highlight></codeline>
+<codeline lineno="92"><highlight class="normal"><sp/><sp/><sp/><sp/>Perem(disk_params-&gt;ugvec,disk_params);</highlight></codeline>
+<codeline lineno="93"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="94"><highlight class="normal"></highlight></codeline>
+<codeline lineno="95"><highlight class="normal"></highlight></codeline>
+<codeline lineno="96"><highlight class="normal"></highlight></codeline>
+<codeline lineno="97"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>loadSigDust(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>radin[][2],<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>*massin,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>out[][3],<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>n,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>disk_t<sp/>*disk_params)<sp/>{</highlight></codeline>
+<codeline lineno="98"><highlight class="normal"></highlight></codeline>
+<codeline lineno="99"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>i;</highlight></codeline>
+<codeline lineno="100"><highlight class="normal"></highlight></codeline>
+<codeline lineno="101"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">for</highlight><highlight class="normal">(i=0;i&lt;n;i++){</highlight></codeline>
+<codeline lineno="102"><highlight class="normal"></highlight></codeline>
+<codeline lineno="103"><highlight class="normal"></highlight><highlight class="comment">/*<sp/><sp/>cm-es<sp/>por<sp/>feluletisurusegenek<sp/>kiszamolasa<sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="104"><highlight class="normal"></highlight><highlight class="comment">/*<sp/><sp/>ha<sp/>a<sp/>reszecske<sp/>tavolsaga<sp/>nagyobb,<sp/>mint<sp/>disk_params-&gt;RMIN,<sp/>azaz<sp/>a<sp/>szamolas<sp/>tartomanyan<sp/>belul<sp/>van,<sp/>a<sp/>feluletisuruseget<sp/>az<sp/>altala<sp/>kepviselt<sp/>tomegbol<sp/>szamolja<sp/>vissza<sp/>a<sp/>program<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="105"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">((radin[i][0]<sp/>&gt;=<sp/>disk_params-&gt;RMIN))<sp/>{</highlight></codeline>
+<codeline lineno="106"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>out[i][0]<sp/>=<sp/>massin[i]<sp/>/<sp/>(2.<sp/>*<sp/>(radin[i][0]-disk_params-&gt;DD/2.)<sp/>*<sp/>M_PI<sp/>*<sp/>disk_params-&gt;DD);<sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>sigma<sp/>=<sp/>m<sp/>/(2<sp/>*<sp/>r<sp/>*<sp/>pi<sp/>*<sp/>dr)<sp/>--&gt;<sp/>itt<sp/>a<sp/>dr<sp/>az<sp/>a<sp/>tavolsag,<sp/>ami<sp/>porreszecske<sp/>&quot;generalo&quot;<sp/>programban<sp/>az<sp/>eredeti<sp/>gridfelbontas</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="107"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>out[i][1]<sp/>=<sp/>radin[i][0];<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>elmenti<sp/>a<sp/>reszecske<sp/>tavolsagat<sp/>is</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="108"><highlight class="normal"></highlight></codeline>
+<codeline lineno="109"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>rmid<sp/>=<sp/>(radin[i][0]<sp/>-<sp/>disk_params-&gt;RMIN)<sp/>/<sp/>disk_params-&gt;DD;<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/><sp/>The<sp/>integer<sp/>part<sp/>of<sp/>this<sp/>gives<sp/>at<sp/>which<sp/>index<sp/>is<sp/>the<sp/>body<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="110"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>rindex<sp/>=<sp/>(int)<sp/>floor(rmid);<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">/*<sp/><sp/>Ez<sp/>az<sp/>rmid<sp/>egesz<sp/>resze<sp/>--&gt;<sp/>floor<sp/>egeszreszre<sp/>kerekit<sp/>lefele,<sp/>a<sp/>+0.5-el<sp/>elerheto,<sp/>hogy<sp/>.5<sp/>felett<sp/>felfele,<sp/>.5<sp/>alatt<sp/>lefele<sp/>kerekitsen<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="111"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>out[i][2]<sp/>=<sp/>(double)<sp/>rindex;</highlight></codeline>
+<codeline lineno="112"><highlight class="normal"></highlight></codeline>
+<codeline lineno="113"><highlight class="normal"></highlight><highlight class="comment">/*<sp/><sp/>ha<sp/>a<sp/>reszecske<sp/>disk_params-&gt;RMIN-en<sp/>belul<sp/>van,<sp/>akkor<sp/>az<sp/>o<sp/>&quot;tavolsagaban&quot;<sp/>a<sp/>feluletisuruseg<sp/>0<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline lineno="114"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}<sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"><sp/>{</highlight></codeline>
+<codeline lineno="115"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>out[i][0]<sp/>=<sp/>0;</highlight></codeline>
+<codeline lineno="116"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>out[i][1]<sp/>=<sp/>0;<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>r<sp/>=<sp/>0,<sp/>mert<sp/>ha<sp/>disk_params-&gt;RMIN-en<sp/>belulre<sp/>kerult<sp/>a<sp/>reszecske,<sp/>akkor<sp/>a<sp/>program<sp/>automatikusan<sp/>kinullazza<sp/>a<sp/>reszecske<sp/>tavolsagat.<sp/>Itt<sp/>tehat<sp/>a<sp/>sigdtemp[i][1]<sp/>=<sp/>0<sp/>lesz!</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="117"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>out[i][2]<sp/>=<sp/>0;</highlight></codeline>
+<codeline lineno="118"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="119"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="120"><highlight class="normal">}</highlight></codeline>
+    </programlisting>
+    <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/disk_model.c"/>
+  </compounddef>
+</doxygen>

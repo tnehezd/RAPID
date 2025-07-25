@@ -1,0 +1,955 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.14.0" xml:lang="en-US">
+  <compounddef id="simulation__core_8c" kind="file" language="C++">
+    <compoundname>simulation_core.c</compoundname>
+    <includes local="no">stdio.h</includes>
+    <includes local="no">stdlib.h</includes>
+    <includes local="no">math.h</includes>
+    <includes local="no">string.h</includes>
+    <includes local="no">omp.h</includes>
+    <includes refid="config_8h" local="yes">config.h</includes>
+    <includes refid="io__utils_8h" local="yes">io_utils.h</includes>
+    <includes refid="disk__model_8h" local="yes">disk_model.h</includes>
+    <includes refid="dust__physics_8h" local="yes">dust_physics.h</includes>
+    <includes refid="utils_8h" local="yes">utils.h</includes>
+    <includes refid="simulation__core_8h" local="yes">simulation_core.h</includes>
+    <includes refid="particle__data_8h" local="yes">particle_data.h</includes>
+    <includes refid="globals_8h" local="yes">globals.h</includes>
+    <incdepgraph>
+      <node id="7">
+        <label>config.h</label>
+        <link refid="config_8h"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+      </node>
+      <node id="1">
+        <label>/Users/tnehezd/Documents/Munka/dust_drift/src/simulation_core.c</label>
+        <link refid="simulation__core_8c"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+        <childnode refid="3" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+        <childnode refid="5" relation="include">
+        </childnode>
+        <childnode refid="6" relation="include">
+        </childnode>
+        <childnode refid="7" relation="include">
+        </childnode>
+      </node>
+      <node id="4">
+        <label>math.h</label>
+      </node>
+      <node id="6">
+        <label>omp.h</label>
+      </node>
+      <node id="2">
+        <label>stdio.h</label>
+      </node>
+      <node id="3">
+        <label>stdlib.h</label>
+      </node>
+      <node id="5">
+        <label>string.h</label>
+      </node>
+    </incdepgraph>
+    <sectiondef kind="func">
+      <memberdef kind="function" id="simulation__core_8c_1a8059490fcc33d6d0c5c5ea6b6af42195" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void eqrhs</definition>
+        <argsstring>(double pradius, double dp, double sigma, double ug, double r, double *drdt, const disk_t *disk_params)</argsstring>
+        <name>eqrhs</name>
+        <param>
+          <type>double</type>
+          <declname>pradius</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>dp</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>sigma</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>ug</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>r</declname>
+        </param>
+        <param>
+          <type>double *</type>
+          <declname>drdt</declname>
+        </param>
+        <param>
+          <type>const disk_t *</type>
+          <declname>disk_params</declname>
+        </param>
+        <briefdescription>
+<para>Kiszámítja az 1D-s részecske drift sebességét (dr/dt). </para>
+        </briefdescription>
+        <detaileddescription>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pradius</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>A részecske sugara [AU]. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>dp</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Nyomásgradiens (dP/dr) [dimenziótlan]. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>sigma</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>A gáz felszíni sűrűsége [CGS]. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>ug</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>A gáz sebessége (valószínűleg a viszkózus ráta) [cm/s]. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>r</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Aktuális sugárpozíció [AU]. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>drdt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>A kimeneti drift sebesség [AU/s]. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>disk_params</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>A diszk paramétereit tartalmazó struktúra. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>void (az eredményt a drdt pointerbe írja). </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/simulation_core.c" line="24" column="6" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/simulation_core.c" bodystart="24" bodyend="35"/>
+      </memberdef>
+      <memberdef kind="function" id="simulation__core_8c_1aa5644fc6376d92ef7d17f3e73a3a40e9" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>double</type>
+        <definition>double Coeff_1</definition>
+        <argsstring>(double r, const disk_t *disk_params)</argsstring>
+        <name>Coeff_1</name>
+        <param>
+          <type>double</type>
+          <declname>r</declname>
+        </param>
+        <param>
+          <type>const disk_t *</type>
+          <declname>disk_params</declname>
+        </param>
+        <briefdescription>
+<para>Kiszámítja a viszkozitással kapcsolatos Coeff_1 együtthatót. A diffúziós egyenlet 3 * nu tagja. </para>
+        </briefdescription>
+        <detaileddescription>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>r</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Aktuális sugárpozíció [AU]. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>disk_params</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>A diszk paramétereit tartalmazó struktúra. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>Az Coeff_1 értéke. </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/simulation_core.c" line="39" column="8" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/simulation_core.c" bodystart="39" bodyend="43"/>
+      </memberdef>
+      <memberdef kind="function" id="simulation__core_8c_1a4dae2be6415b8c7d0806ae4923477da4" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>double</type>
+        <definition>double Coeff_2</definition>
+        <argsstring>(double r, const disk_t *disk_params)</argsstring>
+        <name>Coeff_2</name>
+        <param>
+          <type>double</type>
+          <declname>r</declname>
+        </param>
+        <param>
+          <type>const disk_t *</type>
+          <declname>disk_params</declname>
+        </param>
+        <briefdescription>
+<para>Kiszámítja a viszkozitással kapcsolatos Coeff_2 együtthatót. A diffúziós egyenlet 9 * nu / (2 * r) tagja. </para>
+        </briefdescription>
+        <detaileddescription>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>r</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Aktuális sugárpozíció [AU]. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>disk_params</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>A diszk paramétereit tartalmazó struktúra. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>Az Coeff_2 értéke. </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/simulation_core.c" line="46" column="8" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/simulation_core.c" bodystart="46" bodyend="50"/>
+      </memberdef>
+      <memberdef kind="function" id="simulation__core_8c_1a14cf486befcc4cf9db7a86930c262a1d" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>double</type>
+        <definition>double time_step</definition>
+        <argsstring>(const disk_t *disk_params)</argsstring>
+        <name>time_step</name>
+        <param>
+          <type>const disk_t *</type>
+          <declname>disk_params</declname>
+        </param>
+        <briefdescription>
+<para>Kiszámítja a minimális időlépést a szimulációhoz. </para>
+        </briefdescription>
+        <detaileddescription>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>rvec</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>A diszk sugárkoordinátáinak vektora. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>disk_params</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>A diszk paramétereit tartalmazó struktúra. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>A számított időlépés. </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/simulation_core.c" line="52" column="8" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/simulation_core.c" bodystart="52" bodyend="67"/>
+      </memberdef>
+      <memberdef kind="function" id="simulation__core_8c_1a2619309eea001cc44dc83e45a7195bb1" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void int_step</definition>
+        <argsstring>(double time, double prad, const double *sigmad, const double *rdvec, double step, double y, double *ynew, double *pradnew, const disk_t *disk_params, const simulation_options_t *sim_opts)</argsstring>
+        <name>int_step</name>
+        <param>
+          <type>double</type>
+          <declname>time</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>prad</declname>
+        </param>
+        <param>
+          <type>const double *</type>
+          <declname>sigmad</declname>
+        </param>
+        <param>
+          <type>const double *</type>
+          <declname>rdvec</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>step</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>y</declname>
+        </param>
+        <param>
+          <type>double *</type>
+          <declname>ynew</declname>
+        </param>
+        <param>
+          <type>double *</type>
+          <declname>pradnew</declname>
+        </param>
+        <param>
+          <type>const disk_t *</type>
+          <declname>disk_params</declname>
+        </param>
+        <param>
+          <type>const simulation_options_t *</type>
+          <declname>sim_opts</declname>
+        </param>
+        <briefdescription>
+<para>Egyetlen Runge-Kutta 4 lépést hajt végre a részecske mozgására. </para>
+        </briefdescription>
+        <detaileddescription>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>time</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Aktuális szimulációs idő. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>prad</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Aktuális részecskesugár. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pressvec</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Nyomás vektor a diszk rácspontjain. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>dpressvec</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Nyomásgradiens vektor a diszk rácspontjain. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>sigmavec</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Gáz felszíni sűrűség vektor a diszk rácspontjain. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>sigmad</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Por felszíni sűrűség (adott részecske rácspontján). </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>rdvec</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>A por részecskék radiális koordinátái. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>rvec</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>A diszk rácspontjainak radiális koordinátái. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>ugvec</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Gáz sebesség vektor a diszk rácspontjain. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>step</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Az időlépés mérete. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>y</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>A részecske aktuális radiális pozíciója. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>ynew</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>A részecske új radiális pozíciója (kimenet). </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>pradnew</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>A részecske új sugara (kimenet, növekedés után). </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>disk_params</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>A diszk paramétereit tartalmazó struktúra. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>sim_opts</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>A szimulációs opciókat tartalmazó struktúra. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/simulation_core.c" line="72" column="6" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/simulation_core.c" bodystart="72" bodyend="129"/>
+      </memberdef>
+      <memberdef kind="function" id="simulation__core_8c_1a2b25fbbf120ff866ddd2eb0bd8d84d58" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void tIntegrate</definition>
+        <argsstring>(disk_t *disk_params, const simulation_options_t *sim_opts, output_files_t *output_files)</argsstring>
+        <name>tIntegrate</name>
+        <param>
+          <type>disk_t *</type>
+          <declname>disk_params</declname>
+        </param>
+        <param>
+          <type>const simulation_options_t *</type>
+          <declname>sim_opts</declname>
+        </param>
+        <param>
+          <type>output_files_t *</type>
+          <declname>output_files</declname>
+        </param>
+        <briefdescription>
+<para>A fő időintegrációs ciklus. Koordinálja a részecskék mozgását, növekedését, és a gázfelszíni sűrűség evolúcióját, valamint a kimeneti adatok írását. </para>
+        </briefdescription>
+        <detaileddescription>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>output_dir_name</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>A kimeneti könyvtár neve. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>disk_params</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>A diszk paramétereit tartalmazó struktúra. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>sim_opts</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>A szimulációs opciókat tartalmazó struktúra. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>output_files</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>A kimeneti fájl mutatókat tartalmazó struktúra. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/simulation_core.c" line="133" column="6" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/simulation_core.c" bodystart="133" bodyend="425"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"><highlight class="normal"></highlight></codeline>
+<codeline lineno="2"><highlight class="normal"></highlight><highlight class="comment">//<sp/>src/simulation_core.c</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="3"><highlight class="normal"></highlight></codeline>
+<codeline lineno="4"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Standard<sp/>C<sp/>Library<sp/>Includes</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="5"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;stdio.h&gt;</highlight><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>For<sp/>printf,<sp/>fopen,<sp/>fclose,<sp/>fscanf,<sp/>snprintf,<sp/>sprintf</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="6"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;stdlib.h&gt;</highlight><highlight class="normal"><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>For<sp/>exit,<sp/>EXIT_FAILURE,<sp/>EXIT_SUCCESS,<sp/>system</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="7"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;math.h&gt;</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>For<sp/>M_PI,<sp/>fmod,<sp/>HUGE_VAL<sp/>(and<sp/>pow<sp/>if<sp/>used<sp/>by<sp/>other<sp/>functions)</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="8"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;string.h&gt;</highlight><highlight class="normal"><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>For<sp/>snprintf,<sp/>sprintf</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="9"><highlight class="normal"></highlight></codeline>
+<codeline lineno="10"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;omp.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="11"><highlight class="normal"></highlight></codeline>
+<codeline lineno="12"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Your<sp/>Project<sp/>Header<sp/>Includes</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="13"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;<ref refid="config_8h" kindref="compound">config.h</ref>&quot;</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>For<sp/>PARTICLE_NUMBER,<sp/>TMAX,<sp/>WO,<sp/>RMIN,<sp/>DT,<sp/>optdr,<sp/>sim_opts-&gt;twopop,<sp/>sim_opts-&gt;growth,<sp/>optev,<sp/>r_dze_i,<sp/>r_dze_o</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="14"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;io_utils.h&quot;</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>For<sp/>timePar<sp/>(though<sp/>not<sp/>called<sp/>in<sp/>tIntegrate,<sp/>it&apos;s<sp/>io-related),<sp/>reszecskek_szama,<sp/>ReadDustFile,<sp/>Print_Sigma,<sp/>Print_Pormozg_Size,<sp/>Print_Mass,<sp/>Print_Sigmad.<sp/>Also<sp/>for<sp/>globals:<sp/>filenev1,<sp/>filenev3,</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="15"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;disk_model.h&quot;</highlight><highlight class="normal"><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>If<sp/>any<sp/>disk_model<sp/>functions<sp/>are<sp/>called<sp/>(e.g.,<sp/>Perem<sp/>indirectly<sp/>if<sp/>sigma/press<sp/>depend<sp/>on<sp/>it)<sp/>-<sp/>Though<sp/>not<sp/>directly<sp/>visible<sp/>in<sp/>tIntegrate,<sp/>often<sp/>needed<sp/>for<sp/>global<sp/>disk<sp/>parameters.<sp/>Add<sp/>if<sp/>you<sp/>hit<sp/>implicit<sp/>declaration<sp/>for<sp/>disk_model<sp/>functions.</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="16"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;dust_physics.h&quot;</highlight><highlight class="normal"><sp/></highlight><highlight class="comment">//<sp/>For<sp/>Count_Mass,<sp/>secondaryGrowth,<sp/>find_max,<sp/>find_min,<sp/>Get_Sigmad,<sp/>Get_Radius</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="17"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;utils.h&quot;</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>For<sp/>time_step,<sp/>Get_Sigma_P_dP,<sp/>and<sp/>potentially<sp/>other<sp/>utility<sp/>functions</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="18"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;simulation_core.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="19"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;particle_data.h&quot;</highlight><highlight class="normal"><sp/></highlight><highlight class="comment">//<sp/>Új<sp/>include</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="20"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;globals.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="21"><highlight class="normal"></highlight></codeline>
+<codeline lineno="22"><highlight class="normal"></highlight><highlight class="comment">/*<sp/><sp/>Kiszamolja<sp/>az<sp/>1D-s<sp/>driftet<sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="23"><highlight class="normal"></highlight><highlight class="comment">/*<sp/><sp/><sp/><sp/><sp/><sp/>dr/dt<sp/>=<sp/>St/(1+St*St)*H(r)/r*dlnP/dlnr*cs<sp/>=<sp/>St/(1+St*St)<sp/>*<sp/>(H/r)<sp/>*<sp/>(r/P)<sp/>*<sp/>(dP/dr)<sp/>*<sp/>cs<sp/><sp/><sp/><sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="24"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>eqrhs(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>pradius,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>dp,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>sigma,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>ug,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>r,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>*drdt,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>disk_t<sp/>*disk_params)<sp/>{</highlight></codeline>
+<codeline lineno="25"><highlight class="normal"></highlight></codeline>
+<codeline lineno="26"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>P,<sp/>H,<sp/>dPdr,<sp/>St,<sp/>csound;</highlight></codeline>
+<codeline lineno="27"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="28"><highlight class="normal"><sp/><sp/><sp/><sp/>St<sp/>=<sp/>Stokes_Number(pradius,sigma,disk_params);</highlight></codeline>
+<codeline lineno="29"><highlight class="normal"><sp/><sp/><sp/><sp/>H<sp/>=<sp/>scale_height(r,disk_params);<sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="30"><highlight class="normal"><sp/><sp/><sp/><sp/>P<sp/>=<sp/>press(sigma,r,disk_params);</highlight></codeline>
+<codeline lineno="31"><highlight class="normal"><sp/><sp/><sp/><sp/>dPdr<sp/>=<sp/>dp;</highlight></codeline>
+<codeline lineno="32"><highlight class="normal"><sp/><sp/><sp/><sp/>csound<sp/>=<sp/>c_sound(r,disk_params);<sp/></highlight></codeline>
+<codeline lineno="33"><highlight class="normal"></highlight></codeline>
+<codeline lineno="34"><highlight class="normal"><sp/><sp/><sp/><sp/>*drdt<sp/>=<sp/>ug<sp/>/<sp/>(1.<sp/>+<sp/>St<sp/>*<sp/>St)<sp/>+<sp/>St<sp/>/<sp/>(1.<sp/>+<sp/>St<sp/>*<sp/>St)<sp/>*<sp/>H<sp/>/<sp/>P<sp/>*<sp/>dPdr<sp/>*<sp/>csound;<sp/><sp/></highlight><highlight class="comment">/*<sp/>bearamlas<sp/>sebessege:<sp/>Birnstiel<sp/>PHD<sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="35"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="36"><highlight class="normal"></highlight></codeline>
+<codeline lineno="37"><highlight class="normal"></highlight></codeline>
+<codeline lineno="38"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>for<sp/>solving<sp/>d(sigma*nu)/dt<sp/>=<sp/>3*nu*d2(sigma*nu)/dr2<sp/>+<sp/>9*hu/(2*r)*dsigma/dr<sp/><sp/><sp/><sp/>--&gt;<sp/>3*nu<sp/>=<sp/>Coeff_1<sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="39"><highlight class="normal"></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>Coeff_1(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>r,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>disk_t<sp/>*disk_params){<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="40"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>A;</highlight></codeline>
+<codeline lineno="41"><highlight class="normal"><sp/><sp/><sp/><sp/>A<sp/>=<sp/>3.0<sp/>*<sp/>visc(r,<sp/>disk_params);</highlight></codeline>
+<codeline lineno="42"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>A;</highlight></codeline>
+<codeline lineno="43"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="44"><highlight class="normal"></highlight></codeline>
+<codeline lineno="45"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>for<sp/>solving<sp/>d(sigma*nu)/dt<sp/>=<sp/>3*nu*d2(sigma*nu)/dr2<sp/>+<sp/>9*hu/(2*r)*dsigma/dr<sp/><sp/><sp/><sp/>--&gt;<sp/>9*nu<sp/>/(2*r)<sp/>=<sp/>Coeff_2<sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="46"><highlight class="normal"></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>Coeff_2(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>r,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>disk_t<sp/>*disk_params){<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="47"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>B;</highlight></codeline>
+<codeline lineno="48"><highlight class="normal"><sp/><sp/><sp/><sp/>B<sp/>=<sp/>9.0<sp/>*<sp/>visc(r,disk_params)<sp/>/<sp/>(2.0<sp/>*<sp/>r);</highlight></codeline>
+<codeline lineno="49"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>B;</highlight></codeline>
+<codeline lineno="50"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="51"><highlight class="normal"></highlight></codeline>
+<codeline lineno="52"><highlight class="normal"></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>time_step(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>disk_t<sp/>*disk_params)<sp/>{<sp/></highlight><highlight class="comment">//<sp/>Add<sp/>const<sp/>here<sp/>too</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="53"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>A_max,<sp/>stepping;</highlight></codeline>
+<codeline lineno="54"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>i;</highlight></codeline>
+<codeline lineno="55"><highlight class="normal"></highlight></codeline>
+<codeline lineno="56"><highlight class="normal"><sp/><sp/><sp/><sp/>A_max<sp/>=<sp/>-10000.0;</highlight></codeline>
+<codeline lineno="57"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="58"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">for</highlight><highlight class="normal">(i<sp/>=<sp/>0;<sp/>i<sp/>&lt;<sp/>disk_params-&gt;NGRID;<sp/>i++)<sp/>{</highlight></codeline>
+<codeline lineno="59"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(Coeff_1(disk_params-&gt;rvec[i],<sp/>disk_params)<sp/>&gt;<sp/>A_max)<sp/>{</highlight></codeline>
+<codeline lineno="60"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>A_max<sp/>=<sp/>Coeff_1(disk_params-&gt;rvec[i],<sp/>disk_params);</highlight></codeline>
+<codeline lineno="61"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="62"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="63"><highlight class="normal"><sp/><sp/><sp/><sp/>stepping<sp/>=<sp/>disk_params-&gt;DD<sp/>*<sp/>disk_params-&gt;DD<sp/>/<sp/>(2.0<sp/>*<sp/>A_max);</highlight></codeline>
+<codeline lineno="64"><highlight class="normal"><sp/><sp/><sp/><sp/>fprintf(stderr,</highlight><highlight class="stringliteral">&quot;<sp/>Actual<sp/>time_step:<sp/>DD<sp/>=<sp/>%.2e,<sp/>stepping<sp/>=<sp/>%.2e\n&quot;</highlight><highlight class="normal">,<sp/>disk_params-&gt;DD,<sp/>stepping);</highlight></codeline>
+<codeline lineno="65"><highlight class="normal"></highlight></codeline>
+<codeline lineno="66"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>stepping;</highlight></codeline>
+<codeline lineno="67"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="68"><highlight class="normal"></highlight></codeline>
+<codeline lineno="69"><highlight class="normal"></highlight></codeline>
+<codeline lineno="70"><highlight class="normal"></highlight><highlight class="comment">/*<sp/><sp/>Runge-Kutta4<sp/>integrator<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="71"><highlight class="normal"></highlight><highlight class="comment">//<sp/>prad<sp/>bemenet:<sp/>AU-ban!</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="72"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>int_step(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>time,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>prad,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>*sigmad,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>*rdvec,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>step,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>y,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>*ynew,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>*pradnew,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>disk_t<sp/>*disk_params,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>simulation_options_t<sp/>*sim_opts){</highlight></codeline>
+<codeline lineno="73"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>dy1,dy2,dy3,dy4;</highlight></codeline>
+<codeline lineno="74"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>ytemp,<sp/>ytemp2;</highlight></codeline>
+<codeline lineno="75"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>sigma,<sp/>dpress,<sp/>ugas;<sp/></highlight></codeline>
+<codeline lineno="76"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>pdens,<sp/>p;</highlight></codeline>
+<codeline lineno="77"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>pradtemp;</highlight></codeline>
+<codeline lineno="78"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>opt<sp/>=<sp/>0;</highlight></codeline>
+<codeline lineno="79"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>sigmadd<sp/>=<sp/>0.0;</highlight></codeline>
+<codeline lineno="80"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="81"><highlight class="normal"></highlight><highlight class="comment">/*<sp/><sp/>Mivel<sp/>a<sp/>kulongozo<sp/>parametereket<sp/>csak<sp/>a<sp/>megadott<sp/>gridcella<sp/>pontokban<sp/>ismerjuk,<sp/>de<sp/>ez<sp/>nem<sp/>feltetlen<sp/>egyezik<sp/>meg<sp/>a<sp/>reszecskek<sp/>pozicijaval,<sp/>ezert<sp/>minden<sp/>fontos<sp/>parametert<sp/>interpolalunk<sp/>a<sp/>reszecskek<sp/>tavolsagara<sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="82"><highlight class="normal"><sp/><sp/><sp/><sp/>interpol(disk_params-&gt;sigmavec,disk_params-&gt;rvec,y,&amp;sigma,disk_params-&gt;DD,opt,disk_params);</highlight></codeline>
+<codeline lineno="83"><highlight class="normal"><sp/><sp/><sp/><sp/>interpol(disk_params-&gt;dpressvec,disk_params-&gt;rvec,y,&amp;dpress,disk_params-&gt;DD,opt,disk_params);</highlight></codeline>
+<codeline lineno="84"><highlight class="normal"><sp/><sp/><sp/><sp/>interpol(disk_params-&gt;ugvec,disk_params-&gt;rvec,y,&amp;ugas,disk_params-&gt;DD,opt,disk_params);</highlight></codeline>
+<codeline lineno="85"><highlight class="normal"></highlight></codeline>
+<codeline lineno="86"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>dd<sp/>=<sp/>(disk_params-&gt;RMAX<sp/>-<sp/>disk_params-&gt;RMIN)<sp/>/<sp/>(<ref refid="config_8c_1ae28967b989638744a8c653fa8228c1b6" kindref="member">PARTICLE_NUMBER</ref>-1);</highlight></codeline>
+<codeline lineno="87"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>dker<sp/>=<sp/>(int)(1./dd);</highlight><highlight class="comment">//</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="88"><highlight class="normal"><sp/><sp/><sp/><sp/>dker<sp/>=<sp/>dker<sp/>*<sp/>KEREK;</highlight></codeline>
+<codeline lineno="89"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>ddker<sp/>=<sp/>(double)<sp/>dker;</highlight></codeline>
+<codeline lineno="90"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>temp;</highlight></codeline>
+<codeline lineno="91"><highlight class="normal"></highlight></codeline>
+<codeline lineno="92"><highlight class="normal"><sp/><sp/><sp/><sp/>temp<sp/>=<sp/>(int)floor(y<sp/>*<sp/>ddker+0.5);</highlight></codeline>
+<codeline lineno="93"><highlight class="normal"><sp/><sp/><sp/><sp/>ytemp2<sp/>=<sp/>(double)temp<sp/>/<sp/>ddker;</highlight></codeline>
+<codeline lineno="94"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="95"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>i;</highlight></codeline>
+<codeline lineno="96"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">for</highlight><highlight class="normal">(i=0;i&lt;<ref refid="config_8c_1ae28967b989638744a8c653fa8228c1b6" kindref="member">PARTICLE_NUMBER</ref>;i++)<sp/>{</highlight></codeline>
+<codeline lineno="97"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(ytemp2<sp/>==<sp/>rdvec[i])<sp/>{</highlight></codeline>
+<codeline lineno="98"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>sigmadd<sp/>=<sp/>sigmad[i];</highlight></codeline>
+<codeline lineno="99"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">break</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="100"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="101"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="102"><highlight class="normal"></highlight></codeline>
+<codeline lineno="103"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(sim_opts-&gt;growth<sp/>==<sp/>1.)<sp/>{<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>ha<sp/>van<sp/>reszecskenovekedes</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="104"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(time<sp/>!=<sp/>0.)<sp/>{<sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>ha<sp/>nem<sp/>t0<sp/>idopontban<sp/>vagyunk</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="105"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pradtemp<sp/>=<sp/>prad;</highlight></codeline>
+<codeline lineno="106"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>interpol(disk_params-&gt;pressvec,disk_params-&gt;rvec,y,&amp;p,disk_params-&gt;DD,opt,disk_params);</highlight></codeline>
+<codeline lineno="107"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pdens<sp/>=<sp/>disk_params-&gt;PDENSITY;<sp/></highlight></codeline>
+<codeline lineno="108"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pradtemp<sp/>=<sp/>getSize(prad,pdens,sigma,sigmadd,y,p,dpress,step,disk_params);<sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>itt<sp/>szamolja<sp/>a<sp/>reszecskenovekedest</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="109"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>prad<sp/>=<sp/>pradtemp;</highlight></codeline>
+<codeline lineno="110"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="111"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="112"><highlight class="normal"></highlight></codeline>
+<codeline lineno="113"><highlight class="normal"><sp/><sp/><sp/><sp/>*pradnew<sp/>=<sp/>prad;</highlight></codeline>
+<codeline lineno="114"><highlight class="normal"></highlight></codeline>
+<codeline lineno="115"><highlight class="normal"></highlight><highlight class="comment">/*<sp/><sp/>Itt<sp/>szamolja<sp/>a<sp/>reszecske<sp/>poziciojat<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="116"><highlight class="normal"><sp/><sp/><sp/><sp/>eqrhs(prad,<sp/>dpress,<sp/>sigma,<sp/>ugas,<sp/>y,<sp/>&amp;dy1,disk_params);</highlight></codeline>
+<codeline lineno="117"><highlight class="normal"></highlight></codeline>
+<codeline lineno="118"><highlight class="normal"><sp/><sp/><sp/><sp/>ytemp<sp/>=<sp/>y<sp/>+<sp/>0.5<sp/>*<sp/>step<sp/>*<sp/>dy1;</highlight></codeline>
+<codeline lineno="119"><highlight class="normal"><sp/><sp/><sp/><sp/>eqrhs(prad,<sp/>dpress,<sp/>sigma,<sp/>ugas,<sp/>ytemp,<sp/>&amp;dy2,disk_params);</highlight></codeline>
+<codeline lineno="120"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="121"><highlight class="normal"><sp/><sp/><sp/><sp/>ytemp<sp/>=<sp/>y<sp/>+<sp/>0.5<sp/>*<sp/>step<sp/>*<sp/>dy2;</highlight></codeline>
+<codeline lineno="122"><highlight class="normal"><sp/><sp/><sp/><sp/>eqrhs(prad,<sp/>dpress,<sp/>sigma,<sp/>ugas,<sp/>ytemp,<sp/>&amp;dy3,disk_params);</highlight></codeline>
+<codeline lineno="123"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="124"><highlight class="normal"><sp/><sp/><sp/><sp/>ytemp<sp/>=<sp/>y<sp/>+<sp/>step<sp/>*<sp/>dy3;</highlight></codeline>
+<codeline lineno="125"><highlight class="normal"><sp/><sp/><sp/><sp/>eqrhs(prad,<sp/>dpress,<sp/>sigma,<sp/>ugas,<sp/>ytemp,<sp/>&amp;dy4,disk_params);</highlight></codeline>
+<codeline lineno="126"><highlight class="normal"></highlight></codeline>
+<codeline lineno="127"><highlight class="normal"><sp/><sp/><sp/><sp/>*ynew<sp/>=<sp/>y<sp/>+<sp/>step<sp/>*<sp/>(dy1<sp/>+<sp/>2.0<sp/>*<sp/>dy2<sp/>+<sp/>2.0<sp/>*<sp/>dy3<sp/>+<sp/>dy4)<sp/>/<sp/>6.0;</highlight></codeline>
+<codeline lineno="128"><highlight class="normal"></highlight></codeline>
+<codeline lineno="129"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="130"><highlight class="normal"></highlight></codeline>
+<codeline lineno="131"><highlight class="normal"></highlight></codeline>
+<codeline lineno="132"><highlight class="normal"></highlight></codeline>
+<codeline lineno="133"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>tIntegrate(disk_t<sp/>*disk_params,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>simulation_options_t<sp/>*sim_opts,<sp/>output_files_t<sp/>*output_files)<sp/>{</highlight></codeline>
+<codeline lineno="134"><highlight class="normal"><sp/><sp/><sp/><sp/>ParticleData_t<sp/>p_data;</highlight></codeline>
+<codeline lineno="135"><highlight class="normal"><sp/><sp/><sp/><sp/>HeaderData_t<sp/>header_data_for_files;<sp/></highlight><highlight class="comment">//<sp/>Később<sp/>inicializáljuk<sp/>a<sp/>setup_initial_output_files-ban</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="136"><highlight class="normal"></highlight></codeline>
+<codeline lineno="137"><highlight class="normal"></highlight></codeline>
+<codeline lineno="138"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>L<sp/>=<sp/>0.;<sp/></highlight><highlight class="comment">//<sp/>Években<sp/>mért<sp/>&quot;pillanatfelvétel&quot;<sp/>időzítő</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="139"><highlight class="normal"></highlight></codeline>
+<codeline lineno="140"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(disk_params<sp/>==<sp/>NULL)<sp/>{</highlight></codeline>
+<codeline lineno="141"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>fprintf(stderr,<sp/></highlight><highlight class="stringliteral">&quot;ERROR<sp/>[tIntegrate]:<sp/>disk_params_ptr<sp/>is<sp/>NULL!\n&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="142"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>exit(1);<sp/></highlight><highlight class="comment">//<sp/>Program<sp/>leállítása,<sp/>ha<sp/>kritikus<sp/>hiba<sp/>van</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="143"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="144"><highlight class="normal"></highlight></codeline>
+<codeline lineno="145"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>---<sp/>Inicializálási<sp/>szakasz<sp/>---</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="146"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(sim_opts-&gt;drift<sp/>==<sp/>1.)<sp/>{</highlight></codeline>
+<codeline lineno="147"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="config_8c_1ae28967b989638744a8c653fa8228c1b6" kindref="member">PARTICLE_NUMBER</ref><sp/>=<sp/>reszecskek_szama(sim_opts-&gt;dust_input_filename);</highlight></codeline>
+<codeline lineno="148"><highlight class="normal"><sp/><sp/><sp/><sp/>}<sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"><sp/>{</highlight></codeline>
+<codeline lineno="149"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>fprintf(stderr,<sp/></highlight><highlight class="stringliteral">&quot;ERROR<sp/>[tIntegrate]:<sp/>Particle<sp/>drift<sp/>is<sp/>OFF.<sp/>PARTICLE_NUMBER<sp/>set<sp/>to<sp/>0.\n&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="150"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="config_8c_1ae28967b989638744a8c653fa8228c1b6" kindref="member">PARTICLE_NUMBER</ref><sp/>=<sp/>0;</highlight></codeline>
+<codeline lineno="151"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="152"><highlight class="normal"></highlight></codeline>
+<codeline lineno="153"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(<ref refid="config_8c_1ae28967b989638744a8c653fa8228c1b6" kindref="member">PARTICLE_NUMBER</ref><sp/>&gt;<sp/>0<sp/>&amp;&amp;<sp/>allocate_particle_data(&amp;p_data,<sp/><ref refid="config_8c_1ae28967b989638744a8c653fa8228c1b6" kindref="member">PARTICLE_NUMBER</ref>,<sp/>(</highlight><highlight class="keywordtype">int</highlight><highlight class="normal">)sim_opts-&gt;twopop)<sp/>!=<sp/>0)<sp/>{</highlight></codeline>
+<codeline lineno="154"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>fprintf(stderr,<sp/></highlight><highlight class="stringliteral">&quot;ERROR:<sp/>Failed<sp/>to<sp/>allocate<sp/>particle<sp/>data.<sp/>Exiting.\n&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="155"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>exit(EXIT_FAILURE);</highlight></codeline>
+<codeline lineno="156"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="157"><highlight class="normal"></highlight></codeline>
+<codeline lineno="158"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Fájl<sp/>inicializálás<sp/>a<sp/>meglévő<sp/>io_utils<sp/>függvény<sp/>hívásával</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="159"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(sim_opts-&gt;drift<sp/>==<sp/>1.)<sp/>{</highlight></codeline>
+<codeline lineno="160"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(setup_initial_output_files(output_files,<sp/>sim_opts,<sp/>disk_params,<sp/>&amp;header_data_for_files)<sp/>!=<sp/>0)<sp/>{</highlight></codeline>
+<codeline lineno="161"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>fprintf(stderr,<sp/></highlight><highlight class="stringliteral">&quot;ERROR:<sp/>Failed<sp/>to<sp/>set<sp/>up<sp/>initial<sp/>output<sp/>files.<sp/>Exiting.\n&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="162"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>exit(EXIT_FAILURE);</highlight></codeline>
+<codeline lineno="163"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="164"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>ReadDustFile<sp/>hívása<sp/>a<sp/>részecskeadatok<sp/>beolvasására</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="165"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>ReadDustFile(p_data.radius,<sp/>p_data.radiusmicr,<sp/>p_data.massvec,<sp/>p_data.massmicrvec,<sp/>sim_opts-&gt;dust_input_filename);</highlight></codeline>
+<codeline lineno="166"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="167"><highlight class="normal"></highlight></codeline>
+<codeline lineno="168"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>További<sp/>inicializálások</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="169"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>max<sp/>=<sp/>0.0,<sp/>min<sp/>=<sp/>0.0,<sp/>max2<sp/>=<sp/>0.0,<sp/>min2<sp/>=<sp/>0.0;</highlight></codeline>
+<codeline lineno="170"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>i;<sp/></highlight><highlight class="comment">//<sp/>Hagyjuk<sp/>meg<sp/>ezt<sp/>a<sp/>ciklusváltozót<sp/>a<sp/>C89<sp/>kompatibilitás<sp/>kedvéért,<sp/>ha<sp/>szükséges</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="171"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="172"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Ideiglenes<sp/>puffer<sp/>a<sp/>fájlneveknek<sp/>a<sp/>ciklusban</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="173"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>dens_name[MAX_PATH_LEN]<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="174"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>dust_name[MAX_PATH_LEN]<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="175"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>dust_name2[MAX_PATH_LEN]<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="176"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>size_name[MAX_PATH_LEN]<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="177"><highlight class="normal"></highlight></codeline>
+<codeline lineno="178"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>t<sp/>=<sp/>0.0;</highlight></codeline>
+<codeline lineno="179"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>t_integration<sp/>=<sp/>sim_opts-&gt;TMAX<sp/>*<sp/>2.0<sp/>*<sp/>M_PI;</highlight></codeline>
+<codeline lineno="180"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>deltat<sp/>=<sp/>time_step(disk_params)<sp/>/<sp/>5.0;</highlight></codeline>
+<codeline lineno="181"><highlight class="normal"></highlight></codeline>
+<codeline lineno="182"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>DT<sp/>felülbírálása,<sp/>ha<sp/>a<sp/>felhasználó<sp/>megadott<sp/>kisebb<sp/>értéket</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="183"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(sim_opts-&gt;DT<sp/>&gt;<sp/>0.0<sp/>&amp;&amp;<sp/>sim_opts-&gt;DT<sp/>&lt;<sp/>deltat)<sp/>{</highlight></codeline>
+<codeline lineno="184"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>((simulation_options_t<sp/>*)sim_opts)-&gt;DT<sp/>=<sp/>deltat;<sp/></highlight><highlight class="comment">//<sp/>Az<sp/>eredeti<sp/>kód<sp/>hibásan<sp/>a<sp/>deltat-t<sp/>vette<sp/>át,<sp/>ha<sp/>sim_opts-&gt;DT<sp/>nagyobb<sp/>volt</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="185"><highlight class="normal"><sp/><sp/><sp/><sp/>}<sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"><sp/>{</highlight></codeline>
+<codeline lineno="186"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>((simulation_options_t<sp/>*)sim_opts)-&gt;DT<sp/>=<sp/>deltat;<sp/></highlight><highlight class="comment">//<sp/>Az<sp/>eredeti<sp/>kód<sp/>szerint,<sp/>ha<sp/>nem<sp/>kisebb,<sp/>akkor<sp/>deltat<sp/>a<sp/>DT</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="187"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="188"><highlight class="normal"></highlight></codeline>
+<codeline lineno="189"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Mass<sp/>accumulation<sp/>változók</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="190"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>masstempiin<sp/>=<sp/>0,<sp/>massmtempiin<sp/>=<sp/>0,<sp/>masstempoin<sp/>=<sp/>0,<sp/>massmtempoin<sp/>=<sp/>0;</highlight></codeline>
+<codeline lineno="191"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>masstempiout<sp/>=<sp/>0,<sp/>massmtempiout<sp/>=<sp/>0,<sp/>masstempoout<sp/>=<sp/>0,<sp/>massmtempoout<sp/>=<sp/>0;</highlight></codeline>
+<codeline lineno="192"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>tavin<sp/>=<sp/>0,<sp/>tavout<sp/>=<sp/>0;<sp/></highlight><highlight class="comment">//<sp/>Távolságok<sp/>a<sp/>Print_Mass-hoz</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="193"><highlight class="normal"></highlight></codeline>
+<codeline lineno="194"><highlight class="normal"></highlight></codeline>
+<codeline lineno="195"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(sim_opts-&gt;twopop<sp/>==<sp/>0<sp/>&amp;&amp;<sp/><ref refid="config_8c_1ae28967b989638744a8c653fa8228c1b6" kindref="member">PARTICLE_NUMBER</ref><sp/>&gt;<sp/>0)<sp/>{</highlight></codeline>
+<codeline lineno="196"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">for</highlight><highlight class="normal"><sp/>(i<sp/>=<sp/>0;<sp/>i<sp/>&lt;<sp/><ref refid="config_8c_1ae28967b989638744a8c653fa8228c1b6" kindref="member">PARTICLE_NUMBER</ref>;<sp/>i++)<sp/>{</highlight></codeline>
+<codeline lineno="197"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>p_data.radiusmicr[i][0]<sp/>=<sp/>0;</highlight></codeline>
+<codeline lineno="198"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>p_data.radiusmicr[i][1]<sp/>=<sp/>0;</highlight></codeline>
+<codeline lineno="199"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>p_data.partmassmicrind[i][0]<sp/>=<sp/>0;</highlight></codeline>
+<codeline lineno="200"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>p_data.partmassmicrind[i][1]<sp/>=<sp/>0;</highlight></codeline>
+<codeline lineno="201"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>p_data.massmicrvec[i]<sp/>=<sp/>0;</highlight></codeline>
+<codeline lineno="202"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="203"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="204"><highlight class="normal"></highlight></codeline>
+<codeline lineno="205"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>---<sp/>Fő<sp/>szimulációs<sp/>ciklus<sp/>---</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="206"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">do</highlight><highlight class="normal"><sp/>{</highlight></codeline>
+<codeline lineno="207"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(sim_opts-&gt;drift<sp/>==<sp/>1.)<sp/>{</highlight></codeline>
+<codeline lineno="208"><highlight class="normal"></highlight></codeline>
+<codeline lineno="209"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Radius<sp/>reciprok<sp/>számítása<sp/>a<sp/>min/max<sp/>kereséshez</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="210"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">for</highlight><highlight class="normal"><sp/>(i<sp/>=<sp/>0;<sp/>i<sp/>&lt;<sp/><ref refid="config_8c_1ae28967b989638744a8c653fa8228c1b6" kindref="member">PARTICLE_NUMBER</ref>;<sp/>i++)<sp/>{</highlight></codeline>
+<codeline lineno="211"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(p_data.radius[i][0]<sp/>&gt;<sp/>0.<sp/>&amp;&amp;<sp/>p_data.radius[i][0]<sp/>&gt;<sp/>disk_params-&gt;RMIN)<sp/>{</highlight></codeline>
+<codeline lineno="212"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>p_data.radius_rec[i][0]<sp/>=<sp/>1.<sp/>/<sp/>p_data.radius[i][0];</highlight></codeline>
+<codeline lineno="213"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}<sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"><sp/>{</highlight></codeline>
+<codeline lineno="214"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>p_data.radius_rec[i][0]<sp/>=<sp/>0.;<sp/></highlight><highlight class="comment">//<sp/>Vagy<sp/>valamilyen<sp/>&quot;érvénytelen&quot;<sp/>érték,<sp/>ami<sp/>kizárja<sp/>a<sp/>min/max<sp/>keresésből</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="215"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="216"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="217"><highlight class="normal"></highlight></codeline>
+<codeline lineno="218"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>max<sp/>=<sp/>find_max(p_data.radius,<sp/><ref refid="config_8c_1ae28967b989638744a8c653fa8228c1b6" kindref="member">PARTICLE_NUMBER</ref>);</highlight></codeline>
+<codeline lineno="219"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>min<sp/>=<sp/>find_max(p_data.radius_rec,<sp/><ref refid="config_8c_1ae28967b989638744a8c653fa8228c1b6" kindref="member">PARTICLE_NUMBER</ref>);<sp/></highlight><highlight class="comment">//<sp/>Megkeresi<sp/>a<sp/>távolság<sp/>reciprokának<sp/>maximumát</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="220"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>min<sp/>=<sp/>1.<sp/>/<sp/>min;<sp/></highlight><highlight class="comment">//<sp/>Ebből<sp/>lesz<sp/>a<sp/>távolság<sp/>minimuma</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="221"><highlight class="normal"></highlight></codeline>
+<codeline lineno="222"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>mint,<sp/>maxt;</highlight></codeline>
+<codeline lineno="223"><highlight class="normal"></highlight></codeline>
+<codeline lineno="224"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(sim_opts-&gt;twopop<sp/>==<sp/>1)<sp/>{</highlight></codeline>
+<codeline lineno="225"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Micron<sp/>részecskék<sp/>radius<sp/>reciprok<sp/>számítása</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="226"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">for</highlight><highlight class="normal"><sp/>(i<sp/>=<sp/>0;<sp/>i<sp/>&lt;<sp/><ref refid="config_8c_1ae28967b989638744a8c653fa8228c1b6" kindref="member">PARTICLE_NUMBER</ref>;<sp/>i++)<sp/>{</highlight></codeline>
+<codeline lineno="227"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(p_data.radiusmicr[i][0]<sp/>&gt;<sp/>0.<sp/>&amp;&amp;<sp/>p_data.radiusmicr[i][0]<sp/>&gt;<sp/>disk_params-&gt;RMIN)<sp/>{</highlight></codeline>
+<codeline lineno="228"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>p_data.radius_rec[i][0]<sp/>=<sp/>1.<sp/>/<sp/>p_data.radiusmicr[i][0];</highlight></codeline>
+<codeline lineno="229"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}<sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"><sp/>{</highlight></codeline>
+<codeline lineno="230"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>p_data.radius_rec[i][0]<sp/>=<sp/>0.;</highlight></codeline>
+<codeline lineno="231"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="232"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="233"><highlight class="normal"></highlight></codeline>
+<codeline lineno="234"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>max2<sp/>=<sp/>find_max(p_data.radiusmicr,<sp/><ref refid="config_8c_1ae28967b989638744a8c653fa8228c1b6" kindref="member">PARTICLE_NUMBER</ref>);</highlight></codeline>
+<codeline lineno="235"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>min2<sp/>=<sp/>find_max(p_data.radius_rec,<sp/><ref refid="config_8c_1ae28967b989638744a8c653fa8228c1b6" kindref="member">PARTICLE_NUMBER</ref>);</highlight></codeline>
+<codeline lineno="236"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>min2<sp/>=<sp/>1.<sp/>/<sp/>min2;</highlight></codeline>
+<codeline lineno="237"><highlight class="normal"></highlight></codeline>
+<codeline lineno="238"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>mint<sp/>=<sp/>find_min(min,<sp/>min2,<sp/>HUGE_VAL);<sp/></highlight><highlight class="comment">//<sp/>Itt<sp/>a<sp/>te<sp/>find_min(s1,<sp/>s2,<sp/>s3)<sp/>függvényedet<sp/>használjuk</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="239"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Ahogy<sp/>korábban<sp/>beszéltük,<sp/>ha<sp/>find_max(s1,s2,s3)<sp/>lenne,<sp/>az<sp/>jobb<sp/>lenne,</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="240"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>de<sp/>a<sp/>meglévő<sp/>find_min-t<sp/>használva<sp/>a<sp/>reciprok<sp/>trükkkel:</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="241"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>maxt<sp/>=<sp/>find_min(1.<sp/>/<sp/>max,<sp/>1.<sp/>/<sp/>max2,<sp/>HUGE_VAL);</highlight></codeline>
+<codeline lineno="242"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>maxt<sp/>=<sp/>1.<sp/>/<sp/>maxt;</highlight></codeline>
+<codeline lineno="243"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}<sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"><sp/>{</highlight></codeline>
+<codeline lineno="244"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>mint<sp/>=<sp/>min;</highlight></codeline>
+<codeline lineno="245"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>maxt<sp/>=<sp/>max;</highlight></codeline>
+<codeline lineno="246"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="247"><highlight class="normal"></highlight></codeline>
+<codeline lineno="248"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>---<sp/>Kimeneti<sp/>adatok<sp/>(pillanatfelvétel)<sp/>kezelése<sp/>---</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="249"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>current_time_years<sp/>=<sp/>t<sp/>/<sp/>(2.0<sp/>*<sp/>M_PI);</highlight></codeline>
+<codeline lineno="250"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>((fmod(current_time_years,<sp/>(sim_opts-&gt;TMAX<sp/>/<sp/>sim_opts-&gt;WO))<sp/>&lt;<sp/>deltat<sp/>||<sp/>current_time_years<sp/>==<sp/>0)<sp/>&amp;&amp;<sp/>L<sp/>-<sp/>current_time_years<sp/>&lt;<sp/>deltat)<sp/>{</highlight></codeline>
+<codeline lineno="251"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>fprintf(stderr,</highlight><highlight class="stringliteral">&quot;\n---<sp/>Simulation<sp/>Time:<sp/>%.2e<sp/>years<sp/>(Internal<sp/>time:<sp/>%.2e,<sp/>L:<sp/>%.2e)<sp/>---\n&quot;</highlight><highlight class="normal">,<sp/>current_time_years,<sp/>t,<sp/>L);</highlight></codeline>
+<codeline lineno="252"><highlight class="normal"></highlight></codeline>
+<codeline lineno="253"><highlight class="normal"></highlight></codeline>
+<codeline lineno="254"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(current_time_years<sp/>!=<sp/>0)<sp/>{</highlight></codeline>
+<codeline lineno="255"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(sim_opts-&gt;evol<sp/>==<sp/>1)<sp/>{</highlight></codeline>
+<codeline lineno="256"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>snprintf(dens_name,<sp/>MAX_PATH_LEN,<sp/></highlight><highlight class="stringliteral">&quot;%s/%s/%s_%08d.dat&quot;</highlight><highlight class="normal">,<sp/>sim_opts-&gt;output_dir_name,<sp/><ref refid="config_8c_1a5e24f7e18638f7c8bb96feda607d1403" kindref="member">LOGS_DIR</ref>,<sp/><ref refid="config_8c_1a5935f1a0e3e4be8da9d07eb621b70d9b" kindref="member">FILE_DENS_PREFIX</ref>,<sp/>(</highlight><highlight class="keywordtype">int</highlight><highlight class="normal">)L);</highlight></codeline>
+<codeline lineno="257"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="258"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="259"><highlight class="normal"></highlight></codeline>
+<codeline lineno="260"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>snprintf(dust_name,<sp/>MAX_PATH_LEN,<sp/></highlight><highlight class="stringliteral">&quot;%s/%s/dust.%i.dat&quot;</highlight><highlight class="normal">,<sp/>sim_opts-&gt;output_dir_name,<sp/><ref refid="config_8c_1a5e24f7e18638f7c8bb96feda607d1403" kindref="member">LOGS_DIR</ref>,<sp/>(</highlight><highlight class="keywordtype">int</highlight><highlight class="normal">)L);</highlight></codeline>
+<codeline lineno="261"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>snprintf(dust_name2,<sp/>MAX_PATH_LEN,<sp/></highlight><highlight class="stringliteral">&quot;%s/%s/dustmic.%i.dat&quot;</highlight><highlight class="normal">,<sp/>sim_opts-&gt;output_dir_name,<sp/><ref refid="config_8c_1a5e24f7e18638f7c8bb96feda607d1403" kindref="member">LOGS_DIR</ref>,<sp/>(</highlight><highlight class="keywordtype">int</highlight><highlight class="normal">)L);</highlight></codeline>
+<codeline lineno="262"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>snprintf(size_name,<sp/>MAX_PATH_LEN,<sp/></highlight><highlight class="stringliteral">&quot;%s/%s/size.%d.dat&quot;</highlight><highlight class="normal">,<sp/>sim_opts-&gt;output_dir_name,<sp/><ref refid="config_8c_1a5e24f7e18638f7c8bb96feda607d1403" kindref="member">LOGS_DIR</ref>,<sp/>(</highlight><highlight class="keywordtype">int</highlight><highlight class="normal">)L);</highlight></codeline>
+<codeline lineno="263"><highlight class="normal"></highlight></codeline>
+<codeline lineno="264"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Fájlok<sp/>megnyitása<sp/>és<sp/>fejlécek<sp/>írása</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="265"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>output_files-&gt;surface_file<sp/>=<sp/>fopen(dens_name,<sp/></highlight><highlight class="stringliteral">&quot;w&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="266"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(L<sp/>!=<sp/>0)<sp/>{</highlight></codeline>
+<codeline lineno="267"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(output_files-&gt;surface_file<sp/>==<sp/>NULL)<sp/>{</highlight></codeline>
+<codeline lineno="268"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>fprintf(stderr,<sp/></highlight><highlight class="stringliteral">&quot;ERROR:<sp/>Could<sp/>not<sp/>open<sp/>%s<sp/>for<sp/>writing.\n&quot;</highlight><highlight class="normal">,<sp/>dens_name);</highlight></codeline>
+<codeline lineno="269"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}<sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"><sp/>{</highlight></codeline>
+<codeline lineno="270"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>HeaderData_t<sp/>gas_header_data<sp/>=<sp/>{.current_time<sp/>=<sp/>current_time_years,<sp/>.is_initial_data<sp/>=<sp/>(current_time_years<sp/>==<sp/>0.0)};</highlight></codeline>
+<codeline lineno="271"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>print_file_header(output_files-&gt;surface_file,<sp/>FILE_TYPE_GAS_DENSITY,<sp/>&amp;gas_header_data);</highlight></codeline>
+<codeline lineno="272"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="273"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="274"><highlight class="normal"></highlight></codeline>
+<codeline lineno="275"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>output_files-&gt;dust_file<sp/>=<sp/>fopen(dust_name,<sp/></highlight><highlight class="stringliteral">&quot;w&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="276"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(output_files-&gt;dust_file<sp/>==<sp/>NULL)<sp/>{</highlight></codeline>
+<codeline lineno="277"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>fprintf(stderr,<sp/></highlight><highlight class="stringliteral">&quot;ERROR:<sp/>Could<sp/>not<sp/>open<sp/>%s<sp/>for<sp/>writing.\n&quot;</highlight><highlight class="normal">,<sp/>dust_name);</highlight></codeline>
+<codeline lineno="278"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}<sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"><sp/>{</highlight></codeline>
+<codeline lineno="279"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>HeaderData_t<sp/>dust_header_data<sp/>=<sp/>{.current_time<sp/>=<sp/>current_time_years,<sp/>.is_initial_data<sp/>=<sp/>(current_time_years<sp/>==<sp/>0.0)};</highlight></codeline>
+<codeline lineno="280"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>print_file_header(output_files-&gt;dust_file,<sp/>FILE_TYPE_DUST_MOTION,<sp/>&amp;dust_header_data);</highlight></codeline>
+<codeline lineno="281"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="282"><highlight class="normal"></highlight></codeline>
+<codeline lineno="283"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(sim_opts-&gt;twopop<sp/>==<sp/>1.)<sp/>{</highlight></codeline>
+<codeline lineno="284"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>output_files-&gt;micron_dust_file<sp/>=<sp/>fopen(dust_name2,<sp/></highlight><highlight class="stringliteral">&quot;w&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="285"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(output_files-&gt;micron_dust_file<sp/>==<sp/>NULL)<sp/>{</highlight></codeline>
+<codeline lineno="286"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>fprintf(stderr,<sp/></highlight><highlight class="stringliteral">&quot;ERROR:<sp/>Could<sp/>not<sp/>open<sp/>%s<sp/>for<sp/>writing.\n&quot;</highlight><highlight class="normal">,<sp/>dust_name2);</highlight></codeline>
+<codeline lineno="287"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}<sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"><sp/>{</highlight></codeline>
+<codeline lineno="288"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>HeaderData_t<sp/>micron_dust_header_data<sp/>=<sp/>{.current_time<sp/>=<sp/>current_time_years,<sp/>.is_initial_data<sp/>=<sp/>(current_time_years<sp/>==<sp/>0.0)};</highlight></codeline>
+<codeline lineno="289"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>print_file_header(output_files-&gt;micron_dust_file,<sp/>FILE_TYPE_MICRON_MOTION,<sp/>&amp;micron_dust_header_data);</highlight></codeline>
+<codeline lineno="290"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="291"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="292"><highlight class="normal"></highlight></codeline>
+<codeline lineno="293"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Eredeti<sp/>t==0<sp/>logika</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="294"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(current_time_years<sp/>==<sp/>0)<sp/>{</highlight></codeline>
+<codeline lineno="295"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Count_Mass(p_data.radius,<sp/>p_data.partmassind,<sp/>p_data.massvec,<sp/>t,<sp/><ref refid="config_8c_1ae28967b989638744a8c653fa8228c1b6" kindref="member">PARTICLE_NUMBER</ref>,<sp/>disk_params);</highlight></codeline>
+<codeline lineno="296"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(sim_opts-&gt;twopop<sp/>==<sp/>1)<sp/>Count_Mass(p_data.radiusmicr,<sp/>p_data.partmassmicrind,<sp/>p_data.massmicrvec,<sp/>t,<sp/><ref refid="config_8c_1ae28967b989638744a8c653fa8228c1b6" kindref="member">PARTICLE_NUMBER</ref>,<sp/>disk_params);</highlight></codeline>
+<codeline lineno="297"><highlight class="normal"></highlight></codeline>
+<codeline lineno="298"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(sim_opts-&gt;growth<sp/>==<sp/>1.)<sp/>{</highlight></codeline>
+<codeline lineno="299"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Get_Sigmad(max,<sp/>min,<sp/>p_data.radius,<sp/>p_data.radiusmicr,<sp/>p_data.sigmad,<sp/>p_data.sigmadm,<sp/>p_data.massvec,<sp/>p_data.massmicrvec,<sp/>p_data.rdvec,<sp/>p_data.rmicvec,<sp/>sim_opts,<sp/>disk_params);</highlight></codeline>
+<codeline lineno="300"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="301"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="302"><highlight class="normal"></highlight></codeline>
+<codeline lineno="303"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Gas<sp/>density<sp/>output</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="304"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(sim_opts-&gt;evol<sp/>==<sp/>1<sp/>||<sp/>current_time_years<sp/>==<sp/>0)<sp/>{</highlight></codeline>
+<codeline lineno="305"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal">(L<sp/>!=<sp/>0)<sp/>Print_Sigma(disk_params,<sp/>output_files);</highlight></codeline>
+<codeline lineno="306"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="307"><highlight class="normal"></highlight></codeline>
+<codeline lineno="308"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Particle<sp/>position<sp/>and<sp/>size<sp/>output</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="309"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(sim_opts-&gt;drift<sp/>==<sp/>1)<sp/>{</highlight></codeline>
+<codeline lineno="310"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Print_Pormozg_Size(size_name,<sp/>(</highlight><highlight class="keywordtype">int</highlight><highlight class="normal">)L,<sp/>p_data.radius,<sp/>p_data.radiusmicr,<sp/>disk_params,<sp/>sim_opts,<sp/>output_files);</highlight></codeline>
+<codeline lineno="311"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="312"><highlight class="normal"></highlight></codeline>
+<codeline lineno="313"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Reset<sp/>mass<sp/>accumulation<sp/>variables<sp/>for<sp/>next<sp/>interval</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="314"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>masstempiout<sp/>=<sp/>0;</highlight></codeline>
+<codeline lineno="315"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>massmtempiout<sp/>=<sp/>0;</highlight></codeline>
+<codeline lineno="316"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>masstempoout<sp/>=<sp/>0;</highlight></codeline>
+<codeline lineno="317"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>massmtempoout<sp/>=<sp/>0;</highlight></codeline>
+<codeline lineno="318"><highlight class="normal"></highlight></codeline>
+<codeline lineno="319"><highlight class="normal"></highlight></codeline>
+<codeline lineno="320"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Resetting<sp/>partmassind[k][3]<sp/>and<sp/>[k][4]</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="321"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(sim_opts-&gt;dzone<sp/>==<sp/>1.0<sp/>&amp;&amp;<sp/><ref refid="config_8c_1ae28967b989638744a8c653fa8228c1b6" kindref="member">PARTICLE_NUMBER</ref><sp/>&gt;<sp/>0)<sp/>{<sp/></highlight><highlight class="comment">//<sp/>Ellenőrzés<sp/>PARTICLE_NUMBER-re</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="322"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">for</highlight><highlight class="normal"><sp/>(</highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>k<sp/>=<sp/>0;<sp/>k<sp/>&lt;<sp/><ref refid="config_8c_1ae28967b989638744a8c653fa8228c1b6" kindref="member">PARTICLE_NUMBER</ref>;<sp/>k++)<sp/>{</highlight></codeline>
+<codeline lineno="323"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>p_data.partmassind[k][3]<sp/>=<sp/>0.0;</highlight></codeline>
+<codeline lineno="324"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>p_data.partmassind[k][4]<sp/>=<sp/>0.0;</highlight></codeline>
+<codeline lineno="325"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="326"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="327"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="328"><highlight class="normal"></highlight></codeline>
+<codeline lineno="329"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Print_Mass(L,<sp/>p_data.partmassind,<sp/>p_data.partmassmicrind,<sp/>t,<sp/>masstempiin,<sp/>masstempoin,<sp/>massmtempiin,<sp/>massmtempoin,<sp/>&amp;masstempiout,<sp/>&amp;masstempoout,<sp/>&amp;massmtempiout,<sp/>&amp;massmtempoout,<sp/>&amp;tavin,<sp/>&amp;tavout,<sp/>disk_params,<sp/>sim_opts,<sp/>output_files);</highlight></codeline>
+<codeline lineno="330"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Update<sp/>input<sp/>mass<sp/>for<sp/>next<sp/>Print_Mass<sp/>call</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="331"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>masstempiin<sp/>=<sp/>masstempiout;</highlight></codeline>
+<codeline lineno="332"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>massmtempiin<sp/>=<sp/>massmtempiout;</highlight></codeline>
+<codeline lineno="333"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>masstempoin<sp/>=<sp/>masstempoout;</highlight></codeline>
+<codeline lineno="334"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>massmtempoin<sp/>=<sp/>massmtempoout;</highlight></codeline>
+<codeline lineno="335"><highlight class="normal"></highlight></codeline>
+<codeline lineno="336"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(sim_opts-&gt;growth<sp/>==<sp/>1.)<sp/>{</highlight></codeline>
+<codeline lineno="337"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Print_Sigmad(p_data.rdvec,<sp/>p_data.rmicvec,<sp/>p_data.sigmad,<sp/>p_data.sigmadm,<sp/>disk_params,<sp/>sim_opts,<sp/>output_files);</highlight></codeline>
+<codeline lineno="338"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="339"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>fprintf(stderr,</highlight><highlight class="stringliteral">&quot;L<sp/>set<sp/>to<sp/>%lg\n&quot;</highlight><highlight class="normal">,L);</highlight></codeline>
+<codeline lineno="340"><highlight class="normal"></highlight></codeline>
+<codeline lineno="341"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>L<sp/>=<sp/>L<sp/>+<sp/>(double)(sim_opts-&gt;TMAX<sp/>/<sp/>sim_opts-&gt;WO);</highlight></codeline>
+<codeline lineno="342"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Fájlok<sp/>bezárása,<sp/>amelyek<sp/>csak<sp/>ezen<sp/>időintervallumban<sp/>voltak<sp/>nyitva</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="343"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>close_snapshot_files(output_files,<sp/>dens_name,<sp/>dust_name,<sp/>dust_name2,<sp/>sim_opts);</highlight></codeline>
+<codeline lineno="344"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="345"><highlight class="normal"></highlight></codeline>
+<codeline lineno="346"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Gas<sp/>evolution</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="347"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(sim_opts-&gt;evol<sp/>==<sp/>1.)<sp/>{</highlight></codeline>
+<codeline lineno="348"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Get_Sigma_P_dP(sim_opts,<sp/>disk_params);</highlight></codeline>
+<codeline lineno="349"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="350"><highlight class="normal"></highlight></codeline>
+<codeline lineno="351"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Count<sp/>masses<sp/>and<sp/>get<sp/>sigma_d<sp/>for<sp/>the<sp/>next<sp/>step<sp/>(always<sp/>done)</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="352"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Count_Mass(p_data.radius,<sp/>p_data.partmassind,<sp/>p_data.massvec,<sp/>t,<sp/><ref refid="config_8c_1ae28967b989638744a8c653fa8228c1b6" kindref="member">PARTICLE_NUMBER</ref>,<sp/>disk_params);</highlight></codeline>
+<codeline lineno="353"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(sim_opts-&gt;twopop<sp/>==<sp/>1)<sp/>Count_Mass(p_data.radiusmicr,<sp/>p_data.partmassmicrind,<sp/>p_data.massmicrvec,<sp/>t,<sp/><ref refid="config_8c_1ae28967b989638744a8c653fa8228c1b6" kindref="member">PARTICLE_NUMBER</ref>,<sp/>disk_params);</highlight></codeline>
+<codeline lineno="354"><highlight class="normal"></highlight></codeline>
+<codeline lineno="355"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(sim_opts-&gt;growth<sp/>==<sp/>1.)<sp/>{</highlight></codeline>
+<codeline lineno="356"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Get_Sigmad(max,<sp/>min,<sp/>p_data.radius,<sp/>p_data.radiusmicr,<sp/>p_data.sigmad,<sp/>p_data.sigmadm,<sp/>p_data.massvec,<sp/>p_data.massmicrvec,<sp/>p_data.rdvec,<sp/>p_data.rmicvec,<sp/>sim_opts,<sp/>disk_params);</highlight></codeline>
+<codeline lineno="357"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="358"><highlight class="normal"></highlight></codeline>
+<codeline lineno="359"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Get<sp/>radii<sp/>for<sp/>next<sp/>step</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="360"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>optsize<sp/>=<sp/>0;</highlight></codeline>
+<codeline lineno="361"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Get_Radius(sim_opts-&gt;output_dir_name,<sp/>optsize,<sp/>p_data.radius,<sp/>p_data.sigmad,<sp/>p_data.rdvec,<sp/>deltat,<sp/>t,<sp/><ref refid="config_8c_1ae28967b989638744a8c653fa8228c1b6" kindref="member">PARTICLE_NUMBER</ref>,<sp/>sim_opts,<sp/>disk_params);</highlight></codeline>
+<codeline lineno="362"><highlight class="normal"></highlight></codeline>
+<codeline lineno="363"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(sim_opts-&gt;twopop<sp/>==<sp/>1.)<sp/>{</highlight></codeline>
+<codeline lineno="364"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>optsize<sp/>=<sp/>1;</highlight></codeline>
+<codeline lineno="365"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Get_Radius(sim_opts-&gt;output_dir_name,<sp/>optsize,<sp/>p_data.radiusmicr,<sp/>p_data.sigmadm,<sp/>p_data.rmicvec,<sp/>deltat,<sp/>t,<sp/><ref refid="config_8c_1ae28967b989638744a8c653fa8228c1b6" kindref="member">PARTICLE_NUMBER</ref>,<sp/>sim_opts,<sp/>disk_params);</highlight></codeline>
+<codeline lineno="366"><highlight class="normal"></highlight></codeline>
+<codeline lineno="367"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="368"><highlight class="normal"></highlight></codeline>
+<codeline lineno="369"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>t<sp/>=<sp/>t<sp/>+<sp/>deltat;</highlight></codeline>
+<codeline lineno="370"><highlight class="normal"></highlight></codeline>
+<codeline lineno="371"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Kilépési<sp/>feltétel<sp/>a<sp/>drift<sp/>==<sp/>1<sp/>ágon</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="372"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Fontos:<sp/>maxt<sp/>és<sp/>mint<sp/>frissül<sp/>az<sp/>előző<sp/>szakaszban,<sp/>azt<sp/>használjuk<sp/>itt.</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="373"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(!(maxt<sp/>&gt;=<sp/>disk_params-&gt;RMIN<sp/>&amp;&amp;<sp/>mint<sp/>!=<sp/>maxt))<sp/>{</highlight></codeline>
+<codeline lineno="374"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>fprintf(stderr,</highlight><highlight class="stringliteral">&quot;DEBUG<sp/>[tIntegrate]:<sp/>Simulation<sp/>termination<sp/>condition<sp/>met<sp/>(maxt<sp/>&lt;<sp/>RMIN<sp/>or<sp/>mint<sp/>==<sp/>maxt)<sp/>at<sp/>time:<sp/>%lg.\n&quot;</highlight><highlight class="normal">,L);</highlight></codeline>
+<codeline lineno="375"><highlight class="normal"></highlight></codeline>
+<codeline lineno="376"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">goto</highlight><highlight class="normal"><sp/>cleanup;<sp/></highlight><highlight class="comment">//<sp/>Ugrás<sp/>a<sp/>tisztításra</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="377"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="378"><highlight class="normal"></highlight></codeline>
+<codeline lineno="379"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}<sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"><sp/>{<sp/></highlight><highlight class="comment">//<sp/>sim_opts-&gt;drift<sp/>==<sp/>0.<sp/>(Gas-only<sp/>simulation)</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="380"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>current_time_years<sp/>=<sp/>t<sp/>/<sp/>(2.0<sp/>*<sp/>M_PI);</highlight></codeline>
+<codeline lineno="381"><highlight class="normal"></highlight></codeline>
+<codeline lineno="382"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>((fmod(current_time_years,<sp/>(sim_opts-&gt;TMAX<sp/>/<sp/>sim_opts-&gt;WO))<sp/>&lt;<sp/>deltat<sp/>||<sp/>current_time_years<sp/>==<sp/>0)<sp/>&amp;&amp;<sp/>L<sp/>-<sp/>current_time_years<sp/>&lt;<sp/>deltat)<sp/>{</highlight></codeline>
+<codeline lineno="383"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>fprintf(stderr,</highlight><highlight class="stringliteral">&quot;\n---<sp/>Simulation<sp/>Time:<sp/>%.2e<sp/>years<sp/>(Internal<sp/>time:<sp/>%.2e,<sp/>L:<sp/>%.2e)<sp/>---\n&quot;</highlight><highlight class="normal">,<sp/>current_time_years,<sp/>t,<sp/>L);</highlight></codeline>
+<codeline lineno="384"><highlight class="normal"></highlight></codeline>
+<codeline lineno="385"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>fprintf(stderr,</highlight><highlight class="stringliteral">&quot;DEBUG<sp/>[tIntegrate]:<sp/>Outputting<sp/>data<sp/>for<sp/>gas-only<sp/>simulation<sp/>at<sp/>time<sp/>%.2e.<sp/>L=%.2e\n&quot;</highlight><highlight class="normal">,<sp/>current_time_years,<sp/>L);</highlight></codeline>
+<codeline lineno="386"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>snprintf(dens_name,<sp/>MAX_PATH_LEN,<sp/></highlight><highlight class="stringliteral">&quot;%s/%s/%s_%08d.dat&quot;</highlight><highlight class="normal">,<sp/>sim_opts-&gt;output_dir_name,<sp/><ref refid="config_8c_1a5e24f7e18638f7c8bb96feda607d1403" kindref="member">LOGS_DIR</ref>,<sp/><ref refid="config_8c_1a5935f1a0e3e4be8da9d07eb621b70d9b" kindref="member">FILE_DENS_PREFIX</ref>,<sp/>(</highlight><highlight class="keywordtype">int</highlight><highlight class="normal">)L);</highlight></codeline>
+<codeline lineno="387"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>fprintf(stderr,<sp/></highlight><highlight class="stringliteral">&quot;DEBUG<sp/>[tIntegrate]:<sp/>Outputting<sp/>%s_%08d.dat<sp/>to<sp/>%s.\n&quot;</highlight><highlight class="normal">,<sp/><ref refid="config_8c_1a5935f1a0e3e4be8da9d07eb621b70d9b" kindref="member">FILE_DENS_PREFIX</ref>,<sp/>(</highlight><highlight class="keywordtype">int</highlight><highlight class="normal">)L,<sp/>dens_name);</highlight></codeline>
+<codeline lineno="388"><highlight class="normal"></highlight></codeline>
+<codeline lineno="389"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>output_files-&gt;surface_file<sp/>=<sp/>fopen(dens_name,<sp/></highlight><highlight class="stringliteral">&quot;w&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="390"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(output_files-&gt;surface_file<sp/>==<sp/>NULL)<sp/>{</highlight></codeline>
+<codeline lineno="391"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>fprintf(stderr,<sp/></highlight><highlight class="stringliteral">&quot;ERROR:<sp/>Could<sp/>not<sp/>open<sp/>%s<sp/>for<sp/>writing<sp/>in<sp/>gas-only<sp/>branch.\n&quot;</highlight><highlight class="normal">,<sp/>dens_name);</highlight></codeline>
+<codeline lineno="392"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}<sp/></highlight><highlight class="keywordflow">else</highlight><highlight class="normal"><sp/>{</highlight></codeline>
+<codeline lineno="393"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>fprintf(stderr,<sp/></highlight><highlight class="stringliteral">&quot;DEBUG<sp/>[tIntegrate]:<sp/>Opened<sp/>%s<sp/>for<sp/>writing<sp/>in<sp/>gas-only<sp/>branch.\n&quot;</highlight><highlight class="normal">,<sp/>dens_name);</highlight></codeline>
+<codeline lineno="394"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>HeaderData_t<sp/>gas_header_data<sp/>=<sp/>{.current_time<sp/>=<sp/>current_time_years,<sp/>.is_initial_data<sp/>=<sp/>(current_time_years<sp/>==<sp/>0.0)};</highlight></codeline>
+<codeline lineno="395"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>print_file_header(output_files-&gt;surface_file,<sp/>FILE_TYPE_GAS_DENSITY,<sp/>&amp;gas_header_data);</highlight></codeline>
+<codeline lineno="396"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="397"><highlight class="normal"></highlight></codeline>
+<codeline lineno="398"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Print_Sigma(disk_params,<sp/>output_files);</highlight></codeline>
+<codeline lineno="399"><highlight class="normal"></highlight></codeline>
+<codeline lineno="400"><highlight class="normal"></highlight></codeline>
+<codeline lineno="401"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(output_files-&gt;surface_file<sp/>!=<sp/>NULL)<sp/>{</highlight></codeline>
+<codeline lineno="402"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>fclose(output_files-&gt;surface_file);</highlight></codeline>
+<codeline lineno="403"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>output_files-&gt;surface_file<sp/>=<sp/>NULL;</highlight></codeline>
+<codeline lineno="404"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>fprintf(stderr,<sp/></highlight><highlight class="stringliteral">&quot;DEBUG<sp/>[tIntegrate]:<sp/>Closed<sp/>%s<sp/>in<sp/>gas-only<sp/>branch.\n&quot;</highlight><highlight class="normal">,<sp/>dens_name);</highlight></codeline>
+<codeline lineno="405"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="406"><highlight class="normal"></highlight></codeline>
+<codeline lineno="407"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>L<sp/>=<sp/>L<sp/>+<sp/>(double)(sim_opts-&gt;TMAX<sp/>/<sp/>sim_opts-&gt;WO);</highlight></codeline>
+<codeline lineno="408"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>fprintf(stderr,</highlight><highlight class="stringliteral">&quot;DEBUG<sp/>[tIntegrate]:<sp/>Updated<sp/>L<sp/>to<sp/>%.2e.\n&quot;</highlight><highlight class="normal">,<sp/>L);</highlight></codeline>
+<codeline lineno="409"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="410"><highlight class="normal"></highlight></codeline>
+<codeline lineno="411"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>fprintf(stderr,</highlight><highlight class="stringliteral">&quot;DEBUG<sp/>[tIntegrate]:<sp/>Calling<sp/>Get_Sigma_P_dP<sp/>for<sp/>gas-only<sp/>evolution.\n&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="412"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>Get_Sigma_P_dP(sim_opts,<sp/>disk_params);</highlight></codeline>
+<codeline lineno="413"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="414"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>t<sp/>=<sp/>t<sp/>+<sp/>deltat;</highlight></codeline>
+<codeline lineno="415"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="416"><highlight class="normal"></highlight></codeline>
+<codeline lineno="417"><highlight class="normal"><sp/><sp/><sp/><sp/>}<sp/></highlight><highlight class="keywordflow">while</highlight><highlight class="normal"><sp/>(t<sp/>&lt;=<sp/>t_integration);</highlight></codeline>
+<codeline lineno="418"><highlight class="normal"></highlight></codeline>
+<codeline lineno="419"><highlight class="normal"><sp/><sp/><sp/><sp/>fprintf(stderr,</highlight><highlight class="stringliteral">&quot;\n\nDEBUG<sp/>[tIntegrate]:<sp/>Main<sp/>simulation<sp/>loop<sp/>finished<sp/>(t<sp/>&gt;<sp/>t_integration).\n&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="420"><highlight class="normal"></highlight></codeline>
+<codeline lineno="421"><highlight class="normal">cleanup:</highlight></codeline>
+<codeline lineno="422"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>---<sp/>Tisztítási<sp/>szakasz<sp/>---</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="423"><highlight class="normal"><sp/><sp/><sp/><sp/>cleanup_simulation_resources(&amp;p_data,<sp/>output_files,<sp/>sim_opts);</highlight></codeline>
+<codeline lineno="424"><highlight class="normal"><sp/><sp/><sp/><sp/>fprintf(stderr,</highlight><highlight class="stringliteral">&quot;DEBUG<sp/>[tIntegrate]:<sp/>Cleanup<sp/>completed.\n&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="425"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="426"><highlight class="normal"></highlight></codeline>
+    </programlisting>
+    <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/simulation_core.c"/>
+  </compounddef>
+</doxygen>

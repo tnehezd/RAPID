@@ -1,0 +1,270 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.14.0" xml:lang="en-US">
+  <compounddef id="struct_header_data__t" kind="struct" language="C++" prot="public">
+    <compoundname>HeaderData_t</compoundname>
+    <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="struct_header_data__t_1a7f076a963de65ece8fe73f8aa64a6b0d" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double HeaderData_t::current_time</definition>
+        <argsstring></argsstring>
+        <name>current_time</name>
+        <qualifiedname>HeaderData_t::current_time</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" line="84" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" bodystart="84" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="struct_header_data__t_1add4f71a30e54f4e412f01bf7064f3612" prot="public" static="no" mutable="no">
+        <type>int</type>
+        <definition>int HeaderData_t::is_initial_data</definition>
+        <argsstring></argsstring>
+        <name>is_initial_data</name>
+        <qualifiedname>HeaderData_t::is_initial_data</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" line="85" column="9" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" bodystart="85" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="struct_header_data__t_1a31e66261e353c20adff3e67d6a216e7f" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double HeaderData_t::R_in</definition>
+        <argsstring></argsstring>
+        <name>R_in</name>
+        <qualifiedname>HeaderData_t::R_in</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" line="87" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" bodystart="87" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="struct_header_data__t_1a92e956c1830024486e94c8bda64a41f3" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double HeaderData_t::R_out</definition>
+        <argsstring></argsstring>
+        <name>R_out</name>
+        <qualifiedname>HeaderData_t::R_out</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" line="88" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" bodystart="88" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="struct_header_data__t_1aa8337693e80ae5e6ec726765adb50989" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double HeaderData_t::sigma_exponent</definition>
+        <argsstring></argsstring>
+        <name>sigma_exponent</name>
+        <qualifiedname>HeaderData_t::sigma_exponent</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" line="89" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" bodystart="89" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="struct_header_data__t_1ad22a57cf140a1afe557314deba382852" prot="public" static="no" mutable="no">
+        <type>long double</type>
+        <definition>long double HeaderData_t::sigma0_gas_au</definition>
+        <argsstring></argsstring>
+        <name>sigma0_gas_au</name>
+        <qualifiedname>HeaderData_t::sigma0_gas_au</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" line="90" column="17" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" bodystart="90" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="struct_header_data__t_1a29194c9c3359b7c69dc7cbdf9d02e147" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double HeaderData_t::grav_const</definition>
+        <argsstring></argsstring>
+        <name>grav_const</name>
+        <qualifiedname>HeaderData_t::grav_const</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" line="91" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" bodystart="91" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="struct_header_data__t_1a85502e83fea39a04c265e38c6604a3c5" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double HeaderData_t::dz_r_inner</definition>
+        <argsstring></argsstring>
+        <name>dz_r_inner</name>
+        <qualifiedname>HeaderData_t::dz_r_inner</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" line="92" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" bodystart="92" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="struct_header_data__t_1a18e415cf77b3b1d7fc0ddefee36b6f3e" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double HeaderData_t::dz_r_outer</definition>
+        <argsstring></argsstring>
+        <name>dz_r_outer</name>
+        <qualifiedname>HeaderData_t::dz_r_outer</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" line="93" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" bodystart="93" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="struct_header_data__t_1a2cc19382c77f40f019db5f80817585bd" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double HeaderData_t::dz_dr_inner_calc</definition>
+        <argsstring></argsstring>
+        <name>dz_dr_inner_calc</name>
+        <qualifiedname>HeaderData_t::dz_dr_inner_calc</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" line="94" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" bodystart="94" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="struct_header_data__t_1acedc286fcbd78273acebff2de32f3e89" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double HeaderData_t::dz_dr_outer_calc</definition>
+        <argsstring></argsstring>
+        <name>dz_dr_outer_calc</name>
+        <qualifiedname>HeaderData_t::dz_dr_outer_calc</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" line="95" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" bodystart="95" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="struct_header_data__t_1a0ac65049aaadd00d27292fedb935b507" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double HeaderData_t::dz_alpha_mod</definition>
+        <argsstring></argsstring>
+        <name>dz_alpha_mod</name>
+        <qualifiedname>HeaderData_t::dz_alpha_mod</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" line="96" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" bodystart="96" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="struct_header_data__t_1a83f4b9c7fd53ceafe76330dc6b667954" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double HeaderData_t::dust_density_g_cm3</definition>
+        <argsstring></argsstring>
+        <name>dust_density_g_cm3</name>
+        <qualifiedname>HeaderData_t::dust_density_g_cm3</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" line="97" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" bodystart="97" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="struct_header_data__t_1a4661dd4b08b863ed44cd5524eed4c9a0" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double HeaderData_t::alpha_viscosity</definition>
+        <argsstring></argsstring>
+        <name>alpha_viscosity</name>
+        <qualifiedname>HeaderData_t::alpha_viscosity</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" line="98" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" bodystart="98" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="struct_header_data__t_1a89de1164db535d9c9b179d572623c113" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double HeaderData_t::star_mass</definition>
+        <argsstring></argsstring>
+        <name>star_mass</name>
+        <qualifiedname>HeaderData_t::star_mass</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" line="99" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" bodystart="99" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="struct_header_data__t_1ae3f2212de8d393201d3ed5d086cc8f21" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double HeaderData_t::flaring_index</definition>
+        <argsstring></argsstring>
+        <name>flaring_index</name>
+        <qualifiedname>HeaderData_t::flaring_index</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" line="100" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" bodystart="100" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="struct_header_data__t_1af03c0073952a6744c8266c65f0b473e7" prot="public" static="no" mutable="no">
+        <type>int</type>
+        <definition>int HeaderData_t::n_grid_points</definition>
+        <argsstring></argsstring>
+        <name>n_grid_points</name>
+        <qualifiedname>HeaderData_t::n_grid_points</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" line="101" column="9" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" bodystart="101" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" line="83" column="1" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" bodystart="83" bodyend="102"/>
+    <listofallmembers>
+      <member refid="struct_header_data__t_1a4661dd4b08b863ed44cd5524eed4c9a0" prot="public" virt="non-virtual"><scope>HeaderData_t</scope><name>alpha_viscosity</name></member>
+      <member refid="struct_header_data__t_1a7f076a963de65ece8fe73f8aa64a6b0d" prot="public" virt="non-virtual"><scope>HeaderData_t</scope><name>current_time</name></member>
+      <member refid="struct_header_data__t_1a83f4b9c7fd53ceafe76330dc6b667954" prot="public" virt="non-virtual"><scope>HeaderData_t</scope><name>dust_density_g_cm3</name></member>
+      <member refid="struct_header_data__t_1a0ac65049aaadd00d27292fedb935b507" prot="public" virt="non-virtual"><scope>HeaderData_t</scope><name>dz_alpha_mod</name></member>
+      <member refid="struct_header_data__t_1a2cc19382c77f40f019db5f80817585bd" prot="public" virt="non-virtual"><scope>HeaderData_t</scope><name>dz_dr_inner_calc</name></member>
+      <member refid="struct_header_data__t_1acedc286fcbd78273acebff2de32f3e89" prot="public" virt="non-virtual"><scope>HeaderData_t</scope><name>dz_dr_outer_calc</name></member>
+      <member refid="struct_header_data__t_1a85502e83fea39a04c265e38c6604a3c5" prot="public" virt="non-virtual"><scope>HeaderData_t</scope><name>dz_r_inner</name></member>
+      <member refid="struct_header_data__t_1a18e415cf77b3b1d7fc0ddefee36b6f3e" prot="public" virt="non-virtual"><scope>HeaderData_t</scope><name>dz_r_outer</name></member>
+      <member refid="struct_header_data__t_1ae3f2212de8d393201d3ed5d086cc8f21" prot="public" virt="non-virtual"><scope>HeaderData_t</scope><name>flaring_index</name></member>
+      <member refid="struct_header_data__t_1a29194c9c3359b7c69dc7cbdf9d02e147" prot="public" virt="non-virtual"><scope>HeaderData_t</scope><name>grav_const</name></member>
+      <member refid="struct_header_data__t_1add4f71a30e54f4e412f01bf7064f3612" prot="public" virt="non-virtual"><scope>HeaderData_t</scope><name>is_initial_data</name></member>
+      <member refid="struct_header_data__t_1af03c0073952a6744c8266c65f0b473e7" prot="public" virt="non-virtual"><scope>HeaderData_t</scope><name>n_grid_points</name></member>
+      <member refid="struct_header_data__t_1a31e66261e353c20adff3e67d6a216e7f" prot="public" virt="non-virtual"><scope>HeaderData_t</scope><name>R_in</name></member>
+      <member refid="struct_header_data__t_1a92e956c1830024486e94c8bda64a41f3" prot="public" virt="non-virtual"><scope>HeaderData_t</scope><name>R_out</name></member>
+      <member refid="struct_header_data__t_1ad22a57cf140a1afe557314deba382852" prot="public" virt="non-virtual"><scope>HeaderData_t</scope><name>sigma0_gas_au</name></member>
+      <member refid="struct_header_data__t_1aa8337693e80ae5e6ec726765adb50989" prot="public" virt="non-virtual"><scope>HeaderData_t</scope><name>sigma_exponent</name></member>
+      <member refid="struct_header_data__t_1a89de1164db535d9c9b179d572623c113" prot="public" virt="non-virtual"><scope>HeaderData_t</scope><name>star_mass</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

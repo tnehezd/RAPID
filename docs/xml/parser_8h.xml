@@ -1,0 +1,202 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.14.0" xml:lang="en-US">
+  <compounddef id="parser_8h" kind="file" language="C++">
+    <compoundname>parser.h</compoundname>
+    <includes local="no">stdbool.h</includes>
+    <includes refid="config_8h" local="yes">config.h</includes>
+    <includes refid="simulation__types_8h" local="yes">simulation_types.h</includes>
+    <includes refid="globals_8h" local="yes">globals.h</includes>
+    <includedby refid="main_8c" local="yes">/Users/tnehezd/Documents/Munka/dust_drift/src/main.c</includedby>
+    <includedby refid="parser_8c" local="yes">/Users/tnehezd/Documents/Munka/dust_drift/src/parser.c</includedby>
+    <incdepgraph>
+      <node id="3">
+        <label>config.h</label>
+        <link refid="config_8h"/>
+        <childnode refid="4" relation="include">
+        </childnode>
+        <childnode refid="5" relation="include">
+        </childnode>
+      </node>
+      <node id="1">
+        <label>/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h</label>
+        <link refid="parser_8h"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+        <childnode refid="3" relation="include">
+        </childnode>
+      </node>
+      <node id="5">
+        <label>math.h</label>
+      </node>
+      <node id="2">
+        <label>stdbool.h</label>
+      </node>
+      <node id="4">
+        <label>stdio.h</label>
+      </node>
+    </incdepgraph>
+    <innerclass refid="structoptions__t" prot="public">options_t</innerclass>
+    <sectiondef kind="define">
+      <memberdef kind="define" id="parser_8h_1a911de7c89466a4907312069f97b2ac5d" prot="public" static="no">
+        <name>MAX_OUTPUT_DIR_LEN</name>
+        <initializer>MAX_PATH_LEN</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" line="10" column="9" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" bodystart="10" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="func">
+      <memberdef kind="function" id="parser_8h_1a44e3f2185ea84729ff420ed0d0618e18" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void create_default_options</definition>
+        <argsstring>(options_t *opt)</argsstring>
+        <name>create_default_options</name>
+        <param>
+          <type>options_t *</type>
+          <declname>opt</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" line="69" column="6" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.c" bodystart="11" bodyend="60" declfile="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" declline="69" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="parser_8h_1ad7c722486a5174b2f6e5466dc637c6e2" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int parse_options</definition>
+        <argsstring>(int argc, const char **argv, options_t *opt)</argsstring>
+        <name>parse_options</name>
+        <param>
+          <type>int</type>
+          <declname>argc</declname>
+        </param>
+        <param>
+          <type>const char **</type>
+          <declname>argv</declname>
+        </param>
+        <param>
+          <type>options_t *</type>
+          <declname>opt</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" line="78" column="5" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.c" bodystart="108" bodyend="229" declfile="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" declline="78" declcolumn="5"/>
+      </memberdef>
+      <memberdef kind="function" id="parser_8h_1ae5ad5cbeccaedc03a48d3c7eaa803e79" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void print_usage</definition>
+        <argsstring>()</argsstring>
+        <name>print_usage</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" line="83" column="6" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.c" bodystart="63" bodyend="104" declfile="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" declline="83" declcolumn="6"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"><highlight class="preprocessor">#ifndef<sp/>PARSER_H</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="2"><highlight class="normal"></highlight><highlight class="preprocessor">#define<sp/>PARSER_H</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="3"><highlight class="normal"></highlight></codeline>
+<codeline lineno="4"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;stdbool.h&gt;</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>For<sp/>bool<sp/>type</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="5"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;<ref refid="config_8h" kindref="compound">config.h</ref>&quot;</highlight><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Keep<sp/>this<sp/>for<sp/>other<sp/>config<sp/>definitions<sp/>if<sp/>needed</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="6"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;simulation_types.h&quot;</highlight><highlight class="normal"><sp/></highlight><highlight class="comment">//<sp/>CRITICAL:<sp/>This<sp/>line<sp/>provides<sp/>MAX_PATH_LEN</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="7"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;globals.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="8"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Define<sp/>a<sp/>maximum<sp/>length<sp/>for<sp/>the<sp/>output<sp/>directory<sp/>name</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="9"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Use<sp/>MAX_PATH_LEN<sp/>from<sp/>simulation_types.h<sp/>for<sp/>consistency</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="10"><highlight class="normal"></highlight><highlight class="preprocessor">#define<sp/>MAX_OUTPUT_DIR_LEN<sp/>MAX_PATH_LEN</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="11"><highlight class="normal"></highlight></codeline>
+<codeline lineno="12"><highlight class="normal"></highlight><highlight class="comment">/*</highlight></codeline>
+<codeline lineno="13"><highlight class="comment"><sp/>*<sp/>@brief<sp/>Structure<sp/>to<sp/>hold<sp/>all<sp/>parsed<sp/>command-line<sp/>options.</highlight></codeline>
+<codeline lineno="14"><highlight class="comment"><sp/>*<sp/>This<sp/>replaces<sp/>many<sp/>individual<sp/>global<sp/>variables<sp/>for<sp/>options.</highlight></codeline>
+<codeline lineno="15"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="16"><highlight class="normal"></highlight><highlight class="keyword">typedef</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal">{</highlight></codeline>
+<codeline lineno="17"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Simulation<sp/>control<sp/>options</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="18"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>drift;</highlight></codeline>
+<codeline lineno="19"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>growth;</highlight></codeline>
+<codeline lineno="20"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>evol;</highlight></codeline>
+<codeline lineno="21"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>twopop;</highlight></codeline>
+<codeline lineno="22"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>ufrag;</highlight></codeline>
+<codeline lineno="23"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>ffrag;</highlight></codeline>
+<codeline lineno="24"><highlight class="normal"></highlight></codeline>
+<codeline lineno="25"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Core<sp/>disk<sp/>parameters<sp/>(also<sp/>serve<sp/>as<sp/>init_tool<sp/>defaults<sp/>if<sp/>no<sp/>input<sp/>file)</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="26"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><sp/><sp/><sp/>ngrid_val;<sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Number<sp/>of<sp/>grid<sp/>points</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="27"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><sp/><sp/><sp/>ndust_val;</highlight></codeline>
+<codeline lineno="28"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>rmin_val;<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Inner<sp/>radius<sp/>(AU)</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="29"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>rmax_val;<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Outer<sp/>radius<sp/>(AU)</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="30"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>sigma0_val;<sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Initial<sp/>gas<sp/>surface<sp/>density<sp/>at<sp/>1<sp/>AU<sp/>(M_sun/AU^2)</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="31"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>sigmap_exp_val;<sp/><sp/></highlight><highlight class="comment">//<sp/>Exponent<sp/>of<sp/>surface<sp/>density<sp/>profile<sp/>(positive<sp/>value,<sp/>e.g.,<sp/>1.0<sp/>for<sp/>r^-1)</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="32"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>alpha_visc_val;<sp/><sp/></highlight><highlight class="comment">//<sp/>Alpha<sp/>viscosity</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="33"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>star_val;<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Star<sp/>mass<sp/>(M_sun)</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="34"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>hasp_val;<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Aspect<sp/>ratio<sp/>at<sp/>1<sp/>AU<sp/>(H/R)</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="35"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>flind_val;<sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Flaring<sp/>index</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="36"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>r_dze_i_val;<sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Inner<sp/>dead<sp/>zone<sp/>radius<sp/>(AU)</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="37"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>r_dze_o_val;<sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Outer<sp/>dead<sp/>zone<sp/>radius<sp/>(AU)</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="38"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>dr_dze_i_val;<sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Inner<sp/>dead<sp/>zone<sp/>transition<sp/>width<sp/>multiplier</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="39"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>dr_dze_o_val;<sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Outer<sp/>dead<sp/>zone<sp/>transition<sp/>width<sp/>multiplier</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="40"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>a_mod_val;<sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Alpha<sp/>viscosity<sp/>multiplier<sp/>in<sp/>dead<sp/>zone</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="41"><highlight class="normal"></highlight></codeline>
+<codeline lineno="42"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>File<sp/>input/output</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="43"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*input_file;<sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Path<sp/>to<sp/>the<sp/>input<sp/>profile<sp/>file,<sp/>NULL<sp/>if<sp/>not<sp/>provided</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="44"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>output_dir_name[MAX_OUTPUT_DIR_LEN];<sp/></highlight><highlight class="comment">//<sp/>Name<sp/>of<sp/>the<sp/>output<sp/>directory</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="45"><highlight class="normal"></highlight></codeline>
+<codeline lineno="46"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Time<sp/>parameters</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="47"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>tStep;<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Fixed<sp/>time<sp/>step</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="48"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>totalTime;<sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Total<sp/>simulation<sp/>time</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="49"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>outputFrequency;<sp/></highlight><highlight class="comment">//<sp/>Output<sp/>frequency</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="50"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>startTime;<sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Current<sp/>start<sp/>time<sp/>(for<sp/>resuming<sp/>or<sp/>initial<sp/>time)</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="51"><highlight class="normal"></highlight></codeline>
+<codeline lineno="52"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Init<sp/>tool<sp/>specific<sp/>parameters<sp/>(if<sp/>initial<sp/>profile<sp/>is<sp/>generated)</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="53"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>These<sp/>could<sp/>also<sp/>be<sp/>merged<sp/>into<sp/>the<sp/>general<sp/>disk<sp/>parameters<sp/>if<sp/>they<sp/>always<sp/>overlap</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="54"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>eps_val;<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Dust-to-gas<sp/>ratio</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="55"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>ratio_val;<sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Ratio<sp/>of<sp/>Pop1<sp/>dust<sp/>mass<sp/>to<sp/>total<sp/>dust<sp/>mass</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="56"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>mic_val;<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Micro-sized<sp/>particle<sp/>radius<sp/>(cm)</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="57"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>onesize_val;<sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Flag/value<sp/>for<sp/>one<sp/>size<sp/>particles<sp/>(0.0<sp/>for<sp/>distribution,<sp/>1.0<sp/>for<sp/>mic_val)</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="58"><highlight class="normal"></highlight></codeline>
+<codeline lineno="59"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="60"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>NEW:<sp/>Add<sp/>PDENSITY<sp/>(dust<sp/>particle<sp/>density)<sp/>parameter</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="61"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>pdensity_val;<sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Dust<sp/>particle<sp/>density<sp/>[g/cm^3]</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="62"><highlight class="normal"></highlight></codeline>
+<codeline lineno="63"><highlight class="normal">}<sp/>options_t;</highlight></codeline>
+<codeline lineno="64"><highlight class="normal"></highlight></codeline>
+<codeline lineno="65"><highlight class="normal"></highlight><highlight class="comment">/*</highlight></codeline>
+<codeline lineno="66"><highlight class="comment"><sp/>*<sp/>@brief<sp/>Initializes<sp/>the<sp/>options_t<sp/>structure<sp/>with<sp/>default<sp/>values.</highlight></codeline>
+<codeline lineno="67"><highlight class="comment"><sp/>*<sp/>@param<sp/>opt<sp/>Pointer<sp/>to<sp/>the<sp/>options_t<sp/>structure<sp/>to<sp/>be<sp/>initialized.</highlight></codeline>
+<codeline lineno="68"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="69"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>create_default_options(options_t<sp/>*opt);</highlight></codeline>
+<codeline lineno="70"><highlight class="normal"></highlight></codeline>
+<codeline lineno="71"><highlight class="normal"></highlight><highlight class="comment">/*</highlight></codeline>
+<codeline lineno="72"><highlight class="comment"><sp/>*<sp/>@brief<sp/>Parses<sp/>command-line<sp/>arguments<sp/>and<sp/>populates<sp/>the<sp/>options_t<sp/>structure.</highlight></codeline>
+<codeline lineno="73"><highlight class="comment"><sp/>*<sp/>@param<sp/>argc<sp/>The<sp/>number<sp/>of<sp/>command-line<sp/>arguments.</highlight></codeline>
+<codeline lineno="74"><highlight class="comment"><sp/>*<sp/>@param<sp/>argv<sp/>An<sp/>array<sp/>of<sp/>strings<sp/>containing<sp/>the<sp/>command-line<sp/>arguments.</highlight></codeline>
+<codeline lineno="75"><highlight class="comment"><sp/>*<sp/>@param<sp/>opt<sp/>Pointer<sp/>to<sp/>the<sp/>options_t<sp/>structure<sp/>where<sp/>parsed<sp/>values<sp/>will<sp/>be<sp/>stored.</highlight></codeline>
+<codeline lineno="76"><highlight class="comment"><sp/>*<sp/>@return<sp/>0<sp/>on<sp/>successful<sp/>parsing,<sp/>1<sp/>on<sp/>error<sp/>(e.g.,<sp/>missing<sp/>value,<sp/>unknown<sp/>option).</highlight></codeline>
+<codeline lineno="77"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="78"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>parse_options(</highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>argc,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>**argv,<sp/>options_t<sp/>*opt);</highlight></codeline>
+<codeline lineno="79"><highlight class="normal"></highlight></codeline>
+<codeline lineno="80"><highlight class="normal"></highlight><highlight class="comment">/*</highlight></codeline>
+<codeline lineno="81"><highlight class="comment"><sp/>*<sp/>@brief<sp/>Prints<sp/>the<sp/>command-line<sp/>usage<sp/>information<sp/>to<sp/>stderr.</highlight></codeline>
+<codeline lineno="82"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="83"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>print_usage();</highlight></codeline>
+<codeline lineno="84"><highlight class="normal"></highlight></codeline>
+<codeline lineno="85"><highlight class="normal"></highlight><highlight class="preprocessor">#endif<sp/></highlight><highlight class="comment">//<sp/>PARSER_H</highlight><highlight class="normal"></highlight></codeline>
+    </programlisting>
+    <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h"/>
+  </compounddef>
+</doxygen>

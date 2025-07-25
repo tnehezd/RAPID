@@ -1,0 +1,32 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.14.0" xml:lang="en-US">
+  <compounddef id="dir_68267d1309a1af8e8297ef4c3efbcdba" kind="dir">
+    <compoundname>/Users/tnehezd/Documents/Munka/dust_drift/src</compoundname>
+    <innerfile refid="config_8c">config.c</innerfile>
+    <innerfile refid="config_8h">config.h</innerfile>
+    <innerfile refid="disk__model_8c">disk_model.c</innerfile>
+    <innerfile refid="disk__model_8h">disk_model.h</innerfile>
+    <innerfile refid="dust__physics_8c">dust_physics.c</innerfile>
+    <innerfile refid="dust__physics_8h">dust_physics.h</innerfile>
+    <innerfile refid="globals_8h">globals.h</innerfile>
+    <innerfile refid="init__tool__module_8c">init_tool_module.c</innerfile>
+    <innerfile refid="init__tool__module_8h">init_tool_module.h</innerfile>
+    <innerfile refid="io__utils_8c">io_utils.c</innerfile>
+    <innerfile refid="io__utils_8h">io_utils.h</innerfile>
+    <innerfile refid="main_8c">main.c</innerfile>
+    <innerfile refid="parser_8c">parser.c</innerfile>
+    <innerfile refid="parser_8h">parser.h</innerfile>
+    <innerfile refid="particle__data_8c">particle_data.c</innerfile>
+    <innerfile refid="particle__data_8h">particle_data.h</innerfile>
+    <innerfile refid="simulation__core_8c">simulation_core.c</innerfile>
+    <innerfile refid="simulation__core_8h">simulation_core.h</innerfile>
+    <innerfile refid="simulation__types_8h">simulation_types.h</innerfile>
+    <innerfile refid="utils_8c">utils.c</innerfile>
+    <innerfile refid="utils_8h">utils.h</innerfile>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/"/>
+  </compounddef>
+</doxygen>

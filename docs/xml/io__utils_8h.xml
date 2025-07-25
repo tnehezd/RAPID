@@ -1,0 +1,736 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.14.0" xml:lang="en-US">
+  <compounddef id="io__utils_8h" kind="file" language="C++">
+    <compoundname>io_utils.h</compoundname>
+    <includes local="no">stdio.h</includes>
+    <includes local="no">stdbool.h</includes>
+    <includes refid="simulation__types_8h" local="yes">simulation_types.h</includes>
+    <includes refid="particle__data_8h" local="yes">particle_data.h</includes>
+    <includes refid="config_8h" local="yes">config.h</includes>
+    <includes refid="globals_8h" local="yes">globals.h</includes>
+    <includedby refid="disk__model_8c" local="yes">/Users/tnehezd/Documents/Munka/dust_drift/src/disk_model.c</includedby>
+    <includedby refid="init__tool__module_8c" local="yes">/Users/tnehezd/Documents/Munka/dust_drift/src/init_tool_module.c</includedby>
+    <includedby refid="io__utils_8c" local="yes">/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.c</includedby>
+    <includedby refid="main_8c" local="yes">/Users/tnehezd/Documents/Munka/dust_drift/src/main.c</includedby>
+    <includedby refid="simulation__core_8c" local="yes">/Users/tnehezd/Documents/Munka/dust_drift/src/simulation_core.c</includedby>
+    <incdepgraph>
+      <node id="4">
+        <label>config.h</label>
+        <link refid="config_8h"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+        <childnode refid="5" relation="include">
+        </childnode>
+      </node>
+      <node id="1">
+        <label>/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h</label>
+        <link refid="io__utils_8h"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+        <childnode refid="3" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+      </node>
+      <node id="5">
+        <label>math.h</label>
+      </node>
+      <node id="3">
+        <label>stdbool.h</label>
+      </node>
+      <node id="2">
+        <label>stdio.h</label>
+      </node>
+    </incdepgraph>
+    <innerclass refid="struct_header_data__t" prot="public">HeaderData_t</innerclass>
+    <sectiondef kind="enum">
+      <memberdef kind="enum" id="io__utils_8h_1a114801acf54af80187839e76d20a729f" prot="public" static="no" strong="no">
+        <type></type>
+        <name>FileType_e</name>
+        <enumvalue id="io__utils_8h_1a114801acf54af80187839e76d20a729fa196fa1d835b14dbb0bbb2741823450e0" prot="public">
+          <name>FILE_TYPE_DUST_MOTION</name>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="io__utils_8h_1a114801acf54af80187839e76d20a729fafe6d3943563e30d3d9dada6729e7a1bf" prot="public">
+          <name>FILE_TYPE_MICRON_MOTION</name>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="io__utils_8h_1a114801acf54af80187839e76d20a729fab854eb9cf1d47602047f88471fa5551f" prot="public">
+          <name>FILE_TYPE_MASS_ACCUMULATION</name>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="io__utils_8h_1a114801acf54af80187839e76d20a729fa94831e257a44219a20ece7b54af37a64" prot="public">
+          <name>FILE_TYPE_GAS_DENSITY</name>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="io__utils_8h_1a114801acf54af80187839e76d20a729fa9102aa840bf31050cbf3231f1581f3e7" prot="public">
+          <name>FILE_TYPE_DUST_DENSITY</name>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="io__utils_8h_1a114801acf54af80187839e76d20a729fa2ac74a2c388ab48156f0d1778345aa7b" prot="public">
+          <name>FILE_TYPE_DUST_MICRON_DENSITY</name>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="io__utils_8h_1a114801acf54af80187839e76d20a729fab70fa15055b3395671b201355c9fd404" prot="public">
+          <name>FILE_TYPE_PARTICLE_SIZE</name>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="io__utils_8h_1a114801acf54af80187839e76d20a729fae84dea84ad6ab13dc247b7d831c0873b" prot="public">
+          <name>FILE_TYPE_DISK_PARAM</name>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" line="70" column="1" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" bodystart="70" bodyend="80"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="var">
+      <memberdef kind="variable" id="io__utils_8h_1a39b8f525748e37e7b53d878ef54453c3" prot="public" static="no" extern="yes" mutable="no">
+        <type>FILE *</type>
+        <definition>FILE* fin1</definition>
+        <argsstring></argsstring>
+        <name>fin1</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" line="14" column="13" declfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" declline="14" declcolumn="13"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="func">
+      <memberdef kind="function" id="io__utils_8h_1a34863376718cda0c8bec9f0c836fbe45" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int reszecskek_szama</definition>
+        <argsstring>(const char *filenev)</argsstring>
+        <name>reszecskek_szama</name>
+        <param>
+          <type>const char *</type>
+          <declname>filenev</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" line="19" column="5" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.c" bodystart="35" bodyend="68" declfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" declline="19" declcolumn="5"/>
+      </memberdef>
+      <memberdef kind="function" id="io__utils_8h_1a8e348e4267493eb8d26d4b88f330bee8" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void ReadDustFile</definition>
+        <argsstring>(double radius[][2], double radiusmicr[][2], double *mass, double *massmicr, const char *filename)</argsstring>
+        <name>ReadDustFile</name>
+        <param>
+          <type>double</type>
+          <declname>radius</declname>
+          <array>[][2]</array>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>radiusmicr</declname>
+          <array>[][2]</array>
+        </param>
+        <param>
+          <type>double *</type>
+          <declname>mass</declname>
+        </param>
+        <param>
+          <type>double *</type>
+          <declname>massmicr</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>filename</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" line="22" column="6" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.c" bodystart="71" bodyend="117" declfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" declline="22" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="io__utils_8h_1a933c16bff8f7c96ecf6399c972837c63" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void ReadSigmaFile</definition>
+        <argsstring>(disk_t *disk_params, const char *filename)</argsstring>
+        <name>ReadSigmaFile</name>
+        <param>
+          <type>disk_t *</type>
+          <declname>disk_params</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>filename</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" line="25" column="6" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.c" bodystart="120" bodyend="188" declfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" declline="25" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="io__utils_8h_1a0c2d2c5b6c664d531f4444939008eb06" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void Mk_Dir</definition>
+        <argsstring>(char *dir_path)</argsstring>
+        <name>Mk_Dir</name>
+        <param>
+          <type>char *</type>
+          <declname>dir_path</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" line="28" column="6" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.c" bodystart="191" bodyend="221" declfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" declline="28" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="io__utils_8h_1a4cb66b5d84a4b30cf1f655deab781932" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void infoCurrent</definition>
+        <argsstring>(const char *nev, const disk_t *disk_params, const simulation_options_t *sim_opts)</argsstring>
+        <name>infoCurrent</name>
+        <param>
+          <type>const char *</type>
+          <declname>nev</declname>
+          <defname>output_dir_name</defname>
+        </param>
+        <param>
+          <type>const disk_t *</type>
+          <declname>disk_params</declname>
+        </param>
+        <param>
+          <type>const simulation_options_t *</type>
+          <declname>sim_opts</declname>
+        </param>
+        <briefdescription>
+<para>Generates a summary log file for the current simulation run. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>This function creates a file (named <computeroutput>summary.dat</computeroutput>) within the specified output directory. It logs the initial simulation parameters, including disk properties, central star mass, and Dead Zone Edge (DZE) configurations.</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>output_dir_name</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[in] The name of the main output directory for this simulation run. This directory is typically located under the <computeroutput>LOGS_DIR</computeroutput>. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>disk_params</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[in] A pointer to the <computeroutput>disk_t</computeroutput> structure containing disk-specific parameters. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>sim_opts</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>[in] A pointer to the <computeroutput>simulation_options_t</computeroutput> structure, containing general simulation options.</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="note"><para>This function uses the global <computeroutput>info_current_file</computeroutput> file pointer, which is declared in <computeroutput><ref refid="config_8h" kindref="compound">config.h</ref></computeroutput> and defined in <computeroutput><ref refid="config_8c" kindref="compound">config.c</ref></computeroutput>. </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" line="33" column="6" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.c" bodystart="238" bodyend="289" declfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" declline="33" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="io__utils_8h_1a35c0de3a3b0e849ad310883a2b3c0e92" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void Print_Mass</definition>
+        <argsstring>(double step, double(*partmassind)[5], double(*partmassmicrind)[5], double t, double massbtempii, double massbtempoi, double massmtempii, double massmtempoi, double *massbtempio, double *massbtempoo, double *massmtempio, double *massmtempoo, double *tavin, double *tavout, const disk_t *disk_params, const simulation_options_t *sim_opts, output_files_t *output_files)</argsstring>
+        <name>Print_Mass</name>
+        <param>
+          <type>double</type>
+          <declname>step</declname>
+        </param>
+        <param>
+          <type>double(*)</type>
+          <declname>partmassind</declname>
+          <array>[5]</array>
+        </param>
+        <param>
+          <type>double(*)</type>
+          <declname>partmassmicrind</declname>
+          <array>[5]</array>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>t</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>massbtempii</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>massbtempoi</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>massmtempii</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>massmtempoi</declname>
+        </param>
+        <param>
+          <type>double *</type>
+          <declname>massbtempio</declname>
+        </param>
+        <param>
+          <type>double *</type>
+          <declname>massbtempoo</declname>
+        </param>
+        <param>
+          <type>double *</type>
+          <declname>massmtempio</declname>
+        </param>
+        <param>
+          <type>double *</type>
+          <declname>massmtempoo</declname>
+        </param>
+        <param>
+          <type>double *</type>
+          <declname>tavin</declname>
+        </param>
+        <param>
+          <type>double *</type>
+          <declname>tavout</declname>
+        </param>
+        <param>
+          <type>const disk_t *</type>
+          <declname>disk_params</declname>
+        </param>
+        <param>
+          <type>const simulation_options_t *</type>
+          <declname>sim_opts</declname>
+        </param>
+        <param>
+          <type>output_files_t *</type>
+          <declname>output_files</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" line="37" column="6" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.c" bodystart="293" bodyend="427" declfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" declline="37" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="io__utils_8h_1a35ebc1d92996797b6472c039cade4dc5" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void Print_Sigma</definition>
+        <argsstring>(const disk_t *disk_params, output_files_t *output_files)</argsstring>
+        <name>Print_Sigma</name>
+        <param>
+          <type>const disk_t *</type>
+          <declname>disk_params</declname>
+        </param>
+        <param>
+          <type>output_files_t *</type>
+          <declname>output_files</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" line="48" column="6" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.c" bodystart="431" bodyend="446" declfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" declline="48" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="io__utils_8h_1afe3ae619da4599343f724381c3897ccc" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void Print_Sigmad</definition>
+        <argsstring>(const double *r, const double *rm, const double *sigmad, const double *sigmadm, const disk_t *disk_params, const simulation_options_t *sim_opts, output_files_t *output_files)</argsstring>
+        <name>Print_Sigmad</name>
+        <param>
+          <type>const double *</type>
+          <declname>r</declname>
+        </param>
+        <param>
+          <type>const double *</type>
+          <declname>rm</declname>
+        </param>
+        <param>
+          <type>const double *</type>
+          <declname>sigmad</declname>
+        </param>
+        <param>
+          <type>const double *</type>
+          <declname>sigmadm</declname>
+        </param>
+        <param>
+          <type>const disk_t *</type>
+          <declname>disk_params</declname>
+        </param>
+        <param>
+          <type>const simulation_options_t *</type>
+          <declname>sim_opts</declname>
+        </param>
+        <param>
+          <type>output_files_t *</type>
+          <declname>output_files</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" line="52" column="6" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.c" bodystart="449" bodyend="474" declfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" declline="52" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="io__utils_8h_1a109ff46c8c493e2017cd1141343c42a8" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void Print_Pormozg_Size</definition>
+        <argsstring>(char *size_name, int step, double(*rad)[2], double(*radmicr)[2], const disk_t *disk_params, const simulation_options_t *sim_opts, output_files_t *output_files)</argsstring>
+        <name>Print_Pormozg_Size</name>
+        <param>
+          <type>char *</type>
+          <declname>size_name</declname>
+        </param>
+        <param>
+          <type>int</type>
+          <declname>step</declname>
+        </param>
+        <param>
+          <type>double(*)</type>
+          <declname>rad</declname>
+          <array>[2]</array>
+        </param>
+        <param>
+          <type>double(*)</type>
+          <declname>radmicr</declname>
+          <array>[2]</array>
+        </param>
+        <param>
+          <type>const disk_t *</type>
+          <declname>disk_params</declname>
+        </param>
+        <param>
+          <type>const simulation_options_t *</type>
+          <declname>sim_opts</declname>
+        </param>
+        <param>
+          <type>output_files_t *</type>
+          <declname>output_files</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" line="57" column="6" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.c" bodystart="477" bodyend="527" declfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" declline="57" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="io__utils_8h_1a487644b455ab949a89b7c063fa40f391" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void timePar</definition>
+        <argsstring>(double tMax_val, double stepping_val, double current_val, simulation_options_t *sim_opts)</argsstring>
+        <name>timePar</name>
+        <param>
+          <type>double</type>
+          <declname>tMax_val</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>stepping_val</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>current_val</declname>
+        </param>
+        <param>
+          <type>simulation_options_t *</type>
+          <declname>sim_opts</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" line="63" column="6" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.c" bodystart="530" bodyend="536" declfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" declline="63" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="io__utils_8h_1a162c2c0ee22fb1849fbabb002d276741" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void print_file_header</definition>
+        <argsstring>(FILE *file, FileType_e file_type, const HeaderData_t *header_data)</argsstring>
+        <name>print_file_header</name>
+        <param>
+          <type>FILE *</type>
+          <declname>file</declname>
+        </param>
+        <param>
+          <type>FileType_e</type>
+          <declname>file_type</declname>
+        </param>
+        <param>
+          <type>const HeaderData_t *</type>
+          <declname>header_data</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" line="107" column="6" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.c" bodystart="540" bodyend="630" declfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" declline="107" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="io__utils_8h_1a001a8db296b37c8cd7c772476c197dda" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int setup_initial_output_files</definition>
+        <argsstring>(output_files_t *output_files, const simulation_options_t *sim_opts, const disk_t *disk_params, HeaderData_t *header_data_for_files)</argsstring>
+        <name>setup_initial_output_files</name>
+        <param>
+          <type>output_files_t *</type>
+          <declname>output_files</declname>
+        </param>
+        <param>
+          <type>const simulation_options_t *</type>
+          <declname>sim_opts</declname>
+        </param>
+        <param>
+          <type>const disk_t *</type>
+          <declname>disk_params</declname>
+        </param>
+        <param>
+          <type>HeaderData_t *</type>
+          <declname>header_data_for_files</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" line="111" column="5" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.c" bodystart="635" bodyend="692" declfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" declline="111" declcolumn="5"/>
+      </memberdef>
+      <memberdef kind="function" id="io__utils_8h_1ae0718f898759783f0eab700a745b1530" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void cleanup_simulation_resources</definition>
+        <argsstring>(ParticleData_t *p_data, output_files_t *output_files, const simulation_options_t *sim_opts)</argsstring>
+        <name>cleanup_simulation_resources</name>
+        <param>
+          <type>ParticleData_t *</type>
+          <declname>p_data</declname>
+        </param>
+        <param>
+          <type>output_files_t *</type>
+          <declname>output_files</declname>
+        </param>
+        <param>
+          <type>const simulation_options_t *</type>
+          <declname>sim_opts</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" line="115" column="6" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.c" bodystart="695" bodyend="727" declfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" declline="115" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="io__utils_8h_1aacc4d9ca85be3e6cd028bc121b4b4109" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void close_snapshot_files</definition>
+        <argsstring>(output_files_t *output_files, const char *dens_name, const char *dust_name, const char *dust_name2, const simulation_options_t *sim_opts)</argsstring>
+        <name>close_snapshot_files</name>
+        <param>
+          <type>output_files_t *</type>
+          <declname>output_files</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>dens_name</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>dust_name</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>dust_name2</declname>
+        </param>
+        <param>
+          <type>const simulation_options_t *</type>
+          <declname>sim_opts</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" line="117" column="6" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.c" bodystart="730" bodyend="743" declfile="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h" declline="117" declcolumn="6"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"><highlight class="preprocessor">#ifndef<sp/>IO_UTILS_H</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="2"><highlight class="normal"></highlight><highlight class="preprocessor">#define<sp/>IO_UTILS_H</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="3"><highlight class="normal"></highlight></codeline>
+<codeline lineno="4"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;stdio.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="5"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;stdbool.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="6"><highlight class="normal"></highlight></codeline>
+<codeline lineno="7"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;simulation_types.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="8"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;particle_data.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="9"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;<ref refid="config_8h" kindref="compound">config.h</ref>&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="10"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;globals.h&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="11"><highlight class="normal"></highlight></codeline>
+<codeline lineno="12"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Globális<sp/>változók<sp/>deklarációi,<sp/>ha<sp/>az<sp/>io_utils.c<sp/>fájlban<sp/>definiálva<sp/>vannak.</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="13"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Ezeknek<sp/>EGYEZNIÜK<sp/>KELL<sp/>a<sp/>src/config.h-ban<sp/>lévő<sp/>extern<sp/>deklarációkkal.</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="14"><highlight class="normal"></highlight><highlight class="keyword">extern</highlight><highlight class="normal"><sp/>FILE<sp/>*fin1;</highlight></codeline>
+<codeline lineno="15"><highlight class="normal"></highlight></codeline>
+<codeline lineno="16"><highlight class="normal"></highlight><highlight class="comment">//<sp/>---<sp/>FÜGGVÉNY<sp/>DEKLARÁCIÓK<sp/>---</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="17"><highlight class="normal"></highlight></codeline>
+<codeline lineno="18"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>reszecskek_szama<sp/>függvény<sp/>deklaráció<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="19"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>reszecskek_szama(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*filenev);</highlight></codeline>
+<codeline lineno="20"><highlight class="normal"></highlight></codeline>
+<codeline lineno="21"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>A<sp/>porreszecskek<sp/>adatainak<sp/>beolvasasa<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="22"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>ReadDustFile(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>radius[][2],<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>radiusmicr[][2],<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>*mass,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>*massmicr,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*filename);</highlight></codeline>
+<codeline lineno="23"><highlight class="normal"></highlight></codeline>
+<codeline lineno="24"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>A<sp/>sigmat<sp/>tartalmazo<sp/>file<sp/>parametereinek<sp/>beolvasasa<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="25"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>ReadSigmaFile(disk_t<sp/>*disk_params,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*filename);</highlight></codeline>
+<codeline lineno="26"><highlight class="normal"></highlight></codeline>
+<codeline lineno="27"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>Fuggveny<sp/>az<sp/>adott<sp/>futashoz<sp/>mappa<sp/>letrehozasara<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="28"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>Mk_Dir(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*dir_path);</highlight></codeline>
+<codeline lineno="29"><highlight class="normal"></highlight></codeline>
+<codeline lineno="30"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>Elkeszit<sp/>egy<sp/>file-t,<sp/>ami<sp/>tartalmazza<sp/>a<sp/>jelenlegi<sp/>futas<sp/>parametereit,<sp/>es<sp/>hogy<sp/>melyik<sp/>mappaban<sp/>talalhatoak<sp/>a<sp/>file-ok<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="31"><highlight class="normal"></highlight><highlight class="comment">//<sp/>FIX:<sp/>The<sp/>original<sp/>had<sp/>&apos;void<sp/>infoCurrent(const<sp/>char<sp/>*nev);&apos;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="32"><highlight class="normal"></highlight><highlight class="comment">//<sp/>You<sp/>are<sp/>missing<sp/>&apos;const<sp/>disk_t<sp/>*disk_params&apos;<sp/>and<sp/>&apos;const<sp/>simulation_options_t<sp/>*sim_opts&apos;.</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="33"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>infoCurrent(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*nev,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>disk_t<sp/>*disk_params,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>simulation_options_t<sp/>*sim_opts);</highlight></codeline>
+<codeline lineno="34"><highlight class="normal"></highlight></codeline>
+<codeline lineno="35"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>Fuggveny<sp/>a<sp/>tomegfile<sp/>kiiratasara<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="36"><highlight class="normal"></highlight><highlight class="comment">//<sp/>FIX:<sp/>The<sp/>original<sp/>was<sp/>missing<sp/>&apos;const<sp/>disk_t<sp/>*disk_params&apos;<sp/>and<sp/>&apos;const<sp/>simulation_options_t<sp/>*sim_opts&apos;.</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="37"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>Print_Mass(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>step,<sp/></highlight></codeline>
+<codeline lineno="38"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>(*partmassind)[5],<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>(*partmassmicrind)[5],<sp/></highlight></codeline>
+<codeline lineno="39"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>t,<sp/></highlight><highlight class="comment">//<sp/>Ezt<sp/>továbbra<sp/>is<sp/>meghagyjuk,<sp/>ha<sp/>az<sp/>időre<sp/>szükség<sp/>van</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="40"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>massbtempii,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>massbtempoi,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>massmtempii,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>massmtempoi,<sp/></highlight></codeline>
+<codeline lineno="41"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>*massbtempio,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>*massbtempoo,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>*massmtempio,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>*massmtempoo,<sp/></highlight></codeline>
+<codeline lineno="42"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>*tavin,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>*tavout,<sp/></highlight></codeline>
+<codeline lineno="43"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>disk_t<sp/>*disk_params,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>simulation_options_t<sp/>*sim_opts,</highlight></codeline>
+<codeline lineno="44"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>output_files_t<sp/>*output_files);</highlight></codeline>
+<codeline lineno="45"><highlight class="normal"></highlight></codeline>
+<codeline lineno="46"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>Fuggveny<sp/>a<sp/>sigma,<sp/>p,<sp/>dp<sp/>kiiratasara<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="47"><highlight class="normal"></highlight><highlight class="comment">//<sp/>FIX:<sp/>The<sp/>original<sp/>was<sp/>missing<sp/>&apos;const<sp/>disk_t<sp/>*disk_params&apos;.</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="48"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>Print_Sigma(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>disk_t<sp/>*disk_params,<sp/>output_files_t<sp/>*output_files);</highlight></codeline>
+<codeline lineno="49"><highlight class="normal"></highlight></codeline>
+<codeline lineno="50"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>Fuggveny<sp/>a<sp/>por<sp/>feluletisurusegenek<sp/>kiiratasara<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="51"><highlight class="normal"></highlight><highlight class="comment">//<sp/>FIX:<sp/>The<sp/>original<sp/>was<sp/>missing<sp/>&apos;const<sp/>disk_t<sp/>*disk_params&apos;<sp/>and<sp/>&apos;const<sp/>simulation_options_t<sp/>*sim_opts&apos;.</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="52"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>Print_Sigmad(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>*r,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>*rm,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>*sigmad,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>*sigmadm,</highlight></codeline>
+<codeline lineno="53"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>disk_t<sp/>*disk_params,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>simulation_options_t<sp/>*sim_opts,</highlight></codeline>
+<codeline lineno="54"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>output_files_t<sp/>*output_files);</highlight></codeline>
+<codeline lineno="55"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>Fuggveny<sp/>a<sp/>pormozgas<sp/>es<sp/>reszecskemeret<sp/>kiiratasara<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="56"><highlight class="normal"></highlight><highlight class="comment">//<sp/>FIX:<sp/>The<sp/>original<sp/>was<sp/>missing<sp/>&apos;const<sp/>disk_t<sp/>*disk_params&apos;<sp/>and<sp/>&apos;const<sp/>simulation_options_t<sp/>*sim_opts&apos;.</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="57"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>Print_Pormozg_Size(</highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*size_name,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>step,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>(*rad)[2],<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>(*radmicr)[2],</highlight></codeline>
+<codeline lineno="58"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>disk_t<sp/>*disk_params,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>simulation_options_t<sp/>*sim_opts,</highlight></codeline>
+<codeline lineno="59"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>output_files_t<sp/>*output_files);</highlight></codeline>
+<codeline lineno="60"><highlight class="normal"></highlight></codeline>
+<codeline lineno="61"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>Az<sp/>idot<sp/>tartalmazo<sp/>file<sp/>parametereinek<sp/>beolvasasa<sp/>(vagy<sp/>beallitasa)<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="62"><highlight class="normal"></highlight><highlight class="comment">//<sp/>FIX:<sp/>The<sp/>original<sp/>was<sp/>missing<sp/>&apos;simulation_options_t<sp/>*sim_opts&apos;.</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="63"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>timePar(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>tMax_val,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>stepping_val,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>current_val,<sp/>simulation_options_t<sp/>*sim_opts);</highlight></codeline>
+<codeline lineno="64"><highlight class="normal"></highlight></codeline>
+<codeline lineno="65"><highlight class="normal"></highlight></codeline>
+<codeline lineno="66"><highlight class="normal"></highlight></codeline>
+<codeline lineno="67"><highlight class="normal"></highlight></codeline>
+<codeline lineno="68"><highlight class="normal"></highlight></codeline>
+<codeline lineno="69"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Enumeráció<sp/>a<sp/>fájltípusok<sp/>azonosítására</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="70"><highlight class="normal"></highlight><highlight class="keyword">typedef</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">enum</highlight><highlight class="normal"><sp/>{</highlight></codeline>
+<codeline lineno="71"><highlight class="normal"><sp/><sp/><sp/><sp/>FILE_TYPE_DUST_MOTION,</highlight></codeline>
+<codeline lineno="72"><highlight class="normal"><sp/><sp/><sp/><sp/>FILE_TYPE_MICRON_MOTION,</highlight></codeline>
+<codeline lineno="73"><highlight class="normal"><sp/><sp/><sp/><sp/>FILE_TYPE_MASS_ACCUMULATION,</highlight></codeline>
+<codeline lineno="74"><highlight class="normal"><sp/><sp/><sp/><sp/>FILE_TYPE_GAS_DENSITY,</highlight></codeline>
+<codeline lineno="75"><highlight class="normal"><sp/><sp/><sp/><sp/>FILE_TYPE_DUST_DENSITY,</highlight></codeline>
+<codeline lineno="76"><highlight class="normal"><sp/><sp/><sp/><sp/>FILE_TYPE_DUST_MICRON_DENSITY,</highlight></codeline>
+<codeline lineno="77"><highlight class="normal"><sp/><sp/><sp/><sp/>FILE_TYPE_PARTICLE_SIZE,</highlight></codeline>
+<codeline lineno="78"><highlight class="normal"><sp/><sp/><sp/><sp/>FILE_TYPE_DISK_PARAM<sp/></highlight><highlight class="comment">//<sp/>ÚJ:<sp/>a<sp/>disk_config.dat<sp/>fájlhoz</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="79"><highlight class="normal"></highlight></codeline>
+<codeline lineno="80"><highlight class="normal">}<sp/>FileType_e;</highlight></codeline>
+<codeline lineno="81"><highlight class="normal"></highlight></codeline>
+<codeline lineno="82"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Struktúra<sp/>a<sp/>fejléc-specifikus<sp/>adatoknak</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="83"><highlight class="normal"></highlight><highlight class="keyword">typedef</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal">{</highlight></codeline>
+<codeline lineno="84"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>current_time;<sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Jelenlegi<sp/>szimulációs<sp/>idő<sp/>(pl.<sp/>években)</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="85"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>is_initial_data;<sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>1,<sp/>ha<sp/>t=0,<sp/>0,<sp/>ha<sp/>szimulált<sp/>időpont</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="86"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Ide<sp/>tehetsz<sp/>más<sp/>adatokat<sp/>is,<sp/>ami<sp/>a<sp/>fejléchez<sp/>kellhet,<sp/>pl.<sp/>R_in,<sp/>R_out</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="87"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>R_in;</highlight></codeline>
+<codeline lineno="88"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>R_out;</highlight></codeline>
+<codeline lineno="89"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>sigma_exponent;<sp/></highlight><highlight class="comment">//<sp/>Kellhet<sp/>a<sp/>disk_param<sp/>fejlécbe</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="90"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>sigma0_gas_au;<sp/></highlight><highlight class="comment">//<sp/>Kellhet<sp/>a<sp/>disk_param<sp/>fejlécbe</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="91"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>grav_const;<sp/></highlight><highlight class="comment">//<sp/>Kellhet<sp/>a<sp/>disk_param<sp/>fejlécbe</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="92"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>dz_r_inner;<sp/></highlight><highlight class="comment">//<sp/>Kellhet<sp/>a<sp/>disk_param<sp/>fejlécbe</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="93"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>dz_r_outer;<sp/></highlight><highlight class="comment">//<sp/>Kellhet<sp/>a<sp/>disk_param<sp/>fejlécbe</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="94"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>dz_dr_inner_calc;<sp/></highlight><highlight class="comment">//<sp/>Kellhet<sp/>a<sp/>disk_param<sp/>fejlécbe</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="95"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>dz_dr_outer_calc;<sp/></highlight><highlight class="comment">//<sp/>Kellhet<sp/>a<sp/>disk_param<sp/>fejlécbe</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="96"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>dz_alpha_mod;<sp/></highlight><highlight class="comment">//<sp/>Kellhet<sp/>a<sp/>disk_param<sp/>fejlécbe</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="97"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>dust_density_g_cm3;<sp/></highlight><highlight class="comment">//<sp/>Kellhet<sp/>a<sp/>disk_param<sp/>fejlécbe</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="98"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>alpha_viscosity;<sp/></highlight><highlight class="comment">//<sp/>Kellhet<sp/>a<sp/>disk_param<sp/>fejlécbe</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="99"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>star_mass;<sp/></highlight><highlight class="comment">//<sp/>Kellhet<sp/>a<sp/>disk_param<sp/>fejlécbe</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="100"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>flaring_index;<sp/></highlight><highlight class="comment">//<sp/>Kellhet<sp/>a<sp/>disk_param<sp/>fejlécbe</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="101"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>n_grid_points;<sp/></highlight><highlight class="comment">//<sp/>Kellhet<sp/>a<sp/>disk_param<sp/>fejlécbe</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="102"><highlight class="normal">}<sp/>HeaderData_t;</highlight></codeline>
+<codeline lineno="103"><highlight class="normal"></highlight></codeline>
+<codeline lineno="104"><highlight class="normal"></highlight></codeline>
+<codeline lineno="105"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Függvény<sp/>a<sp/>fejlécek<sp/>kiírására</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="106"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Az<sp/>&apos;header_data&apos;<sp/>opcionális<sp/>lehet<sp/>(NULL<sp/>is<sp/>átadható),<sp/>ha<sp/>az<sp/>adott<sp/>fájltípushoz<sp/>nem<sp/>kell</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="107"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>print_file_header(FILE<sp/>*file,<sp/>FileType_e<sp/>file_type,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>HeaderData_t<sp/>*header_data);</highlight></codeline>
+<codeline lineno="108"><highlight class="normal"></highlight></codeline>
+<codeline lineno="109"><highlight class="normal"></highlight></codeline>
+<codeline lineno="110"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Függvény<sp/>a<sp/>kezdeti<sp/>kimeneti<sp/>fájlok<sp/>beállítására<sp/>és<sp/>fejlécek<sp/>írására</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="111"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>setup_initial_output_files(output_files_t<sp/>*output_files,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>simulation_options_t<sp/>*sim_opts,</highlight></codeline>
+<codeline lineno="112"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>disk_t<sp/>*disk_params,<sp/>HeaderData_t<sp/>*header_data_for_files);</highlight></codeline>
+<codeline lineno="113"><highlight class="normal"></highlight></codeline>
+<codeline lineno="114"><highlight class="normal"></highlight></codeline>
+<codeline lineno="115"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>cleanup_simulation_resources(ParticleData_t<sp/>*p_data,<sp/>output_files_t<sp/>*output_files,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>simulation_options_t<sp/>*sim_opts);</highlight></codeline>
+<codeline lineno="116"><highlight class="normal"></highlight></codeline>
+<codeline lineno="117"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>close_snapshot_files(output_files_t<sp/>*output_files,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*dens_name,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*dust_name,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>*dust_name2,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>simulation_options_t<sp/>*sim_opts);</highlight></codeline>
+<codeline lineno="118"><highlight class="normal"></highlight></codeline>
+<codeline lineno="119"><highlight class="normal"></highlight></codeline>
+<codeline lineno="120"><highlight class="normal"></highlight><highlight class="preprocessor">#endif<sp/></highlight><highlight class="comment">//<sp/>IO_UTILS_H</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="121"><highlight class="normal"></highlight></codeline>
+    </programlisting>
+    <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.h"/>
+  </compounddef>
+</doxygen>

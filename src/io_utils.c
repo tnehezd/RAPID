@@ -16,7 +16,7 @@
 
 // Local includes
 #include "io_utils.h"
-#include "config.h"         // Defines PARTICLE_NUMBER, AU2CM, FILENAME_INIT_PROFILE, and declares extern FILE *fin1, extern FILE *info_current_file
+#include "config.h"         // Defines PARTICLE_NUMBER, AU2CM, FILENAME_INIT_PROFILE, and declares extern FILE *file_in, extern FILE *info_current_file
 #include "dust_physics.h"   // If needed for any specific function interactions
 #include "utils.h"          // For find_num_zero, find_zero, find_r_annulus
 #include "simulation_types.h" // For disk_t, simulation_options_t, output_files_t
@@ -75,10 +75,10 @@ void ReadDustFile(double radius[][2], double radiusmicr[][2], double *mass, doub
     long double reprmass;
     long double reprmassmicr;
 
-    // Use the global 'fin1' which is declared extern in config.h
-    fin1 = fopen(filename,"r"); // Use the passed filename
+    // Use the global 'file_in' which is declared extern in config.h
+    file_in = fopen(filename,"r"); // Use the passed filename
 
-    if (fin1 == NULL) {
+    if (file_in == NULL) {
         fprintf(stderr, "ERROR [ReadDustFile]: Could not open file '%s'.\n", filename);
         perror("Reason");
         exit(EXIT_FAILURE);
@@ -87,16 +87,16 @@ void ReadDustFile(double radius[][2], double radiusmicr[][2], double *mass, doub
 
     char line_buffer[1024];
     for (int k = 0; k < INIT_DATA_HEADER_LINES; k++) {
-        if (fgets(line_buffer, sizeof(line_buffer), fin1) == NULL) {
+        if (fgets(line_buffer, sizeof(line_buffer), file_in) == NULL) {
             fprintf(stderr, "ERROR [ReadDustFile]: Unexpected end of file while skipping headers in '%s'.\n", filename);
-            fclose(fin1);
+            fclose(file_in);
             exit(EXIT_FAILURE);
         }
     }
 
 
     for (i = 0; i < PARTICLE_NUMBER; i++) {
-        if(fscanf(fin1,"%d %lg %Lg %Lg %lg %lg",&dummy,&distance,&reprmass,&reprmassmicr,&particle_radius,&radmicr) == 6) {
+        if(fscanf(file_in,"%d %lg %Lg %Lg %lg %lg",&dummy,&distance,&reprmass,&reprmassmicr,&particle_radius,&radmicr) == 6) {
             radius[i][0] = distance;
             radius[i][1] = particle_radius / AU2CM; // AU2CM from config.h
             mass[i] = reprmass;
@@ -108,12 +108,12 @@ void ReadDustFile(double radius[][2], double radiusmicr[][2], double *mass, doub
             fprintf(stderr, "\n\n******************* ERROR!      *********************\n\n");
             fprintf(stderr, "   Failed to read line %d from particle data file '%s'!\n", i, filename);
             fprintf(stderr, "   Expected 6 values, but fscanf failed. Program will exit.\n");
-            fclose(fin1);
+            fclose(file_in);
             exit(EXIT_FAILURE);
         }
     }
 
-    fclose(fin1);
+    fclose(file_in);
 }
 
 

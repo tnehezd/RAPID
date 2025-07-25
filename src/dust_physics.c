@@ -410,7 +410,7 @@ void Get_Radius(const char *nev, int opt, double radius[][2], const double *sigm
 
     int i;
     double y, y_out, prad_new, particle_radius;
-    char scout[1024];
+    char timescale_out[1024];
 
     // Fájlkezelés t==0 esetén: ez valószínűleg egyszer történik meg a szimuláció elején,
     // még mielőtt az igazi párhuzamosítás elkezdődne a fő ciklusban.
@@ -418,8 +418,8 @@ void Get_Radius(const char *nev, int opt, double radius[][2], const double *sigm
     #pragma omp master
     {
         if (t == 0) {
-            sprintf(scout, "%s/timescale.dat", nev);
-            fout2 = fopen(scout, "w");
+            sprintf(timescale_out, "%s/%s", nev,FILE_TIMESCALE);
+            timescale_output_file = fopen(timescale_out, "w");
         }
     }
     // Szinkronizálás a master szál befejezéséig.
@@ -439,16 +439,16 @@ void Get_Radius(const char *nev, int opt, double radius[][2], const double *sigm
             if (t == 0) {
                 if (sim_opts->twopop == 0) {
                     double current_drdt_val = (fabs(y_out - y) / (deltat));
-                    // Azért kell a critical szekció, mert az fout2 fájlba írunk.
+                    // Azért kell a critical szekció, mert az timescale_output_file fájlba írunk.
                     // Ez a critical szekció biztosítja, hogy egyszerre csak egy szál írjon a fájlba.
 
-                    #pragma omp critical(fout2_write)
+                    #pragma omp critical(timescale_output_file_write)
                     {
                         // Ellenőrizzük, hogy a fájlmutató nem NULL
-                        if (fout2 != NULL) {
-                            fprintf(fout2, "%lg %lg\n", radius[i][0], (radius[i][0] / current_drdt_val) / (2.0 * M_PI));
+                        if (timescale_output_file != NULL) {
+                            fprintf(timescale_output_file, "%lg %lg\n", radius[i][0], (radius[i][0] / current_drdt_val) / (2.0 * M_PI));
                         } else {
-                            fprintf(stderr, "ERROR: fout2 is NULL during write in Get_Radius (t=0 block).\n");
+                            fprintf(stderr, "ERROR: timescale_output_file is NULL during write in Get_Radius (t=0 block).\n");
                         }
                     }
                 }
@@ -471,9 +471,9 @@ void Get_Radius(const char *nev, int opt, double radius[][2], const double *sigm
     #pragma omp master
     {
         if (t == 0) { // Csak akkor zárjuk be, ha meg is nyitottuk a t=0 blokkban
-            if (fout2 != NULL) {
-                fclose(fout2);
-                fout2 = NULL; // Fontos, hogy NULL-ra állítsuk, miután bezártuk.
+            if (timescale_output_file != NULL) {
+                fclose(timescale_output_file);
+                timescale_output_file = NULL; // Fontos, hogy NULL-ra állítsuk, miután bezártuk.
             }
         }
     }

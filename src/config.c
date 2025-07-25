@@ -14,15 +14,9 @@
 int PARTICLE_NUMBER;
 
 // --- Global File Pointer Definitions ---
-FILE *fout = NULL;
-FILE *fout2 = NULL;
-FILE *fout3 = NULL;
-FILE *foutmicr = NULL;
-FILE *massfil = NULL;
+FILE *timescale_output_file = NULL;
 FILE *info_current_file = NULL;
-FILE *fin1 = NULL;
-FILE *fin2 = NULL;
-FILE *fil = NULL;
+FILE *file_in = NULL;
 
 const char *inputsig = NULL;
 
@@ -34,5 +28,6 @@ const char * const FILE_DENS_PREFIX = "density_profile";
 const char * const FILE_MASS_ACCUMULATE = "mass_accumulation_dze_edge.dat";
 const char * const FILE_DUST_EVOLUTION = "dust_particle_evolution.dat";
 const char * const FILENAME_DISK_PARAM = "disk_config.dat";
+const char * const FILE_TIMESCALE = "timescale_of_drift.dat";
 const char * const LOGS_DIR = "LOGS";
 const char * const CONFIG_DIR = "config";

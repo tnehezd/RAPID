@@ -29,45 +29,16 @@ extern int PARTICLE_NUMBER;
 
 // --- Global File Pointer Declarations (extern) ---
 
-/**
- * @brief Main output file pointer for general simulation results.
- * @details This file serves as a primary destination for key simulation outputs,
- * such as time-dependent data or summaries. Declared as `extern` here,
- * defined and initialized (to `NULL`) in `config.c`.
- */
-extern FILE *fout;
 
 /**
- * @brief Secondary output file pointer for additional simulation results.
- * @details Provides an alternative channel for specific types of data output,
- * complementing the main `fout` file. Declared as `extern` here,
- * defined and initialized (to `NULL`) in `config.c`.
+ * @brief File pointer for output related to simulation timescales.
+ * @details This file handle is specifically intended for logging and storing
+ * data related to various characteristic timescales computed during the simulation,
+ * such as dynamical, thermal, or accretion timescales. It complements other
+ * general output files by providing a dedicated stream for temporal analysis.
+ * Declared as `extern` here, defined and initialized (to `NULL`) in `config.c`.
  */
-extern FILE *fout2;
-
-/**
- * @brief Tertiary output file pointer for specialized simulation data.
- * @details Used for highly specific or detailed output that might not fit
- * into the general or secondary output streams. Declared as `extern` here,
- * defined and initialized (to `NULL`) in `config.c`.
- */
-extern FILE *fout3;
-
-/**
- * @brief File pointer for output related to micron-sized particles or specific microphysics.
- * @details This file is dedicated to logging data relevant to microscopic
- * or sub-grid scale processes. Declared as `extern` here,
- * defined and initialized (to `NULL`) in `config.c`.
- */
-extern FILE *foutmicr;
-
-/**
- * @brief File pointer for output related to mass accumulation or flux data.
- * @details Used to record changes in mass, accretion rates, or mass transfer
- * within the simulation domain. Declared as `extern` here,
- * defined and initialized (to `NULL`) in `config.c`.
- */
-extern FILE *massfil;
+extern FILE *timescale_output_file;
 
 /**
  * @brief File pointer to store a summary of the current simulation run's configuration and status.
@@ -83,22 +54,7 @@ extern FILE *info_current_file;
  * @details Used to read primary input data streams for the simulation.
  * Declared as `extern` here, defined and initialized (to `NULL`) in `config.c`.
  */
-extern FILE *fin1;
-
-/**
- * @brief Second input file pointer for auxiliary input data.
- * @details Provides an additional channel for reading secondary input data,
- * complementing `fin1`. Declared as `extern` here,
- * defined and initialized (to `NULL`) in `config.c`.
- */
-extern FILE *fin2;
-
-/**
- * @brief General-purpose file pointer, often used for temporary or miscellaneous I/O.
- * @details Its specific usage may vary depending on context within the simulation modules.
- * Declared as `extern` here, defined and initialized (to `NULL`) in `config.c`.
- */
-extern FILE *fil;
+extern FILE *file_in;
 
 
 // --- Global Filename Declarations (extern const char * const) ---
@@ -154,14 +110,25 @@ extern const char * const FILE_DUST_EVOLUTION;
  * Declared as `extern const char * const` here, defined in `config.c`.
  */
 extern const char * const FILENAME_DISK_PARAM;
-
 /**
  * @brief Constant string defining the name of the directory where all simulation log files are stored.
  * @details This constant helps in organizing simulation output by centralizing
  * all log, diagnostic, and summary files into a dedicated directory.
  * Declared as `extern const char * const` here, defined in `config.c`.
  */
+
 extern const char * const LOGS_DIR;
+
+/**
+ * @brief Filename for the output file detailing simulation timescales.
+ * @details This constant string specifies the name of the file used to log
+ * various characteristic timescales of the simulation, such as dynamical
+ * timescales, accretion timescales, or other relevant temporal parameters.
+ * It helps in analyzing the evolution of different physical processes over time.
+ * Declared as `extern const char * const` here, its definition (the actual string literal)
+ * should reside in `config.c`.
+ */
+extern const char * const FILE_TIMESCALE;
 
 /**
  * @brief Constant string defining the name of the directory where configuration files are located.
@@ -180,14 +147,5 @@ extern const char * const CONFIG_DIR;
  */
 extern const char *inputsig; // Parameter controls
 
-/**
- * @brief Initializes derived configuration variables.
- * @details This function is responsible for calculating and setting up any
- * configuration parameters that depend on other primary configuration
- * values. It should be called after all primary configuration values
- * have been loaded, typically during the simulation's setup phase,
- * to ensure all parameters are consistently derived.
- */
-void initialize_derived_config_variables();
 
 #endif // CONFIG_H

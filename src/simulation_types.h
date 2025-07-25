@@ -114,6 +114,7 @@ typedef struct {
     FILE *dust_file;            // dust.dat (a Print_Sigmad fő por kimenetéhez)
     FILE *micron_dust_file;     // dustmic.dat (a Print_Sigmad mikronos por kimenetéhez)
     FILE *size_file; 
+    FILE *time_scale_file;
     // Add other file pointers here if you need more output files
 } output_files_t;
 

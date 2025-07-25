@@ -1,0 +1,195 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.14.0" xml:lang="en-US">
+  <compounddef id="struct_particle_data__t" kind="struct" language="C++" prot="public">
+    <compoundname>ParticleData_t</compoundname>
+    <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="struct_particle_data__t_1a8a78b3fd2b131a32cc80dacfe0751625" prot="public" static="no" mutable="no">
+        <type>double(*</type>
+        <definition>double(* ParticleData_t::radius)[2]</definition>
+        <argsstring>)[2]</argsstring>
+        <name>radius</name>
+        <qualifiedname>ParticleData_t::radius</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/particle_data.h" line="10" column="5" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/particle_data.h" bodystart="10" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="struct_particle_data__t_1a293b925ffc196a617f1007f9a4531890" prot="public" static="no" mutable="no">
+        <type>double(*</type>
+        <definition>double(* ParticleData_t::radiusmicr)[2]</definition>
+        <argsstring>)[2]</argsstring>
+        <name>radiusmicr</name>
+        <qualifiedname>ParticleData_t::radiusmicr</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/particle_data.h" line="11" column="5" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/particle_data.h" bodystart="11" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="struct_particle_data__t_1a346f9f34d5efdb0ef3277e31fdbe2745" prot="public" static="no" mutable="no">
+        <type>double(*</type>
+        <definition>double(* ParticleData_t::radius_rec)[2]</definition>
+        <argsstring>)[2]</argsstring>
+        <name>radius_rec</name>
+        <qualifiedname>ParticleData_t::radius_rec</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/particle_data.h" line="12" column="5" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/particle_data.h" bodystart="12" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="struct_particle_data__t_1a45eaf614b2df1f8c94ce801b59d31b08" prot="public" static="no" mutable="no">
+        <type>double *</type>
+        <definition>double* ParticleData_t::massvec</definition>
+        <argsstring></argsstring>
+        <name>massvec</name>
+        <qualifiedname>ParticleData_t::massvec</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/particle_data.h" line="13" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/particle_data.h" bodystart="13" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="struct_particle_data__t_1ad8d8fae117ff3d71287c704274c7f635" prot="public" static="no" mutable="no">
+        <type>double *</type>
+        <definition>double* ParticleData_t::massmicrvec</definition>
+        <argsstring></argsstring>
+        <name>massmicrvec</name>
+        <qualifiedname>ParticleData_t::massmicrvec</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/particle_data.h" line="14" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/particle_data.h" bodystart="14" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="struct_particle_data__t_1a2da56ec9113c2812fcd36717278b0271" prot="public" static="no" mutable="no">
+        <type>double(*</type>
+        <definition>double(* ParticleData_t::partmassind)[5]</definition>
+        <argsstring>)[5]</argsstring>
+        <name>partmassind</name>
+        <qualifiedname>ParticleData_t::partmassind</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/particle_data.h" line="15" column="5" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/particle_data.h" bodystart="15" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="struct_particle_data__t_1a0b8b2298b358a48c5ac36bef5443b866" prot="public" static="no" mutable="no">
+        <type>double(*</type>
+        <definition>double(* ParticleData_t::partmassmicrind)[5]</definition>
+        <argsstring>)[5]</argsstring>
+        <name>partmassmicrind</name>
+        <qualifiedname>ParticleData_t::partmassmicrind</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/particle_data.h" line="16" column="5" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/particle_data.h" bodystart="16" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="struct_particle_data__t_1a7b422af6a2751fa769467390c9eaed73" prot="public" static="no" mutable="no">
+        <type>double *</type>
+        <definition>double* ParticleData_t::sigmad</definition>
+        <argsstring></argsstring>
+        <name>sigmad</name>
+        <qualifiedname>ParticleData_t::sigmad</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/particle_data.h" line="17" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/particle_data.h" bodystart="17" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="struct_particle_data__t_1a46eb061b6c47f676535d167bc5d9101e" prot="public" static="no" mutable="no">
+        <type>double *</type>
+        <definition>double* ParticleData_t::sigmadm</definition>
+        <argsstring></argsstring>
+        <name>sigmadm</name>
+        <qualifiedname>ParticleData_t::sigmadm</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/particle_data.h" line="18" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/particle_data.h" bodystart="18" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="struct_particle_data__t_1a98a2b33d409f3258f9107b7197d5b1b9" prot="public" static="no" mutable="no">
+        <type>double *</type>
+        <definition>double* ParticleData_t::rdvec</definition>
+        <argsstring></argsstring>
+        <name>rdvec</name>
+        <qualifiedname>ParticleData_t::rdvec</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/particle_data.h" line="19" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/particle_data.h" bodystart="19" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="struct_particle_data__t_1abf548c8e0848459bb40ab67001a20233" prot="public" static="no" mutable="no">
+        <type>double *</type>
+        <definition>double* ParticleData_t::rmicvec</definition>
+        <argsstring></argsstring>
+        <name>rmicvec</name>
+        <qualifiedname>ParticleData_t::rmicvec</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/particle_data.h" line="20" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/particle_data.h" bodystart="20" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="struct_particle_data__t_1a188298755ec72ef77806c4f4800bef00" prot="public" static="no" mutable="no">
+        <type>size_t</type>
+        <definition>size_t ParticleData_t::allocated_particle_number</definition>
+        <argsstring></argsstring>
+        <name>allocated_particle_number</name>
+        <qualifiedname>ParticleData_t::allocated_particle_number</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/particle_data.h" line="21" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/particle_data.h" bodystart="21" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/particle_data.h" line="9" column="1" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/particle_data.h" bodystart="9" bodyend="22"/>
+    <listofallmembers>
+      <member refid="struct_particle_data__t_1a188298755ec72ef77806c4f4800bef00" prot="public" virt="non-virtual"><scope>ParticleData_t</scope><name>allocated_particle_number</name></member>
+      <member refid="struct_particle_data__t_1ad8d8fae117ff3d71287c704274c7f635" prot="public" virt="non-virtual"><scope>ParticleData_t</scope><name>massmicrvec</name></member>
+      <member refid="struct_particle_data__t_1a45eaf614b2df1f8c94ce801b59d31b08" prot="public" virt="non-virtual"><scope>ParticleData_t</scope><name>massvec</name></member>
+      <member refid="struct_particle_data__t_1a2da56ec9113c2812fcd36717278b0271" prot="public" virt="non-virtual"><scope>ParticleData_t</scope><name>partmassind</name></member>
+      <member refid="struct_particle_data__t_1a0b8b2298b358a48c5ac36bef5443b866" prot="public" virt="non-virtual"><scope>ParticleData_t</scope><name>partmassmicrind</name></member>
+      <member refid="struct_particle_data__t_1a8a78b3fd2b131a32cc80dacfe0751625" prot="public" virt="non-virtual"><scope>ParticleData_t</scope><name>radius</name></member>
+      <member refid="struct_particle_data__t_1a346f9f34d5efdb0ef3277e31fdbe2745" prot="public" virt="non-virtual"><scope>ParticleData_t</scope><name>radius_rec</name></member>
+      <member refid="struct_particle_data__t_1a293b925ffc196a617f1007f9a4531890" prot="public" virt="non-virtual"><scope>ParticleData_t</scope><name>radiusmicr</name></member>
+      <member refid="struct_particle_data__t_1a98a2b33d409f3258f9107b7197d5b1b9" prot="public" virt="non-virtual"><scope>ParticleData_t</scope><name>rdvec</name></member>
+      <member refid="struct_particle_data__t_1abf548c8e0848459bb40ab67001a20233" prot="public" virt="non-virtual"><scope>ParticleData_t</scope><name>rmicvec</name></member>
+      <member refid="struct_particle_data__t_1a7b422af6a2751fa769467390c9eaed73" prot="public" virt="non-virtual"><scope>ParticleData_t</scope><name>sigmad</name></member>
+      <member refid="struct_particle_data__t_1a46eb061b6c47f676535d167bc5d9101e" prot="public" virt="non-virtual"><scope>ParticleData_t</scope><name>sigmadm</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

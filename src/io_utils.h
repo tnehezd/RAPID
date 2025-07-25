@@ -11,7 +11,7 @@
 
 // Globális változók deklarációi, ha az io_utils.c fájlban definiálva vannak.
 // Ezeknek EGYEZNIÜK KELL a src/config.h-ban lévő extern deklarációkkal.
-extern FILE *fin1, *fin2, *fout, *foutmicr, *fout3, *massfil, *jelfut;
+extern FILE *fin1;
 
 // --- FÜGGVÉNY DEKLARÁCIÓK ---
 

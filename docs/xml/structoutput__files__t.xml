@@ -1,0 +1,135 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.14.0" xml:lang="en-US">
+  <compounddef id="structoutput__files__t" kind="struct" language="C++" prot="public">
+    <compoundname>output_files_t</compoundname>
+    <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="structoutput__files__t_1a5b6019fd98e349446813ec88e33294e6" prot="public" static="no" mutable="no">
+        <type>FILE *</type>
+        <definition>FILE* output_files_t::por_motion_file</definition>
+        <argsstring></argsstring>
+        <name>por_motion_file</name>
+        <qualifiedname>output_files_t::por_motion_file</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/simulation_types.h" line="110" column="10" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/simulation_types.h" bodystart="110" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structoutput__files__t_1a6b37061c3ebe295c50ff0f7aa54bb50a" prot="public" static="no" mutable="no">
+        <type>FILE *</type>
+        <definition>FILE* output_files_t::micron_motion_file</definition>
+        <argsstring></argsstring>
+        <name>micron_motion_file</name>
+        <qualifiedname>output_files_t::micron_motion_file</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/simulation_types.h" line="111" column="10" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/simulation_types.h" bodystart="111" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structoutput__files__t_1aad685f1b23286d9781f9e705ab68a919" prot="public" static="no" mutable="no">
+        <type>FILE *</type>
+        <definition>FILE* output_files_t::mass_file</definition>
+        <argsstring></argsstring>
+        <name>mass_file</name>
+        <qualifiedname>output_files_t::mass_file</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/simulation_types.h" line="112" column="10" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/simulation_types.h" bodystart="112" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structoutput__files__t_1aa89873a95a633cac2ceb61b7723442ad" prot="public" static="no" mutable="no">
+        <type>FILE *</type>
+        <definition>FILE* output_files_t::surface_file</definition>
+        <argsstring></argsstring>
+        <name>surface_file</name>
+        <qualifiedname>output_files_t::surface_file</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/simulation_types.h" line="113" column="10" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/simulation_types.h" bodystart="113" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structoutput__files__t_1a77d5da729d19065e4e07ae4df2c4d20a" prot="public" static="no" mutable="no">
+        <type>FILE *</type>
+        <definition>FILE* output_files_t::dust_file</definition>
+        <argsstring></argsstring>
+        <name>dust_file</name>
+        <qualifiedname>output_files_t::dust_file</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/simulation_types.h" line="114" column="10" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/simulation_types.h" bodystart="114" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structoutput__files__t_1aa2742b70cc085918e5b2e3052fc80f8c" prot="public" static="no" mutable="no">
+        <type>FILE *</type>
+        <definition>FILE* output_files_t::micron_dust_file</definition>
+        <argsstring></argsstring>
+        <name>micron_dust_file</name>
+        <qualifiedname>output_files_t::micron_dust_file</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/simulation_types.h" line="115" column="10" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/simulation_types.h" bodystart="115" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structoutput__files__t_1a93a1626a55979aa8bc1f75adb97b3f11" prot="public" static="no" mutable="no">
+        <type>FILE *</type>
+        <definition>FILE* output_files_t::size_file</definition>
+        <argsstring></argsstring>
+        <name>size_file</name>
+        <qualifiedname>output_files_t::size_file</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/simulation_types.h" line="116" column="10" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/simulation_types.h" bodystart="116" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structoutput__files__t_1a36b3d905e976a786c43c8ca79458b983" prot="public" static="no" mutable="no">
+        <type>FILE *</type>
+        <definition>FILE* output_files_t::time_scale_file</definition>
+        <argsstring></argsstring>
+        <name>time_scale_file</name>
+        <qualifiedname>output_files_t::time_scale_file</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/simulation_types.h" line="117" column="10" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/simulation_types.h" bodystart="117" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/simulation_types.h" line="109" column="1" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/simulation_types.h" bodystart="109" bodyend="119"/>
+    <listofallmembers>
+      <member refid="structoutput__files__t_1a77d5da729d19065e4e07ae4df2c4d20a" prot="public" virt="non-virtual"><scope>output_files_t</scope><name>dust_file</name></member>
+      <member refid="structoutput__files__t_1aad685f1b23286d9781f9e705ab68a919" prot="public" virt="non-virtual"><scope>output_files_t</scope><name>mass_file</name></member>
+      <member refid="structoutput__files__t_1aa2742b70cc085918e5b2e3052fc80f8c" prot="public" virt="non-virtual"><scope>output_files_t</scope><name>micron_dust_file</name></member>
+      <member refid="structoutput__files__t_1a6b37061c3ebe295c50ff0f7aa54bb50a" prot="public" virt="non-virtual"><scope>output_files_t</scope><name>micron_motion_file</name></member>
+      <member refid="structoutput__files__t_1a5b6019fd98e349446813ec88e33294e6" prot="public" virt="non-virtual"><scope>output_files_t</scope><name>por_motion_file</name></member>
+      <member refid="structoutput__files__t_1a93a1626a55979aa8bc1f75adb97b3f11" prot="public" virt="non-virtual"><scope>output_files_t</scope><name>size_file</name></member>
+      <member refid="structoutput__files__t_1aa89873a95a633cac2ceb61b7723442ad" prot="public" virt="non-virtual"><scope>output_files_t</scope><name>surface_file</name></member>
+      <member refid="structoutput__files__t_1a36b3d905e976a786c43c8ca79458b983" prot="public" virt="non-virtual"><scope>output_files_t</scope><name>time_scale_file</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

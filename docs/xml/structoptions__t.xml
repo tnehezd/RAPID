@@ -1,0 +1,495 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.14.0" xml:lang="en-US">
+  <compounddef id="structoptions__t" kind="struct" language="C++" prot="public">
+    <compoundname>options_t</compoundname>
+    <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="structoptions__t_1a2a623e62a3c11e7f3b244a80bde5cd0c" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double options_t::drift</definition>
+        <argsstring></argsstring>
+        <name>drift</name>
+        <qualifiedname>options_t::drift</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" line="18" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" bodystart="18" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structoptions__t_1a2aeff9d51f342cd4cffbef22822377c1" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double options_t::growth</definition>
+        <argsstring></argsstring>
+        <name>growth</name>
+        <qualifiedname>options_t::growth</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" line="19" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" bodystart="19" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structoptions__t_1af5abf7bd320d0f85354d17c37b1356ac" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double options_t::evol</definition>
+        <argsstring></argsstring>
+        <name>evol</name>
+        <qualifiedname>options_t::evol</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" line="20" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" bodystart="20" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structoptions__t_1a44ecb6c3265f14192e87451ae006071d" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double options_t::twopop</definition>
+        <argsstring></argsstring>
+        <name>twopop</name>
+        <qualifiedname>options_t::twopop</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" line="21" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" bodystart="21" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structoptions__t_1aa088487d4187c06dec21bebc10d70e72" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double options_t::ufrag</definition>
+        <argsstring></argsstring>
+        <name>ufrag</name>
+        <qualifiedname>options_t::ufrag</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" line="22" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" bodystart="22" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structoptions__t_1af9354a6585ff44620f064186fd2c6c53" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double options_t::ffrag</definition>
+        <argsstring></argsstring>
+        <name>ffrag</name>
+        <qualifiedname>options_t::ffrag</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" line="23" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" bodystart="23" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structoptions__t_1ab39f40098d145cbddbbc70f3f3e5cad6" prot="public" static="no" mutable="no">
+        <type>int</type>
+        <definition>int options_t::ngrid_val</definition>
+        <argsstring></argsstring>
+        <name>ngrid_val</name>
+        <qualifiedname>options_t::ngrid_val</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" line="26" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" bodystart="26" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structoptions__t_1a6f1373fb8afe92efcc050c7abe4363c3" prot="public" static="no" mutable="no">
+        <type>int</type>
+        <definition>int options_t::ndust_val</definition>
+        <argsstring></argsstring>
+        <name>ndust_val</name>
+        <qualifiedname>options_t::ndust_val</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" line="27" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" bodystart="27" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structoptions__t_1a8a3ec473595536fe0ccd4924f88c7663" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double options_t::rmin_val</definition>
+        <argsstring></argsstring>
+        <name>rmin_val</name>
+        <qualifiedname>options_t::rmin_val</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" line="28" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" bodystart="28" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structoptions__t_1ae92e9555f0d81149735b3871cb01a599" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double options_t::rmax_val</definition>
+        <argsstring></argsstring>
+        <name>rmax_val</name>
+        <qualifiedname>options_t::rmax_val</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" line="29" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" bodystart="29" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structoptions__t_1a519a3ed92bf70838e2b9689be497e630" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double options_t::sigma0_val</definition>
+        <argsstring></argsstring>
+        <name>sigma0_val</name>
+        <qualifiedname>options_t::sigma0_val</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" line="30" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" bodystart="30" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structoptions__t_1a6563abd30526d9b6f107a3e99595fc54" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double options_t::sigmap_exp_val</definition>
+        <argsstring></argsstring>
+        <name>sigmap_exp_val</name>
+        <qualifiedname>options_t::sigmap_exp_val</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" line="31" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" bodystart="31" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structoptions__t_1ac34a2ede3cfbfcde2aa5e2abaf39cc38" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double options_t::alpha_visc_val</definition>
+        <argsstring></argsstring>
+        <name>alpha_visc_val</name>
+        <qualifiedname>options_t::alpha_visc_val</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" line="32" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" bodystart="32" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structoptions__t_1a58b0fe63aaf0eb3addc48dfb76fadb12" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double options_t::star_val</definition>
+        <argsstring></argsstring>
+        <name>star_val</name>
+        <qualifiedname>options_t::star_val</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" line="33" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" bodystart="33" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structoptions__t_1afbcc04c7441abed9f4a180ef93ba6ebe" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double options_t::hasp_val</definition>
+        <argsstring></argsstring>
+        <name>hasp_val</name>
+        <qualifiedname>options_t::hasp_val</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" line="34" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" bodystart="34" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structoptions__t_1a1a4bb59094d147b1794600bd52436554" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double options_t::flind_val</definition>
+        <argsstring></argsstring>
+        <name>flind_val</name>
+        <qualifiedname>options_t::flind_val</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" line="35" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" bodystart="35" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structoptions__t_1a67ef9e2b00b1cea464a15579bbc8039f" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double options_t::r_dze_i_val</definition>
+        <argsstring></argsstring>
+        <name>r_dze_i_val</name>
+        <qualifiedname>options_t::r_dze_i_val</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" line="36" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" bodystart="36" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structoptions__t_1a9efba162de58377088bb9d0c48dcc48c" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double options_t::r_dze_o_val</definition>
+        <argsstring></argsstring>
+        <name>r_dze_o_val</name>
+        <qualifiedname>options_t::r_dze_o_val</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" line="37" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" bodystart="37" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structoptions__t_1a4682b1f1f46a8a58afe35fb9034f27c3" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double options_t::dr_dze_i_val</definition>
+        <argsstring></argsstring>
+        <name>dr_dze_i_val</name>
+        <qualifiedname>options_t::dr_dze_i_val</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" line="38" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" bodystart="38" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structoptions__t_1a444932b3a7f6b083072794048a836bac" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double options_t::dr_dze_o_val</definition>
+        <argsstring></argsstring>
+        <name>dr_dze_o_val</name>
+        <qualifiedname>options_t::dr_dze_o_val</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" line="39" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" bodystart="39" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structoptions__t_1a1c2f73bc1440cf2a64c1c04882bcd54e" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double options_t::a_mod_val</definition>
+        <argsstring></argsstring>
+        <name>a_mod_val</name>
+        <qualifiedname>options_t::a_mod_val</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" line="40" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" bodystart="40" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structoptions__t_1ad7d5117823c1889ebccd80efb976c25c" prot="public" static="no" mutable="no">
+        <type>const char *</type>
+        <definition>const char* options_t::input_file</definition>
+        <argsstring></argsstring>
+        <name>input_file</name>
+        <qualifiedname>options_t::input_file</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" line="43" column="16" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" bodystart="43" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structoptions__t_1afd8bd86970d71b6a5953bd936fc9b27e" prot="public" static="no" mutable="no">
+        <type>char</type>
+        <definition>char options_t::output_dir_name[8192]</definition>
+        <argsstring>[8192]</argsstring>
+        <name>output_dir_name</name>
+        <qualifiedname>options_t::output_dir_name</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" line="44" column="10" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" bodystart="44" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structoptions__t_1a427faf81e67e65a89d6a0501eef016fb" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double options_t::tStep</definition>
+        <argsstring></argsstring>
+        <name>tStep</name>
+        <qualifiedname>options_t::tStep</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" line="47" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" bodystart="47" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structoptions__t_1ae6c90c295c87f0b042c3f7bc35b4c698" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double options_t::totalTime</definition>
+        <argsstring></argsstring>
+        <name>totalTime</name>
+        <qualifiedname>options_t::totalTime</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" line="48" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" bodystart="48" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structoptions__t_1a35b8e460452a3546c86eebe5029a8767" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double options_t::outputFrequency</definition>
+        <argsstring></argsstring>
+        <name>outputFrequency</name>
+        <qualifiedname>options_t::outputFrequency</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" line="49" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" bodystart="49" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structoptions__t_1ab6bcb729776dbe7a05b0b39574a3da74" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double options_t::startTime</definition>
+        <argsstring></argsstring>
+        <name>startTime</name>
+        <qualifiedname>options_t::startTime</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" line="50" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" bodystart="50" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structoptions__t_1abe8e1a4a8e6a682adff57787a07c1a09" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double options_t::eps_val</definition>
+        <argsstring></argsstring>
+        <name>eps_val</name>
+        <qualifiedname>options_t::eps_val</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" line="54" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" bodystart="54" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structoptions__t_1acd19d3fb8696bfa1151f36bf5acee082" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double options_t::ratio_val</definition>
+        <argsstring></argsstring>
+        <name>ratio_val</name>
+        <qualifiedname>options_t::ratio_val</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" line="55" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" bodystart="55" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structoptions__t_1a4330b051914a713ef47fc3a289206763" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double options_t::mic_val</definition>
+        <argsstring></argsstring>
+        <name>mic_val</name>
+        <qualifiedname>options_t::mic_val</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" line="56" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" bodystart="56" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structoptions__t_1ad9ceea6ba71fef80185637d55be26539" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double options_t::onesize_val</definition>
+        <argsstring></argsstring>
+        <name>onesize_val</name>
+        <qualifiedname>options_t::onesize_val</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" line="57" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" bodystart="57" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structoptions__t_1a244913c7ebcf70199d94407f79568aeb" prot="public" static="no" mutable="no">
+        <type>double</type>
+        <definition>double options_t::pdensity_val</definition>
+        <argsstring></argsstring>
+        <name>pdensity_val</name>
+        <qualifiedname>options_t::pdensity_val</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" line="61" column="12" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" bodystart="61" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" line="16" column="1" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/parser.h" bodystart="16" bodyend="63"/>
+    <listofallmembers>
+      <member refid="structoptions__t_1a1c2f73bc1440cf2a64c1c04882bcd54e" prot="public" virt="non-virtual"><scope>options_t</scope><name>a_mod_val</name></member>
+      <member refid="structoptions__t_1ac34a2ede3cfbfcde2aa5e2abaf39cc38" prot="public" virt="non-virtual"><scope>options_t</scope><name>alpha_visc_val</name></member>
+      <member refid="structoptions__t_1a4682b1f1f46a8a58afe35fb9034f27c3" prot="public" virt="non-virtual"><scope>options_t</scope><name>dr_dze_i_val</name></member>
+      <member refid="structoptions__t_1a444932b3a7f6b083072794048a836bac" prot="public" virt="non-virtual"><scope>options_t</scope><name>dr_dze_o_val</name></member>
+      <member refid="structoptions__t_1a2a623e62a3c11e7f3b244a80bde5cd0c" prot="public" virt="non-virtual"><scope>options_t</scope><name>drift</name></member>
+      <member refid="structoptions__t_1abe8e1a4a8e6a682adff57787a07c1a09" prot="public" virt="non-virtual"><scope>options_t</scope><name>eps_val</name></member>
+      <member refid="structoptions__t_1af5abf7bd320d0f85354d17c37b1356ac" prot="public" virt="non-virtual"><scope>options_t</scope><name>evol</name></member>
+      <member refid="structoptions__t_1af9354a6585ff44620f064186fd2c6c53" prot="public" virt="non-virtual"><scope>options_t</scope><name>ffrag</name></member>
+      <member refid="structoptions__t_1a1a4bb59094d147b1794600bd52436554" prot="public" virt="non-virtual"><scope>options_t</scope><name>flind_val</name></member>
+      <member refid="structoptions__t_1a2aeff9d51f342cd4cffbef22822377c1" prot="public" virt="non-virtual"><scope>options_t</scope><name>growth</name></member>
+      <member refid="structoptions__t_1afbcc04c7441abed9f4a180ef93ba6ebe" prot="public" virt="non-virtual"><scope>options_t</scope><name>hasp_val</name></member>
+      <member refid="structoptions__t_1ad7d5117823c1889ebccd80efb976c25c" prot="public" virt="non-virtual"><scope>options_t</scope><name>input_file</name></member>
+      <member refid="structoptions__t_1a4330b051914a713ef47fc3a289206763" prot="public" virt="non-virtual"><scope>options_t</scope><name>mic_val</name></member>
+      <member refid="structoptions__t_1a6f1373fb8afe92efcc050c7abe4363c3" prot="public" virt="non-virtual"><scope>options_t</scope><name>ndust_val</name></member>
+      <member refid="structoptions__t_1ab39f40098d145cbddbbc70f3f3e5cad6" prot="public" virt="non-virtual"><scope>options_t</scope><name>ngrid_val</name></member>
+      <member refid="structoptions__t_1ad9ceea6ba71fef80185637d55be26539" prot="public" virt="non-virtual"><scope>options_t</scope><name>onesize_val</name></member>
+      <member refid="structoptions__t_1afd8bd86970d71b6a5953bd936fc9b27e" prot="public" virt="non-virtual"><scope>options_t</scope><name>output_dir_name</name></member>
+      <member refid="structoptions__t_1a35b8e460452a3546c86eebe5029a8767" prot="public" virt="non-virtual"><scope>options_t</scope><name>outputFrequency</name></member>
+      <member refid="structoptions__t_1a244913c7ebcf70199d94407f79568aeb" prot="public" virt="non-virtual"><scope>options_t</scope><name>pdensity_val</name></member>
+      <member refid="structoptions__t_1a67ef9e2b00b1cea464a15579bbc8039f" prot="public" virt="non-virtual"><scope>options_t</scope><name>r_dze_i_val</name></member>
+      <member refid="structoptions__t_1a9efba162de58377088bb9d0c48dcc48c" prot="public" virt="non-virtual"><scope>options_t</scope><name>r_dze_o_val</name></member>
+      <member refid="structoptions__t_1acd19d3fb8696bfa1151f36bf5acee082" prot="public" virt="non-virtual"><scope>options_t</scope><name>ratio_val</name></member>
+      <member refid="structoptions__t_1ae92e9555f0d81149735b3871cb01a599" prot="public" virt="non-virtual"><scope>options_t</scope><name>rmax_val</name></member>
+      <member refid="structoptions__t_1a8a3ec473595536fe0ccd4924f88c7663" prot="public" virt="non-virtual"><scope>options_t</scope><name>rmin_val</name></member>
+      <member refid="structoptions__t_1a519a3ed92bf70838e2b9689be497e630" prot="public" virt="non-virtual"><scope>options_t</scope><name>sigma0_val</name></member>
+      <member refid="structoptions__t_1a6563abd30526d9b6f107a3e99595fc54" prot="public" virt="non-virtual"><scope>options_t</scope><name>sigmap_exp_val</name></member>
+      <member refid="structoptions__t_1a58b0fe63aaf0eb3addc48dfb76fadb12" prot="public" virt="non-virtual"><scope>options_t</scope><name>star_val</name></member>
+      <member refid="structoptions__t_1ab6bcb729776dbe7a05b0b39574a3da74" prot="public" virt="non-virtual"><scope>options_t</scope><name>startTime</name></member>
+      <member refid="structoptions__t_1ae6c90c295c87f0b042c3f7bc35b4c698" prot="public" virt="non-virtual"><scope>options_t</scope><name>totalTime</name></member>
+      <member refid="structoptions__t_1a427faf81e67e65a89d6a0501eef016fb" prot="public" virt="non-virtual"><scope>options_t</scope><name>tStep</name></member>
+      <member refid="structoptions__t_1a44ecb6c3265f14192e87451ae006071d" prot="public" virt="non-virtual"><scope>options_t</scope><name>twopop</name></member>
+      <member refid="structoptions__t_1aa088487d4187c06dec21bebc10d70e72" prot="public" virt="non-virtual"><scope>options_t</scope><name>ufrag</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

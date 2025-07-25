@@ -1,0 +1,545 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.14.0" xml:lang="en-US">
+  <compounddef id="utils_8h" kind="file" language="C++">
+    <compoundname>utils.h</compoundname>
+    <includes refid="simulation__types_8h" local="yes">simulation_types.h</includes>
+    <includedby refid="disk__model_8c" local="yes">/Users/tnehezd/Documents/Munka/dust_drift/src/disk_model.c</includedby>
+    <includedby refid="dust__physics_8c" local="yes">/Users/tnehezd/Documents/Munka/dust_drift/src/dust_physics.c</includedby>
+    <includedby refid="init__tool__module_8c" local="yes">/Users/tnehezd/Documents/Munka/dust_drift/src/init_tool_module.c</includedby>
+    <includedby refid="io__utils_8c" local="yes">/Users/tnehezd/Documents/Munka/dust_drift/src/io_utils.c</includedby>
+    <includedby refid="main_8c" local="yes">/Users/tnehezd/Documents/Munka/dust_drift/src/main.c</includedby>
+    <includedby refid="simulation__core_8c" local="yes">/Users/tnehezd/Documents/Munka/dust_drift/src/simulation_core.c</includedby>
+    <includedby refid="utils_8c" local="yes">/Users/tnehezd/Documents/Munka/dust_drift/src/utils.c</includedby>
+    <sectiondef kind="func">
+      <memberdef kind="function" id="utils_8h_1a12ae9c6cccb74caacafd89bcabdf3c28" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void Parabola</definition>
+        <argsstring>(double *vec, int i1, int i2, int i3, double *a, double *b, double *c, double dd, const disk_t *disk_params)</argsstring>
+        <name>Parabola</name>
+        <param>
+          <type>double *</type>
+          <declname>vec</declname>
+        </param>
+        <param>
+          <type>int</type>
+          <declname>i1</declname>
+        </param>
+        <param>
+          <type>int</type>
+          <declname>i2</declname>
+        </param>
+        <param>
+          <type>int</type>
+          <declname>i3</declname>
+        </param>
+        <param>
+          <type>double *</type>
+          <declname>a</declname>
+        </param>
+        <param>
+          <type>double *</type>
+          <declname>b</declname>
+        </param>
+        <param>
+          <type>double *</type>
+          <declname>c</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>dd</declname>
+        </param>
+        <param>
+          <type>const disk_t *</type>
+          <declname>disk_params</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.h" line="12" column="6" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.c" bodystart="11" bodyend="33" declfile="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.h" declline="12" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="utils_8h_1af8581c6dba59e7cb7c10b274c3b766ab" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void Perem</definition>
+        <argsstring>(double *vec, const disk_t *disk_params)</argsstring>
+        <name>Perem</name>
+        <param>
+          <type>double *</type>
+          <declname>vec</declname>
+        </param>
+        <param>
+          <type>const disk_t *</type>
+          <declname>disk_params</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.h" line="13" column="6" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.c" bodystart="37" bodyend="47" declfile="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.h" declline="13" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="utils_8h_1abc7d7312ca8694e5b77662cce33428c0" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void interpol</definition>
+        <argsstring>(double *invec, double *rvec, double pos, double *out, double rd, int opt, const disk_t *disk_params)</argsstring>
+        <name>interpol</name>
+        <param>
+          <type>double *</type>
+          <declname>invec</declname>
+        </param>
+        <param>
+          <type>double *</type>
+          <declname>rvec</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>pos</declname>
+        </param>
+        <param>
+          <type>double *</type>
+          <declname>out</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>rd</declname>
+        </param>
+        <param>
+          <type>int</type>
+          <declname>opt</declname>
+        </param>
+        <param>
+          <type>const disk_t *</type>
+          <declname>disk_params</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.h" line="15" column="6" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.c" bodystart="51" bodyend="68" declfile="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.h" declline="15" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="utils_8h_1a44526b444b9125cdcf48bcdddd68638b" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>double</type>
+        <definition>double find_max</definition>
+        <argsstring>(double r[][2], int n)</argsstring>
+        <name>find_max</name>
+        <param>
+          <type>double</type>
+          <declname>r</declname>
+          <array>[][2]</array>
+        </param>
+        <param>
+          <type>int</type>
+          <declname>n</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.h" line="18" column="8" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.c" bodystart="72" bodyend="86" declfile="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.h" declline="18" declcolumn="8"/>
+      </memberdef>
+      <memberdef kind="function" id="utils_8h_1a8f2eb4690a35662965884605a72cceba" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>double</type>
+        <definition>double find_min</definition>
+        <argsstring>(double s1, double s2, double s3)</argsstring>
+        <name>find_min</name>
+        <param>
+          <type>double</type>
+          <declname>s1</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>s2</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>s3</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.h" line="19" column="8" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.c" bodystart="89" bodyend="109" declfile="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.h" declline="19" declcolumn="8"/>
+      </memberdef>
+      <memberdef kind="function" id="utils_8h_1ae5ceb1bad0ba480336697fd4a2a63ef6" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int find_num_zero</definition>
+        <argsstring>(const disk_t *disk_params)</argsstring>
+        <name>find_num_zero</name>
+        <param>
+          <type>const disk_t *</type>
+          <declname>disk_params</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.h" line="22" column="5" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.c" bodystart="114" bodyend="127" declfile="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.h" declline="22" declcolumn="5"/>
+      </memberdef>
+      <memberdef kind="function" id="utils_8h_1a7e56c64a382fac518cfb00793d030883" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>double</type>
+        <definition>double find_r_zero</definition>
+        <argsstring>(double r1, double r2, double dp1, double dp2)</argsstring>
+        <name>find_r_zero</name>
+        <param>
+          <type>double</type>
+          <declname>r1</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>r2</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>dp1</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>dp2</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.h" line="26" column="8" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.c" bodystart="132" bodyend="141" declfile="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.h" declline="26" declcolumn="8"/>
+      </memberdef>
+      <memberdef kind="function" id="utils_8h_1a35ea104dd42db5386b496d0608072052" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>double</type>
+        <definition>double find_zero</definition>
+        <argsstring>(int i, const double *rvec, const double *dp)</argsstring>
+        <name>find_zero</name>
+        <param>
+          <type>int</type>
+          <declname>i</declname>
+        </param>
+        <param>
+          <type>const double *</type>
+          <declname>rvec</declname>
+        </param>
+        <param>
+          <type>const double *</type>
+          <declname>dp</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.h" line="30" column="8" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.c" bodystart="146" bodyend="161" declfile="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.h" declline="30" declcolumn="8"/>
+      </memberdef>
+      <memberdef kind="function" id="utils_8h_1a7e9b83be89bb4e56c46ac11555cc4966" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>double</type>
+        <definition>double calculate_index_from_radius</definition>
+        <argsstring>(double r_coord, disk_t *disk_params)</argsstring>
+        <name>calculate_index_from_radius</name>
+        <param>
+          <type>double</type>
+          <declname>r_coord</declname>
+        </param>
+        <param>
+          <type>disk_t *</type>
+          <declname>disk_params</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.h" line="32" column="8" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.c" bodystart="164" bodyend="167" declfile="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.h" declline="32" declcolumn="8"/>
+      </memberdef>
+      <memberdef kind="function" id="utils_8h_1a1c0f8ca61a2e310617cefb1e4f9462d9" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void find_r_annulus</definition>
+        <argsstring>(double rin_val, double *ind_ii, double *ind_io, double rout_val, double *ind_oi, double *ind_oo, const simulation_options_t *sim_opts, disk_t *disk_params)</argsstring>
+        <name>find_r_annulus</name>
+        <param>
+          <type>double</type>
+          <declname>rin_val</declname>
+        </param>
+        <param>
+          <type>double *</type>
+          <declname>ind_ii</declname>
+        </param>
+        <param>
+          <type>double *</type>
+          <declname>ind_io</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>rout_val</declname>
+        </param>
+        <param>
+          <type>double *</type>
+          <declname>ind_oi</declname>
+        </param>
+        <param>
+          <type>double *</type>
+          <declname>ind_oo</declname>
+        </param>
+        <param>
+          <type>const simulation_options_t *</type>
+          <declname>sim_opts</declname>
+        </param>
+        <param>
+          <type>disk_t *</type>
+          <declname>disk_params</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.h" line="36" column="6" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.c" bodystart="172" bodyend="262" declfile="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.h" declline="36" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="utils_8h_1aafa53ccfa4d32181b0ba4fbd6eb92ed9" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void sort</definition>
+        <argsstring>(double *rv, int n)</argsstring>
+        <name>sort</name>
+        <param>
+          <type>double *</type>
+          <declname>rv</declname>
+        </param>
+        <param>
+          <type>int</type>
+          <declname>n</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.h" line="39" column="6" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.c" bodystart="265" bodyend="283" declfile="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.h" declline="39" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="utils_8h_1ae0edc6db87833d1f24695ebfca153e39" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void histogram</definition>
+        <argsstring>(double r, int *hist, double dd, disk_t *disk_params)</argsstring>
+        <name>histogram</name>
+        <param>
+          <type>double</type>
+          <declname>r</declname>
+        </param>
+        <param>
+          <type>int *</type>
+          <declname>hist</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>dd</declname>
+        </param>
+        <param>
+          <type>disk_t *</type>
+          <declname>disk_params</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.h" line="41" column="6" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.c" bodystart="286" bodyend="320" declfile="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.h" declline="41" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="utils_8h_1aaf58130daa251f162bd351a5d5136138" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void sortarray</definition>
+        <argsstring>(double rv[][3], int n)</argsstring>
+        <name>sortarray</name>
+        <param>
+          <type>double</type>
+          <declname>rv</declname>
+          <array>[][3]</array>
+        </param>
+        <param>
+          <type>int</type>
+          <declname>n</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.h" line="46" column="6" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.c" bodystart="323" bodyend="348" declfile="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.h" declline="46" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="utils_8h_1a6da94cd22acd7de0e4f7ba21de40349c" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void kerekit</definition>
+        <argsstring>(double in[][3], int n, const disk_t *disk_params)</argsstring>
+        <name>kerekit</name>
+        <param>
+          <type>double</type>
+          <declname>in</declname>
+          <array>[][3]</array>
+        </param>
+        <param>
+          <type>int</type>
+          <declname>n</declname>
+        </param>
+        <param>
+          <type>const disk_t *</type>
+          <declname>disk_params</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.h" line="48" column="6" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.c" bodystart="351" bodyend="367" declfile="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.h" declline="48" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="utils_8h_1abf4d4cef48f0f384468dc45a4fe27aa1" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void contract</definition>
+        <argsstring>(double in[][3], double dd, int n, const disk_t *disk_params)</argsstring>
+        <name>contract</name>
+        <param>
+          <type>double</type>
+          <declname>in</declname>
+          <array>[][3]</array>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>dd</declname>
+        </param>
+        <param>
+          <type>int</type>
+          <declname>n</declname>
+        </param>
+        <param>
+          <type>const disk_t *</type>
+          <declname>disk_params</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.h" line="50" column="6" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.c" bodystart="372" bodyend="428" declfile="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.h" declline="50" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="utils_8h_1a059d4a2a281c384612fec05771697620" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void Count_Mass</definition>
+        <argsstring>(double radin[][2], double partmassindin[][5], double *massvecin, double t, int n, const disk_t *disk_params)</argsstring>
+        <name>Count_Mass</name>
+        <param>
+          <type>double</type>
+          <declname>radin</declname>
+          <array>[][2]</array>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>partmassindin</declname>
+          <array>[][5]</array>
+        </param>
+        <param>
+          <type>double *</type>
+          <declname>massvecin</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>t</declname>
+        </param>
+        <param>
+          <type>int</type>
+          <declname>n</declname>
+        </param>
+        <param>
+          <type>const disk_t *</type>
+          <declname>disk_params</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.h" line="52" column="6" bodyfile="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.c" bodystart="430" bodyend="453" declfile="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.h" declline="52" declcolumn="6"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"><highlight class="preprocessor">#ifndef<sp/>UTILS_H</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="2"><highlight class="normal"></highlight><highlight class="preprocessor">#define<sp/>UTILS_H</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="3"><highlight class="normal"></highlight></codeline>
+<codeline lineno="4"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;simulation_types.h&quot;</highlight><highlight class="normal"><sp/></highlight></codeline>
+<codeline lineno="5"><highlight class="normal"></highlight></codeline>
+<codeline lineno="6"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Szükséges<sp/>include-ok,<sp/>ha<sp/>a<sp/>deklarációk<sp/>más<sp/>headerekben<sp/>lévő<sp/>típusokra<sp/>vagy<sp/>makrókra<sp/>hivatkoznak.</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="7"><highlight class="normal"></highlight><highlight class="comment">//<sp/>A<sp/>Parabola<sp/>függvénynek<sp/>nincsenek<sp/>komplex<sp/>függőségei,</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="8"><highlight class="normal"></highlight><highlight class="comment">//<sp/>de<sp/>ha<sp/>más<sp/>utility<sp/>függvények<sp/>lennének<sp/>itt,<sp/>azoknak<sp/>lehetnének.</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="9"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Jelenleg<sp/>nem<sp/>szükséges<sp/>ide<sp/>tenni<sp/>semmit<sp/>a<sp/>Parabola<sp/>miatt.</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="10"><highlight class="normal"></highlight></codeline>
+<codeline lineno="11"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Függvény<sp/>deklarációk<sp/>(prototípusok)</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="12"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>Parabola(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>*vec,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>i1,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>i2,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>i3,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>*a,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>*b,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>*c,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>dd,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>disk_t<sp/>*disk_params);</highlight></codeline>
+<codeline lineno="13"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>Perem(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>*vec,</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>disk_t<sp/>*disk_params);</highlight></codeline>
+<codeline lineno="14"><highlight class="normal"></highlight><highlight class="comment">/*<sp/><sp/>egy<sp/>megadott,<sp/>diszkret<sp/>pontokban<sp/>ismert<sp/>fuggvenyt<sp/>interpolal<sp/>a<sp/>reszecske<sp/>aktualis<sp/>helyere<sp/><sp/><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="15"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>interpol(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>*invec,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>*rvec,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>pos,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>*out,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>rd,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>opt,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>disk_t<sp/>*disk_params);</highlight></codeline>
+<codeline lineno="16"><highlight class="normal"></highlight></codeline>
+<codeline lineno="17"><highlight class="normal"></highlight><highlight class="comment">//<sp/>megkeresi<sp/>egy<sp/>tomb<sp/>maximumat</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="18"><highlight class="normal"></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>find_max(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>r[][2],<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>n);</highlight></codeline>
+<codeline lineno="19"><highlight class="normal"></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>find_min(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>s1,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>s2,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>s3);</highlight></codeline>
+<codeline lineno="20"><highlight class="normal"></highlight></codeline>
+<codeline lineno="21"><highlight class="normal"></highlight><highlight class="comment">//counting<sp/>the<sp/>number<sp/>of<sp/>zero<sp/>points<sp/>of<sp/>the<sp/>pressure<sp/>gradient<sp/>function<sp/><sp/></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="22"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>find_num_zero(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>disk_t<sp/>*disk_params);</highlight></codeline>
+<codeline lineno="23"><highlight class="normal"></highlight></codeline>
+<codeline lineno="24"><highlight class="normal"></highlight><highlight class="comment">//mivel<sp/>a<sp/>dp<sp/>csak<sp/>diszkret<sp/>pontokban<sp/>ismert,<sp/>ezert<sp/>2<sp/>pontra<sp/>illeszt<sp/>egy<sp/>egyenest,<sp/>es<sp/>megnezi,<sp/>hogy<sp/>annak<sp/>hol<sp/>lenne<sp/>0<sp/>az<sp/>erteke</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="25"><highlight class="normal"></highlight><highlight class="comment">//<sp/><sp/>solving<sp/>a*x<sp/>+<sp/>b<sp/>=<sp/>y<sp/>(here<sp/>a<sp/>=<sp/>r,<sp/>y<sp/>=<sp/>dp)<sp/><sp/><sp/><sp/></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="26"><highlight class="normal"></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>find_r_zero(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>r1,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>r2,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>dp1,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>dp2);</highlight></codeline>
+<codeline lineno="27"><highlight class="normal"></highlight></codeline>
+<codeline lineno="28"><highlight class="normal"></highlight></codeline>
+<codeline lineno="29"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Nulla<sp/>pont<sp/>meghatározása<sp/>lineáris<sp/>interpolációval</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="30"><highlight class="normal"></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>find_zero(</highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>i,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>*rvec,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>*dp);</highlight></codeline>
+<codeline lineno="31"><highlight class="normal"></highlight></codeline>
+<codeline lineno="32"><highlight class="normal"></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>calculate_index_from_radius(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>r_coord,<sp/>disk_t<sp/>*disk_params);</highlight></codeline>
+<codeline lineno="33"><highlight class="normal"></highlight></codeline>
+<codeline lineno="34"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>A<sp/>nyomasi<sp/>maximum<sp/>korul<sp/>1H<sp/>tavolsagban<sp/>jeloli<sp/>ki<sp/>a<sp/>korgyurut<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="35"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Feltehetően<sp/>a<sp/>disk_model.h<sp/>tartalmazza<sp/>a<sp/>scale_height<sp/>deklarációját.</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="36"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>find_r_annulus(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>rin_val,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>*ind_ii,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>*ind_io,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>rout_val,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>*ind_oi,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>*ind_oo,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>simulation_options_t<sp/>*sim_opts,<sp/>disk_t<sp/>*disk_params);</highlight></codeline>
+<codeline lineno="37"><highlight class="normal"></highlight></codeline>
+<codeline lineno="38"><highlight class="normal"></highlight><highlight class="comment">//fuggveny<sp/>egy<sp/>tomb<sp/>elemeinek<sp/>sorbarendezesere<sp/>--&gt;<sp/>ezt<sp/>jelenleg<sp/>nem<sp/>hasznalja<sp/>sehol<sp/>a<sp/>program<sp/><sp/><sp/></highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="39"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>sort(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>*rv,</highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>n);</highlight></codeline>
+<codeline lineno="40"><highlight class="normal"></highlight></codeline>
+<codeline lineno="41"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>histogram(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>r,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>*hist,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>dd,<sp/>disk_t<sp/>*disk_params);</highlight></codeline>
+<codeline lineno="42"><highlight class="normal"></highlight></codeline>
+<codeline lineno="43"><highlight class="normal"></highlight></codeline>
+<codeline lineno="44"><highlight class="normal"></highlight></codeline>
+<codeline lineno="45"><highlight class="normal"></highlight><highlight class="comment">/*<sp/><sp/>fuggveny<sp/>egy<sp/>tomb<sp/>elemeinek<sp/>sorbarendezesere<sp/>--&gt;<sp/>ezt<sp/>jelenleg<sp/>nem<sp/>hasznalja<sp/>sehol<sp/>a<sp/>program<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="46"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>sortarray(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>rv[][3],</highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>n);</highlight></codeline>
+<codeline lineno="47"><highlight class="normal"></highlight></codeline>
+<codeline lineno="48"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>kerekit(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>in[][3],<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>n,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>disk_t<sp/>*disk_params);</highlight></codeline>
+<codeline lineno="49"><highlight class="normal"></highlight></codeline>
+<codeline lineno="50"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>contract(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>in[][3],<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>dd,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>n,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>disk_t<sp/>*disk_params);<sp/></highlight></codeline>
+<codeline lineno="51"><highlight class="normal"></highlight></codeline>
+<codeline lineno="52"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>Count_Mass(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>radin[][2],<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>partmassindin[][5],<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>*massvecin,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>t,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>n,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>disk_t<sp/>*disk_params);</highlight></codeline>
+<codeline lineno="53"><highlight class="normal"></highlight></codeline>
+<codeline lineno="54"><highlight class="normal"></highlight></codeline>
+<codeline lineno="55"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Ide<sp/>kerülhetnek<sp/>majd<sp/>a<sp/>jövőbeni<sp/>egyéb<sp/>általános<sp/>segédfüggvények<sp/>deklarációi<sp/>is.</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="56"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Például:</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="57"><highlight class="normal"></highlight><highlight class="comment">//<sp/>double<sp/>calculate_average(double<sp/>*data,<sp/>int<sp/>count);</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="58"><highlight class="normal"></highlight><highlight class="comment">//<sp/>void<sp/>print_timestamp(FILE<sp/>*f);</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="59"><highlight class="normal"></highlight></codeline>
+<codeline lineno="60"><highlight class="normal"></highlight><highlight class="preprocessor">#endif<sp/></highlight><highlight class="comment">//<sp/>UTILS_H</highlight><highlight class="normal"></highlight></codeline>
+    </programlisting>
+    <location file="/Users/tnehezd/Documents/Munka/dust_drift/src/utils.h"/>
+  </compounddef>
+</doxygen>
