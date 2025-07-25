@@ -3,6 +3,7 @@
 output/
 output_*/
 
+.ipynb_checkpoints
 
 *.o
 *.a
