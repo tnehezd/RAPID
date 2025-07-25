@@ -44,21 +44,24 @@
               <p class="caption" role="heading"><span class="caption-text">User Guide:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">API Reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#config-c"><code class="docutils literal notranslate"><span class="pre">config.c</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#_CPPv415PARTICLE_NUMBER"><code class="docutils literal notranslate"><span class="pre">PARTICLE_NUMBER</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#_CPPv421timescale_output_file"><code class="docutils literal notranslate"><span class="pre">timescale_output_file</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#_CPPv417info_current_file"><code class="docutils literal notranslate"><span class="pre">info_current_file</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#_CPPv47file_in"><code class="docutils literal notranslate"><span class="pre">file_in</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#_CPPv425FILENAME_INIT_GAS_PROFILE"><code class="docutils literal notranslate"><span class="pre">FILENAME_INIT_GAS_PROFILE</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#_CPPv426FILENAME_INIT_DUST_PROFILE"><code class="docutils literal notranslate"><span class="pre">FILENAME_INIT_DUST_PROFILE</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#_CPPv416FILE_DENS_PREFIX"><code class="docutils literal notranslate"><span class="pre">FILE_DENS_PREFIX</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#_CPPv420FILE_MASS_ACCUMULATE"><code class="docutils literal notranslate"><span class="pre">FILE_MASS_ACCUMULATE</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#_CPPv419FILE_DUST_EVOLUTION"><code class="docutils literal notranslate"><span class="pre">FILE_DUST_EVOLUTION</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#_CPPv419FILENAME_DISK_PARAM"><code class="docutils literal notranslate"><span class="pre">FILENAME_DISK_PARAM</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#_CPPv48LOGS_DIR"><code class="docutils literal notranslate"><span class="pre">LOGS_DIR</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#_CPPv414FILE_TIMESCALE"><code class="docutils literal notranslate"><span class="pre">FILE_TIMESCALE</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#_CPPv410CONFIG_DIR"><code class="docutils literal notranslate"><span class="pre">CONFIG_DIR</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#_CPPv48inputsig"><code class="docutils literal notranslate"><span class="pre">inputsig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#configuration-module">Configuration Module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#config-h">config.h</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv415PARTICLE_NUMBER"><code class="docutils literal notranslate"><span class="pre">PARTICLE_NUMBER</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv421timescale_output_file"><code class="docutils literal notranslate"><span class="pre">timescale_output_file</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv417info_current_file"><code class="docutils literal notranslate"><span class="pre">info_current_file</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv47file_in"><code class="docutils literal notranslate"><span class="pre">file_in</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv425FILENAME_INIT_GAS_PROFILE"><code class="docutils literal notranslate"><span class="pre">FILENAME_INIT_GAS_PROFILE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv426FILENAME_INIT_DUST_PROFILE"><code class="docutils literal notranslate"><span class="pre">FILENAME_INIT_DUST_PROFILE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv416FILE_DENS_PREFIX"><code class="docutils literal notranslate"><span class="pre">FILE_DENS_PREFIX</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv420FILE_MASS_ACCUMULATE"><code class="docutils literal notranslate"><span class="pre">FILE_MASS_ACCUMULATE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv419FILE_DUST_EVOLUTION"><code class="docutils literal notranslate"><span class="pre">FILE_DUST_EVOLUTION</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv419FILENAME_DISK_PARAM"><code class="docutils literal notranslate"><span class="pre">FILENAME_DISK_PARAM</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv48LOGS_DIR"><code class="docutils literal notranslate"><span class="pre">LOGS_DIR</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv414FILE_TIMESCALE"><code class="docutils literal notranslate"><span class="pre">FILE_TIMESCALE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv410CONFIG_DIR"><code class="docutils literal notranslate"><span class="pre">CONFIG_DIR</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv48inputsig"><code class="docutils literal notranslate"><span class="pre">inputsig</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -90,10 +93,14 @@
            <div itemprop="articleBody">
              
   <section id="api-reference">
-<h1>API Reference<a class="headerlink" href="#api-reference" title="Link to this heading"></a></h1>
-<p>This section provides an automatically generated API reference for the C code.</p>
-<section id="config-c">
-<h2><code class="docutils literal notranslate"><span class="pre">config.c</span></code><a class="headerlink" href="#config-c" title="Link to this heading"></a></h2>
+<span id="id1"></span><h1>API Reference<a class="headerlink" href="#api-reference" title="Link to this heading"></a></h1>
+<p>This section provides a comprehensive, automatically generated API reference for the core C code components of the simulation. It details the functions, variables, and data structures used throughout the project, facilitating understanding and development.</p>
+<section id="configuration-module">
+<h2>Configuration Module<a class="headerlink" href="#configuration-module" title="Link to this heading"></a></h2>
+<p>The <cite>Configuration Module</cite> (<code class="docutils literal notranslate"><span class="pre">config.c</span></code>) is central to managing global simulation parameters, file pointers, and constant definitions. Its API is primarily documented through its header file, <code class="docutils literal notranslate"><span class="pre">config.h</span></code>, which contains the <cite>extern</cite> declarations and associated Doxygen comments.</p>
+<section id="config-h">
+<h3>config.h<a class="headerlink" href="#config-h" title="Link to this heading"></a></h3>
+<p>This section presents the detailed API for the <cite>config.h</cite> header file, including global variables, file pointers, and utility functions related to simulation setup and configuration.</p>
 <p>Global configuration parameters, file pointers, and constants for the simulation. </p>
 <p>This header defines a central repository for various parameters for the simulation, including the total number of particles and file handles for I/O operations. All parameters are declared with <code class="docutils literal notranslate"><span class="pre">extern</span></code>, signifying that their definitions (memory allocation) are in the <code class="docutils literal notranslate"><span class="pre">config.c</span></code> file. </p>
 <div class="breathe-sectiondef docutils container">
@@ -197,6 +204,7 @@
 </dd></dl>
 
 </div>
+</section>
 </section>
 </section>
 

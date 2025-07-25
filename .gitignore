@@ -11,3 +11,5 @@ output_*/
 *.exe
 bin/
 obj/
+
+_build/
