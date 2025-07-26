@@ -17,3 +17,4 @@ This section presents the detailed API for the `config.h` header file, including
 
 .. doxygenfile:: config.h
    :project: rapid
+

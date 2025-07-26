@@ -15,13 +15,17 @@
 #endif
 
 // Local includes
+#include "config.h" // Biztosítja, hogy az info_current_file látható legyen
 #include "io_utils.h"
 #include "config.h"         // Defines PARTICLE_NUMBER, AU2CM, FILENAME_INIT_PROFILE, and declares extern FILE *file_in, extern FILE *info_current_file
 #include "dust_physics.h"   // If needed for any specific function interactions
-#include "utils.h"          // For find_num_zero, find_zero, find_r_annulus
 #include "simulation_types.h" // For disk_t, simulation_options_t, output_files_t
 #include "config.h"
 #include "globals.h"
+
+#include <sys/stat.h> // A mkdir-hez (ha ezt a fájl használja)
+#include <sys/types.h> // A mkdir-hez (ha ezt a fájl használja)
+
 
 #define INIT_DATA_HEADER_LINES 5
 // --- GLOBAL FILE POINTERS ---
@@ -241,8 +245,7 @@ void infoCurrent(const char *output_dir_name, const disk_t *disk_params, const s
     char file_name[100];
 
     
-    sprintf(file_name, "summary.dat");
-    snprintf(full_path, sizeof(full_path), "%s/%s", output_dir_name, file_name);
+    snprintf(full_path, sizeof(full_path), "%s/%s", output_dir_name, FILE_SUMMARY);
 
 
     fprintf(stderr, "DEBUG [infoCurrent]: Attempting to open file: '%s'\n", full_path);
@@ -622,9 +625,17 @@ void print_file_header(FILE *file, FileType_e file_type, const HeaderData_t *hea
             // A tényleges paraméter értékeket nem a fejlécbe írjuk, hanem a fő adatsorba.
             break;
 
+        case FILE_TYPE_TIMESCALE:
+            fprintf(file, "# Dust Depletion Timescale Profile\n");
+            fprintf(file, "# Note: Timescale calculated based on a unit system where 2*PI simulation time units = 1 year.\n");
+            fprintf(file, "#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
+            fprintf(file, "#  %-15s %-15s\n","R_dust [AU]", "Timesc_depletion [years]");
+            fprintf(file, "#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
+            break;
+
         default:
             fprintf(stderr, "WARNING [print_file_header]: Unknown file type for header generation: %d!\n", file_type);
-            break;
+            break; 
     }
     fflush(file);
 }

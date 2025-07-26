@@ -3,11 +3,13 @@
 #include "config.h"       // Szükséges lehet a globális konstansokhoz (pl. PARTICLE_NUMBER, AU2CM, RMIN, RMAX, NGRID, G_GRAV_CONST, STAR, SDCONV, CMPSECTOAUPYRP2PI, uFrag, fFrag, PDENSITYDIMLESS, HASP, M_PI, DD, sim_opts->dzone, sim_opts->twopop, RMIN, RMAX, FLIND, alpha_visc, a_mod, r_dze_i, r_dze_o, Dr_dze_i, Dr_dze_o)
 #include "simulation_types.h" // Például output_files_t, disk_t struktúrákhoz
 #include "globals.h"
+#include "io_utils.h"
 #include "simulation_core.h" // int_step, Perem, find_num_zero, find_zero, find_r_annulus függvényekhez
 #include "utils.h"           // find_min függvényhez
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <string.h>
+#include <errno.h>
 #include <math.h>
 #include <omp.h>             // OpenMP támogatáshoz
 
@@ -411,6 +413,7 @@ void Get_Radius(const char *nev, int opt, double radius[][2], const double *sigm
     int i;
     double y, y_out, prad_new, particle_radius;
     char timescale_out[1024];
+    HeaderData_t header_data_for_files; // Később inicializáljuk a setup_initial_output_files-ban
 
     // Fájlkezelés t==0 esetén: ez valószínűleg egyszer történik meg a szimuláció elején,
     // még mielőtt az igazi párhuzamosítás elkezdődne a fő ciklusban.
@@ -418,8 +421,16 @@ void Get_Radius(const char *nev, int opt, double radius[][2], const double *sigm
     #pragma omp master
     {
         if (t == 0) {
-            sprintf(timescale_out, "%s/%s", nev,FILE_TIMESCALE);
+            HeaderData_t timescale_header_data = {.current_time = 0};
+            snprintf(timescale_out, sizeof(timescale_out), "%s/%s", nev, FILE_TIMESCALE);
             timescale_output_file = fopen(timescale_out, "w");
+            print_file_header(timescale_output_file, FILE_TYPE_TIMESCALE, &timescale_header_data);
+
+            if (timescale_output_file == NULL) {
+                fprintf(stderr, "ERROR: Could not open timescale output file '%s': %s\n", timescale_out, strerror(errno));
+                // Itt érdemes valamilyen hibakezelést végezni, pl. kilépni
+                exit(EXIT_FAILURE);
+            }
         }
     }
     // Szinkronizálás a master szál befejezéséig.
@@ -446,7 +457,7 @@ void Get_Radius(const char *nev, int opt, double radius[][2], const double *sigm
                     {
                         // Ellenőrizzük, hogy a fájlmutató nem NULL
                         if (timescale_output_file != NULL) {
-                            fprintf(timescale_output_file, "%lg %lg\n", radius[i][0], (radius[i][0] / current_drdt_val) / (2.0 * M_PI));
+                            fprintf(timescale_output_file, " %-15.6lg  %-15.6lg\n", radius[i][0], (radius[i][0] / current_drdt_val) / (2.0 * M_PI));
                         } else {
                             fprintf(stderr, "ERROR: timescale_output_file is NULL during write in Get_Radius (t=0 block).\n");
                         }

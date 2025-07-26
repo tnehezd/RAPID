@@ -75,7 +75,8 @@ typedef enum {
     FILE_TYPE_DUST_DENSITY,
     FILE_TYPE_DUST_MICRON_DENSITY,
     FILE_TYPE_PARTICLE_SIZE,
-    FILE_TYPE_DISK_PARAM // ÚJ: a disk_config.dat fájlhoz
+    FILE_TYPE_DISK_PARAM,
+    FILE_TYPE_TIMESCALE
 
 } FileType_e;
 

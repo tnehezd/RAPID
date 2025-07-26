@@ -8,7 +8,7 @@
 
 /**
  * @file config.h
- * @brief Global configuration parameters, file pointers, and constants for the simulation.
+ * @brief Global configuration parameters and file pointers.
  * @details This header defines a central repository for various parameters for the simulation,
  * including the total number of particles and file handles for I/O operations. All parameters
  * are declared with `extern`, signifying that their definitions (memory allocation)
@@ -31,21 +31,21 @@ extern int PARTICLE_NUMBER;
 
 
 /**
- * @brief File pointer for output related to simulation timescales.
- * @details This file handle is specifically intended for logging and storing
- * data related to various characteristic timescales computed during the simulation,
- * such as dynamical, thermal, or accretion timescales. It complements other
- * general output files by providing a dedicated stream for temporal analysis.
- * Declared as `extern` here, defined and initialized (to `NULL`) in `config.c`.
+ * @brief File pointer for drift timescales output.
+ * @details This file (`drift_timescale.dat`) contains the precalculated values of the dust depletion timescale
+ * at a given radius within your predefined `output` dir. The timescale values are presented in years, consistent with
+ * the simulation's astrophysical unit system. In this system, the gravitational
+ * constant $G=1$, and one orbital period at 1 Astronomical Unit (AU) is defined as
+ * $2\pi$ simulation time units, which corresponds to one year.
+ *
  */
 extern FILE *timescale_output_file;
 
 /**
- * @brief File pointer to store a summary of the current simulation run's configuration and status.
- * @details This file is typically opened at the beginning of a simulation run and
- * logs critical input parameters, timestamp, and other relevant metadata for
- * reproducibility and quick overview. Declared as `extern` here,
- * defined and initialized (to `NULL`) in `config.c`.
+ * @brief File pointer to store timestamp and a summary log of the current simulation run's configuration and status.
+ * @details This file is opened at the beginning of a simulation run and
+ * logs critical input parameters of the simulation (¨summary.dat`) within your predefined `output` dir. 
+ * Declared as `extern` here, defined and initialized (to `NULL`) in `config.c`.
  */
 extern FILE *info_current_file;
 
@@ -61,16 +61,16 @@ extern FILE *file_in;
 // Define distinct names for gas and dust initial profiles
 /**
  * @brief Critical: Defines the filename for the initial gas surface density profile.
- * @details This constant string specifies the name of the file expected to contain
- * the initial radial distribution of gas within the simulated environment.
+ * @details This constant string specifies the name of the file (`initial_gas_profile.dat`) that contains
+ * the initial radial distribution of gas in the `config` directory of the predefined `output` dir.
  * Declared as `extern const char * const` here, defined in `config.c`.
  */
 extern const char * const FILENAME_INIT_GAS_PROFILE;
 
 /**
  * @brief Critical: Defines the filename for the initial dust surface density profile.
- * @details This constant string specifies the name of the file expected to contain
- * the initial radial distribution of dust within the simulated environment.
+ * @details This constant string specifies the name of the file (`initial_dust_profile.dat`) that contains
+ * the initial radial distribution of dus in the `config` directory of the predefined `output` dir.
  * Declared as `extern const char * const` here, defined in `config.c`.
  */
 extern const char * const FILENAME_INIT_DUST_PROFILE;
@@ -78,17 +78,18 @@ extern const char * const FILENAME_INIT_DUST_PROFILE;
 /**
  * @brief Prefix for output filenames containing time-dependent density profiles.
  * @details This constant string defines the base name for output files that store
- * the evolving density profiles over time. Actual filenames will typically be formed
- * by appending a timestamp or iteration number (e.g., `density_profile_TIME.dat`).
+ * the evolving density profiles over time. Actual filenames will be formed
+ * by appending a zero-padded number representing the simulation time
+ * (e.g., `density_profile_00000010.dat`) within `LOGS` in the predefined `output` directory.
  * Declared as `extern const char * const` here, defined in `config.c`.
  */
 extern const char * const FILE_DENS_PREFIX;
 
 /**
  * @brief Filename for the output file tracking mass accumulation at the DZE edge.
- * @details This constant string specifies the name of the file used to log gas and/or
- * dust mass flux and accumulation rates at the inner and outer edges of the
- * Dead Zone Edge (DZE) or other relevant boundaries.
+ * @details This constant string specifies the name of the file used to log 
+ * dust accumulation at the inner and outer edges of the
+ * Dead Zone Edge (DZE) within `LOGS` in the predefined `output` directory.
  * Declared as `extern const char * const` here, defined in `config.c`.
  */
 extern const char * const FILE_MASS_ACCUMULATE;
@@ -97,7 +98,7 @@ extern const char * const FILE_MASS_ACCUMULATE;
  * @brief Filename for the output file detailing the evolution of individual dust particles.
  * @details This constant string specifies the name of the file intended to contain
  * detailed, time-series data for each simulated particle, such as positions,
- * velocities, sizes, or other relevant properties.
+ * velocities, sizes, or other relevant properties within `LOGS` in the predefined `output` directory.
  * Declared as `extern const char * const` here, defined in `config.c`.
  */
 extern const char * const FILE_DUST_EVOLUTION;
@@ -129,6 +130,18 @@ extern const char * const LOGS_DIR;
  * should reside in `config.c`.
  */
 extern const char * const FILE_TIMESCALE;
+
+
+/**
+ * @brief Filename for the output file detailing simulation timescales.
+ * @details This constant string specifies the name of the file used to log
+ * various characteristic timescales of the simulation, such as dynamical
+ * timescales, accretion timescales, or other relevant temporal parameters.
+ * It helps in analyzing the evolution of different physical processes over time.
+ * Declared as `extern const char * const` here, its definition (the actual string literal)
+ * should reside in `config.c`.
+ */
+extern const char * const FILE_SUMMARY;
 
 /**
  * @brief Constant string defining the name of the directory where configuration files are located.
