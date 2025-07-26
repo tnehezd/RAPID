@@ -76,7 +76,7 @@ extern const char * const FILENAME_INIT_GAS_PROFILE;
 extern const char * const FILENAME_INIT_DUST_PROFILE;
 
 /**
- * @brief Prefix for output filenames containing time-dependent density profiles.
+ * @brief Prefix for output filenames containing time-dependent gas surface density profiles.
  * @details This constant string defines the base name for output files that store
  * the evolving density profiles over time. Actual filenames will be formed
  * by appending a zero-padded number representing the simulation time
@@ -84,6 +84,16 @@ extern const char * const FILENAME_INIT_DUST_PROFILE;
  * Declared as `extern const char * const` here, defined in `config.c`.
  */
 extern const char * const FILE_DENS_PREFIX;
+
+/**
+ * @brief Prefix for output filenames containing time-dependent dust density profiles.
+ * @details This constant string defines the base name for output files that store
+ * the evolving density profiles over time. Actual filenames will be formed
+ * by appending a zero-padded number representing the simulation time
+ * (e.g., `dust_profile_00000010.dat`) within `LOGS` in the predefined `output` directory.
+ * Declared as `extern const char * const` here, defined in `config.c`.
+ */
+extern const char * const FILE_DUST_PREFIX;
 
 /**
  * @brief Filename for the output file tracking mass accumulation at the DZE edge.

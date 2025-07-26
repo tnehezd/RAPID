@@ -25,6 +25,7 @@ const char *inputsig = NULL;
 const char * const FILENAME_INIT_GAS_PROFILE = "initial_gas_profile.dat";   
 const char * const FILENAME_INIT_DUST_PROFILE = "initial_dust_profile.dat"; 
 const char * const FILE_DENS_PREFIX = "density_profile";
+const char * const FILE_DUST_PREFIX = "dust_profile";
 const char * const FILE_MASS_ACCUMULATE = "mass_accumulation_dze_edge.dat";
 const char * const FILE_DUST_EVOLUTION = "dust_particle_evolution.dat";
 const char * const FILENAME_DISK_PARAM = "disk_config.dat";

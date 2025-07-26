@@ -49,7 +49,8 @@ void Print_Sigma(const disk_t *disk_params, output_files_t *output_files);
 
 /* Fuggveny a por feluletisurusegenek kiiratasara */
 // FIX: The original was missing 'const disk_t *disk_params' and 'const simulation_options_t *sim_opts'.
-void Print_Sigmad(const double *r, const double *rm, const double *sigmad, const double *sigmadm,
+void Print_Sigmad(int step, double (*rad)[2], double (*radmicr)[2], const double *r, const double *rm, 
+                  const double *sigmad, const double *sigmadm,double (*partmassind)[5], double (*partmassmicrind)[5],
                   const disk_t *disk_params, const simulation_options_t *sim_opts,
                   output_files_t *output_files);
 /* Fuggveny a pormozgas es reszecskemeret kiiratasara */
@@ -68,15 +69,15 @@ void timePar(double tMax_val, double stepping_val, double current_val, simulatio
 
 // Enumeráció a fájltípusok azonosítására
 typedef enum {
-    FILE_TYPE_DUST_MOTION,
-    FILE_TYPE_MICRON_MOTION,
     FILE_TYPE_MASS_ACCUMULATION,
     FILE_TYPE_GAS_DENSITY,
     FILE_TYPE_DUST_DENSITY,
     FILE_TYPE_DUST_MICRON_DENSITY,
     FILE_TYPE_PARTICLE_SIZE,
     FILE_TYPE_DISK_PARAM,
-    FILE_TYPE_TIMESCALE
+    FILE_TYPE_TIMESCALE,
+    FILE_TYPE_MICRON_DUST_EVOL,
+    FILE_TYPE_DUST_EVOL
 
 } FileType_e;
 

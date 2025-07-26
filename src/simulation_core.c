@@ -172,7 +172,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
     // Ideiglenes puffer a fájlneveknek a ciklusban
     char dens_name[MAX_PATH_LEN] = "";
     char dust_name[MAX_PATH_LEN] = "";
-    char dust_name2[MAX_PATH_LEN] = "";
+    char micron_dust_name[MAX_PATH_LEN] = "";
     char size_name[MAX_PATH_LEN] = "";
 
     double t = 0.0;
@@ -257,8 +257,8 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                     }
                 }
 
-                snprintf(dust_name, MAX_PATH_LEN, "%s/%s/dust.%i.dat", sim_opts->output_dir_name, LOGS_DIR, (int)L);
-                snprintf(dust_name2, MAX_PATH_LEN, "%s/%s/dustmic.%i.dat", sim_opts->output_dir_name, LOGS_DIR, (int)L);
+                snprintf(dust_name, MAX_PATH_LEN, "%s/%s/%s_%08d.dat", sim_opts->output_dir_name, LOGS_DIR, FILE_DUST_PREFIX,(int)L);
+                snprintf(micron_dust_name, MAX_PATH_LEN, "%s/%s/micron_%s_%08d.%i.dat", sim_opts->output_dir_name, LOGS_DIR, FILE_DUST_PREFIX, (int)L);
                 snprintf(size_name, MAX_PATH_LEN, "%s/%s/size.%d.dat", sim_opts->output_dir_name, LOGS_DIR, (int)L);
 
                 // Fájlok megnyitása és fejlécek írása
@@ -277,16 +277,16 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                     fprintf(stderr, "ERROR: Could not open %s for writing.\n", dust_name);
                 } else {
                     HeaderData_t dust_header_data = {.current_time = current_time_years, .is_initial_data = (current_time_years == 0.0)};
-                    print_file_header(output_files->dust_file, FILE_TYPE_DUST_MOTION, &dust_header_data);
+                    print_file_header(output_files->dust_file, FILE_TYPE_DUST_EVOL, &dust_header_data);
                 }
 
                 if (sim_opts->twopop == 1.) {
-                    output_files->micron_dust_file = fopen(dust_name2, "w");
+                    output_files->micron_dust_file = fopen(micron_dust_name, "w");
                     if (output_files->micron_dust_file == NULL) {
-                        fprintf(stderr, "ERROR: Could not open %s for writing.\n", dust_name2);
+                        fprintf(stderr, "ERROR: Could not open %s for writing.\n", micron_dust_name);
                     } else {
                         HeaderData_t micron_dust_header_data = {.current_time = current_time_years, .is_initial_data = (current_time_years == 0.0)};
-                        print_file_header(output_files->micron_dust_file, FILE_TYPE_MICRON_MOTION, &micron_dust_header_data);
+                        print_file_header(output_files->micron_dust_file, FILE_TYPE_MICRON_DUST_EVOL, &micron_dust_header_data);
                     }
                 }
 
@@ -334,13 +334,13 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                 massmtempoin = massmtempoout;
 
                 if (sim_opts->growth == 1.) {
-                    Print_Sigmad(p_data.rdvec, p_data.rmicvec, p_data.sigmad, p_data.sigmadm, disk_params, sim_opts, output_files);
+                    Print_Sigmad((int)L,p_data.radius, p_data.radiusmicr,p_data.rdvec, p_data.rmicvec, p_data.sigmad, p_data.sigmadm,  p_data.partmassind, p_data.partmassmicrind, disk_params, sim_opts, output_files);
                 }
                 fprintf(stderr,"L set to %lg\n",L);
 
                 L = L + (double)(sim_opts->TMAX / sim_opts->WO);
                 // Fájlok bezárása, amelyek csak ezen időintervallumban voltak nyitva
-                close_snapshot_files(output_files, dens_name, dust_name, dust_name2, sim_opts);
+                close_snapshot_files(output_files, dens_name, dust_name, micron_dust_name, sim_opts);
             }
 
             // Gas evolution
