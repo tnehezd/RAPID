@@ -121,14 +121,6 @@ extern const char * const FILE_DUST_EVOLUTION;
  * Declared as `extern const char * const` here, defined in `config.c`.
  */
 extern const char * const FILENAME_DISK_PARAM;
-/**
- * @brief Constant string defining the name of the directory where all simulation log files are stored.
- * @details This constant helps in organizing simulation output by centralizing
- * all log, diagnostic, and summary files into a dedicated directory.
- * Declared as `extern const char * const` here, defined in `config.c`.
- */
-
-extern const char * const LOGS_DIR;
 
 /**
  * @brief Filename for the output file detailing simulation timescales.
@@ -154,6 +146,16 @@ extern const char * const FILE_TIMESCALE;
 extern const char * const FILE_SUMMARY;
 
 /**
+ * @brief Constant string defining the name of the directory where all simulation log files are stored.
+ * @details This constant helps in organizing simulation output by centralizing
+ * all log, diagnostic, and summary files into a dedicated directory.
+ * Declared as `extern const char * const` here, defined in `config.c`.
+ */
+
+extern const char * const LOGS_DIR;
+
+
+/**
  * @brief Constant string defining the name of the directory where configuration files are located.
  * @details This provides a standard, relative path for locating input configuration
  * files and other setup-related resources.
@@ -162,11 +164,11 @@ extern const char * const FILE_SUMMARY;
 extern const char * const CONFIG_DIR;
 
 /**
- * @brief Global pointer to a character string specifying the input sigma profile filename.
- * @details This string holds the name of the file from which the initial sigma profile
- * (e.g., surface density distribution) for the disk is read. Its value is typically
- * determined during configuration parsing at runtime.
+ * @brief Global pointer to a character string specifying the input surface density profile filename.
+ * @details This string holds the name of the file from which the initial surfae density profile for the disk is read. 
+ * Its value is typically determined during configuration parsing at runtime.
  * Declared as `extern` here, defined (initialized to `NULL`) in `config.c`.
+ * @note CHECK THE FUNCTIONALITY!!!
  */
 extern const char *inputsig; // Parameter controls
 

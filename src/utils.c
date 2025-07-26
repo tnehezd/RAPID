@@ -352,7 +352,7 @@ void kerekit(double in[][3], int n, const disk_t *disk_params) {
 
 	double dd = (disk_params->RMAX - disk_params->RMIN) / (PARTICLE_NUMBER-1);
 	int dker = (int)(1./dd);//
-	dker = dker * KEREK;
+	dker = dker * ROUND;
 	double ddker = (double) dker;
 	int i;
 	int temp;
