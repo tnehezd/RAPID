@@ -1,6 +1,6 @@
 #include "init_tool_module.h"
-#include "config.h" // For FILENAME_INIT_DUST_PROFILE, FILENAME_DISK_PARAM, SDCONV, G_GRAV_CONST, SNOWLINE, ICEFACTOR, CMPSECTOAUPYRP2PI
-#include "disk_model.h" // Contains declarations for load_R, Initial_Profile, Initial_Press, Initial_dPress, Initial_Ugas, disk_param_be, scale_height, v_kep, kep_freq, c_sound, press, rho_mp
+#include "config.h"
+#include "disk_model.h" // Contains declarations for load_R, Initial_Profile, Initial_Press, Initial_dPress, Initial_Ugas, read_disk_parameters, scale_height, v_kep, kep_freq, c_sound, press, rho_mp
 #include "dust_physics.h" // May contain GetMass, etc.
 #include "utils.h" // For find_max, find_min, etc. and for interpolation functions
 #include "io_utils.h" // For Mk_Dir (if used internally here)
@@ -86,15 +86,8 @@ static long double calculate_gas_surface_density(double r_au, init_tool_options_
 }
 
 // Calculates dust surface density at radial position r [M_Sun / AU / AU].
-// Includes handling for snowline/ice factor if enabled (currently commented out as in original).
 static long double calculate_dust_surface_density(double r_au, init_tool_options_t *init_opts, long double current_sigma0) {
     long double sigma_dust = calculate_gas_surface_density(r_au, init_opts, current_sigma0) * init_opts->dust_to_gas_ratio;
-
-    // --- Snowline and Ice Factor Handling (Uncomment and adjust if needed) ---
-    // if (r_au >= SNOWLINE) {
-    //     sigma_dust *= ICEFACTOR;
-    // }
-    // ---------------------------------------------------------------------
 
     return sigma_dust;
 }
@@ -194,8 +187,6 @@ int run_init_tool(init_tool_options_t *opts, disk_t *disk_params) {
     fprintf(stderr,"Inner disk edge (AU): %lg\n", opts->r_inner);
     fprintf(stderr,"Outer disk edge (AU): %lg\n", opts->r_outer);
     fprintf(stderr,"Surface density profile exponent: %lg\n", -opts->sigma_exponent);
-    fprintf(stderr,"Snowline position (AU): %lg\n", SNOWLINE);
-    fprintf(stderr,"Ice factor beyond snowline: %lg\n", ICEFACTOR);
     fprintf(stderr,"Gas surface density at 1 AU (Solar Mass/AU^2): %Lg\n", current_sigma0_gas);
     fprintf(stderr,"Dust to gas ratio: %lg\n", opts->dust_to_gas_ratio);
     fprintf(stderr,"Number of gas grid points: %d\n", opts->n_grid_points); // Clarified for gas grid
@@ -237,7 +228,7 @@ int run_init_tool(init_tool_options_t *opts, disk_t *disk_params) {
 
     // Physical Constants
     double u_frag_cm_s = 1000.0;
-    double u_frag_au_yr2pi = u_frag_cm_s * CMPSECTOAUPYRP2PI;
+    double u_frag_au_yr2pi = u_frag_cm_s * CM_PER_SEC_TO_AU_PER_YEAR_OVER_2PI;
     double u_frag_sq_au_yr2pi_sq = u_frag_au_yr2pi * u_frag_au_yr2pi;
 
     // Populate disk_params structure and allocate its arrays
@@ -283,7 +274,7 @@ int run_init_tool(init_tool_options_t *opts, disk_t *disk_params) {
     }
 
     // Initialize gas disk properties on the NGRID grid
-    disk_param_be(disk_params);
+    read_disk_parameters(disk_params);
     load_R(disk_params);
     Initial_Profile(disk_params);
     Initial_Press(disk_params);
@@ -355,8 +346,8 @@ int run_init_tool(init_tool_options_t *opts, disk_t *disk_params) {
             double sound_speed_sq = sound_speed_au_yr2pi * sound_speed_au_yr2pi;
 
             long double sigma_dust_local = calculate_dust_surface_density(r_dust_particle_au, opts, current_sigma0_gas);
-            long double sigma_dust_local_cgs = sigma_dust_local / SDCONV;
-            double sigma_gas_local_cgs = (double)sigma_gas_local / SDCONV;
+            long double sigma_dust_local_cgs = sigma_dust_local / GAS_SD_CONV_RATE;
+            double sigma_gas_local_cgs = (double)sigma_gas_local / GAS_SD_CONV_RATE;
 
 
             double dlnPdlnr_local;

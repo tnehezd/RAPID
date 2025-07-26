@@ -1,6 +1,6 @@
 // src/dust_physics.c
 #include "dust_physics.h" // A saját headerjét mindig includolni kell
-#include "config.h"       // Szükséges lehet a globális konstansokhoz (pl. PARTICLE_NUMBER, AU2CM, RMIN, RMAX, NGRID, G_GRAV_CONST, STAR, SDCONV, CMPSECTOAUPYRP2PI, uFrag, fFrag, PDENSITYDIMLESS, HASP, M_PI, DD, sim_opts->dzone, sim_opts->twopop, RMIN, RMAX, FLIND, alpha_visc, a_mod, r_dze_i, r_dze_o, Dr_dze_i, Dr_dze_o)
+#include "config.h"       // Szükséges lehet a globális konstansokhoz (pl. PARTICLE_NUMBER, AU2CM, RMIN, RMAX, NGRID, G_GRAV_CONST, STAR, GAS_SD_CONV_RATE, CM_PER_SEC_TO_AU_PER_YEAR_OVER_2PI, uFrag, fFrag, PDENSITYDIMLESS, HASP, M_PI, DD, sim_opts->dzone, sim_opts->twopop, RMIN, RMAX, FLIND, alpha_visc, a_mod, r_dze_i, r_dze_o, Dr_dze_i, Dr_dze_o)
 #include "simulation_types.h" // Például output_files_t, disk_t struktúrákhoz
 #include "globals.h"
 #include "io_utils.h"
@@ -215,7 +215,7 @@ void GetMass(int n, double (*partmassind)[5], int indii, int indio, int indoi, i
 // 1. radialis drift altal meghatarozott maximalis meret			--> kimenet cm-ben!
 double a_drift(double sigmad, double r, double p, double dp, double rho_p, const disk_t *disk_params) {
 
-    double Sigmad_cgs = sigmad / SDCONV;
+    double Sigmad_cgs = sigmad / GAS_SD_CONV_RATE;
 
     double vkep = v_kep(r,disk_params);
     double vkep2 = vkep * vkep;
@@ -231,10 +231,10 @@ double a_turb(double sigma, double r, double rho_p, const disk_t *disk_params) {
 
     double s_frag, u_frag, u_frag2, Sigma_cgs, c_s, c_s2;
 
-    u_frag = disk_params->uFrag * CMPSECTOAUPYRP2PI; /*	cm/sec --> AU / (yr/2pi)	*/
+    u_frag = disk_params->uFrag * CM_PER_SEC_TO_AU_PER_YEAR_OVER_2PI; /*	cm/sec --> AU / (yr/2pi)	*/
     u_frag2 = u_frag * u_frag;
-    Sigma_cgs = sigma / SDCONV;
-    c_s = c_sound(r,disk_params); // / CMPSECTOAUPYRP2PI; // Komment ki, ha a c_sound már megfelelő mértékegységben van
+    Sigma_cgs = sigma / GAS_SD_CONV_RATE;
+    c_s = c_sound(r,disk_params); // / CM_PER_SEC_TO_AU_PER_YEAR_OVER_2PI; // Komment ki, ha a c_sound már megfelelő mértékegységben van
     c_s2 = c_s * c_s;
 
     s_frag = disk_params->fFrag * 2.0 / (3.0 * M_PI) * Sigma_cgs / (rho_p * calculate_turbulent_alpha(r,disk_params)) * u_frag2 / c_s2;
@@ -247,8 +247,8 @@ double a_df(double sigma, double r, double p, double dp, double rho_p, const dis
 
     double u_frag, vkep, dlnPdlnr, c_s, c_s2, s_df, Sigma_cgs;
 
-    u_frag = disk_params->uFrag * CMPSECTOAUPYRP2PI; /*	cm/sec --> AU / (yr/2pi)	*/
-    Sigma_cgs = sigma / SDCONV;
+    u_frag = disk_params->uFrag * CM_PER_SEC_TO_AU_PER_YEAR_OVER_2PI; /*	cm/sec --> AU / (yr/2pi)	*/
+    Sigma_cgs = sigma / GAS_SD_CONV_RATE;
     c_s = c_sound(r,disk_params);
     c_s2 = c_s * c_s;
     dlnPdlnr = r / p * dp;

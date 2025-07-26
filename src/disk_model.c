@@ -1,29 +1,29 @@
 // src/disk_model.c
 
-#include "disk_model.h"   // Saját header
-#include "config.h"       // Globális változók és konstansok
-#include "simulation_types.h"
-#include "globals.h"
-#include "dust_physics.h" // press, dpress, u_gas függvények deklarációi
-#include "io_utils.h"     // ReadSigmaFile és egyéb I/O függvények deklarációi (ha használja)
-#include "utils.h" // Hogy a disk_model.c lássa a Parabola prototípusát
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
 
+#include "disk_model.h"   
+#include "config.h"       
+#include "simulation_types.h"
+#include "globals.h"
+#include "dust_physics.h" 
+#include "io_utils.h"     
+#include "utils.h" 
+
 
 
 /*	A korong parametereinek beolvasasa	*/
-void disk_param_be(disk_t *disk_params) {
+void read_disk_parameters(disk_t *disk_params) {
     // Ellenőrzés, ha a pointer NULL (jó gyakorlat)
     if (disk_params == NULL) {
-        fprintf(stderr, "ERROR [disk_param_be]: Received NULL disk_params pointer.\n");
+        fprintf(stderr, "ERROR [read_disk_parameters]: Received NULL disk_params pointer.\n");
         exit(EXIT_FAILURE);
     }
 
-    fprintf(stderr, "DEBUG [disk_param_be]: Calculating derived disk parameters and writing to output file.\n");
+    fprintf(stderr, "DEBUG [read_disk_parameters]: Calculating derived disk parameters and writing to output file.\n");
 
 
     // A PDENSITYDIMLESS számítása a PDENSITY, csillagtömeg és más konstansok alapján
@@ -34,7 +34,7 @@ void disk_param_be(disk_t *disk_params) {
     // Kérlek, ellenőrizd, melyik a helyes dimenziómentesítés a te modellben!
     // A fenti verziót használtam, mert az tűnik konzisztensebbnek azzal, ahogy a G_GRAV_CONST-t is használtad.
 
-    fprintf(stderr, "DEBUG [disk_param_be]: Calculated PDENSITY = %.2e, PDENSITYDIMLESS = %.2e.\n",
+    fprintf(stderr, "DEBUG [read_disk_parameters]: Calculated PDENSITY = %.2e, PDENSITYDIMLESS = %.2e.\n",
            disk_params->PDENSITY, disk_params->PDENSITYDIMLESS);
 }
 

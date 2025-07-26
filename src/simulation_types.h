@@ -55,7 +55,7 @@ typedef struct disk_t {
     double Dr_dze_o;
     double a_mod; // Alfa modifikációs faktor
 
-    // Por paraméterek (ezeket számolja a disk_param_be)
+    // Por paraméterek (ezeket számolja a read_disk_parameters)
     double PDENSITY; // Por sűrűség (fizikai egységekben, pl. g/cm^3)
     double PDENSITYDIMLESS; // Dimenziómentes por sűrűség
 
