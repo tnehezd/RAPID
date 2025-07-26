@@ -1,11 +1,4 @@
 // src/dust_physics.c
-#include "dust_physics.h" // A saját headerjét mindig includolni kell
-#include "config.h"       // Szükséges lehet a globális konstansokhoz (pl. PARTICLE_NUMBER, AU_TO_CM, RMIN, RMAX, NGRID, G_GRAV_CONST, STAR, GAS_SD_CONV_RATE, CM_PER_SEC_TO_AU_PER_YEAR_OVER_2PI, uFrag, fFrag, PDENSITYDIMLESS, HASP, M_PI, DD, sim_opts->dzone, sim_opts->twopop, RMIN, RMAX, FLIND, alpha_visc, a_mod, r_dze_i, r_dze_o, Dr_dze_i, Dr_dze_o)
-#include "simulation_types.h" // Például output_files_t, disk_t struktúrákhoz
-#include "globals.h"
-#include "io_utils.h"
-#include "simulation_core.h" // int_step, Perem, find_num_zero, find_zero, find_r_annulus függvényekhez
-#include "utils.h"           // find_min függvényhez
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,10 +6,47 @@
 #include <math.h>
 #include <omp.h>             // OpenMP támogatáshoz
 
+#include "disk_model.h"
+#include "dust_physics.h" // A saját headerjét mindig includolni kell
+#include "config.h"       // Szükséges lehet a globális konstansokhoz (pl. PARTICLE_NUMBER, AU_TO_CM, RMIN, RMAX, NGRID, G_GRAV_CONST, STAR, GAS_SD_CONV_RATE, CM_PER_SEC_TO_AU_PER_YEAR_OVER_2PI, uFrag, fFrag, PDENSITYDIMLESS, HASP, M_PI, DD, sim_opts->dzone, sim_opts->twopop, RMIN, RMAX, FLIND, alpha_visc, a_mod, r_dze_i, r_dze_o, Dr_dze_i, Dr_dze_o)
+#include "simulation_types.h" // Például output_files_t, disk_t struktúrákhoz
+#include "globals.h"
+#include "io_utils.h"
+#include "simulation_core.h" // int_step, Perem, find_num_zero, find_zero, find_r_annulus függvényekhez
+#include "utils.h"           // find_min függvényhez
+
+
 // Globális változó deklarációk, ha nem lennének meg máshol (pl. config.h)
 // Fontos: ezeknek a típusoknak egyezniük kell a config.h-ban deklaráltakkal!
 // Ha már szerepelnek a config.h-ban, akkor ezeket innen törölni kell,
 // vagy csak az extern kulcsszót meghagyni!
+
+
+void initial_dust_surface_density_profile(double radin[][2], double *massin, double out[][3], int n, const disk_t *disk_params) {
+
+    int i;
+
+    for(i=0;i<n;i++){
+
+/*  cm-es por feluletisurusegenek kiszamolasa   */
+/*  ha a reszecske tavolsaga nagyobb, mint disk_params->RMIN, azaz a szamolas tartomanyan belul van, a feluletisuruseget az altala kepviselt tomegbol szamolja vissza a program */
+        if((radin[i][0] >= disk_params->RMIN)) {
+            out[i][0] = massin[i] / (2. * (radin[i][0]-disk_params->DD/2.) * M_PI * disk_params->DD);   // sigma = m /(2 * r * pi * dr) --> itt a dr az a tavolsag, ami porreszecske "generalo" programban az eredeti gridfelbontas
+            out[i][1] = radin[i][0];                    // elmenti a reszecske tavolsagat is
+
+            double rmid = (radin[i][0] - disk_params->RMIN) / disk_params->DD;                          /*  The integer part of this gives at which index is the body           */
+            int rindex = (int) floor(rmid);                         /*  Ez az rmid egesz resze --> floor egeszreszre kerekit lefele, a +0.5-el elerheto, hogy .5 felett felfele, .5 alatt lefele kerekitsen                     */
+            out[i][2] = (double) rindex;
+
+/*  ha a reszecske disk_params->RMIN-en belul van, akkor az o "tavolsagaban" a feluletisuruseg 0        */  
+        } else {
+            out[i][0] = 0;
+            out[i][1] = 0;                  // r = 0, mert ha disk_params->RMIN-en belulre kerult a reszecske, akkor a program automatikusan kinullazza a reszecske tavolsagat. Itt tehat a sigdtemp[i][1] = 0 lesz!
+            out[i][2] = 0;
+        }
+    }
+}
+
 
 
 /*	alpha turbulens paraméter kiszámolása --> alfa csökkentése alpha_r-rel	*/
@@ -32,72 +62,7 @@ double Stokes_Number(double pradius, double sigma, disk_t *disk_params) { /*	in 
     return disk_params->PDENSITYDIMLESS * pradius * M_PI / (2.0 * sigma);
 }
 
-/*	Lokalis viszkozitas erteke	*/
-double visc(double r, const disk_t *disk_params) {
-    double nu;
-    double cs, H;
 
-    H = scale_height(r,disk_params);
-    cs = c_sound(r,disk_params);
-
-    nu = calculate_turbulent_alpha(r, disk_params) * cs * H;
-    return nu;
-}
-
-/*	local scale height	*/
-double scale_height(double r, const disk_t *disk_params) {
-
-    if (disk_params == NULL) {
-        fprintf(stderr, "ERROR [scale_height]: disk_params is NULL!\n");
-        return 0.0; // Vagy valamilyen hibakód/NaN
-    }
-
-    // Itt van az eredeti számítás
-    double calculated_result = pow(r, 1. + disk_params->FLIND) * disk_params->HASP;
-    return calculated_result;
-}
-
-/*	lokális kepleri sebesség	*/
-double v_kep(double r, const disk_t *disk_params) {
-    return sqrt(G_GRAV_CONST * disk_params->STAR_MASS / r);
-}
-
-/*	lokalis kepleri korfrekvencia	*/
-double kep_freq(double r, const disk_t *disk_params) {
-    return sqrt(G_GRAV_CONST * disk_params->STAR_MASS / r / r / r);
-}
-
-/*	local sound speed		*/
-double c_sound(double r, const disk_t *disk_params) {
-    return kep_freq(r,disk_params) * scale_height(r,disk_params);
-}
-
-/*	Suruseg a midplane-ben	*/
-double rho_mp(double sigma, double r, const disk_t *disk_params) {
-    return 1. / sqrt(2.0 * M_PI) * sigma / scale_height(r,disk_params);
-}
-
-/* local pressure of the gas p = rho_gas * cs * cs kepletbol!!	*/
-double press(double sigma, double r, const disk_t *disk_params) {
-    return rho_mp(sigma, r, disk_params) * c_sound(r,disk_params) * c_sound(r, disk_params);
-}
-
-/*	a nyomas derivaltja	*/
-void dpress(disk_t *disk_params) {
-    int i;
-    double ptemp, pvec[disk_params->NGRID + 2];
-
-    for (i = 1; i <= disk_params->NGRID; i++) {
-        ptemp = (disk_params->pressvec[i + 1] - disk_params->pressvec[i - 1]) / (2.0 * disk_params->DD);
-        pvec[i] = ptemp;
-
-    }
-    for (i = 1; i <= disk_params->NGRID; i++) {
-        disk_params->dpressvec[i] = pvec[i];
-    }
-
-
-}
 
 /*	u_gas kiszamolasahoz eltarolt koefficiens	*/
 double Coeff_3(double sigma, double r) {
@@ -118,7 +83,7 @@ void u_gas(disk_t *disk_params) {
     #pragma omp parallel for private(i)
     for (i = 0; i <= disk_params->NGRID + 1; i++) { // Használd a disk_params->NGRID-et
         // Hozzáférés a disk_params tagjaihoz
-        ugvec[i] = disk_params->sigmavec[i] * visc(disk_params->rvec[i], disk_params) * sqrt(disk_params->rvec[i]);
+        ugvec[i] = disk_params->sigmavec[i] * calculate_gas_viscosity(disk_params->rvec[i], disk_params) * sqrt(disk_params->rvec[i]);
         // Megjegyzés: A sqrt() függvénynek általában csak egy double paramétere van.
         // Ha valami komplexebb számítást akarsz, akkor lehet, hogy egy saját
         // függvényt hívsz, amihez disk_params is kell. Ellenőrizd a sqrt prototípusát!
@@ -217,9 +182,9 @@ double a_drift(double sigmad, double r, double p, double dp, double rho_p, const
 
     double Sigmad_cgs = sigmad / GAS_SD_CONV_RATE;
 
-    double vkep = v_kep(r,disk_params);
+    double vkep = calculate_keplerian_velocity(r,disk_params);
     double vkep2 = vkep * vkep;
-    double c_s = c_sound(r,disk_params);
+    double c_s = calculate_local_sound_speed(r,disk_params);
     double c_s2 = c_s * c_s;
     double dlnPdlnr = r / p * dp;
     double s_drift =  disk_params->fDrift * 2.0 / M_PI * Sigmad_cgs / rho_p * vkep2 / c_s2 * fabs(1.0 / dlnPdlnr);
@@ -234,7 +199,7 @@ double a_turb(double sigma, double r, double rho_p, const disk_t *disk_params) {
     u_frag = disk_params->uFrag * CM_PER_SEC_TO_AU_PER_YEAR_OVER_2PI; /*	cm/sec --> AU / (yr/2pi)	*/
     u_frag2 = u_frag * u_frag;
     Sigma_cgs = sigma / GAS_SD_CONV_RATE;
-    c_s = c_sound(r,disk_params); // / CM_PER_SEC_TO_AU_PER_YEAR_OVER_2PI; // Komment ki, ha a c_sound már megfelelő mértékegységben van
+    c_s = calculate_local_sound_speed(r,disk_params); // / CM_PER_SEC_TO_AU_PER_YEAR_OVER_2PI; // Komment ki, ha a calculate_local_sound_speed már megfelelő mértékegységben van
     c_s2 = c_s * c_s;
 
     s_frag = disk_params->fFrag * 2.0 / (3.0 * M_PI) * Sigma_cgs / (rho_p * calculate_turbulent_alpha(r,disk_params)) * u_frag2 / c_s2;
@@ -249,10 +214,10 @@ double a_df(double sigma, double r, double p, double dp, double rho_p, const dis
 
     u_frag = disk_params->uFrag * CM_PER_SEC_TO_AU_PER_YEAR_OVER_2PI; /*	cm/sec --> AU / (yr/2pi)	*/
     Sigma_cgs = sigma / GAS_SD_CONV_RATE;
-    c_s = c_sound(r,disk_params);
+    c_s = calculate_local_sound_speed(r,disk_params);
     c_s2 = c_s * c_s;
     dlnPdlnr = r / p * dp;
-    vkep = v_kep(r,disk_params);
+    vkep = calculate_keplerian_velocity(r,disk_params);
 
     s_df = u_frag * vkep / fabs(dlnPdlnr * c_s2 * 0.5) * 2.0 * Sigma_cgs / (M_PI * rho_p);
 
@@ -261,7 +226,7 @@ double a_df(double sigma, double r, double p, double dp, double rho_p, const dis
 
 /*	a reszecskek novekedesenek idoskalaja	*/
 double tauGr(double r, double eps,const disk_t *disk_params) {
-    double omega = kep_freq(r,disk_params);
+    double omega = calculate_keplerian_angular_velocity(r,disk_params);
     double taugr = eps / omega;
     return taugr;
 }
@@ -308,7 +273,7 @@ void Get_Sigmad(double max_param, double min_param, double rad[][2], double radm
     double sigdtemp[PARTICLE_NUMBER][3];
     double sigdmicrtemp[PARTICLE_NUMBER][3];
 
-    // Inicializálás, ha szükséges (bár a loadSigDust valószínűleg felülírja)
+    // Inicializálás, ha szükséges (bár a initial_dust_surface_density_profile valószínűleg felülírja)
     for(i=0; i<PARTICLE_NUMBER; i++){
         sigdtemp[i][0] = 0.0; sigdtemp[i][1] = 0.0; sigdtemp[i][2] = 0.0;
         sigdmicrtemp[i][0] = 0.0; sigdmicrtemp[i][1] = 0.0; sigdmicrtemp[i][2] = 0.0;
@@ -319,14 +284,14 @@ void Get_Sigmad(double max_param, double min_param, double rad[][2], double radm
     }
 
 
-    // loadSigDust és contract függvények hívásai:
+    // initial_dust_surface_density_profile és contract függvények hívásai:
     // Ezek valószínűleg szekvenciálisak, hacsak a függvények belsejében nincs OpenMP.
     // Ha ezek a függvények valamilyen globális állapotot módosítanak, akkor kritikusak.
     // Feltételezve, hogy a 'sigdtemp' és 'sigdmicrtemp' kizárólagosan a hívásaikban vannak feldolgozva,
     // és nem ütköznek más szálakkal globális adatokon keresztül.
-    loadSigDust(rad, massvec, sigdtemp, PARTICLE_NUMBER,disk_params);
+    initial_dust_surface_density_profile(rad, massvec, sigdtemp, PARTICLE_NUMBER,disk_params);
     if (sim_opts->twopop == 1.0) { // Használjunk double összehasonlítást
-        loadSigDust(radmicr, massmicrvec, sigdmicrtemp, PARTICLE_NUMBER,disk_params);
+        initial_dust_surface_density_profile(radmicr, massmicrvec, sigdmicrtemp, PARTICLE_NUMBER,disk_params);
     }
 
     contract(sigdtemp, dd, PARTICLE_NUMBER,disk_params);
@@ -362,12 +327,12 @@ void Get_Sigma_P_dP(const simulation_options_t *sim_opts, disk_t *disk_params) {
     sigma_temp[disk_params->NGRID + 1] = disk_params->sigmavec[disk_params->NGRID + 1];
 
     // uvec temporary array initialization
-    uvec[0] = disk_params->sigmavec[0] * visc(disk_params->rvec[0], disk_params); // Use disk_params->rvec
-    uvec[disk_params->NGRID + 1] = disk_params->sigmavec[disk_params->NGRID + 1] * visc(disk_params->rvec[disk_params->NGRID + 1], disk_params); // Use disk_params->rvec
+    uvec[0] = disk_params->sigmavec[0] * calculate_gas_viscosity(disk_params->rvec[0], disk_params); // Use disk_params->rvec
+    uvec[disk_params->NGRID + 1] = disk_params->sigmavec[disk_params->NGRID + 1] * calculate_gas_viscosity(disk_params->rvec[disk_params->NGRID + 1], disk_params); // Use disk_params->rvec
 
     #pragma omp parallel for
     for(i = 1; i <= disk_params->NGRID; i++) { // Use disk_params->NGRID
-        uvec[i] = disk_params->sigmavec[i] * visc(disk_params->rvec[i], disk_params); // Use disk_params->sigmavec and disk_params->rvec
+        uvec[i] = disk_params->sigmavec[i] * calculate_gas_viscosity(disk_params->rvec[i], disk_params); // Use disk_params->sigmavec and disk_params->rvec
     }
 
     // This loop is critical due to data dependencies. Keep it sequential for correctness
@@ -388,8 +353,8 @@ void Get_Sigma_P_dP(const simulation_options_t *sim_opts, disk_t *disk_params) {
     #pragma omp parallel for
     for (i = 1; i <= disk_params->NGRID; i++) { // Use disk_params->NGRID
         // Update disk_params' own arrays
-        disk_params->sigmavec[i] = sigma_temp[i] / visc(disk_params->rvec[i], disk_params);
-        disk_params->pressvec[i] = press(disk_params->sigmavec[i], disk_params->rvec[i], disk_params); // Assuming press takes disk_params
+        disk_params->sigmavec[i] = sigma_temp[i] / calculate_gas_viscosity(disk_params->rvec[i], disk_params);
+        disk_params->pressvec[i] = calculate_gas_pressure(disk_params->sigmavec[i], disk_params->rvec[i], disk_params); // Assuming press takes disk_params
     }
 
     // These calls likely remain sequential or require their own internal OpenMP if large

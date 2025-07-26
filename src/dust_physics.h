@@ -11,6 +11,7 @@
 // Ha a config.h includolva van a dust_physics.c-ben, és ott vannak definiálva,
 // akkor ezeket az extern deklarációkat elhagyhatod innen.
 
+void initial_dust_surface_density_profile(double radin[][2], double *massin, double out[][3], int n, const disk_t *disk_params);
 
 /*	alpha turbulens paraméter kiszámolása	*/
 double calculate_turbulent_alpha(double r, const disk_t *disk_params);
@@ -18,29 +19,6 @@ double calculate_turbulent_alpha(double r, const disk_t *disk_params);
 /*	kiszamolja az adott reszecskehez tartozo Stokes szamot	*/
 double Stokes_Number(double pradius, double sigma, disk_t *disk_params);
 
-/*	Lokalis viszkozitas erteke	*/
-double visc(double r, const disk_t *disk_params);
-
-/*	local scale height	*/
-double scale_height(double r, const disk_t *disk_params);
-
-/*	lokális kepleri sebesség	*/
-double v_kep(double r, const disk_t *disk_params);
-
-/*	lokalis kepleri korfrekvencia	*/
-double kep_freq(double r, const disk_t *disk_params);
-
-/*	local sound speed		*/
-double c_sound(double r, const disk_t *disk_params);
-
-/*	Suruseg a midplane-ben	*/
-double rho_mp(double sigma, double r, const disk_t *disk_params);
-
-/* local pressure of the gas p = rho_gas * cs * cs kepletbol!!	*/
-double press(double sigma, double r, const disk_t *disk_params);
-
-/*	a nyomas derivaltja	*/
-void dpress(disk_t *disk_params);
 
 /*	u_gas kiszamolasahoz eltarolt koefficiens	*/
 double Coeff_3(double sigma, double r); // Feltételezve, hogy Coeff_3 a dust_physics.c-ben van

@@ -14,7 +14,6 @@
 #include "utils.h" 
 
 
-
 /*	A korong parametereinek beolvasasa	*/
 void read_disk_parameters(disk_t *disk_params) {
     // Ellenőrzés, ha a pointer NULL (jó gyakorlat)
@@ -23,36 +22,23 @@ void read_disk_parameters(disk_t *disk_params) {
         exit(EXIT_FAILURE);
     }
 
-    fprintf(stderr, "DEBUG [read_disk_parameters]: Calculating derived disk parameters and writing to output file.\n");
+    fprintf(stderr, "Calculating derived disk parameters and writing to output file.\n");
 
-
-    // A PDENSITYDIMLESS számítása a PDENSITY, csillagtömeg és más konstansok alapján
     disk_params->PDENSITYDIMLESS = disk_params->PDENSITY / SUN_MASS_TO_GRAMS * AU_TO_CM * AU_TO_CM * AU_TO_CM;
 
-    // Az eredeti kódodban volt egy másik képlet is, ami a SUN_MASS_TO_GRAMS-t használta:
-    // disk_params->PDENSITYDIMLESS = disk_params->PDENSITY / SUN_MASS_TO_GRAMS * AU_TO_CM * AU_TO_CM * AU_TO_CM;
-    // Kérlek, ellenőrizd, melyik a helyes dimenziómentesítés a te modellben!
-    // A fenti verziót használtam, mert az tűnik konzisztensebbnek azzal, ahogy a G_GRAV_CONST-t is használtad.
-
-    fprintf(stderr, "DEBUG [read_disk_parameters]: Calculated PDENSITY = %.2e, PDENSITYDIMLESS = %.2e.\n",
-           disk_params->PDENSITY, disk_params->PDENSITYDIMLESS);
 }
 
 
-
-
 /*	r vektor (gridcellák) inicializálása	*/
-void load_R(disk_t *disk_params) {
-	
+void initialize_grid_cells(disk_t *disk_params) {
 	int i;
- 	for(i = 0; i <= disk_params->NGRID+1; i++) {						/*	load an array of radii	*/
+ 	for(i = 0; i <= disk_params->NGRID+1; i++) {						
  		disk_params->rvec[i] = disk_params->RMIN + (i-1) * disk_params->DD;
-//        fprintf(stderr, "DEBUG [load_R]: r: %lg\n", disk_params->rvec[i]);
 	}
 }
 
 /*	a sigmara kezdeti profil betoltese	*/
-void Initial_Profile(disk_t *disk_params){		/*	initial profile of sigma		*/
+void initial_gas_surface_density_profile(disk_t *disk_params){		/*	initial profile of sigma		*/
 
   	int i;
   
@@ -65,28 +51,28 @@ void Initial_Profile(disk_t *disk_params){		/*	initial profile of sigma		*/
 
 }
 
-void Initial_Press(disk_t *disk_params){		/*	initial profile of pressure		*/
+void initial_gas_pressure_profile(disk_t *disk_params){		/*	initial profile of pressure		*/
 
   	int i;
   
   	for(i = 1; i <= disk_params->NGRID; i++) {
-    		disk_params->pressvec[i] = press(disk_params->sigmavec[i],disk_params->rvec[i],disk_params);
+    		disk_params->pressvec[i] = calculate_gas_pressure(disk_params->sigmavec[i],disk_params->rvec[i],disk_params);
   	}
   	Perem(disk_params->pressvec,disk_params);
 
 
 }
 
-void Initial_dPress(disk_t *disk_params){		/*	initial profile of pressure		*/
+void initial_gas_pressure_gradient_profile(disk_t *disk_params){		/*	initial profile of pressure		*/
 
-	dpress(disk_params);
+	calculate_gas_pressure_gradient(disk_params);
    	Perem(disk_params->dpressvec,disk_params);
 
 
 }
 
 /*	ug vektor feltoltese az u_gas ertekevel	*/
-void Initial_Ugas(disk_t *disk_params){		/*	initial profile of pressure		*/
+void initial_gas_velocity_profile(disk_t *disk_params){		/*	initial profile of pressure		*/
  	
 	u_gas(disk_params);
   	Perem(disk_params->ugvec,disk_params);
@@ -94,27 +80,71 @@ void Initial_Ugas(disk_t *disk_params){		/*	initial profile of pressure		*/
 
 
 
-void loadSigDust(double radin[][2], double *massin, double out[][3], int n, const disk_t *disk_params) {
+/*	Lokalis viszkozitas erteke	*/
+double calculate_gas_viscosity(double r, const disk_t *disk_params) {
+    double nu;
+    double cs, H;
 
-	int i;
+    H = calculate_scale_height(r,disk_params);
+    cs = calculate_local_sound_speed(r,disk_params);
 
-	for(i=0;i<n;i++){
+    nu = calculate_turbulent_alpha(r, disk_params) * cs * H;
+    return nu;
+}
 
-/*	cm-es por feluletisurusegenek kiszamolasa	*/
-/*	ha a reszecske tavolsaga nagyobb, mint disk_params->RMIN, azaz a szamolas tartomanyan belul van, a feluletisuruseget az altala kepviselt tomegbol szamolja vissza a program	*/
-		if((radin[i][0] >= disk_params->RMIN)) {
-			out[i][0] = massin[i] / (2. * (radin[i][0]-disk_params->DD/2.) * M_PI * disk_params->DD);	// sigma = m /(2 * r * pi * dr) --> itt a dr az a tavolsag, ami porreszecske "generalo" programban az eredeti gridfelbontas
-			out[i][1] = radin[i][0];					// elmenti a reszecske tavolsagat is
+/*	local scale height	*/
+double calculate_scale_height(double r, const disk_t *disk_params) {
 
-  			double rmid = (radin[i][0] - disk_params->RMIN) / disk_params->DD;     						/* 	The integer part of this gives at which index is the body			*/
-			int rindex = (int) floor(rmid);							/* 	Ez az rmid egesz resze --> floor egeszreszre kerekit lefele, a +0.5-el elerheto, hogy .5 felett felfele, .5 alatt lefele kerekitsen						*/
-			out[i][2] = (double) rindex;
+    if (disk_params == NULL) {
+        fprintf(stderr, "ERROR [calculate_scale_height]: disk_params is NULL!\n");
+        return 0.0; // Vagy valamilyen hibakód/NaN
+    }
 
-/*	ha a reszecske disk_params->RMIN-en belul van, akkor az o "tavolsagaban" a feluletisuruseg 0		*/	
-		} else {
-			out[i][0] = 0;
-			out[i][1] = 0;					// r = 0, mert ha disk_params->RMIN-en belulre kerult a reszecske, akkor a program automatikusan kinullazza a reszecske tavolsagat. Itt tehat a sigdtemp[i][1] = 0 lesz!
-			out[i][2] = 0;
-		}
-	}
+    // Itt van az eredeti számítás
+    double calculated_result = pow(r, 1. + disk_params->FLIND) * disk_params->HASP;
+    return calculated_result;
+}
+
+
+/*	lokális kepleri sebesség	*/
+double calculate_keplerian_velocity(double r, const disk_t *disk_params) {
+    return sqrt(G_GRAV_CONST * disk_params->STAR_MASS / r);
+}
+
+/*	lokalis kepleri korfrekvencia	*/
+double calculate_keplerian_angular_velocity(double r, const disk_t *disk_params) {
+    return sqrt(G_GRAV_CONST * disk_params->STAR_MASS / r / r / r);
+}
+
+
+/*	local sound speed		*/
+double calculate_local_sound_speed(double r, const disk_t *disk_params) {
+    return calculate_keplerian_angular_velocity(r,disk_params) * calculate_scale_height(r,disk_params);
+}
+
+/*	Suruseg a midplane-ben	*/
+double calculate_midplane_gas_density(double sigma, double r, const disk_t *disk_params) {
+    return 1. / sqrt(2.0 * M_PI) * sigma / calculate_scale_height(r,disk_params);
+}
+
+/* local pressure of the gas p = rho_gas * cs * cs kepletbol!!	*/
+double calculate_gas_pressure(double sigma, double r, const disk_t *disk_params) {
+    return calculate_midplane_gas_density(sigma, r, disk_params) * calculate_local_sound_speed(r,disk_params) * calculate_local_sound_speed(r, disk_params);
+}
+
+/*	a nyomas derivaltja	*/
+void calculate_gas_pressure_gradient(disk_t *disk_params) {
+    int i;
+    double ptemp, pvec[disk_params->NGRID + 2];
+
+    for (i = 1; i <= disk_params->NGRID; i++) {
+        ptemp = (disk_params->pressvec[i + 1] - disk_params->pressvec[i - 1]) / (2.0 * disk_params->DD);
+        pvec[i] = ptemp;
+
+    }
+    for (i = 1; i <= disk_params->NGRID; i++) {
+        disk_params->dpressvec[i] = pvec[i];
+    }
+
+
 }
