@@ -5,8 +5,6 @@
 
 #define MAX_PATH_LEN 16384 // Definiálj egy maximális hosszt fájlnevekhez
 
-// Define fundamental physical constants if they're not in config.h
-// #define AU2CM 1.496e13 // Example: Astronomical Unit to Centimeters
 
 // --- Particle Structure ---
 // Represents a single dust particle

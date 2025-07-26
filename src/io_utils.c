@@ -17,7 +17,7 @@
 // Local includes
 #include "config.h" // Biztosítja, hogy az info_current_file látható legyen
 #include "io_utils.h"
-#include "config.h"         // Defines PARTICLE_NUMBER, AU2CM, FILENAME_INIT_PROFILE, and declares extern FILE *file_in, extern FILE *info_current_file
+#include "config.h"         // Defines PARTICLE_NUMBER, AU_TO_CM, FILENAME_INIT_PROFILE, and declares extern FILE *file_in, extern FILE *info_current_file
 #include "dust_physics.h"   // If needed for any specific function interactions
 #include "simulation_types.h" // For disk_t, simulation_options_t, output_files_t
 #include "config.h"
@@ -102,11 +102,11 @@ void ReadDustFile(double radius[][2], double radiusmicr[][2], double *mass, doub
     for (i = 0; i < PARTICLE_NUMBER; i++) {
         if(fscanf(file_in,"%d %lg %Lg %Lg %lg %lg",&dummy,&distance,&reprmass,&reprmassmicr,&particle_radius,&radmicr) == 6) {
             radius[i][0] = distance;
-            radius[i][1] = particle_radius / AU2CM; // AU2CM from config.h
+            radius[i][1] = particle_radius / AU_TO_CM; // AU_TO_CM from config.h
             mass[i] = reprmass;
 
             radiusmicr[i][0] = distance;
-            radiusmicr[i][1] = radmicr / AU2CM; // AU2CM from config.h
+            radiusmicr[i][1] = radmicr / AU_TO_CM; // AU_TO_CM from config.h
             massmicr[i] = reprmassmicr;
         } else {
             fprintf(stderr, "\n\n******************* ERROR!      *********************\n\n");
@@ -464,11 +464,11 @@ void Print_Sigmad(int step, double (*rad)[2], double (*radmicr)[2], const double
 
     for(i=0;i<PARTICLE_NUMBER;i++){ // PARTICLE_NUMBER from config.h
         if (rad[i][0] >= disk_params->RMIN) { // Using disk_params->RMIN
-             fprintf(output_files->dust_file,"%-8d %-15d %-15.8lg %-20.15lg %-20.15lg %-15.15lg \n",step,i, rad[i][0], rad[i][1] * AU2CM,sigmad[i],partmassind[i][0]);
+             fprintf(output_files->dust_file,"%-8d %-15d %-15.8lg %-20.15lg %-20.15lg %-15.15lg \n",step,i, rad[i][0], rad[i][1] * AU_TO_CM,sigmad[i],partmassind[i][0]);
         }
         if(sim_opts->twopop == 1.0 && output_files->micron_dust_file != NULL) {
             if (radmicr[i][0] >= disk_params->RMIN) { // Using disk_params->RMIN
-                fprintf(output_files->micron_dust_file,"%-8d %-15d %-15.8lg %-20.15lg %-20.15lg %-15.15lg \n",step,i,radmicr[i][0], radmicr[i][1] * AU2CM, sigmadm[i],partmassmicrind[i][0]);
+                fprintf(output_files->micron_dust_file,"%-8d %-15d %-15.8lg %-20.15lg %-20.15lg %-15.15lg \n",step,i,radmicr[i][0], radmicr[i][1] * AU_TO_CM, sigmadm[i],partmassmicrind[i][0]);
             }
         }
     }
@@ -498,7 +498,7 @@ void Print_Pormozg_Size(char *size_name, int step, double (*rad)[2], double (*ra
 
         if (sim_opts->growth == 1.0 && fout_size != NULL) {
             if (rad[i][0] >= disk_params->RMIN) { // Using disk_params->RMIN
-                fprintf(fout_size, "%lg %lg %lg \n", (double)step, rad[i][0], rad[i][1] * AU2CM); // AU2CM from config.h
+                fprintf(fout_size, "%lg %lg %lg \n", (double)step, rad[i][0], rad[i][1] * AU_TO_CM); // AU_TO_CM from config.h
             }
         }
     }

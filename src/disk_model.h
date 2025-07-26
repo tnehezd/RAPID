@@ -4,10 +4,6 @@
 #define DISK_MODEL_H
 
 
-// Azért include-olom a config.h-t, mert a read_disk_parameters globális változókat használ
-// (pl. SUN2GR, AU2CM), és a Parabola, load_R, Initial_Profile is NGRID, RMIN, DD, SIGMA0, SIGMAP_EXP-et.
-// Bár ez nem szigorúan szükséges, mert a disk_model.c direktben include-olja a config.h-t,
-// jó gyakorlat, ha egy header is jelzi a függőségeit, ha a benne lévő deklarációk függenek tőlük.
 #include "config.h"
 #include "simulation_types.h" // Feltételezve, hogy itt található a disk_t definíciója
 #include "globals.h"

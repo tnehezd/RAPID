@@ -1,6 +1,6 @@
 // src/dust_physics.c
 #include "dust_physics.h" // A saját headerjét mindig includolni kell
-#include "config.h"       // Szükséges lehet a globális konstansokhoz (pl. PARTICLE_NUMBER, AU2CM, RMIN, RMAX, NGRID, G_GRAV_CONST, STAR, GAS_SD_CONV_RATE, CM_PER_SEC_TO_AU_PER_YEAR_OVER_2PI, uFrag, fFrag, PDENSITYDIMLESS, HASP, M_PI, DD, sim_opts->dzone, sim_opts->twopop, RMIN, RMAX, FLIND, alpha_visc, a_mod, r_dze_i, r_dze_o, Dr_dze_i, Dr_dze_o)
+#include "config.h"       // Szükséges lehet a globális konstansokhoz (pl. PARTICLE_NUMBER, AU_TO_CM, RMIN, RMAX, NGRID, G_GRAV_CONST, STAR, GAS_SD_CONV_RATE, CM_PER_SEC_TO_AU_PER_YEAR_OVER_2PI, uFrag, fFrag, PDENSITYDIMLESS, HASP, M_PI, DD, sim_opts->dzone, sim_opts->twopop, RMIN, RMAX, FLIND, alpha_visc, a_mod, r_dze_i, r_dze_o, Dr_dze_i, Dr_dze_o)
 #include "simulation_types.h" // Például output_files_t, disk_t struktúrákhoz
 #include "globals.h"
 #include "io_utils.h"
@@ -278,7 +278,7 @@ double getSize(double prad, double pdens, double sigma, double sigmad, double y,
     double tau_gr = tauGr(y, eps, disk_params);
     double rt = 0.0;
 
-    smin = smin / AU2CM; // AU-ban
+    smin = smin / AU_TO_CM; // AU-ban
 
     /*	kiszamolja, hogy a fenti smin, vagy a novekedesi idoskalabol szarmazo meret korlatozza a reszecske meretet	*/
     if (prad < smin) {

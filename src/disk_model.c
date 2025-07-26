@@ -27,10 +27,10 @@ void read_disk_parameters(disk_t *disk_params) {
 
 
     // A PDENSITYDIMLESS számítása a PDENSITY, csillagtömeg és más konstansok alapján
-    disk_params->PDENSITYDIMLESS = disk_params->PDENSITY / SUN2GR * AU2CM * AU2CM * AU2CM;
+    disk_params->PDENSITYDIMLESS = disk_params->PDENSITY / SUN_MASS_TO_GRAMS * AU_TO_CM * AU_TO_CM * AU_TO_CM;
 
-    // Az eredeti kódodban volt egy másik képlet is, ami a SUN2GR-t használta:
-    // disk_params->PDENSITYDIMLESS = disk_params->PDENSITY / SUN2GR * AU2CM * AU2CM * AU2CM;
+    // Az eredeti kódodban volt egy másik képlet is, ami a SUN_MASS_TO_GRAMS-t használta:
+    // disk_params->PDENSITYDIMLESS = disk_params->PDENSITY / SUN_MASS_TO_GRAMS * AU_TO_CM * AU_TO_CM * AU_TO_CM;
     // Kérlek, ellenőrizd, melyik a helyes dimenziómentesítés a te modellben!
     // A fenti verziót használtam, mert az tűnik konzisztensebbnek azzal, ahogy a G_GRAV_CONST-t is használtad.
 

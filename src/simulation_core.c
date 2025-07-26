@@ -85,7 +85,7 @@ void int_step(double time, double prad, const double *sigmad, const double *rdve
 
     double dd = (disk_params->RMAX - disk_params->RMIN) / (PARTICLE_NUMBER-1);
     int dker = (int)(1./dd);//
-    dker = dker * ROUND;
+    dker = dker * ROUND_PRECISION_FACTOR;
     double ddker = (double) dker;
     int temp;
 
