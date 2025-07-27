@@ -1,62 +1,138 @@
 // src/dust_physics.c
 #include <stdio.h>
-#include <stdlib.h>
+#include <stdlib.h> // For calloc, free
 #include <string.h>
 #include <errno.h>
-#include <math.h>
-#include <omp.h>            
+#include <math.h>   // For M_PI, floor, fmod
+#include <omp.h>    // For OpenMP directives
 
 #include "disk_model.h"
-#include "dust_physics.h" 
-#include "config.h"       
-#include "simulation_types.h" 
+#include "dust_physics.h"
+#include "config.h"
+#include "simulation_types.h"
 #include "globals.h"
 #include "io_utils.h"
-#include "simulation_core.h" 
-#include "utils.h"           
+#include "simulation_core.h"
+#include "utils.h"
 
+// Por felületi sűrűség számítása (Lagrange-ról Euler-re)
+void calculate_dust_surface_density_profile(
+    double *output_sigma_d_grid,       // Kimenet: A kiszámított por felületi sűrűség (gridenként)
+    double *output_r_grid_centers,     // Kimenet: A grid cellák középpontjainak radiális pozíciói
+    const double radin[][2],           // Bemenet: Részecskék radiális pozíciója (const)
+    const double *massin,              // Bemenet: Részecskék tömege (const)
+    int n_particles,                   // Bemenet: A részecskék száma
+    int n_grid_cells,                  // Bemenet: A grid cellák száma, amire a sűrűséget számoljuk
+    const disk_t *disk_params          // Bemenet: A korong paraméterei (const)
+) {
+    // Memória allokáció és inicializálás
 
-void initial_dust_surface_density_profile(double radin[][2], double *massin, double out[][3], int n, const disk_t *disk_params) {
+    // Ideiglenes tömb a binekben összegyűjtött tömeg tárolására.
+    // Fontos: a CIC miatt szükség van a NGRID + 2 méretre (egy-egy plusz bin a széleken)
+    double *total_mass_in_bins = (double *)calloc(n_grid_cells + 2, sizeof(double));
+    if (total_mass_in_bins == NULL) {
+        fprintf(stderr, "ERROR: Memory allocation failed for total_mass_in_bins in calculate_dust_surface_density_profile.\n");
+        exit(EXIT_FAILURE);
+    }
 
-    int i;
+    // Tömb a bin-ek pontos területének tárolására.
+    double *bin_areas = (double *)calloc(n_grid_cells + 2, sizeof(double));
+    if (bin_areas == NULL) {
+        fprintf(stderr, "ERROR: Memory allocation failed for bin_areas in calculate_dust_surface_density_profile.\n");
+        free(total_mass_in_bins); // Felszabadítjuk az első allokált memóriát is hiba esetén
+        exit(EXIT_FAILURE);
+    }
 
-    for(i=0;i<n;i++){
+    // A rács celláinak szélessége (delta r).
+    double dr_cell_width = (disk_params->RMAX - disk_params->RMIN) / (double)n_grid_cells;
 
-/*  cm-es por feluletisurusegenek kiszamolasa   */
-/*  ha a reszecske tavolsaga nagyobb, mint disk_params->RMIN, azaz a szamolas tartomanyan belul van, a feluletisuruseget az altala kepviselt tomegbol szamolja vissza a program */
-        if((radin[i][0] >= disk_params->RMIN)) {
-            out[i][0] = massin[i] / (2. * (radin[i][0]-disk_params->DD/2.) * M_PI * disk_params->DD);   // sigma = m /(2 * r * pi * dr) --> itt a dr az a tavolsag, ami porreszecske "generalo" programban az eredeti gridfelbontas
-            out[i][1] = radin[i][0];                    // elmenti a reszecske tavolsagat is
+    // 1. lépés: A grid cellák területének kiszámítása és a középpontok feltöltése
+    for (int j = 0; j < n_grid_cells; j++) {
+        double r_inner = disk_params->RMIN + j * dr_cell_width;
+        double r_outer = disk_params->RMIN + (j + 1) * dr_cell_width;
 
-            double rmid = (radin[i][0] - disk_params->RMIN) / disk_params->DD;                          /*  The integer part of this gives at which index is the body           */
-            int rindex = (int) floor(rmid);                         /*  Ez az rmid egesz resze --> floor egeszreszre kerekit lefele, a +0.5-el elerheto, hogy .5 felett felfele, .5 alatt lefele kerekitsen                     */
-            out[i][2] = (double) rindex;
+        // A gyűrű területe: pi * (R_outer^2 - R_inner^2)
+        bin_areas[j] = M_PI * (r_outer * r_outer - r_inner * r_inner);
 
-/*  ha a reszecske disk_params->RMIN-en belul van, akkor az o "tavolsagaban" a feluletisuruseg 0        */  
-        } else {
-            out[i][0] = 0;
-            out[i][1] = 0;                  // r = 0, mert ha disk_params->RMIN-en belulre kerult a reszecske, akkor a program automatikusan kinullazza a reszecske tavolsagat. Itt tehat a sigdtemp[i][1] = 0 lesz!
-            out[i][2] = 0;
+        // Kitöltjük a kimeneti rácspontok sugaraival (cella középpontok)
+        output_r_grid_centers[j] = r_inner + 0.5 * dr_cell_width;
+
+        // Inicializáljuk a kimeneti sűrűség tömböt 0-val.
+        output_sigma_d_grid[j] = 0.0;
+    }
+
+    // 2. lépés: Részecskék tömegének szétosztása a binek között (Cloud-in-Cell - CIC)
+    // Végigmegyünk minden egyes porrészecskén. Párhuzamosítható.
+    #pragma omp parallel for
+    for (int i = 0; i < n_particles; i++) {
+        double current_r = radin[i][0]; // A részecske aktuális radiális pozíciója
+        double current_mass = massin[i]; // A részecske tömege
+
+        // Csak azokat a részecskéket vesszük figyelembe, amelyek a szimulációs tartományon belül vannak.
+        // Ha egy részecske RMIN-en kívülre került, az kiesett, és nem járul hozzá a sűrűséghez.
+        if (current_r < disk_params->RMIN || current_r >= disk_params->RMAX) {
+            continue; // Ugrás a következő részecskére
+        }
+
+        // Kiszámítjuk a részecske "normált" radiális pozícióját a rácshoz képest.
+        double r_normalized = (current_r - disk_params->RMIN) / dr_cell_width;
+
+        // Megkeressük az alsó bin indexét, amiben a részecske elhelyezkedik.
+        int lower_bin_idx = (int)floor(r_normalized);
+
+        // Kiszámítjuk, hogy a részecske mennyire van "belül" az alsó binben (0 és 1 közötti érték).
+        double fraction_in_lower_bin = r_normalized - lower_bin_idx;
+
+        // Hozzáadjuk a tömeg egy részét az alsó binhez.
+        // Critical szekció szükséges, mert több szál is írhat ugyanabba a total_mass_in_bins elembe.
+        if (lower_bin_idx >= 0 && lower_bin_idx < n_grid_cells) {
+            #pragma omp atomic
+            total_mass_in_bins[lower_bin_idx] += current_mass * (1.0 - fraction_in_lower_bin);
+        }
+
+        // Hozzáadjuk a tömeg másik részét a felső binhez (ha van ilyen).
+        // Fontos: a total_mass_in_bins tömb mérete n_grid_cells + 2, így az indexek
+        // 0-tól n_grid_cells + 1-ig érvényesek. lower_bin_idx + 1 maximálisan n_grid_cells lehet.
+        // Tehát a feltételnek azt kell biztosítania, hogy lower_bin_idx + 1 ne lépje túl a tömb végét.
+        if ((lower_bin_idx + 1) < (n_grid_cells + 2)) { // Javított felső határ az tömb eléréshez
+            #pragma omp atomic
+            total_mass_in_bins[lower_bin_idx + 1] += current_mass * fraction_in_lower_bin;
         }
     }
+
+    // 3. lépés: Sűrűség számítása a gyűjtött tömegekből és a kimeneti tömb feltöltése
+    // Végigmegyünk minden grid cellán. Párhuzamosítható.
+    #pragma omp parallel for
+    for (int j = 0; j < n_grid_cells; j++) {
+        // Ellenőrizzük, hogy a bin_areas[j] ne legyen nulla, elkerülve a lebegőpontos hibát.
+        if (bin_areas[j] > 1e-18) { // Nagyon kicsi pozitív értékkel hasonlítjuk össze
+            output_sigma_d_grid[j] = total_mass_in_bins[j] / bin_areas[j];
+        } else {
+            output_sigma_d_grid[j] = 0.0; // Ha a terület nulla, a sűrűség is nulla
+        }
+    }
+
+    // Memória felszabadítás
+    free(total_mass_in_bins);
+    free(bin_areas);
 }
 
-/*	alpha turbulens paraméter kiszámolása --> alfa csökkentése alpha_r-rel	*/
+// Gáz turbulencia és por interakciók
+/* alpha turbulens paraméter kiszámolása --> alfa csökkentése alpha_r-rel    */
 double calculate_turbulent_alpha(double r, const disk_t *disk_params) {
     double alpha_r;
     alpha_r = 1.0 - 0.5 * (1.0 - disk_params->a_mod) * (tanh((r - disk_params->r_dze_i) / disk_params->Dr_dze_i) + tanh((disk_params->r_dze_o - r) / disk_params->Dr_dze_o));
     return alpha_r * disk_params->alpha_visc;
 }
 
-/*	kiszamolja az adott reszecskehez tartozo Stokes szamot	*/
-/*	St = rho_particle * radius_particle * PI / (2 * sigma)	*/
-double Stokes_Number(double pradius, double sigma, disk_t *disk_params) { /*	in the Epstein drag regime	*/
+/* kiszamolja az adott reszecskehez tartozo Stokes szamot    */
+/* St = rho_particle * radius_particle * PI / (2 * sigma)    */
+double Stokes_Number(double pradius, double sigma, disk_t *disk_params) { /* in the Epstein drag regime    */
     return disk_params->PDENSITYDIMLESS * pradius * M_PI / (2.0 * sigma);
 }
 
+// Tömeggyűjtés a holt zónákban
 void GetMass(int n, double (*partmassind)[5], int indii, int indio, int indoi, int indoo, double *massiout, double *massoout, const simulation_options_t *sim_opts) {
-
-    // Debug üzenet frissítve az indexekre
 
     double massitemp = 0.0;
     double massotemp = 0.0;
@@ -67,16 +143,17 @@ void GetMass(int n, double (*partmassind)[5], int indii, int indio, int indoi, i
         #pragma omp parallel for private(i) reduction(+:massitemp, massotemp)
         for (i = 0; i < n; i++) {
             // A részecske aktuális grid indexe (partmassind[i][1]-ből)
-            int current_r_index = (int)partmassind[i][1]; 
+            int current_r_index = (int)partmassind[i][1];
 
             // --- Belső DZE ---
             // Ellenőrizzük, hogy a részecske grid indexe a belső DZE tartományában van-e
             if ((current_r_index >= indii) && (current_r_index <= indio)) {
                 if (partmassind[i][3] == 0.0) { // Belső DZE flag ellenőrzése
+                    // Critical szekció, mert módosítjuk a partmassind[i][3] értéket és a massitemp-et
                     #pragma omp critical(inner_dze_update)
                     {
                         partmassind[i][3] = 1.0;
-                        massitemp = massitemp + partmassind[i][0]; // Tömeg hozzáadása a [0] indexről
+                        massitemp += partmassind[i][0]; // Tömeg hozzáadása a [0] indexről
                     }
                 }
             }
@@ -85,10 +162,11 @@ void GetMass(int n, double (*partmassind)[5], int indii, int indio, int indoi, i
             // Ellenőrizzük, hogy a részecske grid indexe a külső DZE tartományában van-e
             if ((current_r_index >= indoi) && (current_r_index <= indoo)) {
                 if (partmassind[i][4] == 0.0) { // Külső DZE flag ellenőrzése (Flag[4])
+                    // Critical szekció, mert módosítjuk a partmassind[i][4] értéket és a massotemp-et
                     #pragma omp critical(outer_dze_update)
                     {
                         partmassind[i][4] = 1.0;
-                        massotemp = massotemp + partmassind[i][0]; // Tömeg hozzáadása a [0] indexről
+                        massotemp += partmassind[i][0]; // Tömeg hozzáadása a [0] indexről
                     }
                 }
             }
@@ -99,21 +177,13 @@ void GetMass(int n, double (*partmassind)[5], int indii, int indio, int indoi, i
             int current_r_index = (int)partmassind[i][1]; // A részecske grid indexe
 
             // --- Belső DZE (Fix) ---
-            // Az eredeti kódod else ága nem tartalmazta a belső DZE gyűjtését. 
-            // Ha szeretnéd, akkor ide kell tenni a logikát:
             if ((current_r_index >= indii) && (current_r_index <= indio)) {
-                #pragma omp critical(inner_dze_update_fixed)
-                {
-                    massitemp = massitemp + partmassind[i][0]; 
-                }
+                massitemp += partmassind[i][0];
             }
 
             // --- Külső DZE (Fix) ---
             if ((current_r_index >= indoi) && (current_r_index <= indoo)) {
-                #pragma omp critical(outer_dze_update_fixed)
-                {
-                    massotemp = massotemp + partmassind[i][0];
-                }
+                massotemp += partmassind[i][0];
             }
         }
     }
@@ -122,11 +192,9 @@ void GetMass(int n, double (*partmassind)[5], int indii, int indio, int indoi, i
     *massoout = massotemp;
 }
 
-
-/*			BIRNSTIEL EL AL 2012			*/
-
+// Részecskenövekedés (Birnstiel et al. 2012)
 //reprezentativ reszecske kezdeti meretenek meghatarozasa
-// 1. radialis drift altal meghatarozott maximalis meret			--> kimenet cm-ben!
+// 1. radialis drift altal meghatarozott maximalis meret            --> kimenet cm-ben!
 double a_drift(double sigmad, double r, double p, double dp, double rho_p, const disk_t *disk_params) {
 
     double Sigmad_cgs = sigmad / GAS_SD_CONV_RATE;
@@ -140,15 +208,15 @@ double a_drift(double sigmad, double r, double p, double dp, double rho_p, const
     return s_drift;
 }
 
-// 2. a kis skalaju turbulencia altal okozott fragmentacio szerinti maximalis meret	--> kimenet cm-ben!
+// 2. a kis skalaju turbulencia altal okozott fragmentacio szerinti maximalis meret    --> kimenet cm-ben!
 double a_turb(double sigma, double r, double rho_p, const disk_t *disk_params) {
 
     double s_frag, u_frag, u_frag2, Sigma_cgs, c_s, c_s2;
 
-    u_frag = disk_params->uFrag * CM_PER_SEC_TO_AU_PER_YEAR_OVER_2PI; /*	cm/sec --> AU / (yr/2pi)	*/
+    u_frag = disk_params->uFrag * CM_PER_SEC_TO_AU_PER_YEAR_OVER_2PI; /* cm/sec --> AU / (yr/2pi)    */
     u_frag2 = u_frag * u_frag;
     Sigma_cgs = sigma / GAS_SD_CONV_RATE;
-    c_s = calculate_local_sound_speed(r,disk_params); // / CM_PER_SEC_TO_AU_PER_YEAR_OVER_2PI; // Komment ki, ha a calculate_local_sound_speed már megfelelő mértékegységben van
+    c_s = calculate_local_sound_speed(r,disk_params);
     c_s2 = c_s * c_s;
 
     s_frag = disk_params->fFrag * 2.0 / (3.0 * M_PI) * Sigma_cgs / (rho_p * calculate_turbulent_alpha(r,disk_params)) * u_frag2 / c_s2;
@@ -156,12 +224,12 @@ double a_turb(double sigma, double r, double rho_p, const disk_t *disk_params) {
     return s_frag;
 }
 
-// 3. radialis drift altal okozott fragmentacio szerinti maximalis meret		--> kimenet cm-ben!
+// 3. radialis drift altal okozott fragmentacio szerinti maximalis meret        --> kimenet cm-ben!
 double a_df(double sigma, double r, double p, double dp, double rho_p, const disk_t *disk_params) {
 
     double u_frag, vkep, dlnPdlnr, c_s, c_s2, s_df, Sigma_cgs;
 
-    u_frag = disk_params->uFrag * CM_PER_SEC_TO_AU_PER_YEAR_OVER_2PI; /*	cm/sec --> AU / (yr/2pi)	*/
+    u_frag = disk_params->uFrag * CM_PER_SEC_TO_AU_PER_YEAR_OVER_2PI; /* cm/sec --> AU / (yr/2pi)    */
     Sigma_cgs = sigma / GAS_SD_CONV_RATE;
     c_s = calculate_local_sound_speed(r,disk_params);
     c_s2 = c_s * c_s;
@@ -173,28 +241,28 @@ double a_df(double sigma, double r, double p, double dp, double rho_p, const dis
     return s_df;
 }
 
-/*	a reszecskek novekedesenek idoskalaja	*/
+/* a reszecskek novekedesenek idoskalaja    */
 double tauGr(double r, double eps,const disk_t *disk_params) {
     double omega = calculate_keplerian_angular_velocity(r,disk_params);
     double taugr = eps / omega;
     return taugr;
 }
 
-/*	kiszamolja az adott helyen a reszecske meretet --> BIRNSTIEL CIKK	*/
+/* kiszamolja az adott helyen a reszecske meretet --> BIRNSTIEL CIKK    */
 double getSize(double prad, double pdens, double sigma, double sigmad, double y, double p, double dpress_val, double dt, const disk_t *disk_params) {
 
-    double sturb = a_turb(sigma, y, pdens, disk_params);           // cm-ben
+    double sturb = a_turb(sigma, y, pdens, disk_params);     // cm-ben
     double sdf = a_df(sigma, y, p, dpress_val, pdens,disk_params); // cm-ben
     double srdf = a_drift(sigmad, y, p, dpress_val, pdens, disk_params); // cm-ben
     double smin = find_min(sturb, sdf, srdf);         // cm-ben -- megadja, hogy a fenti ket reszecske korlatbol melyik ad kisebb meretet (az a reszecskenovekedes felso korlatja
-    //	double eps = sigma / 100.;
+    //    double eps = sigma / 100.;
     double eps = sigmad / sigma; // A korábbi kódban fordítva volt, feltételezem, hogy eps = (por sűrűség) / (gáz sűrűség)
     double tau_gr = tauGr(y, eps, disk_params);
     double rt = 0.0;
 
     smin = smin / AU_TO_CM; // AU-ban
 
-    /*	kiszamolja, hogy a fenti smin, vagy a novekedesi idoskalabol szarmazo meret korlatozza a reszecske meretet	*/
+    /* kiszamolja, hogy a fenti smin, vagy a novekedesi idoskalabol szarmazo meret korlatozza a reszecske meretet    */
     if (prad < smin) {
         rt = find_min(prad * exp(dt / tau_gr), smin, HUGE_VAL);
     } else { // prad >= smin
@@ -204,67 +272,47 @@ double getSize(double prad, double pdens, double sigma, double sigmad, double y,
     return rt;
 }
 
-void Get_Sigmad(double max_param, double min_param, double rad[][2], double radmicr[][2], 
-                double *sigma_d, double *sigma_dm,  double *massvec, double *massmicrvec,  
-                double *rd, double *rmic, const simulation_options_t *sim_opts, const disk_t *disk_params) {
+// Por felületi sűrűség lekérése és frissítése
+void Get_Sigmad(double max_param, double min_param, double rad[][2], double radmicr[][2],
+                double *sigma_d, double *sigma_dm,  double *massvec, double *massmicrvec,
+                double *rd, double *rmic, const simulation_options_t *sim_opts, disk_t *disk_params) { // disk_params már nem const!
 
     // Suppress unused parameter warnings
     (void)max_param;
     (void)min_param;
 
-    double dd = (disk_params->RMAX - disk_params->RMIN) / (PARTICLE_NUMBER - 1);
-    int i;
+    // A `dd` már nem szükséges itt, mivel a calculate_dust_surface_density_profile számolja
+    // a dr_cell_width-et a disk_params->RMAX, RMIN, NGRID alapján.
 
-    // A temp tömbök deklarálását érdemes a scope tetejére tenni
-    double sigdtemp[PARTICLE_NUMBER][3];
-    double sigdmicrtemp[PARTICLE_NUMBER][3];
+    // Calculate dust surface density profile for the main dust population
+    calculate_dust_surface_density_profile(sigma_d, rd, rad, massvec, PARTICLE_NUMBER, disk_params->NGRID, disk_params);
 
-    // Inicializálás, ha szükséges (bár a initial_dust_surface_density_profile valószínűleg felülírja)
-    for(i=0; i<PARTICLE_NUMBER; i++){
-        sigdtemp[i][0] = 0.0; sigdtemp[i][1] = 0.0; sigdtemp[i][2] = 0.0;
-        sigdmicrtemp[i][0] = 0.0; sigdmicrtemp[i][1] = 0.0; sigdmicrtemp[i][2] = 0.0;
-        rd[i] = 0.0;
-        rmic[i] = 0.0;
-        sigma_d[i] = 0.0;
-        sigma_dm[i] = 0.0;
+    // If two-population simulation is enabled, calculate for micron-sized dust as well
+    if (sim_opts->twopop == 1.0) {
+        calculate_dust_surface_density_profile(sigma_dm, rmic, radmicr, massmicrvec, PARTICLE_NUMBER, disk_params->NGRID, disk_params);
     }
 
+    // A `contract` függvényre már nincs szükség, mivel a `calculate_dust_surface_density_profile`
+    // már a CIC módszerrel számolja a gridenkénti sűrűséget.
 
-    // initial_dust_surface_density_profile és contract függvények hívásai:
-    // Ezek valószínűleg szekvenciálisak, hacsak a függvények belsejében nincs OpenMP.
-    // Ha ezek a függvények valamilyen globális állapotot módosítanak, akkor kritikusak.
-    // Feltételezve, hogy a 'sigdtemp' és 'sigdmicrtemp' kizárólagosan a hívásaikban vannak feldolgozva,
-    // és nem ütköznek más szálakkal globális adatokon keresztül.
-    initial_dust_surface_density_profile(rad, massvec, sigdtemp, PARTICLE_NUMBER,disk_params);
-    if (sim_opts->twopop == 1.0) { // Használjunk double összehasonlítást
-        initial_dust_surface_density_profile(radmicr, massmicrvec, sigdmicrtemp, PARTICLE_NUMBER,disk_params);
-    }
-
-    contract(sigdtemp, dd, PARTICLE_NUMBER,disk_params);
-    if (sim_opts->twopop == 1.0) { // Használjunk double összehasonlítást
-        contract(sigdmicrtemp, dd, PARTICLE_NUMBER,disk_params);
-    }
-
-    // Utolsó másoló ciklus: Ez is jól párhuzamosítható.
-    #pragma omp parallel for private(i)
-    for (i = 0; i < PARTICLE_NUMBER; i++) {
-        rd[i] = sigdtemp[i][1];
-        sigma_d[i] = sigdtemp[i][0];
-
-        if (sim_opts->twopop == 1.0) { // double összehasonlítás
-            rmic[i] = sigdmicrtemp[i][1];
-            sigma_dm[i] = sigdmicrtemp[i][0];
-        }
+    // FONTOS LÉPÉS: Másoljuk át a kiszámolt sűrűséget a disk_params->sigmadustvec-be.
+    // A disk_params->rvec már a grid pontokat tartalmazza, azt nem kell másolni ide.
+    for (int i = 0; i < disk_params->NGRID; i++) {
+        disk_params->sigmadustvec[i] = sigma_d[i];
+        // Ha van külön tömb a mikronos pornak a disk_t-ben, azt is itt töltenénk fel:
+        // pl: disk_params->sigmadustmicrvec[i] = sigma_dm[i];
+        // Mivel nincs ilyen a disk_t-ben, a sigma_dm külön marad, mint Get_Sigmad kimenet.
     }
 }
 
-/*	Fuggveny a porszemcsek uj tavolsaganak elraktarozasara		*/
+// Részecske radiális mozgásának frissítése
+/* Fuggveny a porszemcsek uj tavolsaganak elraktarozasara        */
 void Get_Radius(const char *nev, int opt, double radius[][2], const double *sigmad, const double *rdvec,
                 double deltat, double t, int n, const simulation_options_t *sim_opts, const disk_t *disk_params){
 
     int i;
     double y, y_out, prad_new, particle_radius;
-    char timescale_out[1024];
+    char timescale_out[MAX_PATH_LEN]; // Használjuk a MAX_PATH_LEN definíciót
     HeaderData_t header_data_for_files; // Később inicializáljuk a setup_initial_output_files-ban
 
     // Fájlkezelés t==0 esetén: ez valószínűleg egyszer történik meg a szimuláció elején,
@@ -292,41 +340,44 @@ void Get_Radius(const char *nev, int opt, double radius[][2], const double *sigm
     // Az `i` ciklus független iterációkkal rendelkezik, minden szál a saját `radius[i]` elemen dolgozik.
     #pragma omp parallel for private(y, y_out, prad_new, particle_radius)
     for (i = 0; i < n; i++) {
-        // Csak a RMIN és RMAX közötti részecskékkel foglalkozunk.
-        // A 0.0-ra állítás kívül esik a párhuzamos részen, ha az if feltétel nem teljesül.
-        if (radius[i][0] > disk_params->RMIN && radius[i][0] < disk_params->RMAX) {
-            y = radius[i][0];
-            particle_radius = radius[i][1];
+        // Ha a részecske RMIN vagy RMAX kívülre kerül, 0.0-ra állítjuk a pozícióját, és kihagyjuk a további számításokat.
+        if (radius[i][0] <= disk_params->RMIN || radius[i][0] >= disk_params->RMAX) {
+            radius[i][0] = 0.0;
+            // Ha a részecske "kiesett", a méretét is érdemes nullázni,
+            // hogy ne vegyen részt a növekedési számításokban.
+            radius[i][1] = 0.0;
+            continue; // Ugrás a következő részecskére
+        }
 
-			int_step(t, particle_radius, sigmad, rdvec, deltat, y, &y_out, &prad_new, disk_params, sim_opts);
-            if (t == 0) {
-                if (sim_opts->twopop == 0) {
-                    double current_drdt_val = (fabs(y_out - y) / (deltat));
-                    // Azért kell a critical szekció, mert az timescale_output_file fájlba írunk.
-                    // Ez a critical szekció biztosítja, hogy egyszerre csak egy szál írjon a fájlba.
+        y = radius[i][0];
+        particle_radius = radius[i][1];
 
-                    #pragma omp critical(timescale_output_file_write)
-                    {
-                        // Ellenőrizzük, hogy a fájlmutató nem NULL
-                        if (timescale_output_file != NULL) {
-                            fprintf(timescale_output_file, " %-15.6lg  %-15.6lg\n", radius[i][0], (radius[i][0] / current_drdt_val) / (2.0 * M_PI));
-                        } else {
-                            fprintf(stderr, "ERROR: timescale_output_file is NULL during write in Get_Radius (t=0 block).\n");
-                        }
+        // Az `int_step` függvénynek szüksége van a `sigmad` és `rdvec` (gridenkénti) tömbre,
+        // hogy interpolálja a lokális por sűrűséget.
+        int_step(t, particle_radius, sigmad, rdvec, deltat, y, &y_out, &prad_new, disk_params, sim_opts);
+
+        if (t == 0) {
+            if (sim_opts->twopop == 0.0) { // Használjunk double összehasonlítást
+                double current_drdt_val = (fabs(y_out - y) / (deltat));
+                // Azért kell a critical szekció, mert az timescale_output_file fájlba írunk.
+                #pragma omp critical(timescale_output_file_write)
+                {
+                    if (timescale_output_file != NULL) {
+                        fprintf(timescale_output_file, " %-15.6lg  %-15.6lg\n", radius[i][0], (radius[i][0] / current_drdt_val) / (2.0 * M_PI));
+                    } else {
+                        fprintf(stderr, "ERROR: timescale_output_file is NULL during write in Get_Radius (t=0 block).\n");
                     }
                 }
             }
+        }
 
-            if (sim_opts->twopop != 1) { // Ha növekedés engedélyezett vagy valami más mód
-                radius[i][1] = prad_new;
-                radius[i][0] = y_out;
-            } else { // sim_opts->twopop == 1, csak drift
-                radius[i][0] = y_out;
-            }
-        } else {
-            // Ha a részecske RMIN vagy RMAX kívülre kerül, 0.0-ra állítjuk a pozícióját.
-            // Ez a hozzárendelés iterációnként független, így párhuzamosítható.
-            radius[i][0] = 0.0;
+        // Frissítjük a részecske pozícióját és méretét
+        // sim_opts->growth == 1.0 (feltételezve, hogy a growth flag kontrollálja a növekedést)
+        if (sim_opts->growth == 1.0) { // Ha növekedés engedélyezett
+            radius[i][1] = prad_new;
+            radius[i][0] = y_out;
+        } else { // Ha növekedés nincs engedélyezve, csak drift
+            radius[i][0] = y_out;
         }
     }
 

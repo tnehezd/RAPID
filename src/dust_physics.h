@@ -11,7 +11,15 @@
 // Ha a config.h includolva van a dust_physics.c-ben, és ott vannak definiálva,
 // akkor ezeket az extern deklarációkat elhagyhatod innen.
 
-void initial_dust_surface_density_profile(double radin[][2], double *massin, double out[][3], int n, const disk_t *disk_params);
+void calculate_dust_surface_density_profile(
+    double *output_sigma_d_grid,       // Kimenet: A kiszámított por felületi sűrűség (gridenként)
+    double *output_r_grid_centers,     // Kimenet: A grid cellák középpontjainak radiális pozíciói
+    const double radin[][2],           // Bemenet: Részecskék radiális pozíciója (const)
+    const double *massin,              // Bemenet: Részecskék tömege (const)
+    int n_particles,                   // Bemenet: A részecskék száma
+    int n_grid_cells,                  // Bemenet: A grid cellák száma, amire a sűrűséget számoljuk
+    const disk_t *disk_params          // Bemenet: A korong paraméterei (const)
+);
 
 /*	alpha turbulens paraméter kiszámolása	*/
 double calculate_turbulent_alpha(double r, const disk_t *disk_params);
@@ -34,10 +42,8 @@ double getSize(double prad, double pdens, double sigma, double sigmad, double y,
 
 // Porkorong sűrűségének számítása
 void Get_Sigmad(double max_param, double min_param, double rad[][2], double radmicr[][2],
-                double *sigma_d, double *sigma_dm, double *massvec,
-                double *massmicrvec,double *rd, double *rmic,
-                const simulation_options_t *sim_opts, const disk_t *disk_params);
-
+                double *sigma_d, double *sigma_dm,  double *massvec, double *massmicrvec,
+                double *rd, double *rmic, const simulation_options_t *sim_opts, disk_t *disk_params);
 /*	Fuggveny a porszemcsek uj tavolsaganak elraktarozasara		*/
 void Get_Radius(const char *nev, int opt, double radius[][2], const double *sigmad, const double *rdvec,
                 double deltat, double t, int n, const simulation_options_t *sim_opts, const disk_t *disk_params);

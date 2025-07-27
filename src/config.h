@@ -78,9 +78,9 @@ extern const char * const FILENAME_INIT_DUST_PROFILE;
 /**
  * @brief Prefix for output filenames containing time-dependent gas surface density profiles.
  * @details This constant string defines the base name for output files that store
- * the evolving density profiles over time. Actual filenames will be formed
+ * the evolving density profiles over time (`gas_density_profile` by default). Actual filenames will be formed
  * by appending a zero-padded number representing the simulation time
- * (e.g., `density_profile_00000010.dat`) within `LOGS` in the predefined `output` directory.
+ * (e.g., `gas_density_profile_00000010.dat`) within `LOGS` in the predefined `output` directory.
  * Declared as `extern const char * const` here, defined in `config.c`.
  */
 extern const char * const FILE_DENS_PREFIX;

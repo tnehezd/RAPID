@@ -3,116 +3,131 @@
 
 #include <stdio.h>
 
-#define MAX_PATH_LEN 16384 // Definiálj egy maximális hosszt fájlnevekhez
+/**
+ * @file simulation_types.h
+ * @brief Contains the definitions for core data structures used in the simulation.
+ *
+ * This header file defines structures for particles, dust populations,
+ * disk parameters, simulation options, and output file pointers.
+ * These structures encapsulate related data, promoting code organization
+ * and reusability throughout the RAPID simulation project.
+ */
 
+#define MAX_PATH_LEN 16384 // Define a maximum length for file paths
 
-// --- Particle Structure ---
-// Represents a single dust particle
+/**
+ * @brief Represents a single dust particle in the simulation.
+ */
 typedef struct {
-    double r;         // Radial distance from star (AU)
-    double prad;      // Particle radius (cm)
-    double reppmass;  // Representative particle mass (mass of the material this particle represents)
+    double r;        ///< Radial distance from star (AU)
+    double prad;     ///< Particle radius (cm)
+    double reppmass; ///< Representative particle mass (mass of the material this particle represents)
     // Add any other per-particle properties here, e.g.:
-    // double velocity_r; // Radial velocity if you track it explicitly
-    // int    index_in_grid; // Or calculated on the fly
+    // double velocity_r; ///< Radial velocity if you track it explicitly
+    // int    index_in_grid; ///< Or calculated on the fly
 } particle_t;
 
-// --- Dust Population Structure ---
-// Represents a collection of particles of a certain type (e.g., cm, micron, secondary)
+/**
+ * @brief Represents a collection of particles of a certain type (e.g., cm-sized, micron-sized).
+ */
 typedef struct {
-    particle_t *particles; // Pointer to an array of particle_t structures
-    int num_particles;     // Number of particles in this specific population
+    particle_t *particles;   ///< Pointer to an array of particle_t structures
+    int num_particles;       ///< Number of particles in this specific population
 
     // If needed, specific properties for the population itself:
-    // double total_mass; // Total mass represented by this population
-    // double initial_mass; // Initial total mass for comparison
+    // double total_mass; ///< Total mass represented by this population
+    // double initial_mass; ///< Initial total mass for comparison
 } dust_population_t;
 
-// --- Disk Structure ---
-// Encapsulates all global disk parameters and dynamic arrays
+/**
+ * @brief Encapsulates all global disk parameters and dynamically allocated arrays.
+ *
+ * This structure holds all physical constants, geometrical parameters,
+ * grid properties, and pointers to arrays representing the disk's state.
+ */
 typedef struct disk_t {
-    // Geometriai és rács paraméterek
-    double RMIN;
-    double RMAX;
-    int NGRID;
-    double DD; // RMIN, RMAX, NGRID alapján számolva
+    // Geometrical and grid parameters
+    double RMIN;       ///< Inner boundary of the disk simulation domain (AU)
+    double RMAX;       ///< Outer boundary of the disk simulation domain (AU)
+    int NGRID;         ///< Number of grid cells
+    double DD;         ///< Grid cell width (calculated based on RMIN, RMAX, NGRID)
 
-    // Gáz korong paraméterek
-    double SIGMA0; // Kezdeti referencia gáz sűrűség
-    double SIGMAP_EXP; // Sűrűség profil kitevő
-    double alpha_visc; // Alfa viszkozitás
-    double STAR_MASS; // Központi csillag tömege
-    double DISK_MASS;
-    double HASP; // H/R arány (diszk magasság)
-    double FLIND; // Fáklyázási index
+    // Gas disk parameters
+    double SIGMA0;     ///< Initial reference gas surface density (e.g., at 1 AU)
+    double SIGMAP_EXP; ///< Exponent of the initial gas surface density power-law profile
+    double alpha_visc; ///< Alpha viscosity parameter (Shakura-Sunyaev alpha)
+    double STAR_MASS;  ///< Mass of the central star
+    double DISK_MASS;  ///< Total mass of the disk
+    double HASP;       ///< Aspect ratio (H/R) of the disk (scale height parameter)
+    double FLIND;      ///< Flaring index of the disk (exponent of H ~ r^FLIND)
 
-    // Holt zóna paraméterek (dead zone)
-    double r_dze_i;
-    double r_dze_o;
-    double Dr_dze_i;
-    double Dr_dze_o;
-    double a_mod; // Alfa modifikációs faktor
+    // Dead zone (DZE) parameters
+    double r_dze_i;    ///< Inner radius of the dead zone transition region (AU)
+    double r_dze_o;    ///< Outer radius of the dead zone transition region (AU)
+    double Dr_dze_i;   ///< Width of the inner dead zone transition region (AU)
+    double Dr_dze_o;   ///< Width of the outer dead zone transition region (AU)
+    double a_mod;      ///< Alpha modification factor within the dead zone
 
-    // Por paraméterek (ezeket számolja a read_disk_parameters)
-    double PDENSITY; // Por sűrűség (fizikai egységekben, pl. g/cm^3)
-    double PDENSITYDIMLESS; // Dimenziómentes por sűrűség
+    // Dust parameters
+    double PDENSITY;       ///< Physical density of dust particle material (e.g., g/cm^3)
+    double PDENSITYDIMLESS;///< Dimensionless density of dust particle material (M_Sun/AU^3)
 
-    // Dinamikusan allokált tömbök (ezek a main-ben vannak beállítva, vagy itt lesznek allokálva)
-    double *rvec;          // Rádiusz vektor
-    double *sigmavec;      // Gáz felületi sűrűség
-    double *pressvec;      // Gáz nyomás
-    double *dpressvec;     // Gáz nyomás gradiens (rádiusz szerinti derivált)
-    double *ugvec;         // Gáz belső energia vagy hőmérséklet
-    double *sigmadustvec;  // Por felületi sűrűség (Új: sigmad)
-    double *rhopvec;       // Por sűrűsége a részecskében (Új: rho_p)
 
-    // Por koagulációs/fragmentációs paraméterek
-    double fFrag;          // Fragmentációs hatékonysági faktor
-    double uFrag;          // Fragmentációs sebesség küszöb
-    double fDrift;         // fd in Birnstiel 2012, set to 0.55
 
-    // További általános paraméterek vagy tömbök
-    // Ha a 'dp' és 'rho_p' nem tömbök, hanem skalárok, akkor azok is ide jöhetnek,
-    // de a kontextusból valószínűbb, hogy rácspontonként változnak.
-    // Mivel az 'dp' már dpressvec néven létezik, csak a 'rho_p'-t kell hozzáadni.
-    // Látom, a korábbi hibáknál 'dp' néven hivatkoztál rá, az most 'dpressvec'.
-    // A 'rho_p' viszont egy új bejegyzés.
+    // Dynamically allocated arrays (these are expected to be allocated in main or dedicated init function)
+    double *rvec;           ///< Radial grid vector (centers of grid cells)
+    double *sigmavec;       ///< Gas surface density at grid points
+    double *pressvec;       ///< Gas pressure at grid points
+    double *dpressvec;      ///< Gas pressure gradient (radial derivative) at grid points
+    double *ugvec;          ///< Gas radial velocity at grid points
+    double *sigmadustvec;   ///< Dust surface density at grid points
+    // Note: The `rhopvec` from your original comments might refer to local midplane dust density,
+    // which would be derived from `sigmadustvec` and disk scale height.
+    // If it's a separate array of values, ensure its purpose is distinct.
+
+    // Dust coagulation/fragmentation parameters
+    double fFrag;           ///< Fragmentation efficiency factor (f_frag in Birnstiel 2012)
+    double uFrag;           ///< Fragmentation velocity threshold (u_frag in Birnstiel 2012)
+    double fDrift;          ///< Drift efficiency factor (f_D in Birnstiel 2012, usually ~0.55)
 
 } disk_t;
 
-// --- Simulation Options/Control Structure ---
-// Groups all boolean/flag-like options
+/**
+ * @brief Groups all simulation control options and flags.
+ */
 typedef struct {
-    double evol;    // Gas evolution (replaces optev)
-    double drift;   // Particle drift (replaces optdr)
-    double growth;  // Particle growth (replaces optgr)
-    double twopop;  // Two-population simulation (replaces opttwopop)
-    double dzone;   // Dead zone flag (replaces optdze)
-    double DT;      // User-defined fixed time step
-    double TMAX;    // Maximum simulation time
-    double WO;      // Write-out interval (TMAX/WO)
-    double TCURR;
+    double evol;           ///< Gas evolution flag (1.0 for enabled, 0.0 for disabled)
+    double drift;          ///< Particle drift flag (1.0 for enabled, 0.0 for disabled)
+    double growth;         ///< Particle growth flag (1.0 for enabled, 0.0 for disabled)
+    double twopop;         ///< Two-population simulation flag (1.0 for enabled, 0.0 for disabled)
+    double dzone;          ///< Dead zone dynamics flag (1.0 for dynamic DZE, 0.0 for fixed DZE)
+    double DT;             ///< User-defined fixed time step
+    double TMAX;           ///< Maximum simulation time
+    double WO;             ///< Write-out interval (output frequency, e.g., TMAX/WO)
+    double TCURR;          ///< Current simulation time
 
-    int num_dust_particles;
+    int num_dust_particles; ///< Total number of dust particles simulated
 
-    char input_filename[MAX_PATH_LEN];  // Input fájl neve (pl. init_data.dat)
-    char output_dir_name[MAX_PATH_LEN]; // Kimeneti könyvtár neve
-    char dust_input_filename[MAX_PATH_LEN]; // NEW: Input file for dust particles (e.g., initial_dust_profile.dat for ReadDustFile)
-
-
+    char input_filename[MAX_PATH_LEN];    ///< Path to the general input parameter file
+    char output_dir_name[MAX_PATH_LEN];   ///< Path to the main output directory
+    char dust_input_filename[MAX_PATH_LEN]; ///< Path to the input file for dust particle initial properties.
 } simulation_options_t;
 
-
-// --- Output File Pointers Structure ---
+/**
+ * @brief Stores pointers to all open output files.
+ *
+ * This structure helps manage file I/O by centralizing all FILE pointers,
+ * ensuring they can be accessed and properly closed across different modules.
+ */
 typedef struct {
-    FILE *por_motion_file;      // pormozgas.dat (fout a régi kódokban)
-    FILE *micron_motion_file;   // pormozgasmic.dat (foutmicr a régi kódokban)
-    FILE *mass_file;            // mass.dat (massfil a régi kódokban)
-    FILE *surface_file;         // surface.dat (a Print_Sigma számára)
-    FILE *dust_file;            // dust.dat (a Print_Sigmad fő por kimenetéhez)
-    FILE *micron_dust_file;     // dustmic.dat (a Print_Sigmad mikronos por kimenetéhez)
-    FILE *time_scale_file;
+    FILE *por_motion_file;    ///< File pointer for particle motion data (e.g., pormozgas.dat)
+    FILE *micron_motion_file; ///< File pointer for micron-sized particle motion data (e.g., pormozgasmic.dat)
+    FILE *mass_file;          ///< File pointer for mass output (e.g., mass.dat)
+    FILE *surface_file;       ///< File pointer for gas surface density output (e.g., surface.dat)
+    FILE *dust_file;          ///< File pointer for dust surface density output (e.g., dust.dat)
+    FILE *micron_dust_file;   ///< File pointer for micron dust surface density output (e.g., dustmic.dat)
+    FILE *time_scale_file;    ///< File pointer for various timescale outputs.
     // Add other file pointers here if you need more output files
 } output_files_t;
 
-#endif // SIMULATION_TYPES_H
+#endif // SIMULATION_TYPES_H    

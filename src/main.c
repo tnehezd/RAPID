@@ -2,6 +2,7 @@
 #include <string.h>
 #include <math.h>
 #include <time.h>
+#include <stdio.h> // Hozzáadva a fprintf és NULL használatához
 
 // Header files
 #include "config.h"           // Declarations of global variables and constants
@@ -57,6 +58,14 @@ int main(int argc, const char **argv) {
     output_files.surface_file = NULL;
     output_files.dust_file = NULL;
     output_files.micron_dust_file = NULL;
+
+    // Initialize disk_params pointers to NULL to prevent dangling pointers if allocation fails
+    disk_params.rvec = NULL;
+    disk_params.sigmavec = NULL;
+    disk_params.pressvec = NULL;
+    disk_params.dpressvec = NULL;
+    disk_params.ugvec = NULL;
+    disk_params.sigmadustvec = NULL; // ÚJ: inicializáljuk NULL-ra
 
     /* Populate the simulation_options_t struct from 'def' (parsed options) */
     sim_opts.evol = def.evol;
@@ -148,18 +157,23 @@ int main(int argc, const char **argv) {
 
         // --- Dynamic Memory Allocation for Disk Arrays ---
         // This happens ONLY HERE, because run_init_tool is not called!
-        disk_params.rvec = (double *)malloc((disk_params.NGRID + 2) * sizeof(double));
-        disk_params.sigmavec = (double *)malloc((disk_params.NGRID + 2) * sizeof(double));
-        disk_params.pressvec = (double *)malloc((disk_params.NGRID + 2) * sizeof(double));
-        disk_params.dpressvec = (double *)malloc((disk_params.NGRID + 2) * sizeof(double));
-        disk_params.ugvec = (double *)malloc((disk_params.NGRID + 2) * sizeof(double));
+        disk_params.rvec = (double *)calloc((disk_params.NGRID + 2), sizeof(double)); // calloc to zero-initialize
+        disk_params.sigmavec = (double *)calloc((disk_params.NGRID + 2), sizeof(double));
+        disk_params.pressvec = (double *)calloc((disk_params.NGRID + 2), sizeof(double));
+        disk_params.dpressvec = (double *)calloc((disk_params.NGRID + 2), sizeof(double));
+        disk_params.ugvec = (double *)calloc((disk_params.NGRID + 2), sizeof(double));
 
         if (!disk_params.rvec || !disk_params.sigmavec || !disk_params.pressvec || !disk_params.dpressvec || !disk_params.ugvec) {
-            fprintf(stderr, "ERROR [main]: Failed to allocate memory for disk arrays (input file branch). Exiting.\n");
+            fprintf(stderr, "ERROR [main]: Failed to allocate memory for gas disk arrays (input file branch). Exiting.\n");
+            // Free already allocated memory before exiting on error
+            if (disk_params.rvec) free(disk_params.rvec);
+            if (disk_params.sigmavec) free(disk_params.sigmavec);
+            if (disk_params.pressvec) free(disk_params.pressvec);
+            if (disk_params.dpressvec) free(disk_params.dpressvec);
+            if (disk_params.ugvec) free(disk_params.ugvec);
             return 1;
         }
-        fprintf(stderr, "DEBUG [main]: Disk profile arrays dynamically allocated with size NGRID+2 = %d (input file branch).\n", disk_params.NGRID + 2);
-
+        fprintf(stderr, "DEBUG [main]: Gas disk profile arrays dynamically allocated with size NGRID+2 = %d (input file branch).\n", disk_params.NGRID + 2);
 
         // Copy input profile file to the 'initial' directory
         snprintf(cmd_buffer, sizeof(cmd_buffer), "cp %s %s/", current_inputsig_file, initial_dir_path);
@@ -202,12 +216,11 @@ int main(int argc, const char **argv) {
         fprintf(stderr, "DEBUG [main]: Calling run_init_tool(&init_tool_params, &disk_params)...\n");
         strncpy(init_tool_params.output_base_path, initial_dir_path, MAX_PATH_LEN - 1);
         init_tool_params.output_base_path[MAX_PATH_LEN - 1] = '\0';
-        // run_init_tool is responsible for allocating and populating disk_params members
+        // run_init_tool is responsible for allocating and populating gas disk_params members (rvec, sigmavec, etc.)
         run_init_tool(&init_tool_params, &disk_params);
-        fprintf(stderr, "DEBUG [main]: run_init_tool completed. disk_params allocated and populated.\n");
+        fprintf(stderr, "DEBUG [main]: run_init_tool completed. disk_params gas arrays allocated and populated.\n");
 
         // Now current_inputsig_file points to the generated file in initial_dir_path
-        // CHANGE HERE: FILENAME_INIT_PROFILE -> FILENAME_INIT_GAS_PROFILE
         snprintf(current_inputsig_file, sizeof(current_inputsig_file), "%s/%s", initial_dir_path, FILENAME_INIT_GAS_PROFILE);
         fprintf(stderr, "DEBUG [main]: Generated GAS profile will be loaded from '%s'.\n", current_inputsig_file);
 
@@ -226,6 +239,23 @@ int main(int argc, const char **argv) {
         // No need for 'cp' here for FILENAME_DISK_PARAM or FILENAME_INIT_PROFILE,
         // since run_init_tool created them directly in initial_dir_path.
     }
+
+    // --- CRITICAL ALLOCATION: Allocate disk_params.sigmadustvec here ---
+    // This allocation is needed regardless of whether an input file was used or a profile was generated,
+    // as disk_params.NGRID should be correctly set by now in both branches.
+    disk_params.sigmadustvec = (double *)calloc(disk_params.NGRID, sizeof(double));
+    if (disk_params.sigmadustvec == NULL) {
+        fprintf(stderr, "ERROR [main]: Failed to allocate memory for disk_params.sigmadustvec. Exiting.\n");
+        // Free previously allocated memory before exiting on error
+        if (disk_params.rvec) free(disk_params.rvec);
+        if (disk_params.sigmavec) free(disk_params.sigmavec);
+        if (disk_params.pressvec) free(disk_params.pressvec);
+        if (disk_params.dpressvec) free(disk_params.dpressvec);
+        if (disk_params.ugvec) free(disk_params.ugvec);
+        return 1;
+    }
+    fprintf(stderr, "DEBUG [main]: disk_params.sigmadustvec dynamically allocated with size NGRID = %d.\n", disk_params.NGRID);
+
 
     // --- CRITICAL STEP: Now that current_inputsig_file is set,
     //     copy it to sim_opts.input_filename for tIntegrate. ---
@@ -302,11 +332,14 @@ int main(int argc, const char **argv) {
     // Free the memory allocated for disk_params.rvec, sigmavec, etc.
     // This allocation happened in the 'if' branch if an input file was used,
     // or within run_init_tool in the 'else' branch.
+    // The sigmadustvec is freed here as well.
     if (disk_params.rvec) free(disk_params.rvec);
     if (disk_params.sigmavec) free(disk_params.sigmavec);
     if (disk_params.pressvec) free(disk_params.pressvec);
     if (disk_params.dpressvec) free(disk_params.dpressvec);
     if (disk_params.ugvec) free(disk_params.ugvec);
+    if (disk_params.sigmadustvec) free(disk_params.sigmadustvec); // ÚJ: felszabadítás
+
     fprintf(stderr, "DEBUG [main]: Dynamically allocated disk arrays freed.\n");
 
     fprintf(stderr, "DEBUG [main]: Program exiting normally.\n");

@@ -86,9 +86,8 @@ static long double calculate_gas_surface_density(double r_au, init_tool_options_
 }
 
 // Calculates dust surface density at radial position r [M_Sun / AU / AU].
-static long double calculate_dust_surface_density(double r_au, init_tool_options_t *init_opts, long double current_sigma0) {
+static long double initial_dust_surface_density(double r_au, init_tool_options_t *init_opts, long double current_sigma0) {
     long double sigma_dust = calculate_gas_surface_density(r_au, init_opts, current_sigma0) * init_opts->dust_to_gas_ratio;
-
     return sigma_dust;
 }
 
@@ -346,7 +345,7 @@ int run_init_tool(init_tool_options_t *opts, disk_t *disk_params) {
             double sound_speed_au_yr2pi = calculate_local_sound_speed(r_dust_particle_au, disk_params);
             double sound_speed_sq = sound_speed_au_yr2pi * sound_speed_au_yr2pi;
 
-            long double sigma_dust_local = calculate_dust_surface_density(r_dust_particle_au, opts, current_sigma0_gas);
+            long double sigma_dust_local = initial_dust_surface_density(r_dust_particle_au, opts, current_sigma0_gas);
             long double sigma_dust_local_cgs = sigma_dust_local / GAS_SD_CONV_RATE;
             double sigma_gas_local_cgs = (double)sigma_gas_local / GAS_SD_CONV_RATE;
 
@@ -385,7 +384,7 @@ int run_init_tool(init_tool_options_t *opts, disk_t *disk_params) {
 
         long double representative_mass_total_in_cell = 2.0 * M_PI * r_dust_particle_au *
                                                         ((opts->r_outer - opts->r_inner) / ((double)opts->n_dust_particles - 1.0)) * // Use dust particle spacing
-                                                        calculate_dust_surface_density(r_dust_particle_au, opts, current_sigma0_gas);
+                                                        initial_dust_surface_density(r_dust_particle_au, opts, current_sigma0_gas);
 
         long double repr_mass_pop1 = representative_mass_total_in_cell * opts->two_pop_ratio;
         long double repr_mass_pop2 = representative_mass_total_in_cell * (1.0 - opts->two_pop_ratio);

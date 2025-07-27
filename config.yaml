@@ -10,7 +10,7 @@ simulation_parameters:
   enable_two_dust_populations: false # Corresponds to 'twopop' in C
   fragmentation_velocity: 300.0     # Corresponds to 'ufrag' in C
   fragmentation_factor: 0.37         # Corresponds to 'ffrag' in C
-  number_of_dust_particles: 1000
+  number_of_dust_particles: 2000
  
   # Grid and Disk Initial Parameters (used if no input_file is provided)
   number_of_grid_points: 1000    # Corresponds to 'ngrid_val' (-n)
