@@ -11,7 +11,13 @@ Contents:
 
 .. toctree::
    :maxdepth: 2
-   :caption: User Guide:
+   :caption: Contents
+
+   
+
+.. toctree::
+   :maxdepth: 2
+   :caption: User Guide
    
    api_reference
 

@@ -57,7 +57,6 @@ int main(int argc, const char **argv) {
     output_files.surface_file = NULL;
     output_files.dust_file = NULL;
     output_files.micron_dust_file = NULL;
-    output_files.size_file = NULL;
 
     /* Populate the simulation_options_t struct from 'def' (parsed options) */
     sim_opts.evol = def.evol;
@@ -161,10 +160,6 @@ int main(int argc, const char **argv) {
         }
         fprintf(stderr, "DEBUG [main]: Disk profile arrays dynamically allocated with size NGRID+2 = %d (input file branch).\n", disk_params.NGRID + 2);
 
-        // Call read_disk_parameters because run_init_tool is not called
-        fprintf(stderr, "DEBUG [main]: Calling read_disk_parameters to calculate derived disk parameters for main disk_params struct (input file branch).\n");
-        read_disk_parameters(&disk_params);
-        fprintf(stderr, "DEBUG [main]: read_disk_parameters completed (input file branch).\n");
 
         // Copy input profile file to the 'initial' directory
         snprintf(cmd_buffer, sizeof(cmd_buffer), "cp %s %s/", current_inputsig_file, initial_dir_path);
@@ -252,8 +247,6 @@ int main(int argc, const char **argv) {
     PARTICLE_NUMBER = reszecskek_szama(sim_opts.dust_input_filename); // Read lines from the dust profile
     fprintf(stderr, "DEBUG [main]: Global PARTICLE_NUMBER set to %d (from dust input file: %s).\n", PARTICLE_NUMBER, sim_opts.dust_input_filename);
 
-    // The read_disk_parameters call has already occurred in the appropriate branch (if using input file)
-    // or was called by run_init_tool (if generating).
 
     fprintf(stderr, "DEBUG [main]: Initial profile loading for ReadSigmaFile...\n");
     ReadSigmaFile(&disk_params, current_inputsig_file); // This populates disk_params.sigmavec and rvec

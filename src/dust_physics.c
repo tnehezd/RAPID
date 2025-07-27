@@ -4,37 +4,17 @@
 #include <string.h>
 #include <errno.h>
 #include <math.h>
-#include <omp.h>             // OpenMP támogatáshoz
+#include <omp.h>            
 
 #include "disk_model.h"
-#include "dust_physics.h" // A saját headerjét mindig includolni kell
-#include "config.h"       // Szükséges lehet a globális konstansokhoz (pl. PARTICLE_NUMBER, AU_TO_CM, RMIN, RMAX, NGRID, G_GRAV_CONST, STAR, GAS_SD_CONV_RATE, CM_PER_SEC_TO_AU_PER_YEAR_OVER_2PI, uFrag, fFrag, PDENSITYDIMLESS, HASP, M_PI, DD, sim_opts->dzone, sim_opts->twopop, RMIN, RMAX, FLIND, alpha_visc, a_mod, r_dze_i, r_dze_o, Dr_dze_i, Dr_dze_o)
-#include "simulation_types.h" // Például output_files_t, disk_t struktúrákhoz
+#include "dust_physics.h" 
+#include "config.h"       
+#include "simulation_types.h" 
 #include "globals.h"
 #include "io_utils.h"
-#include "simulation_core.h" // int_step, Perem, find_num_zero, find_zero, find_r_annulus függvényekhez
-#include "utils.h"           // find_min függvényhez
+#include "simulation_core.h" 
+#include "utils.h"           
 
-// Globális változó deklarációk, ha nem lennének meg máshol (pl. config.h)
-// Fontos: ezeknek a típusoknak egyezniük kell a config.h-ban deklaráltakkal!
-// Ha már szerepelnek a config.h-ban, akkor ezeket innen törölni kell,
-// vagy csak az extern kulcsszót meghagyni!
-
-
-/* EZT INNNEN KI KELL SZEDNI!!! */
-
-void read_disk_parameters(disk_t *disk_params) {
-    // Check for NULL pointer
-    if (disk_params == NULL) {
-        fprintf(stderr, "ERROR [read_disk_parameters]: Received NULL disk_params pointer.\n");
-        exit(EXIT_FAILURE);
-    }
-
-    fprintf(stderr, "Calculating derived disk parameters and writing to output file.\n");
-
-    // Convert particle density to a dimensionless form
-    disk_params->PDENSITYDIMLESS = disk_params->PDENSITY / SUN_MASS_TO_GRAMS * AU_TO_CM * AU_TO_CM * AU_TO_CM;
-}
 
 void initial_dust_surface_density_profile(double radin[][2], double *massin, double out[][3], int n, const disk_t *disk_params) {
 

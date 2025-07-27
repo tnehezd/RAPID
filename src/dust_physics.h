@@ -11,18 +11,6 @@
 // Ha a config.h includolva van a dust_physics.c-ben, és ott vannak definiálva,
 // akkor ezeket az extern deklarációkat elhagyhatod innen.
 
-/**
- * @brief Reads and calculates derived disk parameters.
- *
- * This function initializes and sets up the fundamental parameters of the disk
- * within the `disk_t` structure. It may involve converting input parameters
- * to the appropriate internal units or calculating derived dimensionless quantities.
- *
- * @param disk_params Pointer to the `disk_t` structure where parameters are stored.
- */
-void read_disk_parameters(disk_t *disk_params);
-
-
 void initial_dust_surface_density_profile(double radin[][2], double *massin, double out[][3], int n, const disk_t *disk_params);
 
 /*	alpha turbulens paraméter kiszámolása	*/

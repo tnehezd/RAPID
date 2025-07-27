@@ -53,11 +53,6 @@ void Print_Sigmad(int step, double (*rad)[2], double (*radmicr)[2], const double
                   const double *sigmad, const double *sigmadm,double (*partmassind)[5], double (*partmassmicrind)[5],
                   const disk_t *disk_params, const simulation_options_t *sim_opts,
                   output_files_t *output_files);
-/* Fuggveny a pormozgas es reszecskemeret kiiratasara */
-// FIX: The original was missing 'const disk_t *disk_params' and 'const simulation_options_t *sim_opts'.
-void Print_Pormozg_Size(char *size_name, int step, double (*rad)[2], double (*radmicr)[2],
-                        const disk_t *disk_params, const simulation_options_t *sim_opts,
-                        output_files_t *output_files);
 
 /* Az idot tartalmazo file parametereinek beolvasasa (vagy beallitasa) */
 // FIX: The original was missing 'simulation_options_t *sim_opts'.

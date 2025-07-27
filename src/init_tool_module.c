@@ -274,7 +274,8 @@ int run_init_tool(init_tool_options_t *opts, disk_t *disk_params) {
     }
 
     // Initialize gas disk properties on the NGRID grid
-    read_disk_parameters(disk_params);
+    // Convert particle density to a dimensionless form
+    disk_params->PDENSITYDIMLESS = disk_params->PDENSITY / SUN_MASS_TO_GRAMS * AU_TO_CM * AU_TO_CM * AU_TO_CM;
     initialize_grid_cells(disk_params);
     initial_gas_surface_density_profile(disk_params);
     initial_gas_pressure_profile(disk_params);

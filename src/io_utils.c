@@ -479,35 +479,6 @@ void Print_Sigmad(int step, double (*rad)[2], double (*radmicr)[2], const double
     }
 }
 
-/* Függvény a pormozgás és részecskeméret kiíratására */
-void Print_Pormozg_Size(char *size_name, int step, double (*rad)[2], double (*radmicr)[2], const disk_t *disk_params, const simulation_options_t *sim_opts, output_files_t *output_files) {
-
-    FILE *fout_size = NULL;
-
-    int i;
-
-    if (sim_opts->growth == 1.0) {
-        fout_size = fopen(size_name, "w");
-        if (fout_size == NULL) {
-            fprintf(stderr, "ERROR: Could not open size file '%s' in Print_Pormozg_Size!\n", size_name);
-            return;
-        }
-    }
-
-    for (i = 0; i < PARTICLE_NUMBER; i++) { // PARTICLE_NUMBER from config.h
-
-        if (sim_opts->growth == 1.0 && fout_size != NULL) {
-            if (rad[i][0] >= disk_params->RMIN) { // Using disk_params->RMIN
-                fprintf(fout_size, "%lg %lg %lg \n", (double)step, rad[i][0], rad[i][1] * AU_TO_CM); // AU_TO_CM from config.h
-            }
-        }
-    }
-
-
-    if (sim_opts->growth == 1.0 && fout_size != NULL) {
-        fclose(fout_size);
-    }
-}
 
 /* Az időt tartalmazó fájl paramétereinek beolvasása (vagy beállítása) */
 void timePar(double tMax_val, double stepping_val, double current_val, simulation_options_t *sim_opts) {

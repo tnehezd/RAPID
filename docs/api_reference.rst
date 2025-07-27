@@ -44,3 +44,21 @@ disk_model.h
 .. doxygenfile:: disk_model.h
    :project: rapid
 
+
+This section details the API for the `dust_physics.h` header file. It includes declarations for functions that initialize, and evolve the physical properties of the dust particles within the simulation, such as radial distance, friction due to the headwind, size and the size constraining barriers.
+
+dust_physics.h
+^^^^^^^^^^^^^^
+
+.. doxygenfile:: dust_physics.h
+   :project: rapid
+
+
+
+----
+
+Utils Module
+------------
+
+I/O Utils
+^^^^^^^^^

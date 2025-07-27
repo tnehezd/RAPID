@@ -173,7 +173,6 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
     char dens_name[MAX_PATH_LEN] = "";
     char dust_name[MAX_PATH_LEN] = "";
     char micron_dust_name[MAX_PATH_LEN] = "";
-    char size_name[MAX_PATH_LEN] = "";
 
     double t = 0.0;
     double t_integration = sim_opts->TMAX * 2.0 * M_PI;
@@ -259,7 +258,6 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
 
                 snprintf(dust_name, MAX_PATH_LEN, "%s/%s/%s_%08d.dat", sim_opts->output_dir_name, LOGS_DIR, FILE_DUST_PREFIX,(int)L);
                 snprintf(micron_dust_name, MAX_PATH_LEN, "%s/%s/micron_%s_%08d.%i.dat", sim_opts->output_dir_name, LOGS_DIR, FILE_DUST_PREFIX, (int)L);
-                snprintf(size_name, MAX_PATH_LEN, "%s/%s/size.%d.dat", sim_opts->output_dir_name, LOGS_DIR, (int)L);
 
                 // Fájlok megnyitása és fejlécek írása
                 output_files->surface_file = fopen(dens_name, "w");
@@ -303,11 +301,6 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                 // Gas density output
                 if (sim_opts->evol == 1 || current_time_years == 0) {
                     if(L != 0) Print_Sigma(disk_params, output_files);
-                }
-
-                // Particle position and size output
-                if (sim_opts->drift == 1) {
-                    Print_Pormozg_Size(size_name, (int)L, p_data.radius, p_data.radiusmicr, disk_params, sim_opts, output_files);
                 }
 
                 // Reset mass accumulation variables for next interval
