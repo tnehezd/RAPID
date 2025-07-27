@@ -10,9 +10,7 @@ This section provides a comprehensive, automatically generated API reference for
 Configuration Module
 --------------------
 
-The `Configuration Module` (``config.c``) is central to managing global simulation parameters, file pointers, and constant definitions. Its API is primarily documented through its header file, ``config.h``, which contains the `extern` declarations and associated Doxygen comments.
-
-----
+This section details the API for the `config.h` and `globals.h` header files. Together, these files include declarations for global simulation parameters, file pointers, and constant definitions for the setup and management of the simulation environment.
 
 config.h
 ^^^^^^^^
@@ -31,3 +29,18 @@ This section presents the detailed API for the `globals.h` header file that cont
 
 .. doxygenfile:: globals.h
    :project: rapid
+
+
+----
+
+Disk Physics Module
+-------------------
+
+This section details the API for the `disk_model.h` header file. It includes declarations for functions that initialize, and evolve the physical properties of the gas disk within the simulation, such as surface density, pressure, velocity, and pressure gradient.
+
+disk_model.h
+^^^^^^^^^^^^
+
+.. doxygenfile:: disk_model.h
+   :project: rapid
+

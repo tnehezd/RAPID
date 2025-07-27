@@ -34,7 +34,7 @@ void Parabola(double *vec, int i1, int i2, int i3, double *a, double *b, double 
 
 
 /*	A peremen parabolat illeszt	*/
-void Perem(double *vec, const disk_t *disk_params) {					/*	boundary condition for sigma, p, dp...	*/
+void calculate_boundary(double *vec, const disk_t *disk_params) {					/*	boundary condition for sigma, p, dp...	*/
 
 	double a, b, c; 
 

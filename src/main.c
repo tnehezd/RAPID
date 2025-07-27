@@ -257,10 +257,10 @@ int main(int argc, const char **argv) {
 
     fprintf(stderr, "DEBUG [main]: Initial profile loading for ReadSigmaFile...\n");
     ReadSigmaFile(&disk_params, current_inputsig_file); // This populates disk_params.sigmavec and rvec
-    fprintf(stderr, "DEBUG [main]: ReadSigmaFile completed. Calling Perem for disk_params.rvec and disk_params.sigmavec...\n");
-    Perem(disk_params.rvec, &disk_params);
-    Perem(disk_params.sigmavec, &disk_params);
-    fprintf(stderr, "DEBUG [main]: Perem calls completed for initial profile.\n");
+    fprintf(stderr, "DEBUG [main]: ReadSigmaFile completed. Calling calculate_boundary for disk_params.rvec and disk_params.sigmavec...\n");
+    calculate_boundary(disk_params.rvec, &disk_params);
+    calculate_boundary(disk_params.sigmavec, &disk_params);
+    fprintf(stderr, "DEBUG [main]: calculate_boundary calls completed for initial profile.\n");
 
     // Print current information
     fprintf(stderr, "DEBUG [main]: Calling infoCurrent...\n");

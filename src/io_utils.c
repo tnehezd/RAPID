@@ -172,10 +172,10 @@ void ReadSigmaFile(disk_t *disk_params, const char *filename) {
         }
 
         // Hozzárendelés a disk_params tömbökhöz
-        // Az indexelés 'i + 1' a 0-ás indexű szellemcella miatt (ahogy a disk_t definíciója és a Perem függvény valószínűsíti).
+        // Az indexelés 'i + 1' a 0-ás indexű szellemcella miatt (ahogy a disk_t definíciója és a calculate_boundary függvény valószínűsíti).
         // Fontos: ellenőrizzük, hogy az 'i + 1' index a tömb határain belül van-e.
         // A tömbök mérete disk_params->NGRID + 2, tehát az érvényes indexek 0-tól NGRID+1-ig mennek.
-        // A "valós" adatok 1-től NGRID-ig kerülnek, a 0 és NGRID+1 pedig a Perem-hez.
+        // A "valós" adatok 1-től NGRID-ig kerülnek, a 0 és NGRID+1 pedig a calculate_boundary-hez.
         if ((i + 1) >= 0 && (i + 1) <= disk_params->NGRID + 1) { 
             disk_params->rvec[i + 1] = r_val;
             disk_params->sigmavec[i + 1] = sigma_gas_val;

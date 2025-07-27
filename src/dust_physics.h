@@ -11,6 +11,18 @@
 // Ha a config.h includolva van a dust_physics.c-ben, és ott vannak definiálva,
 // akkor ezeket az extern deklarációkat elhagyhatod innen.
 
+/**
+ * @brief Reads and calculates derived disk parameters.
+ *
+ * This function initializes and sets up the fundamental parameters of the disk
+ * within the `disk_t` structure. It may involve converting input parameters
+ * to the appropriate internal units or calculating derived dimensionless quantities.
+ *
+ * @param disk_params Pointer to the `disk_t` structure where parameters are stored.
+ */
+void read_disk_parameters(disk_t *disk_params);
+
+
 void initial_dust_surface_density_profile(double radin[][2], double *massin, double out[][3], int n, const disk_t *disk_params);
 
 /*	alpha turbulens paraméter kiszámolása	*/
@@ -18,13 +30,6 @@ double calculate_turbulent_alpha(double r, const disk_t *disk_params);
 
 /*	kiszamolja az adott reszecskehez tartozo Stokes szamot	*/
 double Stokes_Number(double pradius, double sigma, disk_t *disk_params);
-
-
-/*	u_gas kiszamolasahoz eltarolt koefficiens	*/
-double Coeff_3(double sigma, double r); // Feltételezve, hogy Coeff_3 a dust_physics.c-ben van
-
-/*	u_gas = -3/(Sigma*R^0.5)*(d/dR)(nu*Sigma*R^0.5) kiszamolasa	*/
-void u_gas(disk_t *disk_params); // disk_params nem const, mert módosítva van az ugvec tagja
 
 // GetMass függvény prototípusa
 void GetMass(int n, double (*partmassind)[5], int indii, int indio, int indoi, int indoo, double *massiout, double *massoout, const simulation_options_t *sim_opts);
@@ -44,10 +49,6 @@ void Get_Sigmad(double max_param, double min_param, double rad[][2], double radm
                 double *sigma_d, double *sigma_dm, double *massvec,
                 double *massmicrvec,double *rd, double *rmic,
                 const simulation_options_t *sim_opts, const disk_t *disk_params);
-
-/*	Fuggveny a sigma, p, dp kiszamolasara	*/
-// disk_params nem const, mert módosítva van a sigmavec, pressvec, dpressvec tagjai
-void Get_Sigma_P_dP(const simulation_options_t *sim_opts, disk_t *disk_params);
 
 /*	Fuggveny a porszemcsek uj tavolsaganak elraktarozasara		*/
 void Get_Radius(const char *nev, int opt, double radius[][2], const double *sigmad, const double *rdvec,

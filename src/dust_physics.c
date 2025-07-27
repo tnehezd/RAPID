@@ -15,12 +15,26 @@
 #include "simulation_core.h" // int_step, Perem, find_num_zero, find_zero, find_r_annulus függvényekhez
 #include "utils.h"           // find_min függvényhez
 
-
 // Globális változó deklarációk, ha nem lennének meg máshol (pl. config.h)
 // Fontos: ezeknek a típusoknak egyezniük kell a config.h-ban deklaráltakkal!
 // Ha már szerepelnek a config.h-ban, akkor ezeket innen törölni kell,
 // vagy csak az extern kulcsszót meghagyni!
 
+
+/* EZT INNNEN KI KELL SZEDNI!!! */
+
+void read_disk_parameters(disk_t *disk_params) {
+    // Check for NULL pointer
+    if (disk_params == NULL) {
+        fprintf(stderr, "ERROR [read_disk_parameters]: Received NULL disk_params pointer.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    fprintf(stderr, "Calculating derived disk parameters and writing to output file.\n");
+
+    // Convert particle density to a dimensionless form
+    disk_params->PDENSITYDIMLESS = disk_params->PDENSITY / SUN_MASS_TO_GRAMS * AU_TO_CM * AU_TO_CM * AU_TO_CM;
+}
 
 void initial_dust_surface_density_profile(double radin[][2], double *massin, double out[][3], int n, const disk_t *disk_params) {
 
@@ -47,8 +61,6 @@ void initial_dust_surface_density_profile(double radin[][2], double *massin, dou
     }
 }
 
-
-
 /*	alpha turbulens paraméter kiszámolása --> alfa csökkentése alpha_r-rel	*/
 double calculate_turbulent_alpha(double r, const disk_t *disk_params) {
     double alpha_r;
@@ -61,49 +73,6 @@ double calculate_turbulent_alpha(double r, const disk_t *disk_params) {
 double Stokes_Number(double pradius, double sigma, disk_t *disk_params) { /*	in the Epstein drag regime	*/
     return disk_params->PDENSITYDIMLESS * pradius * M_PI / (2.0 * sigma);
 }
-
-
-
-/*	u_gas kiszamolasahoz eltarolt koefficiens	*/
-double Coeff_3(double sigma, double r) {
-    return -1.0 * (3.0 / (sigma * sqrt(r)));
-}
-
-/*	u_gas = -3/(Sigma*R^0.5)*(d/dR)(nu*Sigma*R^0.5) kiszamolasa	*/
-void u_gas(disk_t *disk_params) {
-
-    double tempug;
-    // Lokális tömbök, méret NGRID-hez igazítva disk_params-ból
-    double ugvec[disk_params->NGRID + 2];
-    double ugvectemp[disk_params->NGRID + 1]; // Eredeti kód NGRID+1-et használt
-
-    int i;
-
-    // Első ciklus: feltölti a lokális ugvec tömböt
-    #pragma omp parallel for private(i)
-    for (i = 0; i <= disk_params->NGRID + 1; i++) { // Használd a disk_params->NGRID-et
-        // Hozzáférés a disk_params tagjaihoz
-        ugvec[i] = disk_params->sigmavec[i] * calculate_gas_viscosity(disk_params->rvec[i], disk_params) * sqrt(disk_params->rvec[i]);
-        // Megjegyzés: A sqrt() függvénynek általában csak egy double paramétere van.
-        // Ha valami komplexebb számítást akarsz, akkor lehet, hogy egy saját
-        // függvényt hívsz, amihez disk_params is kell. Ellenőrizd a sqrt prototípusát!
-    }
-
-    // Második ciklus: feltölti a lokális ugvectemp tömböt
-    #pragma omp parallel for private(i, tempug)
-    for (i = 1; i <= disk_params->NGRID; i++) { // Használd a disk_params->NGRID-et
-        tempug = (ugvec[i + 1] - ugvec[i - 1]) / (2.0 * disk_params->DD); // Használd a disk_params->DD-t
-        // Coeff_3 hívása, ha szükséges, átadva neki a disk_params-ot
-        ugvectemp[i] = Coeff_3(disk_params->sigmavec[i], disk_params->rvec[i]) * tempug;
-    }
-
-    // Harmadik ciklus: Az eredményt bemásolja a disk_params->ugvec-be
-    for (i = 1; i <= disk_params->NGRID; i++) { // Használd a disk_params->NGRID-et
-        disk_params->ugvec[i] = ugvectemp[i]; // Így éri el a struktúrán belüli ugvec-et
-    }
-}
-
-
 
 void GetMass(int n, double (*partmassind)[5], int indii, int indio, int indoi, int indoo, double *massiout, double *massoout, const simulation_options_t *sim_opts) {
 
@@ -255,9 +224,6 @@ double getSize(double prad, double pdens, double sigma, double sigmad, double y,
     return rt;
 }
 
-
-
-
 void Get_Sigmad(double max_param, double min_param, double rad[][2], double radmicr[][2], 
                 double *sigma_d, double *sigma_dm,  double *massvec, double *massmicrvec,  
                 double *rd, double *rmic, const simulation_options_t *sim_opts, const disk_t *disk_params) {
@@ -310,65 +276,6 @@ void Get_Sigmad(double max_param, double min_param, double rad[][2], double radm
             sigma_dm[i] = sigdmicrtemp[i][0];
         }
     }
-}
-
-
-/*	Fuggveny a sigma, p, dp kiszamolasara	*/
-void Get_Sigma_P_dP(const simulation_options_t *sim_opts, disk_t *disk_params) { // Added sim_opts
-
-    double u, u_bi, u_fi;
-    double sigma_temp[disk_params->NGRID + 2]; // Use disk_params->NGRID
-    double uvec[disk_params->NGRID + 2];     // Use disk_params->NGRID
-
-    int i;
-
-    // Boundary conditions - access via disk_params
-    sigma_temp[0] = disk_params->sigmavec[0];
-    sigma_temp[disk_params->NGRID + 1] = disk_params->sigmavec[disk_params->NGRID + 1];
-
-    // uvec temporary array initialization
-    uvec[0] = disk_params->sigmavec[0] * calculate_gas_viscosity(disk_params->rvec[0], disk_params); // Use disk_params->rvec
-    uvec[disk_params->NGRID + 1] = disk_params->sigmavec[disk_params->NGRID + 1] * calculate_gas_viscosity(disk_params->rvec[disk_params->NGRID + 1], disk_params); // Use disk_params->rvec
-
-    #pragma omp parallel for
-    for(i = 1; i <= disk_params->NGRID; i++) { // Use disk_params->NGRID
-        uvec[i] = disk_params->sigmavec[i] * calculate_gas_viscosity(disk_params->rvec[i], disk_params); // Use disk_params->sigmavec and disk_params->rvec
-    }
-
-    // This loop is critical due to data dependencies. Keep it sequential for correctness
-    for (i = 1; i <= disk_params->NGRID; i++) { // Use disk_params->NGRID
-        u = uvec[i];
-        u_bi = uvec[i - 1];
-        u_fi = uvec[i + 1];
-
-        // Access DD and deltat through the appropriate structs
-        // Assuming Coeff_1 and Coeff_2 also take disk_params (and sim_opts if they need it)
-        double temp = Coeff_1(disk_params->rvec[i], disk_params) * (u_fi - 2.0 * u + u_bi) / (disk_params->DD * disk_params->DD) +
-                      Coeff_2(disk_params->rvec[i], disk_params) * (u_fi - u_bi) / (2.0 * disk_params->DD);
-        
-        sigma_temp[i] = uvec[i] + sim_opts->DT * temp; // Use sim_opts->DT for deltat
-    }
-
-    // This loop is parallelizable
-    #pragma omp parallel for
-    for (i = 1; i <= disk_params->NGRID; i++) { // Use disk_params->NGRID
-        // Update disk_params' own arrays
-        disk_params->sigmavec[i] = sigma_temp[i] / calculate_gas_viscosity(disk_params->rvec[i], disk_params);
-        disk_params->pressvec[i] = calculate_gas_pressure(disk_params->sigmavec[i], disk_params->rvec[i], disk_params); // Assuming press takes disk_params
-    }
-
-    // These calls likely remain sequential or require their own internal OpenMP if large
-    // If Perem, dpress also update members of disk_params, they should take disk_params as a parameter.
-    // And if they are modifying the *content* of the arrays within disk_params, then disk_params should NOT be const in *their* parameter list.
-    // However, since Get_Sigma_P_dP is modifying them, disk_params *here* cannot be const.
-    // Let's remove 'const' from disk_params in Get_Sigma_P_dP signature if it modifies them.
-    // void Get_Sigma_P_dP(disk_t *disk_params, const simulation_options_t *sim_opts) { ... }
-    
-    // Assuming these helper functions need disk_params to access *its* internal arrays
-    dpress(disk_params); // Assuming dpress takes arrays and disk_params
-	Perem(disk_params->sigmavec, disk_params); // First argument is the array, second is the disk_t pointer
-	Perem(disk_params->pressvec, disk_params);
-	Perem(disk_params->dpressvec, disk_params);
 }
 
 /*	Fuggveny a porszemcsek uj tavolsaganak elraktarozasara		*/
