@@ -11,55 +11,49 @@
 
 // Globális változók deklarációi, ha az io_utils.c fájlban definiálva vannak.
 // Ezeknek EGYEZNIÜK KELL a src/config.h-ban lévő extern deklarációkkal.
-extern FILE *fin1;
+extern FILE *fin1; // Valószínűleg a régi ReadDustFile használja
 
 // --- FÜGGVÉNY DEKLARÁCIÓK ---
 
 /* reszecskek_szama függvény deklaráció */
 int reszecskek_szama(const char *filenev);
 
-/* A porreszecskek adatainak beolvasasa */
+/* A porreszecskek adatainak beolvasasa (régi verzió, globális file_in-t és PARTICLE_NUMBER-t használhatja) */
 void ReadDustFile(double radius[][2], double radiusmicr[][2], double *mass, double *massmicr, const char *filename);
+
+/* A porreszecskek adatainak beolvasasa (ÚJ verzió, ParticleData_t struktúrával) */
+// Ez a függvény tölti fel a ParticleData_t struktúrában lévő adatokat.
+// A fájlnevet kapja paraméterül, és a beolvasott részecskeszámot is felhasználhatja (pl. a reszecskek_szama függvényből).
+// A disk_params és sim_opts paraméterek opcionálisak lehetnek, de jó, ha a függvény kontextust kap a szimulációról.
+void ReadDustFile_V2(ParticleData_t *p_data, const char *filename,
+                     const disk_t *disk_params, simulation_options_t *sim_opts); // REMOVED CONST
 
 /* A sigmat tartalmazo file parametereinek beolvasasa */
 void ReadSigmaFile(disk_t *disk_params, const char *filename);
 
 /* Fuggveny az adott futashoz mappa letrehozasara */
-void Mk_Dir(char *dir_path);
+void Mk_Dir(char *dir_path); // Megfontolandó: const char* dir_path, ha nem módosítja
 
 /* Elkeszit egy file-t, ami tartalmazza a jelenlegi futas parametereit, es hogy melyik mappaban talalhatoak a file-ok */
 // FIX: The original had 'void infoCurrent(const char *nev);'
 // You are missing 'const disk_t *disk_params' and 'const simulation_options_t *sim_opts'.
 void infoCurrent(const char *nev, const disk_t *disk_params, const simulation_options_t *sim_opts);
 
-/* Fuggveny a tomegfile kiiratasara */
-// FIX: The original was missing 'const disk_t *disk_params' and 'const simulation_options_t *sim_opts'.
-void Print_Mass(double step, 
-                double (*partmassind)[5], double (*partmassmicrind)[5], 
-                double t, // Ezt továbbra is meghagyjuk, ha az időre szükség van
-                double massbtempii, double massbtempoi, double massmtempii, double massmtempoi, 
-                double *massbtempio, double *massbtempoo, double *massmtempio, double *massmtempoo, 
-                double *tavin, double *tavout, 
-                const disk_t *disk_params, const simulation_options_t *sim_opts,
-                output_files_t *output_files);
 
 /* Fuggveny a sigma, p, dp kiiratasara */
 // FIX: The original was missing 'const disk_t *disk_params'.
 void Print_Sigma(const disk_t *disk_params, output_files_t *output_files);
 
-/* Fuggveny a por feluletisurusegenek kiiratasara */
-// FIX: The original was missing 'const disk_t *disk_params' and 'const simulation_options_t *sim_opts'.
-void Print_Sigmad(int step, double (*rad)[2], double (*radmicr)[2], const double *r, const double *rm, 
-                  const double *sigmad, const double *sigmadm,double (*partmassind)[5], double (*partmassmicrind)[5],
-                  const disk_t *disk_params, const simulation_options_t *sim_opts,
+
+void Print_Sigmad(int step,
+                  const ParticleData_t *p_data, // Itt adjuk át a ParticleData_t struktúrát
+                  const disk_t *disk_params,
+                  const simulation_options_t *sim_opts,
                   output_files_t *output_files);
 
 /* Az idot tartalmazo file parametereinek beolvasasa (vagy beallitasa) */
 // FIX: The original was missing 'simulation_options_t *sim_opts'.
 void timePar(double tMax_val, double stepping_val, double current_val, simulation_options_t *sim_opts);
-
-
-
 
 
 // Enumeráció a fájltípusok azonosítására
@@ -78,7 +72,7 @@ typedef enum {
 
 // Struktúra a fejléc-specifikus adatoknak
 typedef struct {
-    double current_time;    // Jelenlegi szimulációs idő (pl. években)
+    double current_time;     // Jelenlegi szimulációs idő (pl. években)
     int is_initial_data;    // 1, ha t=0, 0, ha szimulált időpont
     // Ide tehetsz más adatokat is, ami a fejléchez kellhet, pl. R_in, R_out
     double R_in;
@@ -106,7 +100,7 @@ void print_file_header(FILE *file, FileType_e file_type, const HeaderData_t *hea
 
 // Függvény a kezdeti kimeneti fájlok beállítására és fejlécek írására
 int setup_initial_output_files(output_files_t *output_files, const simulation_options_t *sim_opts,
-                               const disk_t *disk_params, HeaderData_t *header_data_for_files);
+                                 const disk_t *disk_params, HeaderData_t *header_data_for_files);
 
 
 void cleanup_simulation_resources(ParticleData_t *p_data, output_files_t *output_files, const simulation_options_t *sim_opts);
@@ -115,4 +109,3 @@ void close_snapshot_files(output_files_t *output_files, const char *dens_name, c
 
 
 #endif // IO_UTILS_H
-

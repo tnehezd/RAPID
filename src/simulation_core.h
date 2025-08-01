@@ -63,7 +63,12 @@ double time_step(const disk_t *disk_params);
  * @param disk_params A diszk paramétereit tartalmazó struktúra.
  * @param sim_opts A szimulációs opciókat tartalmazó struktúra.
  */
-void int_step(double time, double prad, const double *sigmad, const double *rdvec, double step, double y, double *ynew, double *pradnew, const disk_t *disk_params, const simulation_options_t *sim_opts);
+// **CRITICAL: Update this prototype to match your int_step implementation**
+void int_step(double time, double psize, double current_r, // particle's current size and distance_au
+              double step, double *new_prad_ptr, double *new_psize_ptr,
+              const double *aggregated_sigmad, const double *aggregated_rdvec, // Aggregated dust density & radii from disk_t or similar
+              int num_grid_points, double grid_dd, double grid_rmin, // Parameters for interpolation grid
+              const disk_t *disk_params, const simulation_options_t *sim_opts);
 
 /**
  * @brief A fő időintegrációs ciklus.

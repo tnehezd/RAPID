@@ -15,29 +15,6 @@
 
 #define MAX_PATH_LEN 16384 // Define a maximum length for file paths
 
-/**
- * @brief Represents a single dust particle in the simulation.
- */
-typedef struct {
-    double r;        ///< Radial distance from star (AU)
-    double prad;     ///< Particle radius (cm)
-    double reppmass; ///< Representative particle mass (mass of the material this particle represents)
-    // Add any other per-particle properties here, e.g.:
-    // double velocity_r; ///< Radial velocity if you track it explicitly
-    // int    index_in_grid; ///< Or calculated on the fly
-} particle_t;
-
-/**
- * @brief Represents a collection of particles of a certain type (e.g., cm-sized, micron-sized).
- */
-typedef struct {
-    particle_t *particles;   ///< Pointer to an array of particle_t structures
-    int num_particles;       ///< Number of particles in this specific population
-
-    // If needed, specific properties for the population itself:
-    // double total_mass; ///< Total mass represented by this population
-    // double initial_mass; ///< Initial total mass for comparison
-} dust_population_t;
 
 /**
  * @brief Encapsulates all global disk parameters and dynamically allocated arrays.
