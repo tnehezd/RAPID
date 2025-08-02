@@ -61,6 +61,8 @@ typedef struct disk_t {
     // Note: The `rhopvec` from your original comments might refer to local midplane dust density,
     // which would be derived from `sigmadustvec` and disk scale height.
     // If it's a separate array of values, ensure its purpose is distinct.
+    double eps;        // Dust-to-gas ratio (por-gáz arány)
+
 
     // Dust coagulation/fragmentation parameters
     double fFrag;           ///< Fragmentation efficiency factor (f_frag in Birnstiel 2012)

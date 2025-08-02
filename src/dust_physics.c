@@ -150,52 +150,46 @@ double calculate_turbulent_alpha(double r, const disk_t *disk_params) {
 // sigma_msun_au2: A gáz felületi sűrűsége M_Sun/AU^2-ben érkezik (ahogy a sigmavec-ben is tárolva van)
 // pradius_cm: A részecske sugara CM-ben érkezik (ahogy a disk_params->PDENSITY is g/cm^3)
 // disk_params: A diszk paraméterei, amiben a G_GRAV_CONST, STAR_MASS, PDENSITY vannak.
-double Stokes_Number(double pradius_cm, double sigma_msun_au2, double r_au, const disk_t *disk_params) {
+
+double Stokes_Number(double pradius_au, double sigma_msun_au2, double r_au, const disk_t *disk_params) {
 
     // --- Konverziók CGS egységrendszerbe a számításhoz ---
 
-    // Konvertáljuk a sugárt AU-ból cm-re
-    double r_cm = r_au * LOCAL_AU_TO_CM;
+    // 1. Részecske sugara: AU -> cm
+    double pradius_cm = pradius_au * AU_TO_CM; // AU_TO_CM: 1.495978707e13
 
-    // Konvertáljuk a gáz felületi sűrűségét M_Sun/AU^2-ből g/cm^2-be
-    double sigma_g_cm2 = sigma_msun_au2 * LOCAL_SUN_MASS_TO_GRAMS / (LOCAL_AU_TO_CM * LOCAL_AU_TO_CM);
+    // 2. Radiális távolság: AU -> cm
+    double r_cm = r_au * AU_TO_CM;
 
-    // A részecske belső sűrűsége már g/cm^3-ben van (disk_params->PDENSITY), tehát ok.
-    double rho_s_g_cm3 = disk_params->PDENSITY;
+    // 3. Gáz felületi sűrűség: M_Sun/AU^2 -> g/cm^2
+    //    1 M_Sun = SUN_MASS_TO_GRAMS g (1.98847e33 g)
+    //    1 AU^2 = (AU_TO_CM)^2 cm^2
+    double sigma_g_cm2 = sigma_msun_au2 * SUN_MASS_TO_GRAMS / (AU_TO_CM * AU_TO_CM);
 
-    // --- Számoljuk ki a szükséges gáz paramétereket CGS-ben ---
-    // Ehhez a calculate_keplerian_angular_velocity és calculate_local_sound_speed
-    // függvényeknek is CGS-ben kellene eredményt adniuk,
-    // VAGY belül kellene konvertálnunk őket.
+    // 4. Részecske belső sűrűsége: g/cm^3 (feltételezzük, hogy disk_params->PDENSITY már ebben van)
+    double rho_s_g_cm3 = disk_params->PDENSITY; // Ezt az értéket ellenőrizd! Pl. 3.0 g/cm^3
 
-    // HA a calculate_keplerian_angular_velocity (és a többi) G=1, M_star=1 egységben számol:
-    // Akkor az eredménye rad / belső időegység lesz.
-    // Ezt kell átkonvertálni rad/s-be.
-    double omega_k_internal = calculate_keplerian_angular_velocity(r_au, disk_params); // rad / belső időegység
-    double omega_k_rad_s = omega_k_internal / LOCAL_INTERNAL_TIME_TO_SEC; // rad / s
+    // 5. Kepler-sebesség (vagy szögsebesség): AU/time_unit -> cm/s
+    //    calculate_keplerian_angular_velocity(r_au, disk_params) feltételezhetően 1/time_unit-ban adja az eredményt (pl. 2pi/év ha G=1, M=1, R=1 AU a periódus)
+    //    Ezt át kell váltani rad/s-be.
+    double omega_k_internal_units = calculate_keplerian_angular_velocity(r_au, disk_params);
+    double omega_k_rad_s = omega_k_internal_units / INTERNAL_TIME_TO_SEC; // INTERNAL_TIME_TO_SEC: 31557600.0 / (2.0 * PI)
 
-    // Hasonlóan a hangsebességgel. Ha AU/belső időegységben van, konvertálni cm/s-be:
-    double csound_internal = calculate_local_sound_speed(r_au, disk_params); // AU / belső időegység
-    double csound_cm_s = csound_internal * LOCAL_AU_TO_CM / LOCAL_INTERNAL_TIME_TO_SEC; // cm / s
-
-    // A skála magasság is AU-ban van (calculate_scale_height). Konvertálni cm-be:
-    double H_scale_au = calculate_scale_height(r_au, disk_params); // AU
-    double H_scale_cm = H_scale_au * LOCAL_AU_TO_CM; // cm
+    // 6. Hangsebesség: AU/time_unit -> cm/s
+    //    calculate_local_sound_speed(r_au, disk_params) feltételezhetően AU/time_unit-ban adja az eredményt
+    //    Ezt át kell váltani cm/s-be.
+    double csound_au_per_timeunit = calculate_local_sound_speed(r_au, disk_params);
+    double csound_cm_s = csound_au_per_timeunit * AU_TO_CM / INTERNAL_TIME_TO_SEC;
 
     // --- Ellenőrzés nullával való osztás előtt ---
-    if (sigma_g_cm2 <= 0.0 || csound_cm_s <= 0.0 || H_scale_cm <= 0.0 || omega_k_rad_s <= 0.0) {
-        fprintf(stderr, "ERROR [Stokes_Number]: Invalid gas/disk parameters detected in CGS (sigma_g_cm2: %.2e, csound_cm_s: %.2e, H_scale_cm: %.2e, omega_k_rad_s: %.2e, r_au: %.2e).\n",
-                sigma_g_cm2, csound_cm_s, H_scale_cm, omega_k_rad_s, r_au);
-        return 0.0; // Hibakezelés: visszaad 0.0-t vagy egy nagyon nagy értéket
+    if (sigma_g_cm2 <= 0.0 || csound_cm_s <= 0.0 || omega_k_rad_s <= 0.0) { // H_scale_cm nem kell ehhez a képlethez
+        fprintf(stderr, "ERROR [Stokes_Number]: Invalid CGS parameters for calculation (sigma_g_cm2: %.2e, csound_cm_s: %.2e, omega_k_rad_s: %.2e, r_au: %.2e).\n",
+                sigma_g_cm2, csound_cm_s, omega_k_rad_s, r_au);
+        return 0.0;
     }
 
     // --- A Stokes-szám Képlete (Epstein-ellenállás) CGS egységekben ---
     // St = (rho_s * a / Sigma_g) * (Omega_K * r / c_s)
-    // Megjegyzés: a (Omega_K * r / c_s) tag kb. (v_Kepler / c_s).
-    // Mivel c_s = Omega_K * H, ezért (Omega_K * r / c_s) = (r / H) is.
-    // Használhatjuk az (r / H) formát is, ha az egyszerűbb a konverziók után.
-    // Most az Omega_K * r / c_s formát használom, mivel az is számolt paraméter.
-
     double Stokes = (rho_s_g_cm3 * pradius_cm / sigma_g_cm2) * (omega_k_rad_s * r_cm / csound_cm_s);
 
     return Stokes;
@@ -279,14 +273,16 @@ double getSize(double prad, double pdens, double sigma, double sigmad, double y,
         rt = smin;
     }
 
+    rt = rt;
     return rt;
 }
 
 // A Get_Sigmad függvény módosított implementációja
 void Get_Sigmad(const ParticleData_t *p_data, disk_t *disk_params, const simulation_options_t *sim_opts) {
-    // Ideiglenes tömbök a calculate_dust_surface_density_profile számára.
-    // Ezeket a disk_params->sigmadustvec fogja felvenni a végén.
-    // A disk_params->rvec már adott.
+
+    // Az EREDETI KÓD, amit ideiglenesen KI KELL KOMMENTELNI vagy törölni,
+    // ha a fenti override-ot akarod használni.
+    
     double *sigma_d_temp = (double *)calloc(disk_params->NGRID, sizeof(double));
     double *sigma_dm_temp = (double *)calloc(disk_params->NGRID, sizeof(double));
 
@@ -297,11 +293,6 @@ void Get_Sigmad(const ParticleData_t *p_data, disk_t *disk_params, const simulat
         exit(EXIT_FAILURE);
     }
 
-    // A radin[][2] és massin[] tömbök előkészítése a calculate_dust_surface_density_profile számára.
-    // Ennek a függvénynek a bemenete a régi formátumban van (double[][2]),
-    // ezért átmenetileg konvertálnunk kell a dust_particle_t adatokból.
-
-    // Csak akkor allokálunk és töltünk fel, ha valóban vannak részecskék.
     if (p_data->num_particles_pop1 > 0) {
         double (*rad_pop1_2d)[2] = (double (*)[2])calloc(p_data->num_particles_pop1, sizeof(double[2]));
         double *mass_pop1_1d = (double *)calloc(p_data->num_particles_pop1, sizeof(double));
@@ -315,7 +306,7 @@ void Get_Sigmad(const ParticleData_t *p_data, disk_t *disk_params, const simulat
 
         for (int i = 0; i < p_data->num_particles_pop1; i++) {
             rad_pop1_2d[i][0] = p_data->particles_pop1[i].distance_au;
-            rad_pop1_2d[i][1] = p_data->particles_pop1[i].current_size_cm; // Vagy valamilyen dummy, ha nem használnánk a [][1] oszlopot
+            rad_pop1_2d[i][1] = p_data->particles_pop1[i].current_size_au;
             mass_pop1_1d[i] = p_data->particles_pop1[i].initial_mass_msun;
         }
 
@@ -327,7 +318,6 @@ void Get_Sigmad(const ParticleData_t *p_data, disk_t *disk_params, const simulat
         free(mass_pop1_1d);
     }
 
-    // Ha two-pop szimuláció van, a mikronos porra is kiszámoljuk.
     if (sim_opts->twopop == 1.0 && p_data->num_particles_pop2 > 0) {
         double (*rad_pop2_2d)[2] = (double (*)[2])calloc(p_data->num_particles_pop2, sizeof(double[2]));
         double *mass_pop2_1d = (double *)calloc(p_data->num_particles_pop2, sizeof(double));
@@ -341,11 +331,11 @@ void Get_Sigmad(const ParticleData_t *p_data, disk_t *disk_params, const simulat
 
         for (int i = 0; i < p_data->num_particles_pop2; i++) {
             rad_pop2_2d[i][0] = p_data->particles_pop2[i].distance_au;
-            rad_pop2_2d[i][1] = p_data->particles_pop2[i].current_size_cm;
+            rad_pop2_2d[i][1] = p_data->particles_pop2[i].current_size_au;
             mass_pop2_1d[i] = p_data->particles_pop2[i].initial_mass_msun;
         }
 
-        calculate_dust_surface_density_profile(sigma_dm_temp, disk_params->rvec, // disk_params->rvec is good for this too
+        calculate_dust_surface_density_profile(sigma_dm_temp, disk_params->rvec,
                                                rad_pop2_2d, mass_pop2_1d,
                                                p_data->num_particles_pop2, disk_params->NGRID, disk_params);
 
@@ -353,21 +343,17 @@ void Get_Sigmad(const ParticleData_t *p_data, disk_t *disk_params, const simulat
         free(mass_pop2_1d);
     }
 
-    // Másoljuk át a kiszámolt sűrűségeket a disk_params megfelelő tömbjébe.
-    // Itt feltételezem, hogy a disk_params tartalmazza a sigmadustvec tömböt.
-    // Ha van külön tömb a mikronos pornak, azt is itt kell feltölteni (pl. sigmadustmicrvec).
     for (int i = 0; i < disk_params->NGRID; i++) {
         disk_params->sigmadustvec[i] = sigma_d_temp[i];
-        // Ha van külön tömb a mikronos pornak a disk_t-ben, azt is itt töltenénk fel:
-        // disk_params->sigmadustmicrvec[i] = sigma_dm_temp[i];
+        // disk_params->sigmadustmicrvec[i] = sigma_dm_temp[i]; // Ha van ilyen tömb
     }
 
     free(sigma_d_temp);
     free(sigma_dm_temp);
+    
 }
 
 
-// Módosított Get_Radius függvény implementációja
 void Get_Radius(dust_particle_t *particles_array, int num_particles, double deltat, double t,
                 const simulation_options_t *sim_opts, const disk_t *disk_params) {
 
@@ -389,70 +375,74 @@ void Get_Radius(dust_particle_t *particles_array, int num_particles, double delt
     // End DEBUG PRINTS
 
     if (particles_array == NULL || num_particles <= 0) {
-        // fprintf(stderr, "WARNING [Get_Radius]: No particles or null array passed. Skipping calculations.\n");
         return;
     }
 
     const double *aggregated_sigmad_ptr = disk_params->sigmadustvec;
-    const double *aggregated_rdvec_ptr = disk_params->rvec; // A grid sugártömb
+    const double *aggregated_rdvec_ptr = disk_params->rvec;
     int num_grid_points = disk_params->NGRID;
-    double grid_dd = disk_params->DD; // disk_params->DD a rács lépésköze
+    double grid_dd = disk_params->DD;
     double grid_rmin = disk_params->RMIN;
+    double grid_rmax = disk_params->RMAX; // Fontos: használd a RMAX-ot is!
 
-    // **ITT A PÁRHUZAMOSÍTÁS!**
     #pragma omp parallel for
     for (int i = 0; i < num_particles; ++i) {
-        // If a particle falls outside RMIN or RMAX, or its size/distance is invalid (0.0 or less),
-        // we set its properties to 0.0 and SKIP further calculations for THIS particle in THIS timestep.
-        if (particles_array[i].distance_au <= disk_params->RMIN ||
-            particles_array[i].distance_au >= disk_params->RMAX ||
-            particles_array[i].current_size_cm <= 0.0 || // Added check for zero or negative size
-            particles_array[i].distance_au <= 0.0) {     // Added check for zero or negative distance
 
+        // --- 1. Korai "halál" check: ha a részecske mérete 0.0, akkor halott.
+        // Ezt a "kill" flag-et az előző lépésben állítottuk be, ha RMIN/RMAX-on kívülre került.
+        if (particles_array[i].current_size_au <= 0.0) {
+            // Már halott, biztosítsuk, hogy a távolsága és sebessége is 0.0 legyen.
             particles_array[i].distance_au = 0.0;
-            particles_array[i].current_size_cm = 0.0;
             particles_array[i].size_reciprocal = 0.0;
-            // No need to set initial_mass_msun to 0 here, as it's typically set once at init.
-            // If a particle is "dead" its mass contribution to density calculation should be zero.
-            // That's handled in Get_Sigmad when preparing rad_pop_2d and mass_pop_1d arrays.
-            continue; // IMPORTANT: Skip to the next particle in the loop
+            particles_array[i].drdt = 0.0; // Biztosítsuk, hogy a sebessége is 0 legyen
+            continue; // Ugrás a következő részecskére, nem dolgozzuk fel tovább.
         }
 
         double current_r = particles_array[i].distance_au;
-        double current_particle_size = particles_array[i].current_size_cm;
+        double current_particle_size = particles_array[i].current_size_au;
 
-        double new_r = 0.0; // int_step will update this
-        double new_size = current_particle_size; // int_step will update this (if growth=1)
+        double new_r = 0.0; // int_step fogja frissíteni
+        double new_size = current_particle_size; // int_step fogja frissíteni (ha growth=1)
 
         // Calling int_step with current data and freshly calculated sigmad values
-        int_step(t,                                  // double time
-                 current_particle_size,              // double psize
-                 current_r,                          // double current_r
-                 deltat,                             // double step
-                 &new_r,                             // double *new_prad_ptr (pointer to new radial position)
-                 &new_size,                          // double *new_psize_ptr (pointer to new particle size)
-                 aggregated_sigmad_ptr,              // const double *aggregated_sigmad
-                 aggregated_rdvec_ptr,               // const double *aggregated_rdvec
-                 num_grid_points,                    // int num_grid_points
-                 grid_dd,                            // double grid_dd
-                 grid_rmin,                          // double grid_rmin
-                 disk_params,                        // const disk_t *disk_params
-                 sim_opts);                          // const simulation_options_t *sim_opts
-
+        int_step(t,
+                 current_particle_size,
+                 current_r,
+                 deltat,
+                 &new_r, // pointer to new radial position
+                 &new_size, // pointer to new particle size
+                 aggregated_sigmad_ptr,
+                 aggregated_rdvec_ptr,
+                 num_grid_points,
+                 grid_dd,
+                 grid_rmin,
+                 disk_params,
+                 sim_opts);
 
         // Update particle's position and size
         particles_array[i].distance_au = new_r;
 
         // Only update size if growth is enabled
         if (sim_opts->growth == 1.0) {
-            particles_array[i].current_size_cm = new_size;
+            particles_array[i].current_size_au = new_size;
             // Update reciprocal value too
-            if (particles_array[i].current_size_cm > 0.0) {
-                particles_array[i].size_reciprocal = 1.0 / particles_array[i].current_size_cm;
+            if (particles_array[i].current_size_au > 0.0) {
+                particles_array[i].size_reciprocal = 1.0 / particles_array[i].current_size_au;
             } else {
                 particles_array[i].size_reciprocal = 0.0;
             }
         }
         // If growth is not enabled, particle size remains unchanged.
+
+        // --- 2. Klampelés ÉS "Halál" folyamat az int_step FUTÁSA UTÁN ---
+        // Ha az új pozíció RMIN alá vagy RMAX fölé esik, "öjük meg" a részecskét.
+        if (particles_array[i].distance_au <= grid_rmin || particles_array[i].distance_au >= grid_rmax) {
+            fprintf(stderr, "DEBUG [Get_Radius]: Particle %d (R=%.4e AU) went out of bounds (RMIN=%.4e, RMAX=%.4e). Killing it.\n",
+                            i, particles_array[i].distance_au, grid_rmin, grid_rmax);
+            particles_array[i].distance_au = 0.0;
+            particles_array[i].current_size_au = 0.0; // Ez a fő "kill" flag a következő lépéshez
+            particles_array[i].size_reciprocal = 0.0;
+            particles_array[i].drdt = 0.0; // Fontos: reseteld a sebességet is
+        }
     }
 }

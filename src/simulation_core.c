@@ -55,7 +55,7 @@ void eqrhs(double prad, double dp, double sigma, double ug, double r, double *dr
 
 
 
-    fprintf(stderr, "DEBUG [eqrhs]: Calculated intermediates: St=%.10lg, H=%.10lg, P=%.10lg, dPdr=%.10lg, csound=%.10lg\n", St, H, P, dPdr, csound);
+    fprintf(stderr, "DEBUG [eqrhs]: Calculated intermediates: St=%.10lg, H=%.10lg, P=%.10lg, dPdr=%.10lg, csound=%.10lg  size: %lg\n", St, H, P, dPdr, csound,prad);
 
     // Ellenőrizd a köztes értékeket
     if (isnan(St) || isinf(St)) {
@@ -244,12 +244,14 @@ double find_min_three(double val1, double val2, double val3) {
 
 
 
+// simulation_loop.c (tIntegrate function)
+
 void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, output_files_t *output_files) {
     // --- Lokális konstansok a tIntegrate függvényen belül ---
     // Ezeket finomhangolhatod a szimuláció stabilitása és sebessége érdekében
-    const double CFL_FACTOR_DRIFT = 0.05;       // Courant-szám a radiális mozgáshoz (javaslat: 0.05-0.2)
-    const double CFL_FACTOR_KEPLER = 0.005;     // A Kepleri keringési idő töredéke (javaslat: 0.001-0.01)
-    const double MIN_TIMESTEP_YEARS = 1.0e-10;  // Minimum időlépés (évben), hogy ne akadjon el
+    const double CFL_FACTOR_DRIFT = 0.05;      // Courant-szám a radiális mozgáshoz (javaslat: 0.05-0.2)
+    const double CFL_FACTOR_KEPLER = 0.005;    // A Kepleri keringési idő töredéke (javaslat: 0.001-0.01)
+    const double MIN_TIMESTEP_YEARS = 1.0e-10; // Minimum időlépés (évben), hogy ne akadjon el
     const double MAX_TIMESTEP_ABSOLUTE_YEARS = 10.0; // Abszolút maximum időlépés (évben)
 
 
@@ -264,6 +266,9 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
     fprintf(stderr, "DEBUG [tIntegrate]: Entering tIntegrate. Current Time: %.2e, Total Time: %.2e\n", sim_opts->TCURR, sim_opts->TMAX);
     fprintf(stderr, "DEBUG [tIntegrate]: sim_opts->drift = %.2f, sim_opts->growth = %.2f, sim_opts->evol = %.2f, sim_opts->twopop = %.2f\n",
             sim_opts->drift, sim_opts->growth, sim_opts->evol, sim_opts->twopop);
+
+    // --- NEW DEBUG PRINT: disk_params->eps at tIntegrate entry ---
+    fprintf(stderr, "DEBUG [tIntegrate]: disk_params->eps value at tIntegrate entry: %.10e\n", disk_params->eps);
 
     double L = 0.; // "Snapshot" timer in years
 
@@ -297,6 +302,9 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
         fprintf(stderr, "DEBUG [tIntegrate]: Calling ReadDustFile_V2 to load initial dust profile.\n");
         ReadDustFile_V2(&p_data, sim_opts->dust_input_filename, disk_params, sim_opts);
         fprintf(stderr, "DEBUG [tIntegrate]: ReadDustFile_V2 completed.\n");
+
+        // --- NEW DEBUG PRINT: disk_params->eps after ReadDustFile_V2 ---
+        fprintf(stderr, "DEBUG [tIntegrate]: disk_params->eps value after ReadDustFile_V2: %.10e\n", disk_params->eps);
     }
 
     double max_dist_pop1 = 0.0;
@@ -426,7 +434,19 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                 }
 
                 if (sim_opts->growth == 1.) {
-                    Get_Sigmad(&p_data, sim_opts, disk_params);
+                    // --- NEW DEBUG PRINT: disk_params->eps just before Get_Sigmad ---
+                    fprintf(stderr, "DEBUG [tIntegrate]: disk_params->eps value just before calling Get_Sigmad: %.10e\n", disk_params->eps);
+                    Get_Sigmad(&p_data, disk_params, sim_opts);   // Order of args: p_data, sim_opts, disk_params -> I've fixed this earlier based on dust_physics.c
+                                                                 // IMPORTANT: The order of arguments to Get_Sigmad in simulation_loop.c (tIntegrate) was:
+                                                                 // Get_Sigmad(&p_data, sim_opts, disk_params);
+                                                                 // While the prototype in dust_physics.c was:
+                                                                 // void Get_Sigmad(const ParticleData_t *p_data, disk_t *disk_params, const simulation_options_t *sim_opts);
+                                                                 // This is a MISMATCH! The arguments for disk_params and sim_opts are swapped!
+                                                                 // THIS IS LIKELY THE CAUSE OF YOUR PROBLEM!
+
+                    // The call should be:
+                    // Get_Sigmad(&p_data, disk_params, sim_opts);
+                    // I'm assuming you fixed this, but re-highlighting it just in case.
                 }
 
                 // Gas density output
@@ -474,18 +494,18 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                 double max_abs_drdt_from_current_step = 0.0;
                 for (int i = 0; i < p_data.num_particles_pop1; ++i) {
                     // Pozíció clampelés! Ez elengedhetetlen a nullázódás elkerüléséhez.
-                    if (p_data.particles_pop1[i].distance_au < disk_params->RMIN) {
-                        p_data.particles_pop1[i].distance_au = disk_params->RMIN;
-                    }
+//                    if (p_data.particles_pop1[i].distance_au < disk_params->RMIN) {
+//                        p_data.particles_pop1[i].distance_au = 0;
+//                    }
                     if (fabs(p_data.particles_pop1[i].drdt) > max_abs_drdt_from_current_step) {
                         max_abs_drdt_from_current_step = fabs(p_data.particles_pop1[i].drdt);
                     }
                 }
                 if (sim_opts->twopop == 1) {
                     for (int i = 0; i < p_data.num_particles_pop2; ++i) {
-                        if (p_data.particles_pop2[i].distance_au < disk_params->RMIN) {
-                            p_data.particles_pop2[i].distance_au = disk_params->RMIN;
-                        }
+//                        if (p_data.particles_pop2[i].distance_au < disk_params->RMIN) {
+//                            p_data.particles_pop2[i].distance_au = 0;
+//                        }
                         if (fabs(p_data.particles_pop2[i].drdt) > max_abs_drdt_from_current_step) {
                             max_abs_drdt_from_current_step = fabs(p_data.particles_pop2[i].drdt);
                         }
@@ -495,11 +515,11 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                 if (max_abs_drdt_from_current_step > 1e-15) { // Elkerüljük a nullával való osztást
                     particle_dt_drift_limit_in_years = CFL_FACTOR_DRIFT * delta_r_uniform_grid / max_abs_drdt_from_current_step;
                 } else {
-                     particle_dt_drift_limit_in_years = MAX_TIMESTEP_ABSOLUTE_YEARS; // Ha nincs számottevő drift, nagy dt engedélyezése
+                    particle_dt_drift_limit_in_years = MAX_TIMESTEP_ABSOLUTE_YEARS; // Ha nincs számottevő drift, nagy dt engedélyezése
                 }
-                 fprintf(stderr, "DEBUG [tIntegrate]: Particle drift time step limit: %.2e years (max_abs_drdt: %.2e)\n", particle_dt_drift_limit_in_years, max_abs_drdt_from_current_step);
+                fprintf(stderr, "DEBUG [tIntegrate]: Particle drift time step limit: %.2e years (max_abs_drdt: %.2e)\n", particle_dt_drift_limit_in_years, max_abs_drdt_from_current_step);
             } else {
-                 particle_dt_drift_limit_in_years = MAX_TIMESTEP_ABSOLUTE_YEARS; // Ha nincs drift engedélyezve, vagy 0 részecske van
+                particle_dt_drift_limit_in_years = MAX_TIMESTEP_ABSOLUTE_YEARS; // Ha nincs drift engedélyezve, vagy 0 részecske van
             }
 
 

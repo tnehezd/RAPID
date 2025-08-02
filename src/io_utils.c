@@ -172,12 +172,12 @@ for (i = 0; i < PARTICLE_NUMBER; i++) {
     // --- Populate the dust_particle_t array for population 1 ---
     p_data->particles_pop1[i].id = temp_dummy_id;
     p_data->particles_pop1[i].distance_au = temp_distance_au;
-    p_data->particles_pop1[i].current_size_cm = temp_particle_radius_pop1; // This now correctly gets MaxPartSize_cm
+    p_data->particles_pop1[i].current_size_au = temp_particle_radius_pop1 / AU_TO_CM; // This now correctly gets MaxPartSize_cm
     p_data->particles_pop1[i].initial_mass_msun = temp_reprmass_pop1;
 
     // Initialize size_reciprocal for Pop1
-    if (p_data->particles_pop1[i].current_size_cm > 0.0) {
-        p_data->particles_pop1[i].size_reciprocal = 1.0 / p_data->particles_pop1[i].current_size_cm;
+    if (p_data->particles_pop1[i].current_size_au > 0.0) {
+        p_data->particles_pop1[i].size_reciprocal = 1.0 / p_data->particles_pop1[i].current_size_au;
     } else {
         p_data->particles_pop1[i].size_reciprocal = 0.0;
     }
@@ -186,12 +186,12 @@ for (i = 0; i < PARTICLE_NUMBER; i++) {
     if (sim_opts->twopop == 1.0) {
         p_data->particles_pop2[i].id = temp_dummy_id; // Same ID as Pop1 particle
         p_data->particles_pop2[i].distance_au = temp_distance_au; // Same distance as Pop1 particle
-        p_data->particles_pop2[i].current_size_cm = temp_particle_radius_pop2; // This correctly gets MicroSize_cm
+        p_data->particles_pop2[i].current_size_au = temp_particle_radius_pop2 /AU_TO_CM; // This correctly gets MicroSize_cm
         p_data->particles_pop2[i].initial_mass_msun = temp_reprmass_pop2; // This correctly gets RepMass_Pop2_Msun
 
         // Initialize size_reciprocal for Pop2
-        if (p_data->particles_pop2[i].current_size_cm > 0.0) {
-            p_data->particles_pop2[i].size_reciprocal = 1.0 / p_data->particles_pop2[i].current_size_cm;
+        if (p_data->particles_pop2[i].current_size_au > 0.0) {
+            p_data->particles_pop2[i].size_reciprocal = 1.0 / p_data->particles_pop2[i].current_size_au;
         } else {
             p_data->particles_pop2[i].size_reciprocal = 0.0;
         }
@@ -202,6 +202,8 @@ for (i = 0; i < PARTICLE_NUMBER; i++) {
     fclose(fp);
     fprintf(stderr, "DEBUG [ReadDustFile_V2]: Successfully read %d particle entries from '%s'.\n", PARTICLE_NUMBER, filename);
 }
+
+
 void ReadSigmaFile(disk_t *disk_params, const char *filename) {
     const char *input_filename = filename;
 
@@ -427,8 +429,8 @@ void Print_Sigmad(int step,
                 fprintf(output_files->dust_file, "%-8d %-15d %-15.8lg %-20.15lg %-20.15lg %-15.15lg \n",
                         step,
                         p_data->particles_pop1[i].id,               // Használjuk az ID-t
-                        p_data->particles_pop1[i].distance_au,
-                        p_data->particles_pop1[i].current_size_cm,
+                        p_data->particles_pop1[i].distance_au ,
+                        p_data->particles_pop1[i].current_size_au * AU_TO_CM,
                         interpolated_sigmad_at_r,
                         p_data->particles_pop1[i].initial_mass_msun); // mass_g helyett initial_mass_msun
             }
@@ -457,7 +459,7 @@ void Print_Sigmad(int step,
                             step,
                             p_data->particles_pop2[i].id,
                             p_data->particles_pop2[i].distance_au,
-                            p_data->particles_pop2[i].current_size_cm,
+                            p_data->particles_pop2[i].current_size_au,
                             interpolated_sigmadm_at_r,
                             p_data->particles_pop2[i].initial_mass_msun);
                 }

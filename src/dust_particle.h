@@ -12,7 +12,7 @@ typedef struct {
     int id;                   ///< Unique identifier for this particle
     double distance_au;       ///< Radial distance from the star in AU
     double distance_au_reciprocal;
-    double current_size_cm;   ///< Particle size in centimeters
+    double current_size_au;   ///< Particle size in centimeters
     double initial_mass_msun; ///< Initial (fixed) representative mass in Solar Masses
     double size_reciprocal;   ///< 1 / current_size_cm (for efficiency in some calculations)
     double drdt;

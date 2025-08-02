@@ -39,6 +39,10 @@
  */
 #define AU_TO_CM 1.496e13                               
 
+#define PI 3.141592653589793
+
+#define INTERNAL_TIME_TO_SEC (31557600.0 / (2.0 * PI)) // Assuming 1 AU period is 1 year
+
 
 /** @def ROUND_PRECISION_FACTOR
  * @brief Precision factor used for rounding floating-point numbers.

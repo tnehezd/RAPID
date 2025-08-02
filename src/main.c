@@ -102,6 +102,9 @@ int main(int argc, const char **argv) {
     disk_params.uFrag = def.ufrag;
     disk_params.fDrift = 0.55; // set by Birnstiel 2012
     disk_params.PDENSITY = def.pdensity_val;
+    // --- IDE ADD HOZZÁ EZT A SORT: A poros-gáz arány beállítása a disk_params-ban ---
+    disk_params.eps = def.eps_val; // Ezt a sort adtad hozzá
+    fprintf(stderr, "DEBUG [main]: disk_params.eps set to %.2e from def.eps_val.\n", disk_params.eps); // Debug kiírás
 
     // Set sim_opts->dzone based on dead zone radii from disk_params
     sim_opts.dzone = (disk_params.r_dze_i > 0.0 || disk_params.r_dze_o > 0.0) ? 1.0 : 0.0;
@@ -320,7 +323,17 @@ int main(int argc, const char **argv) {
 
         fprintf(stderr, "DEBUG [main]: Print_Sigma completed. Program exiting.\n");
     } else {
-        fprintf(stderr, "DEBUG [main]: Evolution (sim_opts.evol=%.2f) or drift (sim_opts.drift=%.2f) is ON. Starting main simulation loop.\n", sim_opts.evol, sim_opts.drift);
+        fprintf(stderr, "DEBUG [main]: sim_opts.input_filename (gas) for tIntegrate: '%s'\n", sim_opts.input_filename);
+        fprintf(stderr, "DEBUG [main]: sim_opts.dust_input_filename (dust) for tIntegrate: '%s'\n", sim_opts.dust_input_filename);
+        fprintf(stderr, "DEBUG [main]: Global PARTICLE_NUMBER before tIntegrate: %d\n", PARTICLE_NUMBER);
+
+        // KULCSFONTOSSÁGÚ DEBUG KIÍRÁSOK ITT:
+        fprintf(stderr, "DEBUG [main]: Verifying disk_params.eps before tIntegrate: %.10e\n", disk_params.eps);
+        // Néhány sigmavec érték ellenőrzése
+        fprintf(stderr, "DEBUG [main]: Verifying disk_params.sigmavec[0]: %.10e\n", disk_params.sigmavec[0]);
+        fprintf(stderr, "DEBUG [main]: Verifying disk_params.sigmavec[NGRID/2]: %.10e\n", disk_params.sigmavec[disk_params.NGRID / 2]);
+        fprintf(stderr, "DEBUG [main]: Verifying disk_params.sigmavec[NGRID-1]: %.10e\n", disk_params.sigmavec[disk_params.NGRID - 1]);
+
         fprintf(stderr, "DEBUG [main]: Calling tIntegrate...\n");
         // Pass sim_opts to tIntegrate.
         // tIntegrate must ensure to use the correct (numbered) output_dir_name.

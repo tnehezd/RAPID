@@ -7,6 +7,7 @@
 #include "globals.h"
 #include "simulation_types.h"
 
+#include <stdlib.h>   // For exit, EXIT_FAILURE, EXIT_SUCCESS, system
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -88,6 +89,8 @@ static long double calculate_gas_surface_density(double r_au, init_tool_options_
 // Calculates dust surface density at radial position r [M_Sun / AU / AU].
 static long double initial_dust_surface_density(double r_au, init_tool_options_t *init_opts, long double current_sigma0) {
     long double sigma_dust = calculate_gas_surface_density(r_au, init_opts, current_sigma0) * init_opts->dust_to_gas_ratio;
+//    fprintf(stderr, "GASSURF: %-15.6lg %-15.6Lg %-15.6lg %-15.6Lg\n",
+//            r_au, current_sigma0, init_opts->dust_to_gas_ratio, sigma_dust);
     return sigma_dust;
 }
 
@@ -422,6 +425,5 @@ int run_init_tool(init_tool_options_t *opts, disk_t *disk_params) {
     fout_params = NULL;
 
     fprintf(stderr,"Disk parameters file created (%s).\n\n", full_disk_param_path);
-
     return 0;
 }
