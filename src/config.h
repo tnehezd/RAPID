@@ -95,6 +95,7 @@ extern const char * const FILE_DENS_PREFIX;
  */
 extern const char * const FILE_DUST_PREFIX;
 
+
 /**
  * @brief Filename for the output file tracking mass accumulation at the DZE edge.
  * @details This constant string specifies the name of the file used to log 
@@ -102,7 +103,7 @@ extern const char * const FILE_DUST_PREFIX;
  * Dead Zone Edge (DZE) within `LOGS` in the predefined `output` directory.
  * Declared as `extern const char * const` here, defined in `config.c`.
  */
-extern const char * const FILE_MASS_ACCUMULATE;
+//extern const char * const FILE_MASS_ACCUMULATE;
 
 /**
  * @brief Filename for the output file detailing the evolution of individual dust particles.
@@ -111,7 +112,7 @@ extern const char * const FILE_MASS_ACCUMULATE;
  * velocities, sizes, or other relevant properties within `LOGS` in the predefined `output` directory.
  * Declared as `extern const char * const` here, defined in `config.c`.
  */
-extern const char * const FILE_DUST_EVOLUTION;
+//extern const char * const FILE_DUST_EVOLUTION;
 
 /**
  * @brief Filename for the configuration file containing global disk parameters.
@@ -131,7 +132,7 @@ extern const char * const FILENAME_DISK_PARAM;
  * Declared as `extern const char * const` here, its definition (the actual string literal)
  * should reside in `config.c`.
  */
-extern const char * const FILE_TIMESCALE;
+extern const char * const FILE_TIMESCALE;  /// KELL EZ?!
 
 
 /**

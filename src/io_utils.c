@@ -362,9 +362,9 @@ void infoCurrent(const char *output_dir_name, const disk_t *disk_params, const s
     fprintf(info_current_file, "   Inner DZE Radius (R_DZE_I): %.4g AU\n", disk_params->r_dze_i);
     fprintf(info_current_file, "   Outer DZE Radius (R_DZE_O): %.4g AU\n", disk_params->r_dze_o);
     fprintf(info_current_file, "   Inner DZE Width (DR_DZEI): %.4g AU\n", disk_params->Dr_dze_i);
-    fprintf(info_current_file, "   Outer DZE Width (DR_DZE_O): %.4g AU\n", disk_params->Dr_dze_o);
-    fprintf(info_current_file, "   Note: R_DZE_I/O = 0 indicates that the corresponding DZE is not simulated.\n");
-    fprintf(info_current_file, "\n");
+    fprintf(info_current_file, "   Outer DZE Width (DR_DZE_O): %.4g AU\n\n", disk_params->Dr_dze_o);
+    fprintf(info_current_file, "   **Note: R_DZE_I/O = 0, or R_DZE_I/O = 0 indicates that the corresponding DZE is not simulated.**\n");
+    fprintf(info_current_file, "\n\n");
 
     fprintf(info_current_file, "--- Central Star Parameters ---\n");
     fprintf(info_current_file, "   Central Star Mass: %.4g Solar Masses\n", disk_params->STAR_MASS);
@@ -605,10 +605,10 @@ int setup_initial_output_files(output_files_t *output_files, const simulation_op
     // Ha a mass_file közvetlenül a sim_opts->output_dir_name alatt van, akkor
     // snprintf(massout, MAX_PATH_LEN, "%s/%s.dat", sim_opts->output_dir_name, FILE_MASS_ACCUMULATE);
     // Ha a LOGS_DIR almappa alatt van, akkor a mostani snprintf helyes.
-    snprintf(massout, MAX_PATH_LEN, "%s/%s/%s.dat", sim_opts->output_dir_name, LOGS_DIR, FILE_MASS_ACCUMULATE);
+/*    snprintf(massout, MAX_PATH_LEN, "%s/%s/%s.dat", sim_opts->output_dir_name, LOGS_DIR, FILE_MASS_ACCUMULATE);
 
 
-    fprintf(stderr, "DEBUG [setup_initial_output_files]: Opening output file: %s\n", massout);
+//    fprintf(stderr, "DEBUG [setup_initial_output_files]: Opening output file: %s\n", massout);
 
 
     output_files->mass_file = fopen(massout, "w");
@@ -617,7 +617,7 @@ int setup_initial_output_files(output_files_t *output_files, const simulation_op
         return 1; // Hiba
     }
     print_file_header(output_files->mass_file, FILE_TYPE_MASS_ACCUMULATION, header_data_for_files);
-
+*/
     return 0; // Siker
 }
 
@@ -628,11 +628,12 @@ void cleanup_simulation_resources(ParticleData_t *p_data, output_files_t *output
     // Use the dedicated free function for particle data
     free_particle_data(p_data);
 
-    if (output_files->mass_file != NULL) {
+/*    if (output_files->mass_file != NULL) {
         fclose(output_files->mass_file);
         output_files->mass_file = NULL;
         fprintf(stderr, "DEBUG [cleanup_simulation_resources]: Closed %s\n", FILE_MASS_ACCUMULATE);
     }
+*/    
 }
 
 // Segédfüggvény a pillanatfelvételek fájljainak bezárására

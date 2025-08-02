@@ -293,6 +293,7 @@ int main(int argc, const char **argv) {
     // Here, def.output_dir_name is passed, which already contains the numbered folder name
     infoCurrent(def.output_dir_name, &disk_params, &sim_opts);
 
+
     // Run simulation or exit based on options
     if(sim_opts.evol == 0. && sim_opts.drift == 0.) {
         fprintf(stderr, "DEBUG [main]: Evolution (sim_opts.evol=%.2f) and drift (sim_opts.drift=%.2f) are OFF.\n", sim_opts.evol, sim_opts.drift);
