@@ -15,6 +15,7 @@ typedef struct {
     double current_size_cm;   ///< Particle size in centimeters
     double initial_mass_msun; ///< Initial (fixed) representative mass in Solar Masses
     double size_reciprocal;   ///< 1 / current_size_cm (for efficiency in some calculations)
+    double drdt;
 
 } dust_particle_t;
 

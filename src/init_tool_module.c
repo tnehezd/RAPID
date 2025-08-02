@@ -351,7 +351,7 @@ int run_init_tool(init_tool_options_t *opts, disk_t *disk_params) {
 
 
             double dlnPdlnr_local;
-            if (fabs(pressure_local) < 1e-12) {
+            if (fabs(pressure_local) < 1e-20) {
                 fprintf(stderr, "Error: Pressure is near zero in dlnPdlnr calculation at r = %lg. Check input parameters. Setting dlnPdlnr = 0.\n", r_dust_particle_au);
                 dlnPdlnr_local = 0.0;
             } else {
@@ -367,8 +367,8 @@ int run_init_tool(init_tool_options_t *opts, disk_t *disk_params) {
 
             double dlnPdlnr_abs_cs2_half = fabs(dlnPdlnr_local * sound_speed_sq * 0.5);
             double s_df;
-            if (dlnPdlnr_abs_cs2_half < 1e-12) {
-                fprintf(stderr, "Error: Denominator is near zero in s_df calculation at r = %lg. Check dlnPdlnr value. Setting s_df to a large value.\n", r_dust_particle_au);
+            if (dlnPdlnr_abs_cs2_half < 1e-40) {
+                fprintf(stderr, "Error: Denominator is near zero %lg in s_df calculation at r = %lg. Check dlnPdlnr value. Setting s_df to a large value.\n",dlnPdlnr_abs_cs2_half, r_dust_particle_au);
                 s_df = 1e99;
             } else {
                 s_df = u_frag_au_yr2pi * calculate_keplerian_velocity_au_yr2pi / dlnPdlnr_abs_cs2_half * 2.0 * sigma_gas_local_cgs / (M_PI * opts->dust_density_g_cm3);

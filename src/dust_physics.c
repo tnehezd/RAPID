@@ -127,12 +127,79 @@ double calculate_turbulent_alpha(double r, const disk_t *disk_params) {
     return alpha_r * disk_params->alpha_visc;
 }
 
-/* kiszamolja az adott reszecskehez tartozo Stokes szamot    */
-/* St = rho_particle * radius_particle * PI / (2 * sigma)    */
-double Stokes_Number(double pradius, double sigma, disk_t *disk_params) { /* in the Epstein drag regime    */
-    return disk_params->PDENSITYDIMLESS * pradius * M_PI / (2.0 * sigma);
-}
 
+// AU -> cm
+#define LOCAL_AU_TO_CM 1.495978707e13 // cm / AU
+
+// Naptömeg -> gramm
+#define LOCAL_SUN_MASS_TO_GRAMS 1.989e33 // g / M_Sun
+
+// "Belső időegység" (1 év / 2pi) -> másodperc
+// Az 1 AU-nál az 1 Naptömeg körüli keringési idő 1 év.
+// Omega_K(1AU, 1M_Sun) = sqrt(G*M_Sun/AU^3).
+// Ha G=1 és M_Sun=1, AU=1, akkor Omega_K = 1.
+// A periódus T = 2pi / Omega_K. Ha Omega_K = 1, akkor T = 2pi (belső időegység).
+// 1 belső időegység = 1 év / (2pi)
+// 1 év = 3.1536e7 másodperc
+// Tehát 1 belső időegység = 3.1536e7 / (2 * M_PI) másodperc
+#define LOCAL_INTERNAL_TIME_TO_SEC (3.1536e7 / (2.0 * M_PI)) // sec / belső időegység
+
+
+// A Stokes_Number függvény definíciója
+// r_au: A sugár AU-ban érkezik (ahogy az rvec-ben is tárolva van)
+// sigma_msun_au2: A gáz felületi sűrűsége M_Sun/AU^2-ben érkezik (ahogy a sigmavec-ben is tárolva van)
+// pradius_cm: A részecske sugara CM-ben érkezik (ahogy a disk_params->PDENSITY is g/cm^3)
+// disk_params: A diszk paraméterei, amiben a G_GRAV_CONST, STAR_MASS, PDENSITY vannak.
+double Stokes_Number(double pradius_cm, double sigma_msun_au2, double r_au, const disk_t *disk_params) {
+
+    // --- Konverziók CGS egységrendszerbe a számításhoz ---
+
+    // Konvertáljuk a sugárt AU-ból cm-re
+    double r_cm = r_au * LOCAL_AU_TO_CM;
+
+    // Konvertáljuk a gáz felületi sűrűségét M_Sun/AU^2-ből g/cm^2-be
+    double sigma_g_cm2 = sigma_msun_au2 * LOCAL_SUN_MASS_TO_GRAMS / (LOCAL_AU_TO_CM * LOCAL_AU_TO_CM);
+
+    // A részecske belső sűrűsége már g/cm^3-ben van (disk_params->PDENSITY), tehát ok.
+    double rho_s_g_cm3 = disk_params->PDENSITY;
+
+    // --- Számoljuk ki a szükséges gáz paramétereket CGS-ben ---
+    // Ehhez a calculate_keplerian_angular_velocity és calculate_local_sound_speed
+    // függvényeknek is CGS-ben kellene eredményt adniuk,
+    // VAGY belül kellene konvertálnunk őket.
+
+    // HA a calculate_keplerian_angular_velocity (és a többi) G=1, M_star=1 egységben számol:
+    // Akkor az eredménye rad / belső időegység lesz.
+    // Ezt kell átkonvertálni rad/s-be.
+    double omega_k_internal = calculate_keplerian_angular_velocity(r_au, disk_params); // rad / belső időegység
+    double omega_k_rad_s = omega_k_internal / LOCAL_INTERNAL_TIME_TO_SEC; // rad / s
+
+    // Hasonlóan a hangsebességgel. Ha AU/belső időegységben van, konvertálni cm/s-be:
+    double csound_internal = calculate_local_sound_speed(r_au, disk_params); // AU / belső időegység
+    double csound_cm_s = csound_internal * LOCAL_AU_TO_CM / LOCAL_INTERNAL_TIME_TO_SEC; // cm / s
+
+    // A skála magasság is AU-ban van (calculate_scale_height). Konvertálni cm-be:
+    double H_scale_au = calculate_scale_height(r_au, disk_params); // AU
+    double H_scale_cm = H_scale_au * LOCAL_AU_TO_CM; // cm
+
+    // --- Ellenőrzés nullával való osztás előtt ---
+    if (sigma_g_cm2 <= 0.0 || csound_cm_s <= 0.0 || H_scale_cm <= 0.0 || omega_k_rad_s <= 0.0) {
+        fprintf(stderr, "ERROR [Stokes_Number]: Invalid gas/disk parameters detected in CGS (sigma_g_cm2: %.2e, csound_cm_s: %.2e, H_scale_cm: %.2e, omega_k_rad_s: %.2e, r_au: %.2e).\n",
+                sigma_g_cm2, csound_cm_s, H_scale_cm, omega_k_rad_s, r_au);
+        return 0.0; // Hibakezelés: visszaad 0.0-t vagy egy nagyon nagy értéket
+    }
+
+    // --- A Stokes-szám Képlete (Epstein-ellenállás) CGS egységekben ---
+    // St = (rho_s * a / Sigma_g) * (Omega_K * r / c_s)
+    // Megjegyzés: a (Omega_K * r / c_s) tag kb. (v_Kepler / c_s).
+    // Mivel c_s = Omega_K * H, ezért (Omega_K * r / c_s) = (r / H) is.
+    // Használhatjuk az (r / H) formát is, ha az egyszerűbb a konverziók után.
+    // Most az Omega_K * r / c_s formát használom, mivel az is számolt paraméter.
+
+    double Stokes = (rho_s_g_cm3 * pradius_cm / sigma_g_cm2) * (omega_k_rad_s * r_cm / csound_cm_s);
+
+    return Stokes;
+}
 
 
 // Részecskenövekedés (Birnstiel et al. 2012)

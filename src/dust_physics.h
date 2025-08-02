@@ -23,8 +23,7 @@ void calculate_dust_surface_density_profile(
 double calculate_turbulent_alpha(double r, const disk_t *disk_params);
 
 /* kiszamolja az adott reszecskehez tartozo Stokes szamot  */
-double Stokes_Number(double pradius, double sigma, disk_t *disk_params);
-
+double Stokes_Number(double pradius, double sigma, double r, const disk_t *disk_params);
 
 double a_drift(double sigmad, double r, double p, double dp, double rho_p, const disk_t *disk_params);
 double a_turb(double sigma, double r, double rho_p, const disk_t *disk_params);
