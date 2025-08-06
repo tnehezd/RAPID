@@ -128,22 +128,6 @@ double calculate_turbulent_alpha(double r, const disk_t *disk_params) {
 }
 
 
-// AU -> cm
-#define LOCAL_AU_TO_CM 1.495978707e13 // cm / AU
-
-// Naptömeg -> gramm
-#define LOCAL_SUN_MASS_TO_GRAMS 1.989e33 // g / M_Sun
-
-// "Belső időegység" (1 év / 2pi) -> másodperc
-// Az 1 AU-nál az 1 Naptömeg körüli keringési idő 1 év.
-// Omega_K(1AU, 1M_Sun) = sqrt(G*M_Sun/AU^3).
-// Ha G=1 és M_Sun=1, AU=1, akkor Omega_K = 1.
-// A periódus T = 2pi / Omega_K. Ha Omega_K = 1, akkor T = 2pi (belső időegység).
-// 1 belső időegység = 1 év / (2pi)
-// 1 év = 3.1536e7 másodperc
-// Tehát 1 belső időegység = 3.1536e7 / (2 * M_PI) másodperc
-#define LOCAL_INTERNAL_TIME_TO_SEC (3.1536e7 / (2.0 * M_PI)) // sec / belső időegység
-
 
 // A Stokes_Number függvény definíciója
 // r_au: A sugár AU-ban érkezik (ahogy az rvec-ben is tárolva van)
