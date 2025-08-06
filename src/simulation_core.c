@@ -55,7 +55,7 @@ void eqrhs(double prad, double dp, double sigma, double ug, double r, double *dr
 
 
 
-    fprintf(stderr, "DEBUG [eqrhs]: Calculated intermediates: St=%.10lg, H=%.10lg, P=%.10lg, dPdr=%.10lg, csound=%.10lg  size: %lg\n", St, H, P, dPdr, csound,prad);
+//    fprintf(stderr, "DEBUG [eqrhs]: Calculated intermediates: St=%.10lg, H=%.10lg, P=%.10lg, dPdr=%.10lg, csound=%.10lg  size: %lg\n", St, H, P, dPdr, csound,prad);
 
     // Ellenőrizd a köztes értékeket
     if (isnan(St) || isinf(St)) {
@@ -88,7 +88,7 @@ void eqrhs(double prad, double dp, double sigma, double ug, double r, double *dr
         exit(EXIT_FAILURE); // Azonnal kilép, hogy lásd, mi okozta
     }
 
-        fprintf(stderr, "DEBUG [eqrhs_output]: drdt=%.10lg\n", *drdt);
+//        fprintf(stderr, "DEBUG [eqrhs_output]: drdt=%.10lg\n", *drdt);
 
 
 //    fprintf(stderr, "DEBUG [eqrhs]: Exiting with drdt=%.10lg\n", *drdt);
