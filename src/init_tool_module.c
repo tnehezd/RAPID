@@ -1,69 +1,66 @@
 #include "init_tool_module.h"
 #include "config.h"
 #include "disk_model.h"
-#include "dust_physics.h" // May contain GetMass, etc.
-#include "utils.h" // For find_max, find_min, etc. and for interpolation functions
-#include "io_utils.h" // For Mk_Dir (if used internally here)
+#include "dust_physics.h" 
+#include "utils.h" 
+#include "io_utils.h" 
 #include "globals.h"
 #include "simulation_types.h"
 
-#include <stdlib.h>   // For exit, EXIT_FAILURE, EXIT_SUCCESS, system
-
+#include <stdlib.h>   
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h> // For strcpy, snprintf
-#include <math.h>   // For M_PI, pow, fabs, sqrt, tanh, log
+#include <string.h> 
+#include <math.h>   
 
-// --- External declaration for the existing interpol function ---
-// This function is assumed to be implemented in utils.c (or similar)
-// and its prototype should be in utils.h.
-//extern void interpol(double *invec, double *rvec, double pos, double *out, double rd, int opt, const disk_t *disk_params);
 
 
 void create_default_init_tool_options(init_tool_options_t *def) {
     // Set default values for the init_tool_options_t struct
-    def->n_grid_points = 1000; // Number of radial gas grid points
-    def->n_dust_particles = 2000; // NEW: Number of initial dust particles
-    def->r_inner = 0.1;
-    def->r_outer = 5.0;
-    def->sigma0_gas_au = 0.01; // Gas surface density at 1 AU [M_Sun/AU^2] (increased from 0.0001)
-    def->sigma_exponent = 0.5;   // CORRECTED: Positive exponent for Sigma ~ r^(-index) form
-    def->alpha_viscosity = 1.0e-2; // Alpha viscosity parameter
-    def->star_mass = 1.0;    // Central star mass [M_Sun]
-    def->aspect_ratio = 5.0e-2; // Disk aspect ratio (H/r)
-    def->flaring_index = 0.0;    // Flaring index for disk height (H ~ r^(1+flind))
+    def->n_grid_points = 1000;          // Number of radial gas grid points
+    def->n_dust_particles = 2000;       // Number of initial dust particles
+    def->r_inner = 0.1;                 // Inner edge of the computational domain
+    def->r_outer = 5.0;                 // Outer edge of the computational domain
+    def->sigma0_gas_au = 0.01;          // Gas surface density at 1 AU [M_Sun/AU^2]
+    def->sigma_exponent = 0.5;          // Power-law exponent for Sigma ~ r^(-index) form
+    def->alpha_viscosity = 1.0e-2;      // Alpha viscosity parameter
+    def->star_mass = 1.0;               // Central star mass [M_Sun]
+    def->aspect_ratio = 5.0e-2;         // Disk aspect ratio (H/r)
+    def->flaring_index = 0.0;           // Flaring index for disk height (H ~ r^(1+flind))
 
     // Dead Zone Parameters (0.0 implies inactive)
-    def->deadzone_r_inner = 0.0;
-    def->deadzone_r_outer = 0.0;
-    def->deadzone_dr_inner = 0.0; // Transition width multiplier
-    def->deadzone_dr_outer = 0.0; // Transition width multiplier
-    def->deadzone_alpha_mod = 0.01; // Alpha reduction factor in dead zone
+    def->deadzone_r_inner = 0.0;        // Inner edge of the dead zone
+    def->deadzone_r_outer = 0.0;        // Outer edge of the dead zone
+    def->deadzone_dr_inner = 0.0;       // Transition width of the inner edge
+    def->deadzone_dr_outer = 0.0;       // Transition width of the outer edge
+    def->deadzone_alpha_mod = 0.01;     // Alpha reduction factor in dead zone
 
     // Dust Parameters
-    def->dust_to_gas_ratio = 0.01; // Initial dust-to-gas ratio (epsilon)
-    def->disk_mass_dust = 0.0100000001; // Total dust disk mass [M_Sun]
-    def->one_size_particle_cm = 1.0; // If > 0, particles are fixed to this size
-    def->two_pop_ratio = 0.85; // Ratio of mass in larger particles for two-population model
-    def->micro_size_cm = 1e-4; // Size of micron-sized particles for two-population model
-    def->f_drift = 1.0;  // Factor for drift-limited size (default value, adjust as needed)
-    def->f_frag = 1.0;   // Factor for fragmentation-limited size (default value, adjust as needed)
+    def->dust_to_gas_ratio = 0.01;      // Initial dust-to-gas ratio (epsilon)
+    def->disk_mass_dust = 0.01;         // Total dust disk mass [M_Sun]
+    def->one_size_particle_cm = 1.0;    // Initial particle size for Pop1 [cm]
+    def->two_pop_ratio = 0.85;          // Ratio of mass in larger particles for two-population model
+    def->micro_size_cm = 1e-4;          // Initial particle size for Pop2 [cm]
+    def->f_drift = 0.55;                // Factor for drift-limited size in Birnsteil et al 2012 (default value, adjust as needed)
+    def->f_frag = 0.37;                 // Factor for fragmentation-limited size in Birnstiel et al 2012 (default value, adjust as needed)
 
-    def->output_base_path[0] = '\0'; // This will be set by main.c
-    def->dust_density_g_cm3 = 1.6; // NEW: Dust particle density (g/cm^3) - default value
+    def->output_base_path[0] = '\0';    // This will be set by main.c
+    def->dust_density_g_cm3 = 1.6;      // Dust particle density [g/cm^3]
 }
 
 // Calculates the gas surface density normalization constant (Sigma0)
 // based on total dust disk mass (Md), in M_Sun / AU / AU.
 static long double calculate_sigma0_from_disk_mass(init_tool_options_t *init_opts) {
-    // Sigma ~ r^(-index), so integral is r^(2-index)
-    double exponent_for_integral = -init_opts->sigma_exponent + 2.0;
+    // Sigma ~ r^(-sigma_exponent), so the mass integral is of r * r^(-sigma_exponent) = r^(1-sigma_exponent)
+    double exponent_for_integral = 2.0 - init_opts->sigma_exponent;
 
     double denominator;
-    if (fabs(exponent_for_integral) < 1e-9) { // Handle case where exponent is close to 0 (logarithmic integral)
-        // This case implies Sigma ~ r^(-2), integral is ln(r)
+    // Handle the special case where the exponent is -2 (i.e., sigma_exponent=2)
+    if (fabs(exponent_for_integral - 2.0) < 1e-9) {
+        // Integral of r^(-1) is ln(r)
         denominator = log(init_opts->r_outer) - log(init_opts->r_inner);
     } else {
+        // Standard power-law integral: [r^p] / p
         denominator = (pow(init_opts->r_outer, exponent_for_integral) - pow(init_opts->r_inner, exponent_for_integral)) / exponent_for_integral;
     }
 
@@ -71,26 +68,19 @@ static long double calculate_sigma0_from_disk_mass(init_tool_options_t *init_opt
         fprintf(stderr, "Error: Denominator is zero or too small in Sigma0 calculation! Check RMAX, RMIN, and SIGMA_EXP values.\n");
         return 0.0;
     }
-    // Md = 2 * PI * Sigma0 * epsilon * Integral(r^(1-index) dr) from Ri to Ro
-    // So, Sigma0 = Md / (2 * PI * epsilon * Integral(...))
-    // Integral(r^(1-index) dr) = [r^(2-index)] / (2-index) from Ri to Ro
-    // = (Ro^(2-index) - Ri^(2-index)) / (2-index)
-    // Hence, Sigma0 = Md * (2-index) / (2 * PI * epsilon * (Ro^(2-index) - Ri^(2-index)))
-    // Or rewritten: Sigma0 = Md * (2-index) / (2 * PI * epsilon * (Ro^(2-index) - Ri^(2-index)))
-    return (long double)init_opts->disk_mass_dust /
-           (2.0 * M_PI * init_opts->dust_to_gas_ratio * denominator);
+    // Md = 2 * PI * Sigma0 * epsilon * Integral(r^(1-index) dr)
+    // Sigma0 = Md / (2 * PI * epsilon * Integral(...))
+    return (long double)init_opts->disk_mass_dust / (2.0 * M_PI * init_opts->dust_to_gas_ratio * denominator);
 }
 
 // Calculates gas surface density at radial position r [M_Sun / AU / AU].
 static long double calculate_gas_surface_density(double r_au, init_tool_options_t *init_opts, long double current_sigma0) {
-    return current_sigma0 * pow(r_au, init_opts->sigma_exponent);
+    return current_sigma0 * pow(r_au, -init_opts->sigma_exponent);
 }
 
 // Calculates dust surface density at radial position r [M_Sun / AU / AU].
 static long double initial_dust_surface_density(double r_au, init_tool_options_t *init_opts, long double current_sigma0) {
     long double sigma_dust = calculate_gas_surface_density(r_au, init_opts, current_sigma0) * init_opts->dust_to_gas_ratio;
-//    fprintf(stderr, "GASSURF: %-15.6lg %-15.6Lg %-15.6lg %-15.6Lg\n",
-//            r_au, current_sigma0, init_opts->dust_to_gas_ratio, sigma_dust);
     return sigma_dust;
 }
 
@@ -107,7 +97,6 @@ static double find_minimum_double(double s1, double s2, double s3) {
 }
 
 // --- Main Init Tool Function ---
-
 int run_init_tool(init_tool_options_t *opts, disk_t *disk_params) {
     FILE *fout_data = NULL; // For dust particle profile
     FILE *fout_params = NULL; // For disk parameters
@@ -128,7 +117,7 @@ int run_init_tool(init_tool_options_t *opts, disk_t *disk_params) {
         fprintf(stderr, "ERROR [run_init_tool]: Number of gas grid points (n_grid_points) must be positive. Current value: %d\n", opts->n_grid_points);
         return 1;
     }
-    if (opts->n_dust_particles <= 0) { // NEW: Validate n_dust_particles
+    if (opts->n_dust_particles <= 0) {
         fprintf(stderr, "ERROR [run_init_tool]: Number of dust particles (n_dust_particles) must be positive. Current value: %d\n", opts->n_dust_particles);
         return 1;
     }
@@ -141,15 +130,18 @@ int run_init_tool(init_tool_options_t *opts, disk_t *disk_params) {
                                     ((opts->deadzone_dr_outer == 0.0) ? 1e-6 : opts->deadzone_dr_outer);
 
     const double DEFAULT_DISK_MASS_DUST = 0.01;
+    // If the user has specified a total dust disk mass, use it to calculate Sigma0.
     if (fabs(opts->disk_mass_dust - DEFAULT_DISK_MASS_DUST) > 1e-9) {
         current_sigma0_gas = calculate_sigma0_from_disk_mass(opts);
         fprintf(stderr,"Sigma0 calculated from total dust disk mass (Md): %Lg M_Sun/AU^2\n", current_sigma0_gas);
     } else {
+        // Otherwise, use the explicitly provided Sigma0_gas_au.
         current_sigma0_gas = opts->sigma0_gas_au;
         fprintf(stderr,"Using explicit Sigma0 (gas surface density at 1 AU): %Lg M_Sun/AU^2\n", current_sigma0_gas);
     }
 
     const double DEFAULT_ONE_SIZE = 1.0;
+    // If a fixed particle size is specified, force a single population model.
     if (fabs(opts->one_size_particle_cm - DEFAULT_ONE_SIZE) > 1e-9 && opts->one_size_particle_cm > 0) {
         opts->two_pop_ratio = 1.0;
     }
@@ -191,8 +183,8 @@ int run_init_tool(init_tool_options_t *opts, disk_t *disk_params) {
     fprintf(stderr,"Surface density profile exponent: %lg\n", -opts->sigma_exponent);
     fprintf(stderr,"Gas surface density at 1 AU (Solar Mass/AU^2): %Lg\n", current_sigma0_gas);
     fprintf(stderr,"Dust to gas ratio: %lg\n", opts->dust_to_gas_ratio);
-    fprintf(stderr,"Number of gas grid points: %d\n", opts->n_grid_points); // Clarified for gas grid
-    fprintf(stderr,"Number of dust particles to generate: %d\n", opts->n_dust_particles); // NEW: Corrected for dust particles
+    fprintf(stderr,"Number of gas grid points: %d\n", opts->n_grid_points);
+    fprintf(stderr,"Number of dust particles to generate: %d\n", opts->n_dust_particles);
     fprintf(stderr,"Dust particle density (g/cm^3): %lg\n", opts->dust_density_g_cm3);
     fprintf(stderr,"------------------------------\n\n");
 

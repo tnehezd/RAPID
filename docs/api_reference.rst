@@ -33,6 +33,19 @@ This section presents the detailed API for the `globals.h` header file that cont
 
 ----
 
+Initialize Disk
+---------------
+
+This section describes the initialization of disk and the pyhsical paramters of the simumation in the `init_tool_module.h` header file.
+
+init_tool_module.h
+^^^^^^^^^^^^^^^^^^
+
+.. doxygenfile:: init_tool_module.h
+   :project: rapid
+
+----
+
 Disk Physics Module
 -------------------
 
