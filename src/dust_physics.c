@@ -129,7 +129,7 @@ double calculate_turbulent_alpha(double r, const disk_t *disk_params) {
 
 
 // Calculate Stokes Number
-double Stokes_Number(double pradius_au, double sigma_msun_au2, double r_au, const disk_t *disk_params) {
+double calculate_stokes_number(double pradius_au, double sigma_msun_au2, double r_au, const disk_t *disk_params) {
 
     // --- Conversions to CGS unit system for calculation ---
 
@@ -161,7 +161,7 @@ double Stokes_Number(double pradius_au, double sigma_msun_au2, double r_au, cons
 
     // --- Check before division by zero ---
     if (sigma_g_cm2 <= 0.0 || csound_cm_s <= 0.0 || omega_k_rad_s <= 0.0) {
-        fprintf(stderr, "ERROR [Stokes_Number]: Invalid CGS parameters for calculation (sigma_g_cm2: %.2e, csound_cm_s: %.2e, omega_k_rad_s: %.2e, r_au: %.2e).\n",
+        fprintf(stderr, "ERROR [calculate_stokes_number]: Invalid CGS parameters for calculation (sigma_g_cm2: %.2e, csound_cm_s: %.2e, omega_k_rad_s: %.2e, r_au: %.2e).\n",
                  sigma_g_cm2, csound_cm_s, omega_k_rad_s, r_au);
         return 0.0;
     }
@@ -177,7 +177,7 @@ double Stokes_Number(double pradius_au, double sigma_msun_au2, double r_au, cons
 // Particle growth (Birnstiel et al. 2012)
 // Determining the initial size of the representative particle
 // 1. Maximum size determined by radial drift --> output in cm!
-double a_drift(double sigmad, double r, double p, double dp, double rho_p, const disk_t *disk_params) {
+double calculate_max_size_from_drift(double sigmad, double r, double p, double dp, double rho_p, const disk_t *disk_params) {
 
     double Sigmad_cgs = sigmad / GAS_SD_CONV_RATE;
 
@@ -191,7 +191,7 @@ double a_drift(double sigmad, double r, double p, double dp, double rho_p, const
 }
 
 // 2. Maximum size according to fragmentation caused by small-scale turbulence --> output in cm!
-double a_turb(double sigma, double r, double rho_p, const disk_t *disk_params) {
+double calculate_max_size_from_turbulence(double sigma, double r, double rho_p, const disk_t *disk_params) {
 
     double s_frag, u_frag, u_frag2, Sigma_cgs, c_s, c_s2;
 
@@ -207,7 +207,7 @@ double a_turb(double sigma, double r, double rho_p, const disk_t *disk_params) {
 }
 
 // 3. Maximum size according to fragmentation caused by radial drift --> output in cm!
-double a_df(double sigma, double r, double p, double dp, double rho_p, const disk_t *disk_params) {
+double calculate_max_size_from_drift_fragmentation(double sigma, double r, double p, double dp, double rho_p, const disk_t *disk_params) {
 
     double u_frag, vkep, dlnPdlnr, c_s, c_s2, s_df, Sigma_cgs;
 
@@ -224,21 +224,21 @@ double a_df(double sigma, double r, double p, double dp, double rho_p, const dis
 }
 
 // timescale for particle growth
-double tauGr(double r, double eps,const disk_t *disk_params) {
+double calculate_growth_timescale(double r, double eps,const disk_t *disk_params) {
     double omega = calculate_keplerian_angular_velocity(r,disk_params);
-    double taugr = eps / omega;
-    return taugr;
+    double tau_growth = eps / omega;
+    return tau_growth;
 }
 
 // calculates the particle size at a given location --> Birnstiel et al 2012
-double getSize(double prad, double pdens, double sigma, double sigmad, double y, double p, double dpress_val, double dt, const disk_t *disk_params) {
+double update_particle_size(double prad, double pdens, double sigma, double sigmad, double y, double p, double dpress_val, double dt, const disk_t *disk_params) {
 
-    double sturb = a_turb(sigma, y, pdens, disk_params);      // in cm
-    double sdf = a_df(sigma, y, p, dpress_val, pdens,disk_params); // in cm
-    double srdf = a_drift(sigmad, y, p, dpress_val, pdens, disk_params); // in cm
+    double sturb = calculate_max_size_from_turbulence(sigma, y, pdens, disk_params);      // in cm
+    double sdf = calculate_max_size_from_drift_fragmentation(sigma, y, p, dpress_val, pdens,disk_params); // in cm
+    double srdf = calculate_max_size_from_drift(sigmad, y, p, dpress_val, pdens, disk_params); // in cm
     double smin = find_min(sturb, sdf, srdf);         // in cm -- gives the smaller size from the two particle limits above (this is the upper limit for particle growth)
     double eps = sigmad / sigma; 
-    double tau_gr = tauGr(y, eps, disk_params);
+    double tau_gr = calculate_growth_timescale(y, eps, disk_params);
     double rt = 0.0;
 
     smin = smin / AU_TO_CM; // in AU
@@ -254,14 +254,14 @@ double getSize(double prad, double pdens, double sigma, double sigmad, double y,
     return rt;
 }
 
-// Modified implementation of the Get_Sigmad function
-void Get_Sigmad(const ParticleData_t *p_data, disk_t *disk_params, const simulation_options_t *sim_opts) {
+// Modified implementation of the calculate_dust_density_grid function
+void calculate_dust_density_grid(const ParticleData_t *p_data, disk_t *disk_params, const simulation_options_t *sim_opts) {
     
     double *sigma_d_temp = (double *)calloc(disk_params->NGRID, sizeof(double));
     double *sigma_dm_temp = (double *)calloc(disk_params->NGRID, sizeof(double));
 
     if (sigma_d_temp == NULL || sigma_dm_temp == NULL) {
-        fprintf(stderr, "ERROR: Memory allocation failed for sigma_d_temp or sigma_dm_temp in Get_Sigmad.\n");
+        fprintf(stderr, "ERROR: Memory allocation failed for sigma_d_temp or sigma_dm_temp in calculate_dust_density_grid.\n");
         free(sigma_d_temp);
         free(sigma_dm_temp);
         exit(EXIT_FAILURE);
@@ -272,7 +272,7 @@ void Get_Sigmad(const ParticleData_t *p_data, disk_t *disk_params, const simulat
         double *mass_pop1_1d = (double *)calloc(p_data->num_particles_pop1, sizeof(double));
 
         if (rad_pop1_2d == NULL || mass_pop1_1d == NULL) {
-            fprintf(stderr, "ERROR: Memory allocation failed for Pop1 temp arrays in Get_Sigmad.\n");
+            fprintf(stderr, "ERROR: Memory allocation failed for Pop1 temp arrays in calculate_dust_density_grid.\n");
             free(sigma_d_temp); free(sigma_dm_temp);
             free(rad_pop1_2d); free(mass_pop1_1d);
             exit(EXIT_FAILURE);
@@ -297,7 +297,7 @@ void Get_Sigmad(const ParticleData_t *p_data, disk_t *disk_params, const simulat
         double *mass_pop2_1d = (double *)calloc(p_data->num_particles_pop2, sizeof(double));
 
         if (rad_pop2_2d == NULL || mass_pop2_1d == NULL) {
-            fprintf(stderr, "ERROR: Memory allocation failed for Pop2 temp arrays in Get_Sigmad.\n");
+            fprintf(stderr, "ERROR: Memory allocation failed for Pop2 temp arrays in calculate_dust_density_grid.\n");
             free(sigma_d_temp); free(sigma_dm_temp);
             free(rad_pop2_2d); free(mass_pop2_1d);
             exit(EXIT_FAILURE);
@@ -328,11 +328,11 @@ void Get_Sigmad(const ParticleData_t *p_data, disk_t *disk_params, const simulat
 }
 
 
-void Get_Radius(dust_particle_t *particles_array, int num_particles, double deltat, double t,
+void update_particle_positions(dust_particle_t *particles_array, int num_particles, double deltat, double t,
                  const simulation_options_t *sim_opts, const disk_t *disk_params) {
 
     if (disk_params == NULL) {
-        fprintf(stderr, "ERROR [Get_Radius]: disk_params pointer IS NULL on entry!\n");
+        fprintf(stderr, "ERROR [update_particle_positions]: disk_params pointer IS NULL on entry!\n");
         exit(EXIT_FAILURE); // Exit if disk_params is NULL
     }
 
@@ -400,7 +400,7 @@ void Get_Radius(dust_particle_t *particles_array, int num_particles, double delt
         // --- 2. Clamping AND "kill" process AFTER int_step RUNS ---
         // If the new position falls below RMIN or above RMAX, "kill" the particle.
         if (particles_array[i].distance_au <= grid_rmin || particles_array[i].distance_au >= grid_rmax) {
-//            fprintf(stderr, "DEBUG [Get_Radius]: Particle %d (R=%.4e AU) went out of bounds (RMIN=%.4e, RMAX=%.4e). Killing it.\n",
+//            fprintf(stderr, "DEBUG [update_particle_positions]: Particle %d (R=%.4e AU) went out of bounds (RMIN=%.4e, RMAX=%.4e). Killing it.\n",
 //                            i, particles_array[i].distance_au, grid_rmin, grid_rmax);
             particles_array[i].distance_au = 0.0;
             particles_array[i].current_size_au = 0.0; // This is the main "kill" flag for the next step

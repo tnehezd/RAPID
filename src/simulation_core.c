@@ -12,7 +12,7 @@
 #include "config.h"        // For PARTICLE_NUMBER, RMIN (and potentially other constants)
 #include "io_utils.h"      // For ReadDustFile_V2, setup_initial_output_files, print_file_header, close_snapshot_files
 #include "disk_model.h"    // For calculate_scale_height, calculate_gas_pressure, calculate_local_sound_speed, calculate_gas_viscosity, interpol
-#include "dust_physics.h"  // For Stokes_Number, Count_Mass, secondaryGrowth, Get_Sigmad, Get_Radius, getSize (if separate), reszecskek_szama (function prototype)
+#include "dust_physics.h"  // For calculate_stokes_number, Count_Mass, secondaryGrowth, calculate_dust_density_grid, update_particle_positions, update_particle_size (if separate), reszecskek_szama (function prototype)
 #include "utils.h"         // For time_step, get_gas_surface_density_pressure_pressure_gradient, find_min_three
 #include "simulation_core.h" // For tIntegrate prototype, etc.
 #include "particle_data.h" // New include for ParticleData_t
@@ -47,7 +47,7 @@ void eqrhs(double prad, double dp, double sigma, double ug, double r, double *dr
         exit(EXIT_FAILURE);
     }
 
-    St = Stokes_Number(prad, sigma, r,disk_params);
+    St = calculate_stokes_number(prad, sigma, r,disk_params);
     H = calculate_scale_height(r, disk_params);
     P = calculate_gas_pressure(sigma, r, disk_params);
     dPdr = dp; // dPdr directly comes from dp input
@@ -59,7 +59,7 @@ void eqrhs(double prad, double dp, double sigma, double ug, double r, double *dr
 
     // Ellenőrizd a köztes értékeket
     if (isnan(St) || isinf(St)) {
-        fprintf(stderr, "ERROR [eqrhs]: Stokes_Number returned NaN/Inf (%.10lg) for prad=%.10lg, sigma=%.10lg, r=%.10lg. Exiting.\n", St, prad, sigma, r);
+        fprintf(stderr, "ERROR [eqrhs]: calculate_stokes_number returned NaN/Inf (%.10lg) for prad=%.10lg, sigma=%.10lg, r=%.10lg. Exiting.\n", St, prad, sigma, r);
         exit(EXIT_FAILURE);
     }
     if (isnan(H) || isinf(H) || H <= 0.0) {
@@ -159,8 +159,8 @@ void int_step(double time, double psize, double current_r, // particle's current
             interpol(disk_params->pressvec, disk_params->rvec, current_r, &gas_pressure, disk_params->DD, opt, disk_params);
             particle_density = disk_params->PDENSITY; // Particle internal density (not surface density)
             
-            // Here, getSize calculates particle growth. It needs to be correct.
-            *new_psize_ptr = getSize(psize, particle_density, sigma_gas, sigmadd_at_r, current_r, gas_pressure, dpress, step, disk_params);
+            // Here, update_particle_size calculates particle growth. It needs to be correct.
+            *new_psize_ptr = update_particle_size(psize, particle_density, sigma_gas, sigmadd_at_r, current_r, gas_pressure, dpress, step, disk_params);
         }
     }
 
@@ -434,18 +434,18 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                 }
 
                 if (sim_opts->growth == 1.) {
-                    // --- NEW DEBUG PRINT: disk_params->eps just before Get_Sigmad ---
-                    fprintf(stderr, "DEBUG [tIntegrate]: disk_params->eps value just before calling Get_Sigmad: %.10e\n", disk_params->eps);
-                    Get_Sigmad(&p_data, disk_params, sim_opts);   // Order of args: p_data, sim_opts, disk_params -> I've fixed this earlier based on dust_physics.c
-                                                                 // IMPORTANT: The order of arguments to Get_Sigmad in simulation_loop.c (tIntegrate) was:
-                                                                 // Get_Sigmad(&p_data, sim_opts, disk_params);
+                    // --- NEW DEBUG PRINT: disk_params->eps just before calculate_dust_density_grid ---
+                    fprintf(stderr, "DEBUG [tIntegrate]: disk_params->eps value just before calling calculate_dust_density_grid: %.10e\n", disk_params->eps);
+                    calculate_dust_density_grid(&p_data, disk_params, sim_opts);   // Order of args: p_data, sim_opts, disk_params -> I've fixed this earlier based on dust_physics.c
+                                                                 // IMPORTANT: The order of arguments to calculate_dust_density_grid in simulation_loop.c (tIntegrate) was:
+                                                                 // calculate_dust_density_grid(&p_data, sim_opts, disk_params);
                                                                  // While the prototype in dust_physics.c was:
-                                                                 // void Get_Sigmad(const ParticleData_t *p_data, disk_t *disk_params, const simulation_options_t *sim_opts);
+                                                                 // void calculate_dust_density_grid(const ParticleData_t *p_data, disk_t *disk_params, const simulation_options_t *sim_opts);
                                                                  // This is a MISMATCH! The arguments for disk_params and sim_opts are swapped!
                                                                  // THIS IS LIKELY THE CAUSE OF YOUR PROBLEM!
 
                     // The call should be:
-                    // Get_Sigmad(&p_data, disk_params, sim_opts);
+                    // calculate_dust_density_grid(&p_data, disk_params, sim_opts);
                     // I'm assuming you fixed this, but re-highlighting it just in case.
                 }
 
@@ -470,25 +470,25 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
             }
 
             if (p_data.particles_pop1 == NULL) {
-                fprintf(stderr, "ERROR [tIntegrate]: particles_pop1 is NULL before Get_Radius call!\n");
+                fprintf(stderr, "ERROR [tIntegrate]: particles_pop1 is NULL before update_particle_positions call!\n");
                 exit(EXIT_FAILURE);
             }
             if (disk_params == NULL) {
-                fprintf(stderr, "ERROR [tIntegrate]: disk_params is NULL before Get_Radius call!\n");
+                fprintf(stderr, "ERROR [tIntegrate]: disk_params is NULL before update_particle_positions call!\n");
                 exit(EXIT_FAILURE);
             }
-            fprintf(stderr, "DEBUG [tIntegrate]: Calling Get_Radius for Pop1 with num_particles = %d\n", PARTICLE_NUMBER);
+            fprintf(stderr, "DEBUG [tIntegrate]: Calling update_particle_positions for Pop1 with num_particles = %d\n", PARTICLE_NUMBER);
 
-            // --- Részecske mozgás (Get_Radius) és méret evolúció ---
-            // A Get_Radius függvény végzi el a Runge-Kutta integrációt
+            // --- Részecske mozgás (update_particle_positions) és méret evolúció ---
+            // A update_particle_positions függvény végzi el a Runge-Kutta integrációt
             // és frissíti a részecskék pozícióit és a drdt tagjait.
-            Get_Radius(p_data.particles_pop1, PARTICLE_NUMBER, deltat, t, sim_opts, disk_params); // 0 = Pop1
+            update_particle_positions(p_data.particles_pop1, PARTICLE_NUMBER, deltat, t, sim_opts, disk_params); // 0 = Pop1
             if (sim_opts->twopop == 1.) {
-                Get_Radius(p_data.particles_pop2, PARTICLE_NUMBER, deltat, t, sim_opts, disk_params); // 1 = Pop2
+                update_particle_positions(p_data.particles_pop2, PARTICLE_NUMBER, deltat, t, sim_opts, disk_params); // 1 = Pop2
             }
 
             // --- Adaptív Időlépés Számítása a Következő Lépéshez ---
-            // Most, hogy a Get_Radius lefutott, a particles_pop1[i].drdt (és pop2) tartalmazza az aktuális radiális sebességet.
+            // Most, hogy a update_particle_positions lefutott, a particles_pop1[i].drdt (és pop2) tartalmazza az aktuális radiális sebességet.
             double particle_dt_drift_limit_in_years = HUGE_VAL;
             if (sim_opts->drift == 1.0 && PARTICLE_NUMBER > 0) {
                 double max_abs_drdt_from_current_step = 0.0;

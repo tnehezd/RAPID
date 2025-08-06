@@ -4,51 +4,53 @@
 #define DUST_PHYSICS_H
 
 #include <stdio.h>
-#include "simulation_types.h" // Szükséges a simulation_options_t és disk_t struktúrákhoz
-#include "particle_data.h"    // Ezt az include-ot is hozzá kell adni a dust_particle_t miatt!
+#include "simulation_types.h" // Required for the simulation_options_t and disk_t structures
+#include "particle_data.h"    // This include must also be added for dust_particle_t!
 
 
-// A calculate_dust_surface_density_profile prototípusa, ha az radin[][2]-t vár
+// Function prototype for calculating dust surface density profile
+// This function performs a Cloud-in-Cell (CIC) mapping from Lagrangian particles
+// onto an Eulerian grid.
 void calculate_dust_surface_density_profile(
-    double *output_sigma_d_grid,       // Kimenet: A kiszámított por felületi sűrűség (gridenként)
-    double *output_r_grid_centers,     // Kimenet: A grid cellák középpontjainak radiális pozíciói
-    const double radin[][2],           // Bemenet: Részecskék radiális pozíciója (const)
-    const double *massin,              // Bemenet: Részecskék tömege (const)
-    int n_particles,                   // Bemenet: A részecskék száma
-    int n_grid_cells,                  // Bemenet: A grid cellák száma, amire a sűrűséget számoljuk
-    const disk_t *disk_params          // Bemenet: A korong paraméterei (const)
+    double *output_sigma_d_grid,      // Output: The calculated dust surface density (per grid cell)
+    double *output_r_grid_centers,    // Output: Radial positions of the grid cell centers
+    const double radin[][2],          // Input: Particle radial positions (const)
+    const double *massin,             // Input: Particle masses (const)
+    int n_particles,                  // Input: Number of particles
+    int n_grid_cells,                 // Input: Number of grid cells for density calculation
+    const disk_t *disk_params         // Input: The disk parameters (const)
 );
 
-/* alpha turbulens paraméter kiszámolása */
+/* Calculates the turbulent alpha parameter */
 double calculate_turbulent_alpha(double r, const disk_t *disk_params);
 
-/* kiszamolja az adott reszecskehez tartozo Stokes szamot  */
-double Stokes_Number(double pradius, double sigma, double r, const disk_t *disk_params);
+/* Calculates the Stokes number for a given particle */
+double calculate_stokes_number(double pradius, double sigma, double r, const disk_t *disk_params);
 
-double a_drift(double sigmad, double r, double p, double dp, double rho_p, const disk_t *disk_params);
-double a_turb(double sigma, double r, double rho_p, const disk_t *disk_params);
-double a_df(double sigma, double r, double p, double dp, double rho_p, const disk_t *disk_params);
+// Functions to determine the maximum particle size based on various physical constraints (Birnstiel et al. 2012)
+double calculate_max_size_from_drift(double sigmad, double r, double p, double dp, double rho_p, const disk_t *disk_params);
+double calculate_max_size_from_turbulence(double sigma, double r, double rho_p, const disk_t *disk_params);
+double calculate_max_size_from_drift_fragmentation(double sigma, double r, double p, double dp, double rho_p, const disk_t *disk_params);
 
-/* a reszecskek novekedesenek idoskalaja   */
-double tauGr(double r, double eps, const disk_t *disk_params);
+/* The timescale for particle growth */
+double calculate_growth_timescale(double r, double eps, const disk_t *disk_params);
 
-/* kiszamolja az adott helyen a reszecske meretet --> BIRNSTIEL CIKK  */
-double getSize(double prad, double pdens, double sigma, double sigmad, double y, double p, double dpress_val, double dt, const disk_t *disk_params);
+/* Calculates the new particle size at a given location, based on the Birnstiel paper */
+double update_particle_size(double prad, double pdens, double sigma, double sigmad, double y, double p, double dpress_val, double dt, const disk_t *disk_params);
 
-// Porkorong sűrűségének számítása
-// Ezt a függvényt úgy fogjuk hívni a tIntegrate-ből, hogy a ParticleData_t struktúrát kapja meg.
-// Az *rd és *rmic paraméterek valószínűleg nem kellenek kimenetként, ha a disk_params->rvec-et használjuk.
-// A sigmad és sigmadm is a disk_params-ba kerül majd.
-void Get_Sigmad(const ParticleData_t *p_data, disk_t *disk_params, const simulation_options_t *sim_opts);
+// Function to calculate the dust disk density
+// This function gets the ParticleData_t structure from tIntegrate.
+// The sigmad and sigmadm values will be stored in disk_params.
+void calculate_dust_density_grid(const ParticleData_t *p_data, disk_t *disk_params, const simulation_options_t *sim_opts);
 
-/* Fuggveny a porszemcsek uj tavolsaganak elraktarozasara      */
-// ÚJ PROTOTÍPUS:
-// - dust_particle_t *particles_array: A tényleges részecske tömb (Pop1 VAGY Pop2)
-// - int num_particles: A tömbben lévő részecskék száma
-// - double deltat, double t: időlépés és aktuális idő
-// - const simulation_options_t *sim_opts, const disk_t *disk_params: opciók és korong paraméterek
-void Get_Radius(dust_particle_t *particles_array, int num_particles, double deltat, double t,
-                const simulation_options_t *sim_opts, const disk_t *disk_params);
+/* Function to store the new distances of the dust particles */
+// NEW PROTOTYPE:
+// - dust_particle_t *particles_array: The actual particle array (either Pop1 OR Pop2)
+// - int num_particles: The number of particles in the array
+// - double deltat, double t: timestep and current time
+// - const simulation_options_t *sim_opts, const disk_t *disk_params: options and disk parameters
+void update_particle_positions(dust_particle_t *particles_array, int num_particles, double deltat, double t,
+                 const simulation_options_t *sim_opts, const disk_t *disk_params);
 
 
 #endif // DUST_PHYSICS_H
