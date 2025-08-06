@@ -110,22 +110,22 @@ int main(int argc, const char **argv) {
     sim_opts.dzone = (disk_params.r_dze_i > 0.0 || disk_params.r_dze_o > 0.0) ? 1.0 : 0.0;
 
     // --- Output directory handling ---
-    // Mk_Dir contains the numbering logic if the directory already exists.
-    Mk_Dir(def.output_dir_name); // Creates the main output folder, potentially with a number.
-    fprintf(stderr, "DEBUG [main]: After Mk_Dir (base dir), def.output_dir_name is now: '%s'\n", def.output_dir_name);
+    // create_output_directory contains the numbering logic if the directory already exists.
+    create_output_directory(def.output_dir_name); // Creates the main output folder, potentially with a number.
+    fprintf(stderr, "DEBUG [main]: After create_output_directory (base dir), def.output_dir_name is now: '%s'\n", def.output_dir_name);
 
     char initial_dir_path[MAX_PATH_LEN];
     char logs_dir_path[MAX_PATH_LEN];
 
     // Create the 'initial' subdirectory using CONFIG_DIR
     snprintf(initial_dir_path, sizeof(initial_dir_path), "%s/%s", def.output_dir_name, CONFIG_DIR);
-    Mk_Dir(initial_dir_path);
+    create_output_directory(initial_dir_path);
 
     // Create the 'LOGS' subdirectory using LOGS_DIR
     snprintf(logs_dir_path, sizeof(logs_dir_path), "%s/%s", def.output_dir_name, LOGS_DIR);
     fprintf(stderr, "DEBUG [main]: logs_dir_path assembled as: '%s'\n", logs_dir_path);
 
-    Mk_Dir(logs_dir_path);
+    create_output_directory(logs_dir_path);
 
     // CRITICAL: Populate sim_opts.output_dir_name from def.output_dir_name
     strncpy(sim_opts.output_dir_name, def.output_dir_name, MAX_PATH_LEN - 1);
@@ -148,7 +148,7 @@ int main(int argc, const char **argv) {
         fprintf(stderr, "DEBUG [main]: Input file specified: '%s'. Attempting to read initial profile.\n", current_inputsig_file);
 
         // disk_params.NGRID update from file *before* allocation.
-        disk_params.NGRID = reszecskek_szama(current_inputsig_file); // Update NGRID from file (for GAS grid)
+        disk_params.NGRID = get_particle_count(current_inputsig_file); // Update NGRID from file (for GAS grid)
 
         // Recalculate DD based on the updated NGRID
         if (disk_params.NGRID > 1) {
@@ -227,10 +227,10 @@ int main(int argc, const char **argv) {
         snprintf(current_inputsig_file, sizeof(current_inputsig_file), "%s/%s", initial_dir_path, FILENAME_INIT_GAS_PROFILE);
         fprintf(stderr, "DEBUG [main]: Generated GAS profile will be loaded from '%s'.\n", current_inputsig_file);
 
-        // --- Update NGRID from the generated file (critical for ReadSigmaFile sizing) ---
+        // --- Update NGRID from the generated file (critical for read_gas_profile sizing) ---
         // Important: Here, the number of lines should be read from FILENAME_INIT_GAS_PROFILE,
         // provided that init_tool_module.c creates this file.
-        disk_params.NGRID = reszecskek_szama(current_inputsig_file);
+        disk_params.NGRID = get_particle_count(current_inputsig_file);
 
         if (disk_params.NGRID > 1) {
             disk_params.DD = (disk_params.RMAX - disk_params.RMIN) / (disk_params.NGRID - 1.0);
@@ -262,7 +262,7 @@ int main(int argc, const char **argv) {
 
     // --- CRITICAL STEP: Now that current_inputsig_file is set,
     //     copy it to sim_opts.input_filename for tIntegrate. ---
-    // This is the gas profile filename that ReadSigmaFile reads.
+    // This is the gas profile filename that read_gas_profile reads.
     strncpy(sim_opts.input_filename, current_inputsig_file, MAX_PATH_LEN - 1);
     sim_opts.input_filename[MAX_PATH_LEN - 1] = '\0'; // Ensure null-termination
     fprintf(stderr, "DEBUG [main]: sim_opts.input_filename set to '%s' for tIntegrate (gas profile).\n", sim_opts.input_filename);
@@ -277,21 +277,21 @@ int main(int argc, const char **argv) {
 
     // --- CRITICAL STEP: Set the global PARTICLE_NUMBER based on the actual dust particle file. ---
     // This ensures PARTICLE_NUMBER reflects the *dust* particle count, not the gas grid count.
-    PARTICLE_NUMBER = reszecskek_szama(sim_opts.dust_input_filename); // Read lines from the dust profile
+    PARTICLE_NUMBER = get_particle_count(sim_opts.dust_input_filename); // Read lines from the dust profile
     fprintf(stderr, "DEBUG [main]: Global PARTICLE_NUMBER set to %d (from dust input file: %s).\n", PARTICLE_NUMBER, sim_opts.dust_input_filename);
 
 
-    fprintf(stderr, "DEBUG [main]: Initial profile loading for ReadSigmaFile...\n");
-    ReadSigmaFile(&disk_params, current_inputsig_file); // This populates disk_params.sigmavec and rvec
-    fprintf(stderr, "DEBUG [main]: ReadSigmaFile completed. Calling calculate_boundary for disk_params.rvec and disk_params.sigmavec...\n");
+    fprintf(stderr, "DEBUG [main]: Initial profile loading for read_gas_profile...\n");
+    read_gas_profile(&disk_params, current_inputsig_file); // This populates disk_params.sigmavec and rvec
+    fprintf(stderr, "DEBUG [main]: read_gas_profile completed. Calling calculate_boundary for disk_params.rvec and disk_params.sigmavec...\n");
     calculate_boundary(disk_params.rvec, &disk_params);
     calculate_boundary(disk_params.sigmavec, &disk_params);
     fprintf(stderr, "DEBUG [main]: calculate_boundary calls completed for initial profile.\n");
 
     // Print current information
-    fprintf(stderr, "DEBUG [main]: Calling infoCurrent...\n");
+    fprintf(stderr, "DEBUG [main]: Calling write_summary_log...\n");
     // Here, def.output_dir_name is passed, which already contains the numbered folder name
-    infoCurrent(def.output_dir_name, &disk_params, &sim_opts);
+    write_summary_log(def.output_dir_name, &disk_params, &sim_opts);
 
 
     // Run simulation or exit based on options
@@ -302,7 +302,7 @@ int main(int argc, const char **argv) {
         snprintf(dens_name_initial, sizeof(dens_name_initial), "%s/%s", initial_dir_path, FILENAME_INIT_GAS_PROFILE);
         fprintf(stderr, "DEBUG [main]: Printing initial surface density to %s.\n", dens_name_initial);
 
-        // Special handling for Print_Sigma when only initial output is needed
+        // Special handling for write_gas_profile_to_file when only initial output is needed
         output_files_t temp_output_for_initial_print;
         temp_output_for_initial_print.surface_file = fopen(dens_name_initial, "w");
         if (temp_output_for_initial_print.surface_file != NULL) {
@@ -314,7 +314,7 @@ int main(int argc, const char **argv) {
             fprintf(temp_output_for_initial_print.surface_file, "# Data generated by Dust Drift Simulation (Initial State)\n");
             fflush(temp_output_for_initial_print.surface_file);
 
-            Print_Sigma(&disk_params, &temp_output_for_initial_print);
+            write_gas_profile_to_file(&disk_params, &temp_output_for_initial_print);
             fclose(temp_output_for_initial_print.surface_file);
             temp_output_for_initial_print.surface_file = NULL;
             fprintf(stderr, "DEBUG [main]: Closed %s.\n", dens_name_initial);
@@ -322,7 +322,7 @@ int main(int argc, const char **argv) {
             fprintf(stderr, "ERROR [main]: Could not open %s for initial surface output.\n", dens_name_initial);
         }
 
-        fprintf(stderr, "DEBUG [main]: Print_Sigma completed. Program exiting.\n");
+        fprintf(stderr, "DEBUG [main]: write_gas_profile_to_file completed. Program exiting.\n");
     } else {
         fprintf(stderr, "DEBUG [main]: sim_opts.input_filename (gas) for tIntegrate: '%s'\n", sim_opts.input_filename);
         fprintf(stderr, "DEBUG [main]: sim_opts.dust_input_filename (dust) for tIntegrate: '%s'\n", sim_opts.dust_input_filename);

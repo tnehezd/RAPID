@@ -211,13 +211,13 @@ int run_init_tool(init_tool_options_t *opts, disk_t *disk_params) {
 
     // --- Write Headers using the new function ---
     if (fout_data != NULL) {
-        print_file_header(fout_data, FILE_TYPE_PARTICLE_SIZE, &initial_header_data);
+        write_file_header(fout_data, FILE_TYPE_PARTICLE_SIZE, &initial_header_data);
     }
     if (fout_dens != NULL) {
-        print_file_header(fout_dens, FILE_TYPE_GAS_DENSITY, &initial_header_data);
+        write_file_header(fout_dens, FILE_TYPE_GAS_DENSITY, &initial_header_data);
     }
     if (fout_params != NULL) {
-        print_file_header(fout_params, FILE_TYPE_DISK_PARAM, &initial_header_data);
+        write_file_header(fout_params, FILE_TYPE_DISK_PARAM, &initial_header_data);
     }
 
     // Physical Constants
@@ -404,8 +404,8 @@ int run_init_tool(init_tool_options_t *opts, disk_t *disk_params) {
 
     // Write parameters to FILENAME_DISK_PARAM (fout_params)
     // CORRECTION: Negate SigmaExp value so that the actual negative exponent is written to the file.
-    // Here, we are not calling print_file_header, because data writing is a separate line, not part of the header.
-    // The header was already written by the print_file_header(fout_params, FILE_TYPE_DISK_PARAM, &initial_header_data); call above.
+    // Here, we are not calling write_file_header, because data writing is a separate line, not part of the header.
+    // The header was already written by the write_file_header(fout_params, FILE_TYPE_DISK_PARAM, &initial_header_data); call above.
     fprintf(fout_params, "%-15.6e %-15.6e %-10d %-15.6e %-20.12Lg %-15.6e %-15.6e %-15.6e %-20.12e %-20.12e %-15.6e %-15.6e %-15.6e %-15.6e %-15.6e\n",
             opts->r_inner, opts->r_outer, opts->n_grid_points, -opts->sigma_exponent, current_sigma0_gas,
             G_GRAV_CONST, opts->deadzone_r_inner, opts->deadzone_r_outer,

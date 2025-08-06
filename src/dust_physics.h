@@ -26,6 +26,8 @@
  * @param n_particles Input: The total number of particles.
  * @param n_grid_cells Input: The number of grid cells for density calculation.
  * @param disk_params Input: A pointer to the disk parameters structure (const).
+ *  
+ * THERE'S A BUG!!!!
  */
 void calculate_dust_surface_density_profile(double *output_sigma_d_grid, double *output_r_grid_centers, const double *particle_radius_au_array, const double *particle_mass_array, int n_particles, int n_grid_cells, const disk_t *disk_params);
 
@@ -134,8 +136,7 @@ void calculate_dust_density_grid(const ParticleData_t *p_data, disk_t *disk_para
  * @param sim_opts A pointer to the simulation options structure (const).
  * @param disk_params A pointer to the disk parameters structure (const).
  */
-void update_particle_positions(dust_particle_t *particles_array, int num_particles, double deltat, double t,
-                 const simulation_options_t *sim_opts, const disk_t *disk_params);
+void update_particle_positions(dust_particle_t *particles_array, int num_particles, double deltat, double t, const simulation_options_t *sim_opts, const disk_t *disk_params);
 
 
 #endif // DUST_PHYSICS_H

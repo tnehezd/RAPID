@@ -10,9 +10,9 @@
 
 // Your Project Header Includes
 #include "config.h"        // For PARTICLE_NUMBER, RMIN (and potentially other constants)
-#include "io_utils.h"      // For ReadDustFile_V2, setup_initial_output_files, print_file_header, close_snapshot_files
+#include "io_utils.h"      // For load_dust_particles, initialize_mass_accumulation_file, write_file_header, close_snapshot_files
 #include "disk_model.h"    // For calculate_scale_height, calculate_gas_pressure, calculate_local_sound_speed, calculate_gas_viscosity, interpol
-#include "dust_physics.h"  // For calculate_stokes_number, Count_Mass, secondaryGrowth, calculate_dust_density_grid, update_particle_positions, update_particle_size (if separate), reszecskek_szama (function prototype)
+#include "dust_physics.h"  // For calculate_stokes_number, Count_Mass, secondaryGrowth, calculate_dust_density_grid, update_particle_positions, update_particle_size (if separate), get_particle_count (function prototype)
 #include "utils.h"         // For time_step, get_gas_surface_density_pressure_pressure_gradient, find_min_three
 #include "simulation_core.h" // For tIntegrate prototype, etc.
 #include "particle_data.h" // New include for ParticleData_t
@@ -279,8 +279,8 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
 
     // --- Initialization Section ---
     if (sim_opts->drift == 1.) {
-        PARTICLE_NUMBER = reszecskek_szama(sim_opts->dust_input_filename);
-        fprintf(stderr, "DEBUG [tIntegrate]: Initial particle count (PARTICLE_NUMBER) from reszecskek_szama: %d\n", PARTICLE_NUMBER);
+        PARTICLE_NUMBER = get_particle_count(sim_opts->dust_input_filename);
+        fprintf(stderr, "DEBUG [tIntegrate]: Initial particle count (PARTICLE_NUMBER) from get_particle_count: %d\n", PARTICLE_NUMBER);
     } else {
         fprintf(stderr, "DEBUG [tIntegrate]: Particle drift is OFF. PARTICLE_NUMBER set to 0.\n");
         PARTICLE_NUMBER = 0;
@@ -294,17 +294,17 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
     }
 
     if (sim_opts->drift == 1.) {
-        if (setup_initial_output_files(output_files, sim_opts, disk_params, &header_data_for_files) != 0) {
+        if (initialize_mass_accumulation_file(output_files, sim_opts, disk_params, &header_data_for_files) != 0) {
             fprintf(stderr, "ERROR: Failed to set up initial output files. Exiting.\n");
             free_particle_data(&p_data);
             exit(EXIT_FAILURE);
         }
-        fprintf(stderr, "DEBUG [tIntegrate]: Calling ReadDustFile_V2 to load initial dust profile.\n");
-        ReadDustFile_V2(&p_data, sim_opts->dust_input_filename, disk_params, sim_opts);
-        fprintf(stderr, "DEBUG [tIntegrate]: ReadDustFile_V2 completed.\n");
+        fprintf(stderr, "DEBUG [tIntegrate]: Calling load_dust_particles to load initial dust profile.\n");
+        load_dust_particles(&p_data, sim_opts->dust_input_filename, disk_params, sim_opts);
+        fprintf(stderr, "DEBUG [tIntegrate]: load_dust_particles completed.\n");
 
-        // --- NEW DEBUG PRINT: disk_params->eps after ReadDustFile_V2 ---
-        fprintf(stderr, "DEBUG [tIntegrate]: disk_params->eps value after ReadDustFile_V2: %.10e\n", disk_params->eps);
+        // --- NEW DEBUG PRINT: disk_params->eps after load_dust_particles ---
+        fprintf(stderr, "DEBUG [tIntegrate]: disk_params->eps value after load_dust_particles: %.10e\n", disk_params->eps);
     }
 
     double max_dist_pop1 = 0.0;
@@ -411,7 +411,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                         fprintf(stderr, "ERROR: Could not open %s for writing.\n", dens_name);
                     } else {
                         HeaderData_t gas_header_data = {.current_time = current_time_years, .is_initial_data = (current_time_years == 0.0)};
-                        print_file_header(output_files->surface_file, FILE_TYPE_GAS_DENSITY, &gas_header_data);
+                        write_file_header(output_files->surface_file, FILE_TYPE_GAS_DENSITY, &gas_header_data);
                     }
                 }
 
@@ -420,7 +420,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                     fprintf(stderr, "ERROR: Could not open %s for writing.\n", dust_name);
                 } else {
                     HeaderData_t dust_header_data = {.current_time = current_time_years, .is_initial_data = (current_time_years == 0.0)};
-                    print_file_header(output_files->dust_file, FILE_TYPE_DUST_EVOL, &dust_header_data);
+                    write_file_header(output_files->dust_file, FILE_TYPE_DUST_EVOL, &dust_header_data);
                 }
 
                 if (sim_opts->twopop == 1.) {
@@ -429,7 +429,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                         fprintf(stderr, "ERROR: Could not open %s for writing.\n", micron_dust_name);
                     } else {
                         HeaderData_t micron_dust_header_data = {.current_time = current_time_years, .is_initial_data = (current_time_years == 0.0)};
-                        print_file_header(output_files->micron_dust_file, FILE_TYPE_MICRON_DUST_EVOL, &micron_dust_header_data);
+                        write_file_header(output_files->micron_dust_file, FILE_TYPE_MICRON_DUST_EVOL, &micron_dust_header_data);
                     }
                 }
 
@@ -451,12 +451,12 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
 
                 // Gas density output
                 if (sim_opts->evol == 1 || current_time_years == 0) {
-                    Print_Sigma(disk_params, output_files);
+                    write_gas_profile_to_file(disk_params, output_files);
                 }
 
                 // Dust surface density output (Main dust & Micron dust if twopop)
                 if (sim_opts->growth == 1.) {
-                    Print_Sigmad((int)L, &p_data, disk_params, sim_opts, output_files);
+                    write_dust_profile_to_file((int)L, &p_data, disk_params, sim_opts, output_files);
                 }
                 fprintf(stderr,"L set to %lg\n",L);
 
@@ -574,10 +574,10 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                 } else {
                     fprintf(stderr, "DEBUG [tIntegrate]: Opened %s for writing in gas-only branch.\n", dens_name);
                     HeaderData_t gas_header_data = {.current_time = current_time_years, .is_initial_data = (current_time_years == 0.0)};
-                    print_file_header(output_files->surface_file, FILE_TYPE_GAS_DENSITY, &gas_header_data);
+                    write_file_header(output_files->surface_file, FILE_TYPE_GAS_DENSITY, &gas_header_data);
                 }
 
-                Print_Sigma(disk_params, output_files);
+                write_gas_profile_to_file(disk_params, output_files);
 
                 if (output_files->surface_file != NULL) {
                     fclose(output_files->surface_file);

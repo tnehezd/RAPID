@@ -1,4 +1,3 @@
-C
 /**
  * @file disk_model.h
  * @brief Declarations for functions handling gas disk properties and evolution.
