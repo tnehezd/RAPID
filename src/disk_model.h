@@ -1,12 +1,4 @@
-// src/disk_model.h
-
-#ifndef DISK_MODEL_H
-#define DISK_MODEL_H
-
-#include "config.h"
-#include "simulation_types.h" // Assumed to contain the definition of disk_t
-#include "globals.h"
-
+C
 /**
  * @file disk_model.h
  * @brief Declarations for functions handling gas disk properties and evolution.
@@ -17,6 +9,12 @@
  * The corresponding implementations are found in `disk_model.c`.
  */
 
+#ifndef DISK_MODEL_H
+#define DISK_MODEL_H
+
+#include "config.h"
+#include "simulation_types.h" // Assumed to contain the definition of disk_t
+#include "globals.h"
 
 /**
  * @brief Initializes the radial grid cell positions.
@@ -72,6 +70,20 @@ void initial_gas_pressure_gradient_profile(disk_t *disk_params);
  * @param disk_params Pointer to the `disk_t` structure containing relevant disk properties.
  */
 void initial_gas_velocity_profile(disk_t *disk_params);
+
+/**
+ * @brief Calculates the turbulent alpha parameter, including the dead zone.
+ *
+ * This function computes the dimensionless turbulent alpha viscosity parameter
+ * ($\alpha$) at a given radial position `r`. The calculation accounts for the
+ * presence of a dead zone, where the turbulence is suppressed.
+ *
+ * @param r The radial distance at which to calculate alpha.
+ * @param disk_params Pointer to the `disk_t` structure containing disk parameters.
+ * @return The calculated turbulent alpha value.
+ */
+double calculate_turbulent_alpha(double r, const disk_t *disk_params);
+
 
 /**
  * @brief Calculates the local kinematic viscosity of the gas.

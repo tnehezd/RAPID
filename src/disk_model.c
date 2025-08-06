@@ -60,6 +60,14 @@ void initial_gas_velocity_profile(disk_t *disk_params){
     calculate_boundary(disk_params->ugvec, disk_params);
 }
 
+// Calculating the turbulent alpha parameter --> reducing alpha with alpha_r
+double calculate_turbulent_alpha(double r, const disk_t *disk_params) {
+    double alpha_r;
+    alpha_r = 1.0 - 0.5 * (1.0 - disk_params->a_mod) * (tanh((r - disk_params->r_dze_i) / disk_params->Dr_dze_i) + tanh((disk_params->r_dze_o - r) / disk_params->Dr_dze_o));
+    return alpha_r * disk_params->alpha_visc;
+}
+
+
 /* --- Gas Disk Property Calculation Implementations --- */
 
 double calculate_gas_viscosity(double r, const disk_t *disk_params) {

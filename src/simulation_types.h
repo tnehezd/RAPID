@@ -58,6 +58,7 @@ typedef struct disk_t {
     double *dpressvec;      ///< Gas pressure gradient (radial derivative) at grid points
     double *ugvec;          ///< Gas radial velocity at grid points
     double *sigmadustvec;   ///< Dust surface density at grid points
+    double *sigmadustmicrvec;   ///< Dust surface density at grid points
     // Note: The `rhopvec` from your original comments might refer to local midplane dust density,
     // which would be derived from `sigmadustvec` and disk scale height.
     // If it's a separate array of values, ensure its purpose is distinct.

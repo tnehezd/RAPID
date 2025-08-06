@@ -18,112 +18,67 @@
 #include "particle_data.h"
 
 // Calculating dust surface density (from Lagrangian to Eulerian)
-void calculate_dust_surface_density_profile(
-    double *output_sigma_d_grid,      // Output: The calculated dust surface density (per grid cell)
-    double *output_r_grid_centers,    // Output: Radial positions of the grid cell centers
-    const double radin[][2],          // Input: Particle radial positions (const)
-    const double *massin,             // Input: Particle masses (const)
-    int n_particles,                  // Input: Number of particles
-    int n_grid_cells,                 // Input: Number of grid cells for density calculation
-    const disk_t *disk_params         // Input: The disk parameters (const)
-) {
+// calculate_dust_surface_density_profile
+void calculate_dust_surface_density_profile(double *output_sigma_d_grid, double *output_r_grid_centers, const double *particle_radius_au, const double *particle_mass, int n_particles, int n_grid_cells, const disk_t *disk_params) {
     // Memory allocation and initialization
-
-    // Temporary array to store mass collected in bins.
-    // Important: due to the CIC method, a size of NGRID + 2 is needed (one extra bin at each edge)
     double *total_mass_in_bins = (double *)calloc(n_grid_cells + 2, sizeof(double));
     if (total_mass_in_bins == NULL) {
         fprintf(stderr, "ERROR: Memory allocation failed for total_mass_in_bins in calculate_dust_surface_density_profile.\n");
         exit(EXIT_FAILURE);
     }
 
-    // Array to store the exact area of the bins.
     double *bin_areas = (double *)calloc(n_grid_cells + 2, sizeof(double));
     if (bin_areas == NULL) {
         fprintf(stderr, "ERROR: Memory allocation failed for bin_areas in calculate_dust_surface_density_profile.\n");
-        free(total_mass_in_bins); // Free the first allocated memory block in case of an error
+        free(total_mass_in_bins);
         exit(EXIT_FAILURE);
     }
 
-    // The width of the grid cells (delta r).
     double dr_cell_width = (disk_params->RMAX - disk_params->RMIN) / (double)n_grid_cells;
 
-    // 1. step: Calculate the area of the grid cells and populate the centers
     for (int j = 0; j < n_grid_cells; j++) {
         double r_inner = disk_params->RMIN + j * dr_cell_width;
         double r_outer = disk_params->RMIN + (j + 1) * dr_cell_width;
-
-        // The area of the ring: pi * (R_outer^2 - R_inner^2)
         bin_areas[j] = M_PI * (r_outer * r_outer - r_inner * r_inner);
-
-        // Fill the output grid points with the radii (cell centers)
         output_r_grid_centers[j] = r_inner + 0.5 * dr_cell_width;
-
-        // Initialize the output density array with 0.
         output_sigma_d_grid[j] = 0.0;
     }
 
-    // 2. step: Distribute particle masses among bins (Cloud-in-Cell - CIC)
-    // Iterate through each dust particle. Can be parallelized.
     #pragma omp parallel for
     for (int i = 0; i < n_particles; i++) {
-        double current_r = radin[i][0]; // The particle's current radial position
-        double current_mass = massin[i]; // The particle's mass
+        double current_r = particle_radius_au[i]; // Corrected variable name
+        double current_mass = particle_mass[i]; // Corrected variable name
 
-        // Only consider particles that are within the simulation domain.
-        // If a particle moved outside RMIN, it's discarded and does not contribute to the density.
         if (current_r < disk_params->RMIN || current_r >= disk_params->RMAX) {
-            continue; // Jump to the next particle
+            continue;
         }
 
-        // Calculate the particle's "normalized" radial position relative to the grid.
         double r_normalized = (current_r - disk_params->RMIN) / dr_cell_width;
-
-        // Find the index of the lower bin where the particle is located.
         int lower_bin_idx = (int)floor(r_normalized);
-
-        // Calculate how "inside" the particle is within the lower bin (a value between 0 and 1).
         double fraction_in_lower_bin = r_normalized - lower_bin_idx;
 
-        // Add a portion of the mass to the lower bin.
-        // A critical section is necessary because multiple threads can write to the same total_mass_in_bins element.
         if (lower_bin_idx >= 0 && lower_bin_idx < n_grid_cells) {
             #pragma omp atomic
             total_mass_in_bins[lower_bin_idx] += current_mass * (1.0 - fraction_in_lower_bin);
         }
 
-        // Add the other portion of the mass to the upper bin (if it exists).
-        // Important: the size of the total_mass_in_bins array is n_grid_cells + 2, so the indices
-        // are valid from 0 to n_grid_cells + 1. lower_bin_idx + 1 can be at most n_grid_cells.
-        // The condition must ensure that lower_bin_idx + 1 does not exceed the end of the array.
-        if ((lower_bin_idx + 1) < (n_grid_cells + 2)) { // Corrected upper bound for array access
+        if ((lower_bin_idx + 1) < (n_grid_cells + 2)) {
             #pragma omp atomic
             total_mass_in_bins[lower_bin_idx + 1] += current_mass * fraction_in_lower_bin;
         }
     }
 
-    // 3. step: Calculate density from the collected masses and fill the output array
-    // Iterate through each grid cell. Can be parallelized.
     #pragma omp parallel for
     for (int j = 0; j < n_grid_cells; j++) {
-        // Check that bin_areas[j] is not zero to avoid floating-point errors.
-        if (bin_areas[j] > 1e-18) { // Compare to a very small positive value
+        if (bin_areas[j] > 1e-18) {
             output_sigma_d_grid[j] = total_mass_in_bins[j] / bin_areas[j];
         } else {
-            output_sigma_d_grid[j] = 0.0; // If the area is zero, the density is also zero
+            output_sigma_d_grid[j] = 0.0;
         }
     }
 
-    // Freeing memory
     free(total_mass_in_bins);
     free(bin_areas);
-}
-
-// Calculating the turbulent alpha parameter --> reducing alpha with alpha_r
-double calculate_turbulent_alpha(double r, const disk_t *disk_params) {
-    double alpha_r;
-    alpha_r = 1.0 - 0.5 * (1.0 - disk_params->a_mod) * (tanh((r - disk_params->r_dze_i) / disk_params->Dr_dze_i) + tanh((disk_params->r_dze_o - r) / disk_params->Dr_dze_o));
-    return alpha_r * disk_params->alpha_visc;
 }
 
 
@@ -231,30 +186,30 @@ double calculate_growth_timescale(double r, double eps,const disk_t *disk_params
 }
 
 // calculates the particle size at a given location --> Birnstiel et al 2012
-double update_particle_size(double prad, double pdens, double sigma, double sigmad, double y, double p, double dpress_val, double dt, const disk_t *disk_params) {
+double update_particle_size(double particle_radius, double particle_density, double sigma_gas, double sigma_dust, double particle_distance_au, double gas_pressure, double gas_dpdr, double time_step, const disk_t *disk_params) {
 
-    double sturb = calculate_max_size_from_turbulence(sigma, y, pdens, disk_params);      // in cm
-    double sdf = calculate_max_size_from_drift_fragmentation(sigma, y, p, dpress_val, pdens,disk_params); // in cm
-    double srdf = calculate_max_size_from_drift(sigmad, y, p, dpress_val, pdens, disk_params); // in cm
-    double smin = find_min(sturb, sdf, srdf);         // in cm -- gives the smaller size from the two particle limits above (this is the upper limit for particle growth)
-    double eps = sigmad / sigma; 
-    double tau_gr = calculate_growth_timescale(y, eps, disk_params);
-    double rt = 0.0;
+    double size_max_turb = calculate_max_size_from_turbulence(sigma_gas, particle_distance_au, particle_density, disk_params);      // in cm
+    double size_max_drift_frag = calculate_max_size_from_drift_fragmentation(sigma_gas, particle_distance_au, gas_pressure, gas_dpdr, particle_density,disk_params); // in cm
+    double size_max_drift = calculate_max_size_from_drift(sigma_dust, particle_distance_au, gas_pressure, gas_dpdr, particle_density, disk_params); // in cm
+    double size_min = find_min(size_max_turb, size_max_drift_frag, size_max_drift);         // in cm -- gives the smaller size from the two particle limits above (this is the upper limit for particle growth)
+    double eps = sigma_dust / sigma_gas; 
+    double tau_growth = calculate_growth_timescale(particle_distance_au, eps, disk_params);
+    double new_size = 0.0;
 
-    smin = smin / AU_TO_CM; // in AU
+    size_min = size_min / AU_TO_CM; // in AU
 
     // calculates whether the above smin or the size resulting from the growth timescale limits the particle size
-    if (prad < smin) {
-        rt = find_min(prad * exp(dt / tau_gr), smin, HUGE_VAL);
-    } else { // prad >= smin
-        rt = smin;
+    if (particle_radius < size_min) {
+        new_size = find_min(particle_radius * exp(time_step / tau_growth), size_min, HUGE_VAL);
+    } else { 
+        new_size = size_min;
     }
 
-    rt = rt;
-    return rt;
+    new_size = new_size;
+    return new_size;
 }
 
-// Modified implementation of the calculate_dust_density_grid function
+
 void calculate_dust_density_grid(const ParticleData_t *p_data, disk_t *disk_params, const simulation_options_t *sim_opts) {
     
     double *sigma_d_temp = (double *)calloc(disk_params->NGRID, sizeof(double));
@@ -268,63 +223,62 @@ void calculate_dust_density_grid(const ParticleData_t *p_data, disk_t *disk_para
     }
 
     if (p_data->num_particles_pop1 > 0) {
-        double (*rad_pop1_2d)[2] = (double (*)[2])calloc(p_data->num_particles_pop1, sizeof(double[2]));
+        double *rad_pop1_1d = (double *)calloc(p_data->num_particles_pop1, sizeof(double));
         double *mass_pop1_1d = (double *)calloc(p_data->num_particles_pop1, sizeof(double));
 
-        if (rad_pop1_2d == NULL || mass_pop1_1d == NULL) {
+        if (rad_pop1_1d == NULL || mass_pop1_1d == NULL) {
             fprintf(stderr, "ERROR: Memory allocation failed for Pop1 temp arrays in calculate_dust_density_grid.\n");
             free(sigma_d_temp); free(sigma_dm_temp);
-            free(rad_pop1_2d); free(mass_pop1_1d);
+            free(rad_pop1_1d); free(mass_pop1_1d);
             exit(EXIT_FAILURE);
         }
 
         for (int i = 0; i < p_data->num_particles_pop1; i++) {
-            rad_pop1_2d[i][0] = p_data->particles_pop1[i].distance_au;
-            rad_pop1_2d[i][1] = p_data->particles_pop1[i].current_size_au;
+            rad_pop1_1d[i] = p_data->particles_pop1[i].distance_au;
             mass_pop1_1d[i] = p_data->particles_pop1[i].initial_mass_msun;
         }
 
         calculate_dust_surface_density_profile(sigma_d_temp, disk_params->rvec,
-                                               rad_pop1_2d, mass_pop1_1d,
+                                               rad_pop1_1d, mass_pop1_1d,
                                                p_data->num_particles_pop1, disk_params->NGRID, disk_params);
 
-        free(rad_pop1_2d);
+        free(rad_pop1_1d);
         free(mass_pop1_1d);
     }
 
     if (sim_opts->twopop == 1.0 && p_data->num_particles_pop2 > 0) {
-        double (*rad_pop2_2d)[2] = (double (*)[2])calloc(p_data->num_particles_pop2, sizeof(double[2]));
+        double *rad_pop2_1d = (double *)calloc(p_data->num_particles_pop2, sizeof(double));
         double *mass_pop2_1d = (double *)calloc(p_data->num_particles_pop2, sizeof(double));
 
-        if (rad_pop2_2d == NULL || mass_pop2_1d == NULL) {
+        if (rad_pop2_1d == NULL || mass_pop2_1d == NULL) {
             fprintf(stderr, "ERROR: Memory allocation failed for Pop2 temp arrays in calculate_dust_density_grid.\n");
             free(sigma_d_temp); free(sigma_dm_temp);
-            free(rad_pop2_2d); free(mass_pop2_1d);
+            free(rad_pop2_1d); free(mass_pop2_1d);
             exit(EXIT_FAILURE);
         }
 
         for (int i = 0; i < p_data->num_particles_pop2; i++) {
-            rad_pop2_2d[i][0] = p_data->particles_pop2[i].distance_au;
-            rad_pop2_2d[i][1] = p_data->particles_pop2[i].current_size_au;
+            rad_pop2_1d[i] = p_data->particles_pop2[i].distance_au;
             mass_pop2_1d[i] = p_data->particles_pop2[i].initial_mass_msun;
         }
 
         calculate_dust_surface_density_profile(sigma_dm_temp, disk_params->rvec,
-                                               rad_pop2_2d, mass_pop2_1d,
+                                               rad_pop2_1d, mass_pop2_1d,
                                                p_data->num_particles_pop2, disk_params->NGRID, disk_params);
 
-        free(rad_pop2_2d);
+        free(rad_pop2_1d);
         free(mass_pop2_1d);
     }
 
     for (int i = 0; i < disk_params->NGRID; i++) {
         disk_params->sigmadustvec[i] = sigma_d_temp[i];
-        // disk_params->sigmadustmicrvec[i] = sigma_dm_temp[i]; // If such an array exists
+        if(sim_opts->twopop == 1.0) {
+            disk_params->sigmadustmicrvec[i] = sigma_dm_temp[i]; // If such an array exists
+        }
     }
 
     free(sigma_d_temp);
     free(sigma_dm_temp);
-    
 }
 
 
@@ -387,7 +341,6 @@ void update_particle_positions(dust_particle_t *particles_array, int num_particl
         // Only update size if growth is enabled
         if (sim_opts->growth == 1.0) {
             particles_array[i].current_size_au = new_size;
-            // Update reciprocal value too
             if (particles_array[i].current_size_au > 0.0) {
                 particles_array[i].size_reciprocal = 1.0 / particles_array[i].current_size_au;
             } else {
