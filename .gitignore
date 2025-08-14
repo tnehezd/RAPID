@@ -15,3 +15,6 @@ obj/
 
 _build/
 xml/
+
+
+plot_cummulative_mass.py
