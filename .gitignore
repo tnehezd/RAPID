@@ -18,3 +18,5 @@ xml/
 
 
 plot_cummulative_mass.py
+
+*.png
