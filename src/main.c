@@ -220,7 +220,7 @@ int main(int argc, const char **argv) {
         strncpy(init_tool_params.output_base_path, initial_dir_path, MAX_PATH_LEN - 1);
         init_tool_params.output_base_path[MAX_PATH_LEN - 1] = '\0';
         // run_init_tool is responsible for allocating and populating gas disk_params members (rvec, sigmavec, etc.)
-        run_init_tool(&init_tool_params, &disk_params);
+        run_init_tool(&init_tool_params, &disk_params, &sim_opts);
         fprintf(stderr, "DEBUG [main]: run_init_tool completed. disk_params gas arrays allocated and populated.\n");
 
         // Now current_inputsig_file points to the generated file in initial_dir_path

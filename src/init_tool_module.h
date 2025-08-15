@@ -208,6 +208,7 @@ void create_default_init_tool_options(init_tool_options_t *opt);
  * gas grid properties will be stored.
  * @return Returns 0 on success, or a non-zero value on error.
  */
-int run_init_tool(init_tool_options_t *opts, disk_t *output_disk_params);
+int run_init_tool(init_tool_options_t *opts, disk_t *output_disk_params, simulation_options_t *simopts);
+
 
 #endif // INIT_TOOL_MODULE_H
