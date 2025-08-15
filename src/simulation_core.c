@@ -290,12 +290,12 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
     p_data.num_particles_pop1 = PARTICLE_NUMBER;
     p_data.num_particles_pop2 = PARTICLE_NUMBER;
 
-    fprintf(stderr, "DEBUG [tIntegrate]: Entering tIntegrate. Current Time: %.2e, Total Time: %.2e\n", sim_opts->TCURR, sim_opts->TMAX);
-    fprintf(stderr, "DEBUG [tIntegrate]: sim_opts->drift = %.2f, sim_opts->growth = %.2f, sim_opts->evol = %.2f, sim_opts->twopop = %.2f\n",
-            sim_opts->drift, sim_opts->growth, sim_opts->evol, sim_opts->twopop);
+//    fprintf(stderr, "DEBUG [tIntegrate]: Entering tIntegrate. Current Time: %.2e, Total Time: %.2e\n", sim_opts->TCURR, sim_opts->TMAX);
+//    fprintf(stderr, "DEBUG [tIntegrate]: sim_opts->drift = %.2f, sim_opts->growth = %.2f, sim_opts->evol = %.2f, sim_opts->twopop = %.2f\n",
+//            sim_opts->drift, sim_opts->growth, sim_opts->evol, sim_opts->twopop);
 
     // --- NEW DEBUG PRINT: disk_params->eps at tIntegrate entry ---
-    fprintf(stderr, "DEBUG [tIntegrate]: disk_params->eps value at tIntegrate entry: %.10e\n", disk_params->eps);
+//    fprintf(stderr, "DEBUG [tIntegrate]: disk_params->eps value at tIntegrate entry: %.10e\n", disk_params->eps);
 
     double L = 0.; // "Snapshot" timer in years
 
@@ -388,7 +388,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
             }
             max_dist_pop1 = get_max_particle_distance(p_data.particles_pop1, p_data.num_particles_pop1);
             min_dist_pop1 = get_min_particle_distance(p_data.particles_pop1, p_data.num_particles_pop1, disk_params->RMIN);
-            fprintf(stderr, "DEBUG [tIntegrate]: Pop1 MinDist: %.8lg AU, MaxDist: %.8lg AU\n", min_dist_pop1, max_dist_pop1);
+//            fprintf(stderr, "DEBUG [tIntegrate]: Pop1 MinDist: %.8lg AU, MaxDist: %.8lg AU\n", min_dist_pop1, max_dist_pop1);
 
 
             if (sim_opts->twopop == 1) {
@@ -409,7 +409,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                 overall_min_dist = min_dist_pop1;
                 overall_max_dist = max_dist_pop1;
             }
-            fprintf(stderr, "DEBUG [tIntegrate]: Overall MinDist: %.8lg AU, Overall MaxDist: %.8lg AU\n", overall_min_dist, overall_max_dist);
+//            fprintf(stderr, "DEBUG [tIntegrate]: Overall MinDist: %.8lg AU, Overall MaxDist: %.8lg AU\n", overall_min_dist, overall_max_dist);
 
 
             // --- Output Data (Snapshot) Handling ---
@@ -462,7 +462,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
 
                 if (sim_opts->growth == 1.) {
                     // --- NEW DEBUG PRINT: disk_params->eps just before calculate_dust_density_grid ---
-                    fprintf(stderr, "DEBUG [tIntegrate]: disk_params->eps value just before calling calculate_dust_density_grid: %.10e\n", disk_params->eps);
+   //                 fprintf(stderr, "DEBUG [tIntegrate]: disk_params->eps value just before calling calculate_dust_density_grid: %.10e\n", disk_params->eps);
                     calculate_dust_density_grid(&p_data, disk_params, sim_opts);   // Order of args: p_data, sim_opts, disk_params -> I've fixed this earlier based on dust_physics.c
                                                                  // IMPORTANT: The order of arguments to calculate_dust_density_grid in simulation_loop.c (tIntegrate) was:
                                                                  // calculate_dust_density_grid(&p_data, sim_opts, disk_params);
@@ -504,7 +504,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                 fprintf(stderr, "ERROR [tIntegrate]: disk_params is NULL before update_particle_positions call!\n");
                 exit(EXIT_FAILURE);
             }
-            fprintf(stderr, "DEBUG [tIntegrate]: Calling update_particle_positions for Pop1 with num_particles = %d\n", PARTICLE_NUMBER);
+//            fprintf(stderr, "DEBUG [tIntegrate]: Calling update_particle_positions for Pop1 with num_particles = %d\n", PARTICLE_NUMBER);
 
             // --- Részecske mozgás (update_particle_positions) és méret evolúció ---
             // A update_particle_positions függvény végzi el a Runge-Kutta integrációt
@@ -544,7 +544,6 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                 } else {
                     particle_dt_drift_limit_in_years = MAX_TIMESTEP_ABSOLUTE_YEARS; // Ha nincs számottevő drift, nagy dt engedélyezése
                 }
-                fprintf(stderr, "DEBUG [tIntegrate]: Particle drift time step limit: %.2e years (max_abs_drdt: %.2e)\n", particle_dt_drift_limit_in_years, max_abs_drdt_from_current_step);
             } else {
                 particle_dt_drift_limit_in_years = MAX_TIMESTEP_ABSOLUTE_YEARS; // Ha nincs drift engedélyezve, vagy 0 részecske van
             }
@@ -568,7 +567,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
 
             // KONVERTÁLJUK a végleges időlépést a belső orbitális egységre!
             deltat = deltat_in_years * (2.0 * M_PI);
-            fprintf(stderr, "DEBUG [tIntegrate]: New effective deltat (in internal units): %.2e (%.2e years)\n", deltat, deltat_in_years);
+//            fprintf(stderr, "DEBUG [tIntegrate]: New effective deltat (in internal units): %.2e (%.2e years)\n", deltat, deltat_in_years);
 
 
             // Az idő léptetése a belső egységben
@@ -576,8 +575,8 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
 
             // Termination condition for drift == 1 branch
             double current_time_years_after_step = t / (2.0 * M_PI);
-            fprintf(stderr, "DEBUG [tIntegrate]: Termination check at time %.2e years: overall_max_dist (%.8lg AU) >= RMIN (%.8lg AU) && overall_min_dist (%.8lg AU) != overall_max_dist (%.8lg AU)\n",
-                            current_time_years_after_step, overall_max_dist, disk_params->RMIN, overall_min_dist, overall_max_dist);
+//            fprintf(stderr, "DEBUG [tIntegrate]: Termination check at time %.2e years: overall_max_dist (%.8lg AU) >= RMIN (%.8lg AU) && overall_min_dist (%.8lg AU) != overall_max_dist (%.8lg AU)\n",
+//                            current_time_years_after_step, overall_max_dist, disk_params->RMIN, overall_min_dist, overall_max_dist);
             // Terminációs feltétel: a részecskék mind RMIN-en belülre kerültek, VAGY az összes részecske egy pontban van.
             if (!(overall_max_dist >= disk_params->RMIN && overall_min_dist != overall_max_dist)) {
                 fprintf(stderr,"DEBUG [tIntegrate]: Simulation termination condition met (overall_max_dist < RMIN or overall_min_dist == overall_max_dist) at time: %.2e years.\n", current_time_years_after_step);
