@@ -48,39 +48,57 @@ void calculate_boundary(double *vec, const disk_t *disk_params) {					/*	boundar
 
 
 /* egy megadott, diszkret pontokban ismert fuggvenyt interpolal a reszecske aktualis helyere */
+/* Egy megadott, diszkret pontokban ismert fuggvenyt interpolal a reszecske aktualis helyere */
 void interpol(double *invec, double *rvec, double pos, double *out, double rd, int opt, const disk_t *disk_params) {
-    // Kisebb epsilon érték a lebegőpontos számok pontosságának kezelésére.
-    const double EPSILON = 1.0e-9;
-    
-    // Check if the position is within the grid boundaries.
-    // If not, we cannot safely interpolate.
-    if (pos < disk_params->RMIN - EPSILON || pos > disk_params->RMAX + EPSILON) {
-        // Handle out-of-bounds position. Returning 0 for now as it's safer.
-        fprintf(stderr, "DEBUG [interpol]: Position %.4e AU is outside grid boundaries (%.4e - %.4e AU). Returning 0.\n",
-                pos, disk_params->RMIN, disk_params->RMAX);
+    // Védőfeltétel a pos értékére
+    if (isnan(pos) || isinf(pos) || pos < disk_params->RMIN || pos > disk_params->RMAX) {
+        fprintf(stderr, "DEBUG [interpol]: Invalid position %.4e AU. Returning 0.\n", pos);
         *out = 0.0;
         return;
     }
 
-    double rmid, rindex, coef1, temp;
+    // Ellenőrizd a bemeneti tömbök érvényességét
+    if (invec == NULL || rvec == NULL) {
+        fprintf(stderr, "ERROR [interpol]: Input vectors are NULL. Returning 0.\n");
+        *out = 0.0;
+        return;
+    }
+    
     int index;
+    double rmid, rindex, coef1, temp;
 
+    // A rács indexének kiszámítása
     rmid = pos - disk_params->RMIN;
     rmid = rmid / rd;
     index = (int) floor(rmid);
 
-    // Guard against out-of-bounds index, especially at the end of the array.
+    // Biztonsági ellenőrzés a tömb határainál
+    if (index < 0) {
+        index = 0;
+    }
     if (index >= disk_params->NGRID - 1) {
         index = disk_params->NGRID - 2;
     }
 
     rindex = rvec[index];
+    
+    // Védőfeltételek a nullával való osztás ellen
+    if (fabs(rvec[index + 1] - rvec[index]) < 1e-12) {
+        fprintf(stderr, "ERROR [interpol]: Grid spacing is too small or zero at index %d. Returning value from current point.\n", index);
+        *out = invec[index];
+        return;
+    }
+    
     coef1 = (invec[index + 1] - invec[index]) / (rvec[index + 1] - rvec[index]);
     temp = invec[index] + coef1 * (pos - rindex);
 
-    if(opt == 1) if(temp < 0) temp = -1.0 * temp;
-
-    *out = temp;
+    // Végleges ellenőrzés
+    if (isnan(temp) || isinf(temp)) {
+        fprintf(stderr, "CRITICAL ERROR [interpol]: Interpolated value is NaN/INF at pos=%.4e. Returning 0.\n", pos);
+        *out = 0.0;
+    } else {
+        *out = temp;
+    }
 }
 
 

@@ -24,13 +24,14 @@
 extern int PARTICLE_NUMBER; 
 
 // A robusztusabb eqrhs függvény, amely védi a nullával való osztást és a gyökvonást.
+/* Kiszámolja az 1D-s driftet */
 void eqrhs(double prad, double dp, double sigma, double ug, double r, double *drdt, const disk_t *disk_params) {
     double P, H, dPdr, St, csound;
 
     // A kimeneti érték inicializálása biztonsági okokból.
     *drdt = 0.0; 
 
-    // --- Védőfeltételek a NaN/INF elkerülésére a bemeneti paramétereknél ---
+    // Védőfeltételek a bemeneti paraméterekre, beleértve a dp (nyomásgradiens) is
     if (isnan(prad) || isinf(prad) || prad <= 0.0) {
         fprintf(stderr, "ERROR [eqrhs]: Invalid prad (%.10lg) for r=%.10lg. Setting drdt to 0.\n", prad, r);
         return;
@@ -39,42 +40,38 @@ void eqrhs(double prad, double dp, double sigma, double ug, double r, double *dr
         fprintf(stderr, "ERROR [eqrhs]: Invalid sigma (%.10lg) for r=%.10lg. Setting drdt to 0.\n", sigma, r);
         return;
     }
-    if (isnan(r) || isinf(r) || r <= 0.0) {
-        fprintf(stderr, "ERROR [eqrhs]: Invalid r (%.10lg). Setting drdt to 0.\n", r);
+    if (isnan(r) || isinf(r) || r <= 0.0 || r >= disk_params->RMAX) {
+        if (r > disk_params->RMAX) {
+            fprintf(stderr, "INFO [eqrhs]: Particle is outside RMAX (r=%.10lg, RMAX=%.10lg). Setting drdt to 0.\n", r, disk_params->RMAX);
+        } else {
+            fprintf(stderr, "ERROR [eqrhs]: Invalid r (%.10lg). Setting drdt to 0.\n", r);
+        }
         return;
     }
     if (isnan(ug) || isinf(ug)) {
         fprintf(stderr, "ERROR [eqrhs]: Invalid ug (%.10lg) for r=%.10lg. Setting drdt to 0.\n", ug, r);
         return;
     }
+    
+    // Mivel a logok alapján a dp NaN, itt is ellenőrizni kell
+    if (isnan(dp) || isinf(dp)) {
+        fprintf(stderr, "ERROR [eqrhs]: Invalid dp (%.10lg) for r=%.10lg. Setting drdt to 0.\n", dp, r);
+        return;
+    }
 
-
-    St = calculate_stokes_number(prad, sigma, r,disk_params);
+    St = calculate_stokes_number(prad, sigma, r, disk_params);
     H = calculate_scale_height(r, disk_params);
     P = calculate_gas_pressure(sigma, r, disk_params);
-    dPdr = dp; // dPdr directly comes from dp input
+    dPdr = dp;
     csound = calculate_local_sound_speed(r, disk_params);
 
-    // Ellenőrizd a köztes értékeket
-    if (isnan(St) || isinf(St)) {
-        fprintf(stderr, "ERROR [eqrhs]: calculate_stokes_number returned NaN/Inf (%.10lg) for prad=%.10lg, sigma=%.10lg, r=%.10lg. Setting drdt to 0.\n", St, prad, sigma, r);
+    // További ellenőrzések
+    if (isnan(St) || isinf(St) || isnan(H) || isinf(H) || isnan(P) || isinf(P) || isnan(csound) || isinf(csound)) {
+        fprintf(stderr, "ERROR [eqrhs]: One of the intermediate values is invalid. St: %.10lg, H: %.10lg, P: %.10lg, csound: %.10lg. Setting drdt to 0.\n", St, H, P, csound);
         return;
     }
-    if (isnan(H) || isinf(H) || H <= 0.0) {
-        fprintf(stderr, "ERROR [eqrhs]: Scale Height returned NaN/Inf/Zero (%.10lg) for r=%.10lg. Setting drdt to 0.\n", H, r);
-        return;
-    }
-    if (isnan(P) || isinf(P) || P <= 0.0) { // P could be very small or zero at the edge of disk
-        fprintf(stderr, "ERROR [eqrhs]: Gas Pressure returned NaN/Inf/Zero (%.10lg) for sigma=%.10lg, r=%.10lg. Setting drdt to 0.\n", P, sigma, r);
-        return;
-    }
-    if (isnan(csound) || isinf(csound) || csound <= 0.0) {
-        fprintf(stderr, "ERROR [eqrhs]: Sound Speed returned NaN/Inf/Zero (%.10lg) for r=%.10lg. Setting drdt to 0.\n", csound, r);
-        return;
-    }
-    
+
     // --- Végleges számítás ---
-    // Az (1+St*St) tag ellenőrzése, nehogy túl közel legyen a nullához
     double denominator = 1.0 + St * St;
     if (fabs(denominator) < 1e-20) {
         fprintf(stderr, "ERROR [eqrhs]: Denominator (1+St*St) is too close to zero (%.10lg) for r=%.10lg. Setting drdt to 0.\n", denominator, r);
@@ -84,16 +81,15 @@ void eqrhs(double prad, double dp, double sigma, double ug, double r, double *dr
     double term1 = ug / denominator;
     double term2 = St / denominator * H / P * dPdr * csound;
     
-    // A végső drdt kiszámítása
     *drdt = term1 + term2;
 
-    // Ellenőrizd az eredményt
     if (isnan(*drdt) || isinf(*drdt)) {
         fprintf(stderr, "CRITICAL ERROR [eqrhs]: Final drdt BECAME NaN/INF (%.10lg) for particle at r=%.10lg!\n", *drdt, r);
         fprintf(stderr, "DEBUG [eqrhs]: Components: ug=%.10lg, St=%.10lg, H=%.10lg, P=%.10lg, dPdr=%.10lg, csound=%.10lg\n", ug, St, H, P, dPdr, csound);
         *drdt = 0.0;
     }
 }
+
 
 
 /* for solving d(sigma*nu)/dt = 3*nu*d2(sigma*nu)/dr2 + 9*hu/(2*r)*dsigma/dr    --> 3*nu = Coeff_1  */
