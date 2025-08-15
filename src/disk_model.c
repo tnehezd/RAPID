@@ -1,5 +1,7 @@
 // src/disk_model.c
 
+// src/disk_model.c
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -15,6 +17,14 @@
 #include "simulation_core.h"
 
 // This file contains the implementation of functions for initializing and evolving gas disk properties.
+
+// Egy nagyon kicsi, de nem nulla érték, amivel elkerülhető
+// a nullával való osztás.
+#define EPSILON 1e-10
+
+// A tanh argumentumának maximális értéke a numerikus stabilitás
+// érdekében. A tanh(50) már gyakorlatilag 1.0, így ez biztonságos.
+#define TANH_MAX_ARG 100.0
 
 /* --- Disk Parameter Initialization and Setup Implementations --- */
 
@@ -62,8 +72,39 @@ void initial_gas_velocity_profile(disk_t *disk_params){
 
 // Calculating the turbulent alpha parameter --> reducing alpha with alpha_r
 double calculate_turbulent_alpha(double r, const disk_t *disk_params) {
-    double alpha_r;
-    alpha_r = 1.0 - 0.5 * (1.0 - disk_params->a_mod) * (tanh((r - disk_params->r_dze_i) / disk_params->Dr_dze_i) + tanh((disk_params->r_dze_o - r) / disk_params->Dr_dze_o));
+    // Kiszámítja a turbulens alfa paramétert. Ez a verzió robusztusabb a numerikus stabilitás szempontjából,
+    // megakadályozva a nullával való osztást és a nagy tanh argumentumokat.
+
+    // A Dr_dze_i és Dr_dze_o paraméterekhez EPSILON-t adunk,
+    // hogy elkerüljük a nullával való osztást.
+    double drdze_i_safe = disk_params->Dr_dze_i;
+    double drdze_o_safe = disk_params->Dr_dze_o;
+
+    // Az EPSILON hozzáadása, ha az érték nullához közelít.
+    if (fabs(drdze_i_safe) < EPSILON) {
+        drdze_i_safe = (drdze_i_safe >= 0) ? EPSILON : -EPSILON;
+    }
+    if (fabs(drdze_o_safe) < EPSILON) {
+        drdze_o_safe = (drdze_o_safe >= 0) ? EPSILON : -EPSILON;
+    }
+
+    double tanh_arg1 = (r - disk_params->r_dze_i) / drdze_i_safe;
+    double tanh_arg2 = (disk_params->r_dze_o - r) / drdze_o_safe;
+
+    // A tanh argumentumának korlátozása a numerikus stabilitás érdekében.
+    // Ezzel elkerülhető a nagyon nagy argumentumokból adódó hiba.
+    if (tanh_arg1 > TANH_MAX_ARG) tanh_arg1 = TANH_MAX_ARG;
+    if (tanh_arg1 < -TANH_MAX_ARG) tanh_arg1 = -TANH_MAX_ARG;
+    if (tanh_arg2 > TANH_MAX_ARG) tanh_arg2 = TANH_MAX_ARG;
+    if (tanh_arg2 < -TANH_MAX_ARG) tanh_arg2 = -TANH_MAX_ARG;
+
+    double alpha_r = 1.0 - 0.5 * (1.0 - disk_params->a_mod) * (tanh(tanh_arg1) + tanh(tanh_arg2));
+
+    // A visszaadott értéknek mindig pozitívnak kell lennie.
+    if (alpha_r < 0.0) {
+        return 0.0;
+    }
+    
     return alpha_r * disk_params->alpha_visc;
 }
 
@@ -110,12 +151,18 @@ double calculate_local_sound_speed(double r, const disk_t *disk_params) {
 
 double calculate_midplane_gas_density(double sigma, double r, const disk_t *disk_params) {
     // rho_midplane = (1 / sqrt(2*PI)) * Sigma / H (for Gaussian vertical profile)
-    return 1. / sqrt(2.0 * M_PI) * sigma / calculate_scale_height(r, disk_params);
+    double H_val = calculate_scale_height(r, disk_params);
+    if (H_val < 1e-12) { // A very small number to prevent division by zero
+        fprintf(stderr, "WARNING [calculate_midplane_gas_density]: H is too small at r=%.10e. Returning 0.\n", r);
+        return 0.0;
+    }
+    return 1. / sqrt(2.0 * M_PI) * sigma / H_val;
 }
 
 double calculate_gas_pressure(double sigma, double r, const disk_t *disk_params) {
     // p = rho_gas * c_s^2
-    return calculate_midplane_gas_density(sigma, r, disk_params) * calculate_local_sound_speed(r, disk_params) * calculate_local_sound_speed(r, disk_params);
+    double cs_val = calculate_local_sound_speed(r, disk_params);
+    return calculate_midplane_gas_density(sigma, r, disk_params) * cs_val * cs_val;
 }
 
 void calculate_gas_pressure_gradient(disk_t *disk_params) {
@@ -124,6 +171,12 @@ void calculate_gas_pressure_gradient(disk_t *disk_params) {
 
     // Calculate radial pressure gradient using central finite difference
     for (i = 1; i <= disk_params->NGRID; i++) {
+        // Safe check for rvec to prevent division by zero
+        if (fabs(disk_params->rvec[i + 1] - disk_params->rvec[i - 1]) < 1e-12) {
+             pvec[i] = 0.0;
+             continue;
+        }
+
         ptemp = (disk_params->pressvec[i + 1] - disk_params->pressvec[i - 1]) / (2.0 * disk_params->DD);
         pvec[i] = ptemp;
     }
@@ -135,10 +188,11 @@ void calculate_gas_pressure_gradient(disk_t *disk_params) {
 
 double coefficient_for_gas_velocity(double sigma, double r) {
     // Coefficient for the gas radial velocity equation: -3 / (Sigma * R^0.5)
-    if (sigma == 0.0 || r <= 0.0) {
+    double denominator = sigma * sqrt(r);
+    if (denominator == 0.0 || isnan(denominator) || isinf(denominator)) {
         return 0.0; // Handle edge cases to prevent division by zero or sqrt of negative
     }
-    return -1.0 * (3.0 / (sigma * sqrt(r)));
+    return -1.0 * (3.0 / denominator);
 }
 
 void calculate_gas_velocity(disk_t *disk_params) {
@@ -157,6 +211,11 @@ void calculate_gas_velocity(disk_t *disk_params) {
     // Calculate the radial derivative using central finite difference
     #pragma omp parallel for private(i, tempug)
     for (i = 1; i <= disk_params->NGRID; i++) {
+        if (fabs(disk_params->rvec[i + 1] - disk_params->rvec[i - 1]) < 1e-12) {
+             ug_derivative_terms[i] = 0.0;
+             continue;
+        }
+        
         tempug = (ugvec_temp_calc[i + 1] - ugvec_temp_calc[i - 1]) / (2.0 * disk_params->DD);
         ug_derivative_terms[i] = coefficient_for_gas_velocity(disk_params->sigmavec[i], disk_params->rvec[i]) * tempug;
     }
@@ -171,7 +230,7 @@ void calculate_gas_velocity(disk_t *disk_params) {
 void get_gas_surface_density_pressure_pressure_gradient(const simulation_options_t *sim_opts, disk_t *disk_params) {
     double u, u_bi, u_fi;
     double sigma_temp[disk_params->NGRID + 2]; // Temporary array for updated surface density
-    double uvec[disk_params->NGRID + 2];       // Temporary array for (sigma * nu) or similar terms
+    double uvec[disk_params->NGRID + 2];        // Temporary array for (sigma * nu) or similar terms
 
     int i;
 
@@ -186,7 +245,10 @@ void get_gas_surface_density_pressure_pressure_gradient(const simulation_options
     // Calculate uvec for internal grid points
     #pragma omp parallel for private(i)
     for(i = 1; i <= disk_params->NGRID; i++) {
-        uvec[i] = disk_params->sigmavec[i] * calculate_gas_viscosity(disk_params->rvec[i], disk_params);
+        double r_val = disk_params->rvec[i];
+        double sigma_val = disk_params->sigmavec[i];
+        double nu_val = calculate_gas_viscosity(r_val, disk_params);
+        uvec[i] = sigma_val * nu_val;
     }
 
     // This loop calculates the new sigma_temp using a finite difference scheme for gas evolution.
@@ -206,7 +268,18 @@ void get_gas_surface_density_pressure_pressure_gradient(const simulation_options
     // Update the actual disk parameters based on the calculated sigma_temp
     #pragma omp parallel for private(i)
     for (i = 1; i <= disk_params->NGRID; i++) {
-        disk_params->sigmavec[i] = sigma_temp[i] / calculate_gas_viscosity(disk_params->rvec[i], disk_params);
+        double nu_val = calculate_gas_viscosity(disk_params->rvec[i], disk_params);
+        if (nu_val == 0.0 || isnan(nu_val) || isinf(nu_val)) {
+            // If viscosity is invalid, sigma becomes invalid. Set to a safe value (e.g., 0)
+            disk_params->sigmavec[i] = 0.0;
+        } else {
+            disk_params->sigmavec[i] = sigma_temp[i] / nu_val;
+        }
+
+        if (disk_params->sigmavec[i] < 0.0) {
+            disk_params->sigmavec[i] = 0.0;
+        }
+
         disk_params->pressvec[i] = calculate_gas_pressure(disk_params->sigmavec[i], disk_params->rvec[i], disk_params);
     }
 
