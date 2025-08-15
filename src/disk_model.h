@@ -227,6 +227,6 @@ void calculate_gas_velocity(disk_t *disk_params);
  * @param disk_params Pointer to the `disk_t` structure containing all gas disk properties
  * (e.g., `sigmavec`, `pressvec`, `dpressvec`, `rvec`, `NGRID`) which will be modified.
  */
-void get_gas_surface_density_pressure_pressure_gradient(const simulation_options_t *sim_opts, disk_t *disk_params);
+void get_gas_surface_density_pressure_pressure_gradient(const simulation_options_t *sim_opts, disk_t *disk_params, double dt);
 
 #endif // DISK_MODEL_H

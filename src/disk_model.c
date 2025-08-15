@@ -1,11 +1,10 @@
 // src/disk_model.c
 
-// src/disk_model.c
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#include <float.h> // for DBL_MAX, or use a very large number
 
 #include "disk_model.h"
 #include "config.h"
@@ -101,8 +100,10 @@ double calculate_turbulent_alpha(double r, const disk_t *disk_params) {
     double alpha_r = 1.0 - 0.5 * (1.0 - disk_params->a_mod) * (tanh(tanh_arg1) + tanh(tanh_arg2));
 
     // A visszaadott értéknek mindig pozitívnak kell lennie.
-    if (alpha_r < 0.0) {
-        return 0.0;
+    // JAVÍTVA: Ahelyett, hogy 0.0-t ad vissza, ami nullás viszkozitást eredményez,
+    // egy kis pozitív értéket ad vissza, ami megakadályozza a nullával való osztást.
+    if (alpha_r < EPSILON) {
+        return EPSILON * disk_params->alpha_visc;
     }
     
     return alpha_r * disk_params->alpha_visc;
@@ -227,65 +228,78 @@ void calculate_gas_velocity(disk_t *disk_params) {
     }
 }
 
-void get_gas_surface_density_pressure_pressure_gradient(const simulation_options_t *sim_opts, disk_t *disk_params) {
+void get_gas_surface_density_pressure_pressure_gradient(const simulation_options_t *sim_opts, disk_t *disk_params, double dt) {
     double u, u_bi, u_fi;
-    double sigma_temp[disk_params->NGRID + 2]; // Temporary array for updated surface density
-    double uvec[disk_params->NGRID + 2];        // Temporary array for (sigma * nu) or similar terms
+    // Ideiglenes tömb a (sigma * nu) frissített értékeinek tárolására
+    double uvec_new[disk_params->NGRID + 2]; 
 
     int i;
+    
+    // DEBUG: Ellenőrzés a függvény elején
+//    fprintf(stderr, "INFO: get_gas_surface_density_pressure_pressure_gradient belépés. Sigma a 10. ponton: %e\n", disk_params->sigmavec[10]);
 
-    // Set boundary conditions for temporary sigma array
-    sigma_temp[0] = disk_params->sigmavec[0];
-    sigma_temp[disk_params->NGRID + 1] = disk_params->sigmavec[disk_params->NGRID + 1];
-
-    // Initialize uvec at boundary points
-    uvec[0] = disk_params->sigmavec[0] * calculate_gas_viscosity(disk_params->rvec[0], disk_params);
-    uvec[disk_params->NGRID + 1] = disk_params->sigmavec[disk_params->NGRID + 1] * calculate_gas_viscosity(disk_params->rvec[disk_params->NGRID + 1], disk_params);
-
-    // Calculate uvec for internal grid points
-    #pragma omp parallel for private(i)
-    for(i = 1; i <= disk_params->NGRID; i++) {
+    // Uvec tömb inicializálása a jelenlegi adatok alapján
+    double uvec_old[disk_params->NGRID + 2];
+//    #pragma omp parallel for private(i)
+    for(i = 0; i <= disk_params->NGRID + 1; i++) {
         double r_val = disk_params->rvec[i];
         double sigma_val = disk_params->sigmavec[i];
         double nu_val = calculate_gas_viscosity(r_val, disk_params);
-        uvec[i] = sigma_val * nu_val;
+        uvec_old[i] = sigma_val * nu_val;
+//        fprintf(stderr," INFO: r: %lg UVEC %lg\n", disk_params->rvec[i], uvec_old[i]);
+        // uvec_new[i] = uvec_old[i]; // Inicializálás
     }
 
-    // This loop calculates the new sigma_temp using a finite difference scheme for gas evolution.
-    // It processes values sequentially due to data dependencies.
+    // A diffúziós egyenlet megoldása az uvec_new tömbbe
     for (i = 1; i <= disk_params->NGRID; i++) {
-        u = uvec[i];
-        u_bi = uvec[i - 1];
-        u_fi = uvec[i + 1];
+        u = uvec_old[i];
+        u_bi = uvec_old[i - 1];
+        u_fi = uvec_old[i + 1];
 
-        // Numerical update for sigma_temp (e.g., discretized diffusion equation)
         double temp = Coeff_1(disk_params->rvec[i], disk_params) * (u_fi - 2.0 * u + u_bi) / (disk_params->DD * disk_params->DD) +
                       Coeff_2(disk_params->rvec[i], disk_params) * (u_fi - u_bi) / (2.0 * disk_params->DD);
         
-        sigma_temp[i] = uvec[i] + sim_opts->DT * temp;
-    }
+        uvec_new[i] = uvec_old[i] + dt * temp;
 
-    // Update the actual disk parameters based on the calculated sigma_temp
+        if (uvec_new[i] < 0.0) {
+            uvec_new[i] = 0.0;
+        }
+
+        // DEBUG: Itt kiírhatod a temp értékét, hogy lásd, nem nulla-e
+        // fprintf(stderr, "DEBUG: r=%e, temp=%e, DT*temp=%e\n", disk_params->rvec[i], temp, sim_opts->DT * temp);
+    }
+    
+    // Szegélyfeltételek beállítása az uvec_new tömbre
+    uvec_new[0] = uvec_old[0];
+    uvec_new[disk_params->NGRID + 1] = uvec_old[disk_params->NGRID + 1];
+
+    // A sigmavec frissítése az uvec_new tömb alapján
     #pragma omp parallel for private(i)
-    for (i = 1; i <= disk_params->NGRID; i++) {
-        double nu_val = calculate_gas_viscosity(disk_params->rvec[i], disk_params);
-        if (nu_val == 0.0 || isnan(nu_val) || isinf(nu_val)) {
-            // If viscosity is invalid, sigma becomes invalid. Set to a safe value (e.g., 0)
-            disk_params->sigmavec[i] = 0.0;
+    for (i = 0; i <= disk_params->NGRID + 1; i++) {
+        double r_val = disk_params->rvec[i];
+        double nu_val = calculate_gas_viscosity(r_val, disk_params);
+
+        if (nu_val > DBL_EPSILON) {
+            disk_params->sigmavec[i] = uvec_new[i] / nu_val;
         } else {
-            disk_params->sigmavec[i] = sigma_temp[i] / nu_val;
-        }
-
-        if (disk_params->sigmavec[i] < 0.0) {
             disk_params->sigmavec[i] = 0.0;
         }
-
-        disk_params->pressvec[i] = calculate_gas_pressure(disk_params->sigmavec[i], disk_params->rvec[i], disk_params);
     }
-
-    // Recalculate pressure gradient and apply boundary conditions to all relevant arrays.
+    
+    // A nyomás és a nyomás gradiens frissítése
+    // Ez a lépés most már a frissített sigmavec-et használja
+    #pragma omp parallel for private(i)
+    for (i = 0; i <= disk_params->NGRID + 1; i++) {
+         disk_params->pressvec[i] = calculate_gas_pressure(disk_params->sigmavec[i], disk_params->rvec[i], disk_params);
+    }
+    
     calculate_gas_pressure_gradient(disk_params);
+
+    // Szegélyfeltételek alkalmazása
     calculate_boundary(disk_params->sigmavec, disk_params);
     calculate_boundary(disk_params->pressvec, disk_params);
     calculate_boundary(disk_params->dpressvec, disk_params);
+    
+    // DEBUG: Ellenőrzés a függvény végén
+//    fprintf(stderr, "INFO: get_gas_surface_density_pressure_pressure_gradient kilépés. Sigma a 10. ponton: %e\n", disk_params->sigmavec[10]);
 }

@@ -371,6 +371,8 @@ void write_dust_profile_to_file(int step,
                        const simulation_options_t *sim_opts,
                        output_files_t *output_files) {
 
+    
+
     int i;
     double interpolated_sigmad_at_r = 0.0;
     double interpolated_sigmadm_at_r = 0.0;
