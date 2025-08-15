@@ -124,53 +124,61 @@ double time_step(const disk_t *disk_params) {
     return stepping;
 }
 
-/*  Runge-Kutta4 integrator */
+
+/* Runge-Kutta4 integrator */
 // prad bemenet: AU-ban!
 // This function operates on a single particle's data at a time.
 // `aggregated_sigmad` and `aggregated_rdvec` are expected to be arrays representing dust surface density
 // on a grid, which `int_step` interpolates from.
+/* Runge-Kutta4 integrator */
 void int_step(double time, double psize, double current_r, // particle's current size and distance_au
               double step, double *new_prad_ptr, double *new_psize_ptr,
               const double *aggregated_sigmad, const double *aggregated_rdvec, // Aggregated dust density & radii from disk_t or similar
               int num_grid_points, double grid_dd, double grid_rmin, // Parameters for interpolation grid
               const disk_t *disk_params, const simulation_options_t *sim_opts){
     double dy1,dy2,dy3,dy4;
-    double ytemp; // Changed ytemp2 to ytemp as it was redundant
-    double sigma_gas, dpress, ugas; 
+    double ytemp; 
+    double sigma_gas, dpress, ugas;
     double gas_pressure, particle_density;
-    
+
     int opt = 0; // For interpol
     double sigmadd_at_r = 0.0; // Dust surface density at current particle's radius
 
-    /*  Mivel a kulonbozo parametereket csak a megadott gridcella pontokban ismerjuk, de ez nem feltetlen egyezik meg a reszecskek poziciojaval, ezert minden fontos parametert interpolalunk a reszecskek tavolsagara  */
+    // Ha a részecske a rács tartományán kívül van, térj vissza nullázott értékekkel.
+    if (current_r < grid_rmin || current_r >= (grid_rmin + grid_dd * num_grid_points)) {
+        fprintf(stderr, "DEBUG [int_step]: Particle at r=%.4e AU is outside grid boundaries. RMIN=%.4e AU, RMAX=%.4e AU. Aborting step.\n", 
+                        current_r, grid_rmin, (grid_rmin + grid_dd * num_grid_points));
+        *new_prad_ptr = current_r;
+        *new_psize_ptr = 0.0;
+        return;
+    }
+
     interpol(disk_params->sigmavec, disk_params->rvec, current_r, &sigma_gas, disk_params->DD, opt, disk_params);
     interpol(disk_params->dpressvec, disk_params->rvec, current_r, &dpress, disk_params->DD, opt, disk_params);
     interpol(disk_params->ugvec, disk_params->rvec, current_r, &ugas, disk_params->DD, opt, disk_params);
-
-    // Interpolate `aggregated_sigmad` at current_r
-    // This assumes aggregated_sigmad is defined over aggregated_rdvec grid.
-    // If these arrays are disk_params->sigmadvec and disk_params->rvec, use those.
-    // Assuming aggregated_rdvec == disk_params->rvec and num_grid_points == disk_params->NGRID for now.
+    
     interpol(aggregated_sigmad, aggregated_rdvec, current_r, &sigmadd_at_r, grid_dd, opt, disk_params);
 
-
-    if (sim_opts->growth == 1.) {       // ha van reszecskenovekedes
-        if (time != 0.) {   // ha nem t0 idopontban vagyunk
+    if (sim_opts->growth == 1.) {
+        if (time != 0.) {
             interpol(disk_params->pressvec, disk_params->rvec, current_r, &gas_pressure, disk_params->DD, opt, disk_params);
-            particle_density = disk_params->PDENSITY; // Particle internal density (not surface density)
-            
-            // Here, update_particle_size calculates particle growth. It needs to be correct.
+            particle_density = disk_params->PDENSITY;
             *new_psize_ptr = update_particle_size(psize, particle_density, sigma_gas, sigmadd_at_r, current_r, gas_pressure, dpress, step, disk_params);
         }
     }
 
-    *new_prad_ptr = current_r; // Store current radius (will be updated by RK4)
+    *new_prad_ptr = current_r;
 
-/*  Itt szamolja a reszecske poziciojat */
     eqrhs(psize, dpress, sigma_gas, ugas, current_r, &dy1, disk_params);
 
     ytemp = current_r + 0.5 * step * dy1;
-    // Re-interpolating sigma_gas, dpress, ugas at ytemp for dy2, dy3, dy4 for RK4 accuracy.
+    if (ytemp < disk_params->RMIN) {
+        ytemp = disk_params->RMIN;
+    }
+    if (ytemp > disk_params->RMAX) {
+        ytemp = disk_params->RMAX;
+    }
+
     double sigma_gas_temp, dpress_temp, ugas_temp;
     interpol(disk_params->sigmavec, disk_params->rvec, ytemp, &sigma_gas_temp, disk_params->DD, opt, disk_params);
     interpol(disk_params->dpressvec, disk_params->rvec, ytemp, &dpress_temp, disk_params->DD, opt, disk_params);
@@ -178,19 +186,38 @@ void int_step(double time, double psize, double current_r, // particle's current
     eqrhs(psize, dpress_temp, sigma_gas_temp, ugas_temp, ytemp, &dy2, disk_params);
         
     ytemp = current_r + 0.5 * step * dy2;
+    if (ytemp < disk_params->RMIN) {
+        ytemp = disk_params->RMIN;
+    }
+    if (ytemp > disk_params->RMAX) {
+        ytemp = disk_params->RMAX;
+    }
     interpol(disk_params->sigmavec, disk_params->rvec, ytemp, &sigma_gas_temp, disk_params->DD, opt, disk_params);
     interpol(disk_params->dpressvec, disk_params->rvec, ytemp, &dpress_temp, disk_params->DD, opt, disk_params);
     interpol(disk_params->ugvec, disk_params->rvec, ytemp, &ugas_temp, disk_params->DD, opt, disk_params);
     eqrhs(psize, dpress_temp, sigma_gas_temp, ugas_temp, ytemp, &dy3, disk_params);
     
     ytemp = current_r + step * dy3;
+    if (ytemp < disk_params->RMIN) {
+        ytemp = disk_params->RMIN;
+    }
+    if (ytemp > disk_params->RMAX) {
+        ytemp = disk_params->RMAX;
+    }
     interpol(disk_params->sigmavec, disk_params->rvec, ytemp, &sigma_gas_temp, disk_params->DD, opt, disk_params);
     interpol(disk_params->dpressvec, disk_params->rvec, ytemp, &dpress_temp, disk_params->DD, opt, disk_params);
     interpol(disk_params->ugvec, disk_params->rvec, ytemp, &ugas_temp, disk_params->DD, opt, disk_params);
     eqrhs(psize, dpress_temp, sigma_gas_temp, ugas_temp, ytemp, &dy4, disk_params);
 
     *new_prad_ptr = current_r + step * (dy1 + 2.0 * dy2 + 2.0 * dy3 + dy4) / 6.0;
+    if (*new_prad_ptr <= disk_params->RMIN) {
+        *new_prad_ptr = disk_params->RMIN;
+    }
+    if (*new_prad_ptr >= disk_params->RMAX) {
+        *new_prad_ptr = disk_params->RMAX;
+    }
 }
+
 
 // Helper function to get max particle distance (distance_au)
 double get_max_particle_distance(const dust_particle_t *particles_array, int num_particles) {
@@ -249,10 +276,10 @@ double find_min_three(double val1, double val2, double val3) {
 void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, output_files_t *output_files) {
     // --- Lokális konstansok a tIntegrate függvényen belül ---
     // Ezeket finomhangolhatod a szimuláció stabilitása és sebessége érdekében
-    const double CFL_FACTOR_DRIFT = 0.05;      // Courant-szám a radiális mozgáshoz (javaslat: 0.05-0.2)
+    const double CFL_FACTOR_DRIFT = 0.005;      // Courant-szám a radiális mozgáshoz (javaslat: 0.05-0.2)
     const double CFL_FACTOR_KEPLER = 0.005;    // A Kepleri keringési idő töredéke (javaslat: 0.001-0.01)
     const double MIN_TIMESTEP_YEARS = 1.0e-10; // Minimum időlépés (évben), hogy ne akadjon el
-    const double MAX_TIMESTEP_ABSOLUTE_YEARS = 10.0; // Abszolút maximum időlépés (évben)
+    const double MAX_TIMESTEP_ABSOLUTE_YEARS = 5.0; // Abszolút maximum időlépés (évben)
 
 
     ParticleData_t p_data;

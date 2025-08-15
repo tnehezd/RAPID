@@ -282,8 +282,17 @@ void calculate_dust_density_grid(const ParticleData_t *p_data, disk_t *disk_para
 }
 
 
-void update_particle_positions(dust_particle_t *particles_array, int num_particles, double deltat, double t,
-                 const simulation_options_t *sim_opts, const disk_t *disk_params) {
+// updates the position of a single particle
+// This function signature is corrected to match the declaration in dust_physics.h
+void update_particle_positions(dust_particle_t *particles_array, 
+                               int num_particles, 
+                               double deltat, 
+                               double t, 
+                               const simulation_options_t *sim_opts, 
+                               const disk_t *disk_params) {
+    // --- ADDED DEBUG: Bemeneti paraméterek ellenőrzése a függvény elején ---
+//    stderr(fprintf, "DEBUG [update_particle_positions]: Entering function. num_particles=%d, deltat=%.4e\n",
+//             num_particles, deltat);
 
     if (disk_params == NULL) {
         fprintf(stderr, "ERROR [update_particle_positions]: disk_params pointer IS NULL on entry!\n");
@@ -291,6 +300,7 @@ void update_particle_positions(dust_particle_t *particles_array, int num_particl
     }
 
     if (particles_array == NULL || num_particles <= 0) {
+        fprintf(stderr, "DEBUG [update_particle_positions]: Exiting function early due to invalid particle data.\n");
         return;
     }
 
@@ -304,36 +314,49 @@ void update_particle_positions(dust_particle_t *particles_array, int num_particl
     #pragma omp parallel for
     for (int i = 0; i < num_particles; ++i) {
 
+        // --- ADDED DEBUG: Ciklus iteráció kezdete ---
+//        fprintf(stderr, "DEBUG [update_particle_positions]: Starting particle loop for index %d\n", i);
+
+
         // --- 1. Early check: if the particle size is 0.0.
         // This "kill" flag was set in the previous step if it went outside RMIN/RMAX.
         if (particles_array[i].current_size_au <= 0.0) {
             // Ensure its distance and velocity are also 0.0.
             particles_array[i].distance_au = 0.0;
             particles_array[i].size_reciprocal = 0.0;
-            particles_array[i].drdt = 0.0; 
+            particles_array[i].drdt = 0.0;
+//            fprintf(stderr, "DEBUG [update_particle_positions]: Particle %d has size <= 0.0. Skipping.\n", i);
             continue; // Jump to the next particle, do not process it further.
         }
 
         double current_r = particles_array[i].distance_au;
         double current_particle_size = particles_array[i].current_size_au;
-
         double new_r = 0.0; // int_step will update this
         double new_size = current_particle_size; // int_step will update this (if growth=1)
 
+        // --- ADDED DEBUG: int_step hívása előtt ---
+//        fprintf(stderr, "DEBUG [update_particle_positions]: Particle %d (R=%.4e AU, Size=%.4e AU) before int_step call.\n",
+//                     i, current_r, current_particle_size);
+
         // Calling int_step with current data and freshly calculated sigmad values
         int_step(t,
-                  current_particle_size,
-                  current_r,
-                  deltat,
-                  &new_r, // pointer to new radial position
-                  &new_size, // pointer to new particle size
-                  aggregated_sigmad_ptr,
-                  aggregated_rdvec_ptr,
-                  num_grid_points,
-                  grid_dd,
-                  grid_rmin,
-                  disk_params,
-                  sim_opts);
+                 current_particle_size,
+                 current_r,
+                 deltat,
+                 &new_r, // pointer to new radial position
+                 &new_size, // pointer to new particle size
+                 aggregated_sigmad_ptr,
+                 aggregated_rdvec_ptr,
+                 num_grid_points,
+                 grid_dd,
+                 grid_rmin,
+                 disk_params,
+                 sim_opts);
+
+        // --- ADDED DEBUG: int_step hívása után ---
+//        fprintf(stderr, "DEBUG [update_particle_positions]: Particle %d after int_step call. new_r=%.4e AU, new_size=%.4e AU\n",
+//                     i, new_r, new_size);
+
 
         // Update particle's position and size
         particles_array[i].distance_au = new_r;
@@ -347,18 +370,21 @@ void update_particle_positions(dust_particle_t *particles_array, int num_particl
                 particles_array[i].size_reciprocal = 0.0;
             }
         }
-        
+
         // If growth is not enabled, particle size remains unchanged.
-        
+
         // --- 2. Clamping AND "kill" process AFTER int_step RUNS ---
         // If the new position falls below RMIN or above RMAX, "kill" the particle.
         if (particles_array[i].distance_au <= grid_rmin || particles_array[i].distance_au >= grid_rmax) {
-//            fprintf(stderr, "DEBUG [update_particle_positions]: Particle %d (R=%.4e AU) went out of bounds (RMIN=%.4e, RMAX=%.4e). Killing it.\n",
-//                            i, particles_array[i].distance_au, grid_rmin, grid_rmax);
+            fprintf(stderr, "DEBUG [update_particle_positions]: Particle %d (R=%.4e AU) went out of bounds (RMIN=%.4e, RMAX=%.4e). Killing it.\n",
+                            i, particles_array[i].distance_au, grid_rmin, grid_rmax);
             particles_array[i].distance_au = 0.0;
             particles_array[i].current_size_au = 0.0; // This is the main "kill" flag for the next step
             particles_array[i].size_reciprocal = 0.0;
             particles_array[i].drdt = 0.0; // Important: reset the velocity as well
         }
     }
+
+    // --- ADDED DEBUG: Függvény vége ---
+//    fprintf(stderr, "DEBUG [update_particle_positions]: Exiting function successfully.\n");
 }

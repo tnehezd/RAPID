@@ -47,24 +47,40 @@ void calculate_boundary(double *vec, const disk_t *disk_params) {					/*	boundar
 }
 
 
-/*	egy megadott, diszkret pontokban ismert fuggvenyt interpolal a reszecske aktualis helyere	*/
+/* egy megadott, diszkret pontokban ismert fuggvenyt interpolal a reszecske aktualis helyere */
 void interpol(double *invec, double *rvec, double pos, double *out, double rd, int opt, const disk_t *disk_params) {
+    // Kisebb epsilon érték a lebegőpontos számok pontosságának kezelésére.
+    const double EPSILON = 1.0e-9;
+    
+    // Check if the position is within the grid boundaries.
+    // If not, we cannot safely interpolate.
+    if (pos < disk_params->RMIN - EPSILON || pos > disk_params->RMAX + EPSILON) {
+        // Handle out-of-bounds position. Returning 0 for now as it's safer.
+        fprintf(stderr, "DEBUG [interpol]: Position %.4e AU is outside grid boundaries (%.4e - %.4e AU). Returning 0.\n",
+                pos, disk_params->RMIN, disk_params->RMAX);
+        *out = 0.0;
+        return;
+    }
 
-	double rmid, rindex, coef1, temp;
-	int index; 
+    double rmid, rindex, coef1, temp;
+    int index;
 
     rmid = pos - disk_params->RMIN;
-	rmid = rmid / rd;     						/* 	the integer part of this gives at which index is the body	*/
-	index = (int) floor(rmid);					/* 	ez az rmid egesz resze	(kerekites 0.5-tol)			*/
-	rindex = rvec[index];       					/* 	the corresponding r, e.g rd[ind] < r < rd[ind+1]		*/
+    rmid = rmid / rd;
+    index = (int) floor(rmid);
 
- 	coef1 = (invec[index + 1] - invec[index]) / rd; 		/*	ez az alabbi ket sor a linearis interpolacio - remelem, jo!!!	*/
-	temp = invec[index] + coef1 * (pos - rindex);          		/*	a beerkezo dimenzionak megfelelo mertekegysegben		*/
+    // Guard against out-of-bounds index, especially at the end of the array.
+    if (index >= disk_params->NGRID - 1) {
+        index = disk_params->NGRID - 2;
+    }
 
-	if(opt == 1) if(temp < 0) temp = -1.*temp;
+    rindex = rvec[index];
+    coef1 = (invec[index + 1] - invec[index]) / (rvec[index + 1] - rvec[index]);
+    temp = invec[index] + coef1 * (pos - rindex);
 
-	*out = temp;
+    if(opt == 1) if(temp < 0) temp = -1.0 * temp;
 
+    *out = temp;
 }
 
 
