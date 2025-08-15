@@ -23,29 +23,31 @@
 // If twopop is enabled, both populations will have PARTICLE_NUMBER particles.
 extern int PARTICLE_NUMBER; 
 
-/*  Kiszámolja az 1D-s driftet  */
-/*      dr/dt = St/(1+St*St)*H(r)/r*dlnP/dlnr*cs = St/(1+St*St) * (H/r) * (r/P) * (dP/dr) * cs      */
+// A robusztusabb eqrhs függvény, amely védi a nullával való osztást és a gyökvonást.
 void eqrhs(double prad, double dp, double sigma, double ug, double r, double *drdt, const disk_t *disk_params) {
     double P, H, dPdr, St, csound;
 
-//    fprintf(stderr, "DEBUG [eqrhs_input]: pradius=%.10lg, dp=%.10lg, sigma=%.10lg, ug=%.10lg, r=%.10lg\n", prad, dp, sigma, ug, r);
+    // A kimeneti érték inicializálása biztonsági okokból.
+    *drdt = 0.0; 
 
-
-//    fprintf(stderr, "DEBUG [eqrhs]: Entering with prad=%.10lg, dp=%.10lg, sigma=%.10lg, ug=%.10lg, r=%.10lg\n", prad, dp, sigma, ug, r);
-
-    // Ellenőrizd a bemeneti paramétereket
+    // --- Védőfeltételek a NaN/INF elkerülésére a bemeneti paramétereknél ---
     if (isnan(prad) || isinf(prad) || prad <= 0.0) {
-//        fprintf(stderr, "ERROR [eqrhs]: Invalid prad (%.10lg) for r=%.10lg. Exiting.\n", prad, r);
-        exit(EXIT_FAILURE);
+        fprintf(stderr, "ERROR [eqrhs]: Invalid prad (%.10lg) for r=%.10lg. Setting drdt to 0.\n", prad, r);
+        return;
     }
     if (isnan(sigma) || isinf(sigma) || sigma <= 0.0) {
-//        fprintf(stderr, "ERROR [eqrhs]: Invalid sigma (%.10lg) for r=%.10lg. Exiting.\n", sigma, r);
-        exit(EXIT_FAILURE);
+        fprintf(stderr, "ERROR [eqrhs]: Invalid sigma (%.10lg) for r=%.10lg. Setting drdt to 0.\n", sigma, r);
+        return;
     }
     if (isnan(r) || isinf(r) || r <= 0.0) {
-//        fprintf(stderr, "ERROR [eqrhs]: Invalid r (%.10lg). Exiting.\n", r);
-        exit(EXIT_FAILURE);
+        fprintf(stderr, "ERROR [eqrhs]: Invalid r (%.10lg). Setting drdt to 0.\n", r);
+        return;
     }
+    if (isnan(ug) || isinf(ug)) {
+        fprintf(stderr, "ERROR [eqrhs]: Invalid ug (%.10lg) for r=%.10lg. Setting drdt to 0.\n", ug, r);
+        return;
+    }
+
 
     St = calculate_stokes_number(prad, sigma, r,disk_params);
     H = calculate_scale_height(r, disk_params);
@@ -53,45 +55,44 @@ void eqrhs(double prad, double dp, double sigma, double ug, double r, double *dr
     dPdr = dp; // dPdr directly comes from dp input
     csound = calculate_local_sound_speed(r, disk_params);
 
-
-
-//    fprintf(stderr, "DEBUG [eqrhs]: Calculated intermediates: St=%.10lg, H=%.10lg, P=%.10lg, dPdr=%.10lg, csound=%.10lg  size: %lg\n", St, H, P, dPdr, csound,prad);
-
     // Ellenőrizd a köztes értékeket
     if (isnan(St) || isinf(St)) {
-        fprintf(stderr, "ERROR [eqrhs]: calculate_stokes_number returned NaN/Inf (%.10lg) for prad=%.10lg, sigma=%.10lg, r=%.10lg. Exiting.\n", St, prad, sigma, r);
-        exit(EXIT_FAILURE);
+        fprintf(stderr, "ERROR [eqrhs]: calculate_stokes_number returned NaN/Inf (%.10lg) for prad=%.10lg, sigma=%.10lg, r=%.10lg. Setting drdt to 0.\n", St, prad, sigma, r);
+        return;
     }
     if (isnan(H) || isinf(H) || H <= 0.0) {
-        fprintf(stderr, "ERROR [eqrhs]: Scale Height returned NaN/Inf/Zero (%.10lg) for r=%.10lg. Exiting.\n", H, r);
-        exit(EXIT_FAILURE);
+        fprintf(stderr, "ERROR [eqrhs]: Scale Height returned NaN/Inf/Zero (%.10lg) for r=%.10lg. Setting drdt to 0.\n", H, r);
+        return;
     }
     if (isnan(P) || isinf(P) || P <= 0.0) { // P could be very small or zero at the edge of disk
-        fprintf(stderr, "ERROR [eqrhs]: Gas Pressure returned NaN/Inf/Zero (%.10lg) for sigma=%.10lg, r=%.10lg. Exiting.\n", P, sigma, r);
-        exit(EXIT_FAILURE);
+        fprintf(stderr, "ERROR [eqrhs]: Gas Pressure returned NaN/Inf/Zero (%.10lg) for sigma=%.10lg, r=%.10lg. Setting drdt to 0.\n", P, sigma, r);
+        return;
     }
     if (isnan(csound) || isinf(csound) || csound <= 0.0) {
-        fprintf(stderr, "ERROR [eqrhs]: Sound Speed returned NaN/Inf/Zero (%.10lg) for r=%.10lg. Exiting.\n", csound, r);
-        exit(EXIT_FAILURE);
+        fprintf(stderr, "ERROR [eqrhs]: Sound Speed returned NaN/Inf/Zero (%.10lg) for r=%.10lg. Setting drdt to 0.\n", csound, r);
+        return;
     }
-
-    // Végleges számítás
-    double term1 = ug / (1. + St * St);
-    double term2_denominator = (1. + St * St);
-    double term2 = St / term2_denominator * H / P * dPdr * csound;
+    
+    // --- Végleges számítás ---
+    // Az (1+St*St) tag ellenőrzése, nehogy túl közel legyen a nullához
+    double denominator = 1.0 + St * St;
+    if (fabs(denominator) < 1e-20) {
+        fprintf(stderr, "ERROR [eqrhs]: Denominator (1+St*St) is too close to zero (%.10lg) for r=%.10lg. Setting drdt to 0.\n", denominator, r);
+        return;
+    }
+    
+    double term1 = ug / denominator;
+    double term2 = St / denominator * H / P * dPdr * csound;
+    
+    // A végső drdt kiszámítása
     *drdt = term1 + term2;
 
     // Ellenőrizd az eredményt
     if (isnan(*drdt) || isinf(*drdt)) {
         fprintf(stderr, "CRITICAL ERROR [eqrhs]: Final drdt BECAME NaN/INF (%.10lg) for particle at r=%.10lg!\n", *drdt, r);
         fprintf(stderr, "DEBUG [eqrhs]: Components: ug=%.10lg, St=%.10lg, H=%.10lg, P=%.10lg, dPdr=%.10lg, csound=%.10lg\n", ug, St, H, P, dPdr, csound);
-        exit(EXIT_FAILURE); // Azonnal kilép, hogy lásd, mi okozta
+        *drdt = 0.0;
     }
-
-//        fprintf(stderr, "DEBUG [eqrhs_output]: drdt=%.10lg\n", *drdt);
-
-
-//    fprintf(stderr, "DEBUG [eqrhs]: Exiting with drdt=%.10lg\n", *drdt);
 }
 
 
