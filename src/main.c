@@ -281,12 +281,12 @@ int main(int argc, const char **argv) {
     fprintf(stderr, "DEBUG [main]: Global PARTICLE_NUMBER set to %d (from dust input file: %s).\n", PARTICLE_NUMBER, sim_opts.dust_input_filename);
 
 
-    fprintf(stderr, "DEBUG [main]: Initial profile loading for read_gas_profile...\n");
-    read_gas_profile(&disk_params, current_inputsig_file); // This populates disk_params.sigmavec and rvec
-    fprintf(stderr, "DEBUG [main]: read_gas_profile completed. Calling calculate_boundary for disk_params.rvec and disk_params.sigmavec...\n");
-    calculate_boundary(disk_params.rvec, &disk_params);
-    calculate_boundary(disk_params.sigmavec, &disk_params);
-    fprintf(stderr, "DEBUG [main]: calculate_boundary calls completed for initial profile.\n");
+//    fprintf(stderr, "DEBUG [main]: Initial profile loading for read_gas_profile...\n");
+//    read_gas_profile(&disk_params, current_inputsig_file); // This populates disk_params.sigmavec and rvec
+//    fprintf(stderr, "DEBUG [main]: read_gas_profile completed. Calling calculate_boundary for disk_params.rvec and disk_params.sigmavec...\n");
+//    calculate_boundary(disk_params.rvec, &disk_params);
+//    calculate_boundary(disk_params.sigmavec, &disk_params);
+//    fprintf(stderr, "DEBUG [main]: calculate_boundary calls completed for initial profile.\n");
 
     // Print current information
     fprintf(stderr, "DEBUG [main]: Calling write_summary_log...\n");
