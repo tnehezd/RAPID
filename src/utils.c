@@ -48,7 +48,6 @@ void calculate_boundary(double *vec, const disk_t *disk_params) {					/*	boundar
 
 
 /* egy megadott, diszkret pontokban ismert fuggvenyt interpolal a reszecske aktualis helyere */
-/* Egy megadott, diszkret pontokban ismert fuggvenyt interpolal a reszecske aktualis helyere */
 void interpol(double *invec, double *rvec, double pos, double *out, double rd, int opt, const disk_t *disk_params) {
     // Védőfeltétel a pos értékére
     if (isnan(pos) || isinf(pos) || pos < disk_params->RMIN || pos > disk_params->RMAX) {
@@ -92,14 +91,24 @@ void interpol(double *invec, double *rvec, double pos, double *out, double rd, i
     coef1 = (invec[index + 1] - invec[index]) / (rvec[index + 1] - rvec[index]);
     temp = invec[index] + coef1 * (pos - rindex);
 
-    // Végleges ellenőrzés
+    // Fizikailag értelmetlen értékek ellenőrzése
+    // Ezeket a feltételeket csak fizikai mennyiségekre kell alkalmazni, amelyeknek pozitívnak kell lenniük.
+    // Tegyük fel, hogy opt=1 a gáznyomásra (gas_pressure) vonatkozik.
+    if (opt == 1 && temp < 0.0) {
+        // Ha az érték negatív, de fizikailag pozitívnak kellene lennie, akkor beállítjuk egy kis pozitív számra.
+        fprintf(stderr, "WARNING [interpol]: Interpolated value is negative (%.4e) for a positive quantity. Clamping to 0.0.\n", temp);
+        temp = 0.0; // Vagy egy nagyon kicsi pozitív érték, pl. 1e-30
+    }
+
+    // Végleges ellenőrzés NaN/inf értékekre
     if (isnan(temp) || isinf(temp)) {
-        fprintf(stderr, "CRITICAL ERROR [interpol]: Interpolated value is NaN/INF at pos=%.4e. Returning 0.\n", pos);
+        fprintf(stderr, "CRITICAL ERROR [interpol]: Interpolated value is NaN/INF (%.4e) at pos=%.4e. Clamping to 0.0.\n", temp, pos);
         *out = 0.0;
     } else {
         *out = temp;
     }
 }
+
 
 
 /*	megkeresi egy tomb maximumat	*/

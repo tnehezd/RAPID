@@ -81,7 +81,7 @@ void calculate_dust_surface_density_profile(double *output_sigma_d_grid, double 
         if (bin_area > EPSILON_SIZE) {
             output_sigma_d_grid[j] = total_mass_in_bins[j] / bin_area;
         } else {
-            // This case should not happen unless the grid is degenerate, but it's a good safety check.
+            // Ez az eset csak akkor fordulhat elő, ha a rács degenerált, de jó biztonsági ellenőrzés.
             output_sigma_d_grid[j] = 0.0;
         }
         // JAVÍTÁS: A negatív értékek elkerülése, ami a korábbi kimenetben is felbukkant
@@ -115,8 +115,8 @@ double calculate_stokes_number(double pradius_au, double sigma_msun_au2, double 
     double Stokes = (rho_s_g_cm3 * pradius_cm / sigma_g_cm2) * (omega_k_rad_s * r_cm / csound_cm_s);
     
     // ELLENŐRZÉS: Visszatérés előtt ellenőrizzük, hogy az eredmény NaN-e.
-    if (isnan(Stokes) || isinf(Stokes)) {
-        fprintf(stderr, "HIBA [calculate_stokes_number]: NaN vagy Inf érték keletkezett. Bemenet: pradius_au=%.2e, sigma_msun_au2=%.2e, r_au=%.2e.\n", pradius_au, sigma_msun_au2, r_au);
+    if (isnan(Stokes) || isinf(Stokes) || Stokes < 0.0) {
+        fprintf(stderr, "HIBA [calculate_stokes_number]: NaN, Inf vagy negatív érték keletkezett (%.2e). Bemenet: pradius_au=%.2e, sigma_msun_au2=%.2e, r_au=%.2e.\n", Stokes, pradius_au, sigma_msun_au2, r_au);
         return 0.0;
     }
 
@@ -140,8 +140,8 @@ double calculate_max_size_from_drift(double sigmad, double r, double p, double d
 
     double s_drift = disk_params->fDrift * 2.0 / M_PI * Sigmad_cgs / rho_p * vkep2 / c_s2 * fabs(1.0 / dlnPdlnr);
 
-    if (isnan(s_drift) || isinf(s_drift)) {
-        fprintf(stderr, "HIBA [calculate_max_size_from_drift]: NaN vagy Inf érték keletkezett. Bemenet: sigmad=%.2e, r=%.2e.\n", sigmad, r);
+    if (isnan(s_drift) || isinf(s_drift) || s_drift < 0.0) {
+        fprintf(stderr, "HIBA [calculate_max_size_from_drift]: NaN, Inf vagy negatív érték keletkezett (%.2e). Bemenet: sigmad=%.2e, r=%.2e.\n", s_drift, sigmad, r);
         return 0.0;
     }
 
@@ -167,8 +167,8 @@ double calculate_max_size_from_turbulence(double sigma, double r, double rho_p, 
     
     s_frag = disk_params->fFrag * 2.0 / (3.0 * M_PI) * Sigma_cgs / (rho_p * alpha_turb) * u_frag2 / c_s2;
 
-    if (isnan(s_frag) || isinf(s_frag)) {
-        fprintf(stderr, "HIBA [calculate_max_size_from_turbulence]: NaN vagy Inf érték keletkezett. Bemenet: sigma=%.2e, r=%.2e.\n", sigma, r);
+    if (isnan(s_frag) || isinf(s_frag) || s_frag < 0.0) {
+        fprintf(stderr, "HIBA [calculate_max_size_from_turbulence]: NaN, Inf vagy negatív érték keletkezett (%.2e). Bemenet: sigma=%.2e, r=%.2e.\n", s_frag, sigma, r);
         return 0.0;
     }
 
@@ -183,7 +183,14 @@ double calculate_max_size_from_drift_fragmentation(double sigma, double r, doubl
     Sigma_cgs = sigma / GAS_SD_CONV_RATE;
     c_s = calculate_local_sound_speed(r,disk_params);
     c_s2 = c_s * c_s;
+    
+    // JAVÍTÁS: Robusztusabb ellenőrzés a nullával való osztás elkerülésére a dlnPdlnr számításában.
+    if (p <= EPSILON_SIZE || dp == 0.0) {
+        fprintf(stderr, "HIBA [calculate_max_size_from_drift_fragmentation]: Érvénytelen nyomás (p=%.2e) vagy nyomásgradiens (dp=%.2e).\n", p, dp);
+        return 0.0;
+    }
     dlnPdlnr = r / p * dp;
+    
     vkep = calculate_keplerian_velocity(r,disk_params);
 
     // ELLENŐRZÉS: Elkerüljük a 0-val való osztást.
@@ -194,8 +201,8 @@ double calculate_max_size_from_drift_fragmentation(double sigma, double r, doubl
 
     s_df = u_frag * vkep / fabs(dlnPdlnr * c_s2 * 0.5) * 2.0 * Sigma_cgs / (M_PI * rho_p);
 
-    if (isnan(s_df) || isinf(s_df)) {
-        fprintf(stderr, "HIBA [calculate_max_size_from_drift_fragmentation]: NaN vagy Inf érték keletkezett. Bemenet: sigma=%.2e, r=%.2e.\n", sigma, r);
+    if (isnan(s_df) || isinf(s_df) || s_df < 0.0) {
+        fprintf(stderr, "HIBA [calculate_max_size_from_drift_fragmentation]: NaN, Inf vagy negatív érték keletkezett (%.2e). Bemenet: sigma=%.2e, r=%.2e.\n", s_df, sigma, r);
         return 0.0;
     }
 
@@ -212,13 +219,16 @@ double calculate_growth_timescale(double r, double eps, const disk_t *disk_param
 
     double omega = calculate_keplerian_angular_velocity(r, disk_params);
 
-    if (omega <= 1e-20) {
-        fprintf(stderr, "HIBA [calculate_growth_timescale]: Az omega érték túl kicsi vagy nulla (%.2e). Visszatérés 0.0.\n", omega);
-        return 0.0;
+    if (omega <= EPSILON_SIZE) {
+        fprintf(stderr, "HIBA [calculate_growth_timescale]: Az omega érték túl kicsi vagy nulla (%.2e). Visszatérés DBL_MAX.\n", omega);
+        return DBL_MAX; // Javítás: Végtelen időt ad vissza a nulla helyett, hogy elkerüljük a szokatlan viselkedést.
     }
 
     // A növekedési idő képlete
     double tau_growth = eps / omega;
+    if (isnan(tau_growth) || isinf(tau_growth) || tau_growth < 0.0) {
+        return DBL_MAX;
+    }
     return tau_growth;
 }
 
@@ -227,6 +237,12 @@ double update_particle_size(double particle_radius, double particle_density, dou
     // JAVÍTÁS: A részecskeméret ne legyen túl kicsi vagy negatív a számítások előtt sem.
     if (particle_radius < EPSILON_SIZE) {
         return EPSILON_SIZE;
+    }
+
+    // JAVÍTÁS: Hozzáadott robusztus ellenőrzés a bemeneti paraméterekre
+    if (sigma_gas < EPSILON_SIZE || sigma_dust < 0.0 || gas_pressure < EPSILON_SIZE || isnan(sigma_gas) || isnan(sigma_dust) || isnan(gas_pressure)) {
+        fprintf(stderr, "HIBA [update_particle_size]: Érvénytelen bemeneti paraméterek. (sigma_gas=%.2e, sigma_dust=%.2e, gas_pressure=%.2e).\n", sigma_gas, sigma_dust, gas_pressure);
+        return particle_radius; // Visszatérés az eredeti mérethez, ha a bemenet hibás.
     }
 
     double size_max_turb = calculate_max_size_from_turbulence(sigma_gas, particle_distance_au, particle_density, disk_params);
@@ -274,7 +290,7 @@ double update_particle_size(double particle_radius, double particle_density, dou
     }
     
     // A növekedési mechanizmus beépítése
-    if (tau_growth <= EPSILON_SIZE || tau_growth > HUGE_VAL) {
+    if (tau_growth <= EPSILON_SIZE || tau_growth >= HUGE_VAL) {
         new_size = size_min;
     } else if (particle_radius < size_min) {
         // ELLENŐRZÉS: A logaritmus argumentumának pozitívnak kell lennie.
@@ -299,8 +315,8 @@ double update_particle_size(double particle_radius, double particle_density, dou
     }
     
     // VISSZATÉRÉSI ÉRTÉK ELLENŐRZÉSE
-    if (isnan(new_size) || isinf(new_size)) {
-        fprintf(stderr, "HIBA [update_particle_size]: NaN vagy Inf érték a new_size-ban. Visszatérés 0.0. Paraméterek: particle_radius=%.2e, tau_growth=%.2e.\n", particle_radius, tau_growth);
+    if (isnan(new_size) || isinf(new_size) || new_size < 0.0) {
+        fprintf(stderr, "HIBA [update_particle_size]: NaN, Inf vagy negatív érték a new_size-ban (%.2e). Visszatérés 0.0. Paraméterek: particle_radius=%.2e, tau_growth=%.2e.\n", new_size, particle_radius, tau_growth);
         return 0.0;
     }
 
@@ -309,13 +325,19 @@ double update_particle_size(double particle_radius, double particle_density, dou
 
 void calculate_dust_density_grid(const ParticleData_t *p_data, disk_t *disk_params, const simulation_options_t *sim_opts) {
     double *sigma_d_temp = (double *)calloc(disk_params->NGRID, sizeof(double));
-    double *sigma_dm_temp = (double *)calloc(disk_params->NGRID, sizeof(double));
-
-    if (sigma_d_temp == NULL || sigma_dm_temp == NULL) {
-        fprintf(stderr, "HIBA: Memóriafoglalás sikertelen a sigma_d_temp vagy a sigma_dm_temp számára a calculate_dust_density_grid-ben.\n");
-        free(sigma_d_temp);
-        free(sigma_dm_temp);
+    if (sigma_d_temp == NULL) {
+        fprintf(stderr, "HIBA: Memóriafoglalás sikertelen a sigma_d_temp számára a calculate_dust_density_grid-ben.\n");
         exit(EXIT_FAILURE);
+    }
+    
+    double *sigma_dm_temp = NULL;
+    if (sim_opts->twopop == 1.0) {
+        sigma_dm_temp = (double *)calloc(disk_params->NGRID, sizeof(double));
+        if (sigma_dm_temp == NULL) {
+            fprintf(stderr, "HIBA: Memóriafoglalás sikertelen a sigma_dm_temp számára a calculate_dust_density_grid-ben.\n");
+            free(sigma_d_temp); // Fontos: Szabadítsuk fel a korábban lefoglalt memóriát
+            exit(EXIT_FAILURE);
+        }
     }
 
     if (p_data->num_particles_pop1 > 0) {
@@ -324,8 +346,10 @@ void calculate_dust_density_grid(const ParticleData_t *p_data, disk_t *disk_para
 
         if (rad_pop1_1d == NULL || mass_pop1_1d == NULL) {
             fprintf(stderr, "HIBA: Memóriafoglalás sikertelen a Pop1 ideiglenes tömbökhöz a calculate_dust_density_grid-ben.\n");
-            free(sigma_d_temp); free(sigma_dm_temp);
-            free(rad_pop1_1d); free(mass_pop1_1d);
+            free(sigma_d_temp);
+            if (sigma_dm_temp != NULL) free(sigma_dm_temp);
+            free(rad_pop1_1d); // A calloc NULL-t ad, ha hibás, így itt a free biztonságos.
+            free(mass_pop1_1d);
             exit(EXIT_FAILURE);
         }
 
@@ -335,8 +359,8 @@ void calculate_dust_density_grid(const ParticleData_t *p_data, disk_t *disk_para
         }
 
         calculate_dust_surface_density_profile(sigma_d_temp, disk_params->rvec,
-                                               rad_pop1_1d, mass_pop1_1d,
-                                               p_data->num_particles_pop1, disk_params->NGRID, disk_params);
+                                                rad_pop1_1d, mass_pop1_1d,
+                                                p_data->num_particles_pop1, disk_params->NGRID, disk_params);
 
         free(rad_pop1_1d);
         free(mass_pop1_1d);
@@ -348,8 +372,10 @@ void calculate_dust_density_grid(const ParticleData_t *p_data, disk_t *disk_para
 
         if (rad_pop2_1d == NULL || mass_pop2_1d == NULL) {
             fprintf(stderr, "HIBA: Memóriafoglalás sikertelen a Pop2 ideiglenes tömbökhöz a calculate_dust_density_grid-ben.\n");
-            free(sigma_d_temp); free(sigma_dm_temp);
-            free(rad_pop2_1d); free(mass_pop2_1d);
+            free(sigma_d_temp);
+            if (sigma_dm_temp != NULL) free(sigma_dm_temp);
+            free(rad_pop2_1d);
+            free(mass_pop2_1d);
             exit(EXIT_FAILURE);
         }
 
@@ -359,8 +385,8 @@ void calculate_dust_density_grid(const ParticleData_t *p_data, disk_t *disk_para
         }
 
         calculate_dust_surface_density_profile(sigma_dm_temp, disk_params->rvec,
-                                               rad_pop2_1d, mass_pop2_1d,
-                                               p_data->num_particles_pop2, disk_params->NGRID, disk_params);
+                                                rad_pop2_1d, mass_pop2_1d,
+                                                p_data->num_particles_pop2, disk_params->NGRID, disk_params);
 
         free(rad_pop2_1d);
         free(mass_pop2_1d);
@@ -374,7 +400,7 @@ void calculate_dust_density_grid(const ParticleData_t *p_data, disk_t *disk_para
     }
 
     free(sigma_d_temp);
-    free(sigma_dm_temp);
+    if (sigma_dm_temp != NULL) free(sigma_dm_temp); // Fontos: Csak akkor szabadítsuk fel, ha lefoglaltuk.
 }
 
 
