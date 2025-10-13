@@ -295,6 +295,19 @@ int main(int argc, const char **argv) {
     write_summary_log(def.output_dir_name, &disk_params, &sim_opts);
 
 
+    for (int i = disk_params.NGRID - 120; i <= disk_params.NGRID; i++) {
+        fprintf(stderr, "INIT CHECK i=%d: sigma=%.4e, dust=%.4e, press=%.4e, dpress=%.4e\n",
+            i,
+            disk_params.sigmavec[i],
+            disk_params.sigmadustvec[i],
+            disk_params.pressvec[i],
+            disk_params.dpressvec[i]);
+    }
+
+
+
+    exit(EXIT_SUCCESS);
+
     // Run simulation or exit based on options
     if(sim_opts.evol == 0. && sim_opts.drift == 0.) {
         fprintf(stderr, "DEBUG [main]: Evolution (sim_opts.evol=%.2f) and drift (sim_opts.drift=%.2f) are OFF.\n", sim_opts.evol, sim_opts.drift);

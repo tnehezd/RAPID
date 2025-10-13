@@ -13,6 +13,8 @@
 #include <string.h>
 #include <math.h>
 
+#define EPSILON_SIZE 1e-20
+
 void create_default_init_tool_options(init_tool_options_t *def) {
     // Set default values for the init_tool_options_t struct
     def->n_grid_points = 1000;          // Number of radial gas grid points
@@ -271,9 +273,27 @@ int run_init_tool(init_tool_options_t *opts, disk_t *disk_params, simulation_opt
 
     // --- NEW SECTION: Initialize Dust Surface Density Profile from Gas Profile ---
     // A gázsűrűség profil alapján kitöltjük a por sűrűség profil tömbjét.
+    disk_params->eps = opts->dust_to_gas_ratio;  // Átadjuk az eps értéket a disk_params struktúrába
+
     for (int i_loop = 0; i_loop < disk_params->NGRID + 2; i_loop++) {
-        long double sigma_gas_val = disk_params->sigmavec[i_loop];
-        disk_params->sigmadustvec[i_loop] = sigma_gas_val * opts->dust_to_gas_ratio;
+        double sigma_gas_val = disk_params->sigmavec[i_loop];
+        double dust_val = sigma_gas_val * disk_params->eps;
+
+        // Clampelés numerikus stabilitásért
+        if (!isfinite(dust_val) || dust_val < EPSILON_SIZE) {
+            dust_val = EPSILON_SIZE;
+        }
+
+        disk_params->sigmadustvec[i_loop] = dust_val;
+    }
+
+    // --- DEBUG: Ellenőrzés, hogy a porprofil valóban létrejött ---
+    fprintf(stderr, "DEBUG [dust init]: eps = %.4e\n", disk_params->eps);
+    for (int i = disk_params->NGRID - 5; i <= disk_params->NGRID; i++) {
+        fprintf(stderr, "DEBUG [dust init]: i=%d sigma=%.4e → dust=%.4e\n",
+            i,
+            disk_params->sigmavec[i],
+            disk_params->sigmadustvec[i]);
     }
 
     // --- NEW SECTION: Write Gas Density Profile (to fout_dens) ---
@@ -330,6 +350,15 @@ int run_init_tool(init_tool_options_t *opts, disk_t *disk_params, simulation_opt
 
         interpol(disk_params->dpressvec, disk_params->rvec, r_dust_particle_au, &temp_dPdr, disk_params->DD, 0, disk_params);
         double dPdr_local = temp_dPdr;
+
+
+        // --- Clamp interpolated values to avoid NaN/INF or near-zero issues ---
+        if (!isfinite(temp_sigma_dust) || temp_sigma_dust < EPSILON_SIZE)
+            temp_sigma_dust = EPSILON_SIZE;
+        if (!isfinite(temp_sigma_gas) || temp_sigma_gas < EPSILON_SIZE)
+            temp_sigma_gas = EPSILON_SIZE;
+        if (!isfinite(temp_pressure) || temp_pressure < EPSILON_SIZE)
+            temp_pressure = EPSILON_SIZE;
 
 
         double s_max_cm;
