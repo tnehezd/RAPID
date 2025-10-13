@@ -57,4 +57,8 @@ void Count_Mass(double radin[][2], double partmassindin[][5], double *massvecin,
 // double calculate_average(double *data, int count);
 // void print_timestamp(FILE *f);
 
+
+void validate_disk_state(const disk_t *disk);
+
 #endif // UTILS_H
+

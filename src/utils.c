@@ -494,3 +494,30 @@ void Count_Mass(double radin[][2], double partmassindin[][5], double *massvecin,
 	}
 
 }
+
+
+void validate_disk_state(const disk_t *disk) {
+    if (!disk || !disk->rvec || !disk->sigmavec || !disk->pressvec || !disk->dpressvec || !disk->ugvec) {
+        fprintf(stderr, "ERROR [validate_full_disk_state]: One or more disk arrays are NULL.\n");
+        return;
+    }
+
+    int nan_count = 0, neg_count = 0;
+    for (int i = 0; i <= disk->NGRID + 1; i++) {
+        if (!isfinite(disk->rvec[i]) || disk->rvec[i] <= 0.0) {
+            fprintf(stderr, "BAD rvec[%d] = %.4e\n", i, disk->rvec[i]);
+            exit(EXIT_SUCCESS);            
+        }
+        if (!isfinite(disk->sigmavec[i]) || disk->sigmavec[i] < 0.0) {
+            nan_count++;
+        }
+        if (!isfinite(disk->pressvec[i]) || !isfinite(disk->dpressvec[i]) || !isfinite(disk->ugvec[i])) {
+            fprintf(stderr, "BAD physics at i=%d: press=%.4e, dpress=%.4e, ug=%.4e\n", i, disk->pressvec[i], disk->dpressvec[i], disk->ugvec[i]);
+            exit(EXIT_SUCCESS);
+        }
+    }
+
+    if (nan_count > 0) {
+        fprintf(stderr, "WARNING [validate_full_disk_state]: %d entries in sigmavec are NaN or negative.\n", nan_count);
+    }
+}

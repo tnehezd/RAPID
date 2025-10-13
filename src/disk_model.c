@@ -279,11 +279,13 @@ void get_gas_surface_density_pressure_pressure_gradient(const simulation_options
         double r_val = disk_params->rvec[i];
         double nu_val = calculate_gas_viscosity(r_val, disk_params);
 
-        if (nu_val > DBL_EPSILON) {
-            disk_params->sigmavec[i] = uvec_new[i] / nu_val;
-        } else {
+        if (!isfinite(uvec_new[i]) || uvec_new[i] < 0.0 || !isfinite(nu_val) || nu_val < DBL_EPSILON) {
+            fprintf(stderr, "WARNING [sigmavec update]: Bad uvec_new[%d]=%.4e or nu=%.4e → clamping sigma to 0.0\n", i, uvec_new[i], nu_val);
             disk_params->sigmavec[i] = 0.0;
+        } else {
+            disk_params->sigmavec[i] = uvec_new[i] / nu_val;
         }
+
     }
     
     // A nyomás és a nyomás gradiens frissítése

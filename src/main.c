@@ -127,6 +127,7 @@ int main(int argc, const char **argv) {
 
     create_output_directory(logs_dir_path);
 
+
     // CRITICAL: Populate sim_opts.output_dir_name from def.output_dir_name
     strncpy(sim_opts.output_dir_name, def.output_dir_name, MAX_PATH_LEN - 1);
     sim_opts.output_dir_name[MAX_PATH_LEN - 1] = '\0'; // Ensure null-termination

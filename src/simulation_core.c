@@ -441,6 +441,8 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
 
             if (sim_opts->evol == 1.) {
                 get_gas_surface_density_pressure_pressure_gradient(sim_opts, disk_params, deltat);
+                validate_disk_state(disk_params);  // ← IDE!
+
             }
 
             if (p_data.particles_pop1 == NULL) {
@@ -525,6 +527,8 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
             }
             fprintf(stderr,"DEBUG [tIntegrate]: Calling get_gas_surface_density_pressure_pressure_gradient for gas-only evolution.\n");
             get_gas_surface_density_pressure_pressure_gradient(sim_opts, disk_params,deltat);
+            validate_disk_state(disk_params);  // ← IDE!
+
             t = t + deltat;
         }
     } while (t <= t_integration_in_internal_units);
@@ -535,3 +539,5 @@ cleanup:
     cleanup_simulation_resources(&p_data, output_files, sim_opts);
     fprintf(stderr,"DEBUG [tIntegrate]: Cleanup completed.\n");
 }
+
+
