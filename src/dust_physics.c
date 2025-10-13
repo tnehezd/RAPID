@@ -241,9 +241,28 @@ double update_particle_size(double particle_radius, double particle_density, dou
 
     // JAVÍTÁS: Hozzáadott robusztus ellenőrzés a bemeneti paraméterekre
     if (sigma_gas < EPSILON_SIZE || sigma_dust < 0.0 || gas_pressure < EPSILON_SIZE || isnan(sigma_gas) || isnan(sigma_dust) || isnan(gas_pressure)) {
-        fprintf(stderr, "HIBA [update_particle_size]: Érvénytelen bemeneti paraméterek. (sigma_gas=%.2e, sigma_dust=%.2e, gas_pressure=%.2e).\n", sigma_gas, sigma_dust, gas_pressure);
+        fprintf(stderr, "HIBA [update_particle_size]: Ervenytelen bemeneti parameterek. (sigma_gas=%.2e, sigma_dust=%.2e, gas_pressure=%.2e).\n", sigma_gas, sigma_dust, gas_pressure);
         return particle_radius; // Visszatérés az eredeti mérethez, ha a bemenet hibás.
     }
+
+
+    if (sigma_gas < EPSILON_SIZE) {
+    fprintf(stderr, "HIBA [update_particle_size]: sigma_gas túl kicsi (%.2e)\n", sigma_gas);
+    return particle_radius;
+    }
+    if (sigma_dust < 0.0) {
+        fprintf(stderr, "HIBA [update_particle_size]: sigma_dust negatív (%.2e)\n", sigma_dust);
+        return particle_radius;
+    }
+    if (gas_pressure < EPSILON_SIZE) {
+        fprintf(stderr, "HIBA [update_particle_size]: gas_pressure túl kicsi (%.2e)\n", gas_pressure);
+        return particle_radius;
+    }
+    if (isnan(sigma_gas) || isnan(sigma_dust) || isnan(gas_pressure)) {
+        fprintf(stderr, "HIBA [update_particle_size]: NaN a bemenetben (sigma_gas=%.2e, sigma_dust=%.2e, gas_pressure=%.2e)\n", sigma_gas, sigma_dust, gas_pressure);
+        return particle_radius;
+    }
+
 
     double size_max_turb = calculate_max_size_from_turbulence(sigma_gas, particle_distance_au, particle_density, disk_params);
     double size_max_drift_frag = calculate_max_size_from_drift_fragmentation(sigma_gas, particle_distance_au, gas_pressure, gas_dpdr, particle_density,disk_params);

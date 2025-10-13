@@ -178,8 +178,16 @@ void calculate_gas_pressure_gradient(disk_t *disk_params) {
              continue;
         }
 
-        ptemp = (disk_params->pressvec[i + 1] - disk_params->pressvec[i - 1]) / (2.0 * disk_params->DD);
-        pvec[i] = ptemp;
+        double dp = disk_params->pressvec[i + 1] - disk_params->pressvec[i - 1];
+        double dr = 2.0 * disk_params->DD;
+
+        if (!isfinite(dp) || !isfinite(dr) || fabs(dr) < DBL_EPSILON) {
+            fprintf(stderr, "WARNING [dpressvec]: Bad pressure gradient at i=%d → clamping to 0.0\n", i);
+            pvec[i] = 0.0;
+        } else {
+            pvec[i] = dp / dr;
+        }
+
     }
     // Copy results to the disk_params structure's dpressvec array
     for (i = 1; i <= disk_params->NGRID; i++) {
