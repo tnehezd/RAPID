@@ -17,9 +17,9 @@ simulation_parameters:
   flaring_index: 0.0
   deadzone_inner_radius_au: 2.7
   deadzone_outer_radius_au: 24.0
-  deadzone_inner_transition_width_mult: 0.5
-  deadzone_outer_transition_width_mult: 0.5
-  deadzone_alpha_reduction: 0.001
+  deadzone_inner_transition_width_mult: 1.0
+  deadzone_outer_transition_width_mult: 1.0
+  deadzone_alpha_reduction: 0.01
   initial_dust_to_gas_ratio: 0.01
   population_one_mass_ratio: 0.85
   micro_particle_size_cm: 0.01
