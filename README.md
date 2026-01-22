@@ -47,7 +47,7 @@ Alternatively, you can run the executable directly from the command line by spec
 ----
 ### References
 
-If you use this code in your research, please cite the following paper, which provides the theoretical background for the core numerical methods:
+If you use this code in your research, please cite the following papers, which provides the theoretical background for the core numerical methods:
 
 ```bibtex
 @ARTICLE{2017ApJ...851...89R,
