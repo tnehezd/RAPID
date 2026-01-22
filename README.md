@@ -68,3 +68,22 @@ primaryClass = {astro-ph.EP},
      adsurl = {[https://ui.adsabs.harvard.edu/abs/2017ApJ...851...89R](https://ui.adsabs.harvard.edu/abs/2017ApJ...851...89R)},
     adsnote = {Provided by the SAO/NASA Astrophysics Data System}
 }
+
+@ARTICLE{2026arXiv260101468T,
+       author = {{Tarczay-Neh{\'e}z}, D.},
+        title = "{Trajectory-Based Dust Evolution in Disks: First Results from the RAPID Simulation Code}",
+      journal = {arXiv e-prints},
+     keywords = {Earth and Planetary Astrophysics},
+         year = 2026,
+        month = jan,
+          eid = {arXiv:2601.01468},
+        pages = {arXiv:2601.01468},
+          doi = {10.48550/arXiv.2601.01468},
+archivePrefix = {arXiv},
+       eprint = {2601.01468},
+ primaryClass = {astro-ph.EP},
+       adsurl = {https://ui.adsabs.harvard.edu/abs/2026arXiv260101468T},
+      adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+}
+
+
