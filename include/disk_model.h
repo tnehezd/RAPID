@@ -4,19 +4,19 @@
 #define DISK_MODEL_H
 
 
-// Azért include-olom a config.h-t, mert a disk_param_be globális változókat használ
-// (pl. SUN2GR, AU2CM), és a Parabola, load_R, Initial_Profile is NGRID, RMIN, DD, SIGMA0, SIGMAP_EXP-et.
+// Azért include-olom a config.h-t, mert a readDiskParameters globális változókat használ
+// (pl. SUN2GR, AU2CM), és a Parabola, createRadialGrid, createInitialGasSurfaceDensity is NGRID, RMIN, DD, SIGMA0, SIGMAP_EXP-et.
 // Bár ez nem szigorúan szükséges, mert a disk_model.c direktben include-olja a config.h-t,
 // jó gyakorlat, ha egy header is jelzi a függőségeit, ha a benne lévő deklarációk függenek tőlük.
 #include "config.h"
 #include "simulation_types.h" // Feltételezve, hogy itt található a disk_t definíciója
 
 // Funkciódeklarációk a disk_model.c-ből
-void disk_param_be(disk_t *disk_params);
+void readDiskParameters(disk_t *disk_params);
 
-void load_R(disk_t *disk_params);
+void createRadialGrid(disk_t *disk_params);
 
-void Initial_Profile(disk_t *disk_params);
+void createInitialGasSurfaceDensity(disk_t *disk_params);
 
 void Initial_Press(disk_t *disk_params);
 

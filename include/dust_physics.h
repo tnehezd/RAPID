@@ -12,17 +12,17 @@
 // akkor ezeket az extern deklarációkat elhagyhatod innen.
 
 
-/*	alpha turbulens paraméter kiszámolása	*/
-double calculate_turbulent_alpha(double r, const disk_t *disk_params);
+/*	Calculates turbulent alpha parameter	*/
+double calculateTurbulentAlpha(double r, const disk_t *disk_params);
 
 /*	kiszamolja az adott reszecskehez tartozo Stokes szamot	*/
-double Stokes_Number(double pradius, double sigma, disk_t *disk_params);
+double stokesNumber(double pradius, double sigma, disk_t *disk_params);
 
 /*	Lokalis viszkozitas erteke	*/
-double visc(double r, const disk_t *disk_params);
+double kinematicViscosity(double r, const disk_t *disk_params);
 
 /*	local scale height	*/
-double scale_height(double r, const disk_t *disk_params);
+double scaleHeight(double r, const disk_t *disk_params);
 
 /*	lokális kepleri sebesség	*/
 double v_kep(double r, const disk_t *disk_params);

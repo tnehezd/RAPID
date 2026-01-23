@@ -195,9 +195,9 @@ void find_r_annulus(double rin, double *ind_ii, double *ind_io,
     *ind_oo = 0.0;
 
     // --- ITT HÍVJUK MEG A scale_height-et EGYSZER, ÉS MENTSÜK EL AZ EREDMÉNYT ---
-    double h_rin = scale_height(rin, disk_params); // Első hívás, eredmény mentése
+    double h_rin = scaleHeight(rin, disk_params); // Első hívás, eredmény mentése
 
-    double h_rout = scale_height(rout, disk_params); // Rout-ra is számoljuk ki egyszer
+    double h_rout = scaleHeight(rout, disk_params); // Rout-ra is számoljuk ki egyszer
 
     // Számítsuk ki a határokhoz szükséges "rin +/- h_rin" és "rout +/- h_rout" értékeket
     // Ezeket a változókat használjuk majd a riimH, roimH stb. számításoknál

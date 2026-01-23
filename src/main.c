@@ -161,10 +161,10 @@ int main(int argc, const char **argv) {
         }
         fprintf(stderr, "DEBUG [main]: Disk profile arrays dynamically allocated with size NGRID+2 = %d (input file branch).\n", disk_params.NGRID + 2);
 
-        // Call disk_param_be because run_init_tool is not called
-        fprintf(stderr, "DEBUG [main]: Calling disk_param_be to calculate derived disk parameters for main disk_params struct (input file branch).\n");
-        disk_param_be(&disk_params);
-        fprintf(stderr, "DEBUG [main]: disk_param_be completed (input file branch).\n");
+        // Call readDiskParameters because run_init_tool is not called
+        fprintf(stderr, "DEBUG [main]: Calling readDiskParameters to calculate derived disk parameters for main disk_params struct (input file branch).\n");
+        readDiskParameters(&disk_params);
+        fprintf(stderr, "DEBUG [main]: readDiskParameters completed (input file branch).\n");
 
         // Copy input profile file to the 'initial' directory
         snprintf(cmd_buffer, sizeof(cmd_buffer), "cp %s %s/", current_inputsig_file, initial_dir_path);
@@ -252,7 +252,7 @@ int main(int argc, const char **argv) {
     PARTICLE_NUMBER = reszecskek_szama(sim_opts.dust_input_filename); // Read lines from the dust profile
     fprintf(stderr, "DEBUG [main]: Global PARTICLE_NUMBER set to %d (from dust input file: %s).\n", PARTICLE_NUMBER, sim_opts.dust_input_filename);
 
-    // The disk_param_be call has already occurred in the appropriate branch (if using input file)
+    // The readDiskParameters call has already occurred in the appropriate branch (if using input file)
     // or was called by run_init_tool (if generating).
 
     fprintf(stderr, "DEBUG [main]: Initial profile loading for sigIn...\n");

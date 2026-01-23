@@ -1,6 +1,6 @@
 #include "init_tool_module.h"
 #include "config.h" // For FILENAME_INIT_DUST_PROFILE, FILENAME_DISK_PARAM, SDCONV, G_GRAV_CONST, SNOWLINE, ICEFACTOR, CMPSECTOAUPYRP2PI
-#include "disk_model.h" // Contains declarations for load_R, Initial_Profile, Initial_Press, Initial_dPress, Initial_Ugas, disk_param_be, scale_height, v_kep, kep_freq, c_sound, press, rho_mp
+#include "disk_model.h" // Contains declarations for createRadialGrid, createInitialGasSurfaceDensity, Initial_Press, Initial_dPress, Initial_Ugas, readDiskParameters, scale_height, v_kep, kep_freq, c_sound, press, rho_mp
 #include "dust_physics.h" // May contain GetMass, etc.
 #include "utils.h" // For find_max, find_min, etc. and for interpolation functions
 #include "io_utils.h" // For Mk_Dir (if used internally here)
@@ -283,9 +283,9 @@ int run_init_tool(init_tool_options_t *opts, disk_t *disk_params) {
     }
 
     // Initialize gas disk properties on the NGRID grid
-    disk_param_be(disk_params);
-    load_R(disk_params);
-    Initial_Profile(disk_params);
+    readDiskParameters(disk_params);
+    createRadialGrid(disk_params);
+    createInitialGasSurfaceDensity(disk_params);
     Initial_Press(disk_params);
     Initial_dPress(disk_params);
     Initial_Ugas(disk_params);
@@ -348,7 +348,7 @@ int run_init_tool(init_tool_options_t *opts, disk_t *disk_params) {
             s_max_cm = opts->one_size_particle_cm;
         } else {
             // Use interpolated gas properties for calculations
-            // double H_au = scale_height(r_dust_particle_au, disk_params); // Removed: unused
+            // double H_au = scaleHeight(r_dust_particle_au, disk_params); // Removed: unused
             double v_kep_au_yr2pi = v_kep(r_dust_particle_au, disk_params);
             // double omega_yr2pi = kep_freq(r_dust_particle_au, disk_params); // Removed: unused
             double sound_speed_au_yr2pi = c_sound(r_dust_particle_au, disk_params);
@@ -371,7 +371,7 @@ int run_init_tool(init_tool_options_t *opts, disk_t *disk_params) {
                              (v_kep_au_yr2pi * v_kep_au_yr2pi) / sound_speed_sq * fabs(1.0 / dlnPdlnr_local);
 
             double s_frag = opts->f_frag * 2.0 / (3.0 * M_PI) * sigma_gas_local_cgs /
-                            (opts->dust_density_g_cm3 * calculate_turbulent_alpha(r_dust_particle_au, disk_params)) *
+                            (opts->dust_density_g_cm3 * calculateTurbulentAlpha(r_dust_particle_au, disk_params)) *
                             u_frag_sq_au_yr2pi_sq / sound_speed_sq;
 
             double dlnPdlnr_abs_cs2_half = fabs(dlnPdlnr_local * sound_speed_sq * 0.5);
