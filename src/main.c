@@ -50,6 +50,8 @@ int main(int argc, const char **argv) {
     disk_t disk_params; // Main disk parameters struct
     simulation_options_t sim_opts;
     output_files_t output_files;
+    ParticleData_t particle_data;
+
 
     // Initialize output_files pointers to NULL
     output_files.por_motion_file = NULL;
@@ -260,16 +262,24 @@ int main(int argc, const char **argv) {
     }
     fprintf(stderr, "DEBUG [main]: disk_params.sigmadustvec dynamically allocated with size NGRID = %d.\n", disk_params.NGRID);
 
+    // 2️⃣ Memóriafoglalás a command-line/bemeneti opciók alapján
+    int num_pop1 = sim_opts.num_dust_particles;
+    int num_pop2 = (sim_opts.twopop) ? sim_opts.num_dust_particles : 0;
+
+    allocate_particle_data(&particle_data, num_pop1, num_pop2, sim_opts.twopop);
+
+    // --- CALCULATE DUST DENSITY GRID ---
+    // Meghívjuk a függvényt, hogy feltöltse a sigmadustvec-et
+    calculate_dust_density_grid(&particle_data, &disk_params, &sim_opts);
+    fprintf(stderr, "DEBUG [main]: calculate_dust_density_grid completed. disk_params.sigmadustvec populated.\n");
 
     // --- CRITICAL STEP: Now that current_inputsig_file is set,
     //     copy it to sim_opts.input_filename for tIntegrate. ---
-    // This is the gas profile filename that read_gas_profile reads.
     strncpy(sim_opts.input_filename, current_inputsig_file, MAX_PATH_LEN - 1);
     sim_opts.input_filename[MAX_PATH_LEN - 1] = '\0'; // Ensure null-termination
     fprintf(stderr, "DEBUG [main]: sim_opts.input_filename set to '%s' for tIntegrate (gas profile).\n", sim_opts.input_filename);
 
     // --- NEW PART: Set the dust profile filename in sim_opts.dust_input_filename ---
-    // This is the dust profile filename that ReadDustFile reads within tIntegrate.
     char current_inputdust_file[MAX_PATH_LEN];
     snprintf(current_inputdust_file, sizeof(current_inputdust_file), "%s/%s", initial_dir_path, FILENAME_INIT_DUST_PROFILE);
     strncpy(sim_opts.dust_input_filename, current_inputdust_file, MAX_PATH_LEN - 1);
@@ -277,24 +287,10 @@ int main(int argc, const char **argv) {
     fprintf(stderr, "DEBUG [main]: sim_opts.dust_input_filename set to '%s' for tIntegrate (dust profile).\n", sim_opts.dust_input_filename);
 
     // --- CRITICAL STEP: Set the global PARTICLE_NUMBER based on the actual dust particle file. ---
-    // This ensures PARTICLE_NUMBER reflects the *dust* particle count, not the gas grid count.
     PARTICLE_NUMBER = get_particle_count(sim_opts.dust_input_filename); // Read lines from the dust profile
     fprintf(stderr, "DEBUG [main]: Global PARTICLE_NUMBER set to %d (from dust input file: %s).\n", PARTICLE_NUMBER, sim_opts.dust_input_filename);
 
-
-//    fprintf(stderr, "DEBUG [main]: Initial profile loading for read_gas_profile...\n");
-//    read_gas_profile(&disk_params, current_inputsig_file); // This populates disk_params.sigmavec and rvec
-//    fprintf(stderr, "DEBUG [main]: read_gas_profile completed. Calling calculate_boundary for disk_params.rvec and disk_params.sigmavec...\n");
-//    calculate_boundary(disk_params.rvec, &disk_params);
-//    calculate_boundary(disk_params.sigmavec, &disk_params);
-//    fprintf(stderr, "DEBUG [main]: calculate_boundary calls completed for initial profile.\n");
-
-    // Print current information
-    fprintf(stderr, "DEBUG [main]: Calling write_summary_log...\n");
-    // Here, def.output_dir_name is passed, which already contains the numbered folder name
-    write_summary_log(def.output_dir_name, &disk_params, &sim_opts);
-
-
+    // --- DEBUG: Ellenőrzés a sigmadustvec-re ---
     for (int i = disk_params.NGRID - 120; i <= disk_params.NGRID; i++) {
         fprintf(stderr, "INIT CHECK i=%d: sigma=%.4e, dust=%.4e, press=%.4e, dpress=%.4e\n",
             i,
@@ -304,9 +300,10 @@ int main(int argc, const char **argv) {
             disk_params.dpressvec[i]);
     }
 
+    // --- exit(EXIT_SUCCESS) ---
+    // Ezzel a ponttal a program itt kilép, és a dust grid már ki lett számolva
+//    exit(EXIT_SUCCESS);
 
-
-    exit(EXIT_SUCCESS);
 
     // Run simulation or exit based on options
     if(sim_opts.evol == 0. && sim_opts.drift == 0.) {
@@ -349,7 +346,7 @@ int main(int argc, const char **argv) {
         fprintf(stderr, "DEBUG [main]: Verifying disk_params.sigmavec[NGRID/2]: %.10e\n", disk_params.sigmavec[disk_params.NGRID / 2]);
         fprintf(stderr, "DEBUG [main]: Verifying disk_params.sigmavec[NGRID-1]: %.10e\n", disk_params.sigmavec[disk_params.NGRID - 1]);
 
-        fprintf(stderr, "DEBUG [main]: Calling tIntegrate...\n");
+        fprintf(stderr, "\n\n\n\n\nDEBUG [main]: Calling tIntegrate...\n");
         // Pass sim_opts to tIntegrate.
         // tIntegrate must ensure to use the correct (numbered) output_dir_name.
         tIntegrate(&disk_params, &sim_opts, &output_files);
@@ -367,6 +364,12 @@ int main(int argc, const char **argv) {
     if (disk_params.dpressvec) free(disk_params.dpressvec);
     if (disk_params.ugvec) free(disk_params.ugvec);
     if (disk_params.sigmadustvec) free(disk_params.sigmadustvec); // ÚJ: felszabadítás
+    // --- Free dynamically allocated particle data ---
+    if (particle_data.particles_pop1 != NULL || particle_data.particles_pop2 != NULL) {
+        free_particle_data(&particle_data);
+        fprintf(stderr, "DEBUG [main]: Particle data freed.\n");
+    }
+
 
     fprintf(stderr, "DEBUG [main]: Dynamically allocated disk arrays freed.\n");
 

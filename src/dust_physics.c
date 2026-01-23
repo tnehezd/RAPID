@@ -90,6 +90,13 @@ void calculate_dust_surface_density_profile(double *output_sigma_d_grid, double 
         }
     }
 
+
+    fprintf(stderr, "\n--- DEBUG: Dust surface density profile ---\n");
+    for (int j = n_grid_cells - 20; j < n_grid_cells; j++) {
+        fprintf(stderr, "DEBUG i=%d, r=%.4e, sigma_dust=%.4e\n",
+                j, output_r_grid_centers[j], output_sigma_d_grid[j]);
+    }
+
     free(total_mass_in_bins);
 }
 

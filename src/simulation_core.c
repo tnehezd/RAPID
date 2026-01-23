@@ -292,6 +292,8 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
     p_data.num_particles_pop1 = PARTICLE_NUMBER;
     p_data.num_particles_pop2 = PARTICLE_NUMBER;
 
+    fprintf(stderr, "DEBUG: TMAX = %g years\n", sim_opts->TMAX);
+
     double L = 0.;
     if (disk_params == NULL) {
         fprintf(stderr, "ERROR [tIntegrate]: disk_params pointer is NULL!\n");
