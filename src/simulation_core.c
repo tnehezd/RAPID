@@ -176,7 +176,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
     char size_name[MAX_PATH_LEN] = "";
 
     double t = 0.0;
-    double t_integration = sim_opts->TMAX * 2.0 * M_PI;
+    double t_integration_in_internal_units = sim_opts->TMAX * 2.0 * M_PI;
     double deltat = time_step(disk_params) / 5.0;
 
     // DT felülbírálása, ha a felhasználó megadott kisebb értéket
@@ -414,9 +414,9 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
             t = t + deltat;
         }
 
-    } while (t <= t_integration);
+    } while (t <= t_integration_in_internal_units);
 
-    fprintf(stderr,"\n\nDEBUG [tIntegrate]: Main simulation loop finished (t > t_integration).\n");
+    fprintf(stderr,"\n\nDEBUG [tIntegrate]: Main simulation loop finished (t > t_integration_in_internal_units).\n");
 
 cleanup:
     // --- Tisztítási szakasz ---

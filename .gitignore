@@ -2,6 +2,7 @@
 
 output/
 output_*/
+run_*/
 
 .ipynb_checkpoints
 

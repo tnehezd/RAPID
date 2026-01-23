@@ -14,7 +14,7 @@ RAPID is a trajectory-based Lagrangian model that tracks the motion of represent
 
 This approach offers computational efficiency due to its 1D nature while providing an effective approximation of particle trajectories. Using RAPID, we can conduct parameter studies to investigate dust mass growth, particle trajectories, and the evolution of feeding zones around pressure bumps, aiming to understand the conditions that facilitate planetesimal formation in protoplanetary disks.
 
-This work is based on the methods described in Regály et al. (2017) and will be further detailed in a forthcoming publication.
+This work is based on the methods described in Regály et al. (2017) and Tarczay-Nehéz (2026).
 
 ## Building and Running the Simulation
 
