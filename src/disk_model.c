@@ -15,15 +15,15 @@
 
 
 
-/*	A korong parametereinek beolvasasa	*/
-void disk_param_be(disk_t *disk_params) {
+/*	Reads the parameters of the disk	*/
+void readDiskParameters(disk_t *disk_params) {
     // Ellenőrzés, ha a pointer NULL (jó gyakorlat)
     if (disk_params == NULL) {
-        fprintf(stderr, "ERROR [disk_param_be]: Received NULL disk_params pointer.\n");
+        fprintf(stderr, "ERROR [readDiskParameters]: Received NULL disk_params pointer.\n");
         exit(EXIT_FAILURE);
     }
 
-    fprintf(stderr, "DEBUG [disk_param_be]: Calculating derived disk parameters and writing to output file.\n");
+    fprintf(stderr, "DEBUG [readDiskParameters]: Calculating derived disk parameters and writing to output file.\n");
 
 
     // A PDENSITYDIMLESS számítása a PDENSITY, csillagtömeg és más konstansok alapján
@@ -34,7 +34,7 @@ void disk_param_be(disk_t *disk_params) {
     // Kérlek, ellenőrizd, melyik a helyes dimenziómentesítés a te modellben!
     // A fenti verziót használtam, mert az tűnik konzisztensebbnek azzal, ahogy a G_GRAV_CONST-t is használtad.
 
-    fprintf(stderr, "DEBUG [disk_param_be]: Calculated PDENSITY = %.2e, PDENSITYDIMLESS = %.2e.\n",
+    fprintf(stderr, "DEBUG [readDiskParameters]: Calculated PDENSITY = %.2e, PDENSITYDIMLESS = %.2e.\n",
            disk_params->PDENSITY, disk_params->PDENSITYDIMLESS);
 }
 
@@ -42,17 +42,17 @@ void disk_param_be(disk_t *disk_params) {
 
 
 /*	r vektor (gridcellák) inicializálása	*/
-void load_R(disk_t *disk_params) {
+void createRadialGrid(disk_t *disk_params) {
 	
 	int i;
  	for(i = 0; i <= disk_params->NGRID+1; i++) {						/*	load an array of radii	*/
  		disk_params->rvec[i] = disk_params->RMIN + (i-1) * disk_params->DD;
-//        fprintf(stderr, "DEBUG [load_R]: r: %lg\n", disk_params->rvec[i]);
+//        fprintf(stderr, "DEBUG [createRadialGrid]: r: %lg\n", disk_params->rvec[i]);
 	}
 }
 
 /*	a sigmara kezdeti profil betoltese	*/
-void Initial_Profile(disk_t *disk_params){		/*	initial profile of sigma		*/
+void createInitialGasSurfaceDensity(disk_t *disk_params){		/*	initial profile of sigma		*/
 
   	int i;
   

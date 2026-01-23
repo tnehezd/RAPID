@@ -18,32 +18,32 @@
 
 
 /*	alpha turbulens paraméter kiszámolása --> alfa csökkentése alpha_r-rel	*/
-double calculate_turbulent_alpha(double r, const disk_t *disk_params) {
+double calculateTurbulentAlpha(double r, const disk_t *disk_params) {
     double alpha_r;
     alpha_r = 1.0 - 0.5 * (1.0 - disk_params->a_mod) * (tanh((r - disk_params->r_dze_i) / disk_params->Dr_dze_i) + tanh((disk_params->r_dze_o - r) / disk_params->Dr_dze_o));
     return alpha_r * disk_params->alpha_visc;
 }
 
-/*	kiszamolja az adott reszecskehez tartozo Stokes szamot	*/
+/*	Calculates the Stokes number for each particle	*/
 /*	St = rho_particle * radius_particle * PI / (2 * sigma)	*/
-double Stokes_Number(double pradius, double sigma, disk_t *disk_params) { /*	in the Epstein drag regime	*/
+double stokesNumber(double pradius, double sigma, disk_t *disk_params) { /*	in the Epstein drag regime	*/
     return disk_params->PDENSITYDIMLESS * pradius * M_PI / (2.0 * sigma);
 }
 
 /*	Lokalis viszkozitas erteke	*/
-double visc(double r, const disk_t *disk_params) {
+double kinematicViscosity(double r, const disk_t *disk_params) {
     double nu;
     double cs, H;
 
-    H = scale_height(r,disk_params);
+    H = scaleHeight(r,disk_params);
     cs = c_sound(r,disk_params);
 
-    nu = calculate_turbulent_alpha(r, disk_params) * cs * H;
+    nu = calculateTurbulentAlpha(r, disk_params) * cs * H;
     return nu;
 }
 
 /*	local scale height	*/
-double scale_height(double r, const disk_t *disk_params) {
+double scaleHeight(double r, const disk_t *disk_params) {
 
     if (disk_params == NULL) {
         fprintf(stderr, "ERROR [scale_height]: disk_params is NULL!\n");
@@ -67,12 +67,12 @@ double kep_freq(double r, const disk_t *disk_params) {
 
 /*	local sound speed		*/
 double c_sound(double r, const disk_t *disk_params) {
-    return kep_freq(r,disk_params) * scale_height(r,disk_params);
+    return kep_freq(r,disk_params) * scaleHeight(r,disk_params);
 }
 
 /*	Suruseg a midplane-ben	*/
 double rho_mp(double sigma, double r, const disk_t *disk_params) {
-    return 1. / sqrt(2.0 * M_PI) * sigma / scale_height(r,disk_params);
+    return 1. / sqrt(2.0 * M_PI) * sigma / scaleHeight(r,disk_params);
 }
 
 /* local pressure of the gas p = rho_gas * cs * cs kepletbol!!	*/
@@ -116,7 +116,7 @@ void u_gas(disk_t *disk_params) {
     #pragma omp parallel for private(i)
     for (i = 0; i <= disk_params->NGRID + 1; i++) { // Használd a disk_params->NGRID-et
         // Hozzáférés a disk_params tagjaihoz
-        ugvec[i] = disk_params->sigmavec[i] * visc(disk_params->rvec[i], disk_params) * sqrt(disk_params->rvec[i]);
+        ugvec[i] = disk_params->sigmavec[i] * kinematicViscosity(disk_params->rvec[i], disk_params) * sqrt(disk_params->rvec[i]);
         // Megjegyzés: A sqrt() függvénynek általában csak egy double paramétere van.
         // Ha valami komplexebb számítást akarsz, akkor lehet, hogy egy saját
         // függvényt hívsz, amihez disk_params is kell. Ellenőrizd a sqrt prototípusát!
@@ -235,7 +235,7 @@ double a_turb(double sigma, double r, double rho_p, const disk_t *disk_params) {
     c_s = c_sound(r,disk_params); // / CMPSECTOAUPYRP2PI; // Komment ki, ha a c_sound már megfelelő mértékegységben van
     c_s2 = c_s * c_s;
 
-    s_frag = disk_params->fFrag * 2.0 / (3.0 * M_PI) * Sigma_cgs / (rho_p * calculate_turbulent_alpha(r,disk_params)) * u_frag2 / c_s2;
+    s_frag = disk_params->fFrag * 2.0 / (3.0 * M_PI) * Sigma_cgs / (rho_p * calculateTurbulentAlpha(r,disk_params)) * u_frag2 / c_s2;
 
     return s_frag;
 }
@@ -360,12 +360,12 @@ void Get_Sigma_P_dP(const simulation_options_t *sim_opts, disk_t *disk_params) {
     sigma_temp[disk_params->NGRID + 1] = disk_params->sigmavec[disk_params->NGRID + 1];
 
     // uvec temporary array initialization
-    uvec[0] = disk_params->sigmavec[0] * visc(disk_params->rvec[0], disk_params); // Use disk_params->rvec
-    uvec[disk_params->NGRID + 1] = disk_params->sigmavec[disk_params->NGRID + 1] * visc(disk_params->rvec[disk_params->NGRID + 1], disk_params); // Use disk_params->rvec
+    uvec[0] = disk_params->sigmavec[0] * kinematicViscosity(disk_params->rvec[0], disk_params); // Use disk_params->rvec
+    uvec[disk_params->NGRID + 1] = disk_params->sigmavec[disk_params->NGRID + 1] * kinematicViscosity(disk_params->rvec[disk_params->NGRID + 1], disk_params); // Use disk_params->rvec
 
     #pragma omp parallel for
     for(i = 1; i <= disk_params->NGRID; i++) { // Use disk_params->NGRID
-        uvec[i] = disk_params->sigmavec[i] * visc(disk_params->rvec[i], disk_params); // Use disk_params->sigmavec and disk_params->rvec
+        uvec[i] = disk_params->sigmavec[i] * kinematicViscosity(disk_params->rvec[i], disk_params); // Use disk_params->sigmavec and disk_params->rvec
     }
 
     // This loop is critical due to data dependencies. Keep it sequential for correctness
@@ -386,7 +386,7 @@ void Get_Sigma_P_dP(const simulation_options_t *sim_opts, disk_t *disk_params) {
     #pragma omp parallel for
     for (i = 1; i <= disk_params->NGRID; i++) { // Use disk_params->NGRID
         // Update disk_params' own arrays
-        disk_params->sigmavec[i] = sigma_temp[i] / visc(disk_params->rvec[i], disk_params);
+        disk_params->sigmavec[i] = sigma_temp[i] / kinematicViscosity(disk_params->rvec[i], disk_params);
         disk_params->pressvec[i] = press(disk_params->sigmavec[i], disk_params->rvec[i], disk_params); // Assuming press takes disk_params
     }
 
