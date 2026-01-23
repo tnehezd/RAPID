@@ -1,142 +1,80 @@
-/**
- * @file dust_physics.h
- * @brief This header file contains function prototypes and structures
- * related to the physical processes of dust particles in the RAPID model,
- * including dynamics, density calculations, and growth.
- */
-
 #ifndef DUST_PHYSICS_H
 #define DUST_PHYSICS_H
 
-#include <stdio.h>
-#include "simulation_types.h"
-#include "particle_data.h"
+#include <stdio.h> // Szükséges lehet FILE, fprintf stb.
+#include "simulation_types.h" // Szükséges a simulation_options_t és disk_t struktúrákhoz
+
+// Extern globális változók deklarációi, ha ezeket a dust_physics.c fájl használja
+// Ezeknek a definíciói valószínűleg a config.h-ban vagy a main.c-ben vannak.
+// Csak akkor hagyd meg őket itt, ha a dust_physics.c fájl közvetlenül használja őket,
+// és nincs beinclude-olva egy másik fájl, ami már deklarálja (pl. config.h)
+// Ha a config.h includolva van a dust_physics.c-ben, és ott vannak definiálva,
+// akkor ezeket az extern deklarációkat elhagyhatod innen.
 
 
-/**
- * @brief Calculates the dust surface density profile on an Eulerian grid.
- *
- * This function performs a Cloud-in-Cell (CIC) mapping from Lagrangian particles
- * onto an Eulerian grid to compute the dust surface density.
- *
- * @param output_sigma_d_grid Output: The calculated dust surface density (per grid cell).
- * @param output_r_grid_centers Output: Radial positions of the grid cell centers.
- * @param particle_radius_au_array Input: A 1D array of particle radial positions (const).
- * @param particle_mass_array Input: A 1D array of particle masses (const).
- * @param n_particles Input: The total number of particles.
- * @param n_grid_cells Input: The number of grid cells for density calculation.
- * @param disk_params Input: A pointer to the disk parameters structure (const).
- *  
- * THERE'S A BUG!!!!
- */
-void calculate_dust_surface_density_profile(double *output_sigma_d_grid, double *output_r_grid_centers, const double *particle_radius_au_array, const double *particle_mass_array, int n_particles, int n_grid_cells, const disk_t *disk_params);
+/*	alpha turbulens paraméter kiszámolása	*/
+double calculate_turbulent_alpha(double r, const disk_t *disk_params);
 
+/*	kiszamolja az adott reszecskehez tartozo Stokes szamot	*/
+double Stokes_Number(double pradius, double sigma, disk_t *disk_params);
 
-/**
- * @brief Calculates the Stokes number for a given particle.
- * @param pradius The radius of the particle.
- * @param sigma The gas surface density.
- * @param r The radial distance from the star.
- * @param disk_params A pointer to the disk parameters structure.
- * @return The calculated Stokes number.
- */
-double calculate_stokes_number(double pradius, double sigma, double r, const disk_t *disk_params);
+/*	Lokalis viszkozitas erteke	*/
+double visc(double r, const disk_t *disk_params);
 
-/**
- * @brief Calculates the maximum particle size limited by radial drift.
- *
- * This function determines the maximum particle size based on the drift barrier
- * described in Birnstiel et al. (2012).
- *
- * @param sigmad The dust surface density.
- * @param r The radial distance.
- * @param p The gas surface density power-law exponent.
- * @param dp The pressure gradient parameter.
- * @param rho_p The intrinsic density of the dust particle.
- * @param disk_params A pointer to the disk parameters structure.
- * @return The maximum particle size from the drift barrier.
- */
-double calculate_max_size_from_drift(double sigmad, double r, double p, double dp, double rho_p, const disk_t *disk_params);
+/*	local scale height	*/
+double scale_height(double r, const disk_t *disk_params);
 
-/**
- * @brief Calculates the maximum particle size limited by turbulence.
- *
- * This function determines the maximum particle size based on the turbulence barrier
- * described in Birnstiel et al. (2012).
- *
- * @param sigma The gas surface density.
- * @param r The radial distance.
- * @param rho_p The intrinsic density of the dust particle.
- * @param disk_params A pointer to the disk parameters structure.
- * @return The maximum particle size from the turbulence barrier.
- */
-double calculate_max_size_from_turbulence(double sigma, double r, double rho_p, const disk_t *disk_params);
+/*	lokális kepleri sebesség	*/
+double v_kep(double r, const disk_t *disk_params);
 
-/**
- * @brief Calculates the maximum particle size limited by combined drift and fragmentation.
- *
- * This function determines the maximum particle size based on the fragmentation barrier
- * and radial drift, as described in Birnstiel et al. (2012).
- *
- * @param sigma The gas surface density.
- * @param r The radial distance.
- * @param p The gas surface density power-law exponent.
- * @param dp The pressure gradient parameter.
- * @param rho_p The intrinsic density of the dust particle.
- * @param disk_params A pointer to the disk parameters structure.
- * @return The maximum particle size from the drift-fragmentation barrier.
- */
-double calculate_max_size_from_drift_fragmentation(double sigma, double r, double p, double dp, double rho_p, const disk_t *disk_params);
+/*	lokalis kepleri korfrekvencia	*/
+double kep_freq(double r, const disk_t *disk_params);
 
-/**
- * @brief Calculates the timescale for particle growth.
- * @param r The radial distance.
- * @param eps The dust-to-gas ratio.
- * @param disk_params A pointer to the disk parameters structure.
- * @return The growth timescale.
- */
-double calculate_growth_timescale(double r, double eps, const disk_t *disk_params);
+/*	local sound speed		*/
+double c_sound(double r, const disk_t *disk_params);
 
-/**
- * @brief Updates the particle size based on the Birnstiel et al. (2012) paper.
- * @param prad The current particle radius.
- * @param pdens The particle density.
- * @param sigma The gas surface density.
- * @param sigmad The dust surface density.
- * @param y The gas-to-dust ratio.
- * @param p The gas surface density power-law exponent.
- * @param dpress_val The pressure gradient value.
- * @param dt The time step.
- * @param disk_params A pointer to the disk parameters structure.
- * @return The new particle size.
- */
-double update_particle_size(double prad, double pdens, double sigma, double sigmad, double y, double p, double dpress_val, double dt, const disk_t *disk_params);
+/*	Suruseg a midplane-ben	*/
+double rho_mp(double sigma, double r, const disk_t *disk_params);
 
-/**
- * @brief Calculates the dust disk density on a grid.
- *
- * This function retrieves the ParticleData_t structure from tIntegrate and
- * stores the calculated `sigmad` and `sigmadm` values in the disk_params structure.
- *
- * @param p_data A pointer to the ParticleData_t structure (const).
- * @param disk_params A pointer to the disk parameters structure.
- * @param sim_opts A pointer to the simulation options structure (const).
- */
-void calculate_dust_density_grid(const ParticleData_t *p_data, disk_t *disk_params, const simulation_options_t *sim_opts);
+/* local pressure of the gas p = rho_gas * cs * cs kepletbol!!	*/
+double press(double sigma, double r, const disk_t *disk_params);
 
-/**
- * @brief Updates the radial positions of the dust particles.
- *
- * This function calculates and stores the new distances of the dust particles.
- *
- * @param particles_array A pointer to the array of dust particles (either Pop1 or Pop2).
- * @param num_particles The number of particles in the array.
- * @param deltat The time step.
- * @param t The current simulation time.
- * @param sim_opts A pointer to the simulation options structure (const).
- * @param disk_params A pointer to the disk parameters structure (const).
- */
-void update_particle_positions(dust_particle_t *particles_array, int num_particles, double deltat, double t, const simulation_options_t *sim_opts, const disk_t *disk_params);
+/*	a nyomas derivaltja	*/
+void dpress(disk_t *disk_params);
+
+/*	u_gas kiszamolasahoz eltarolt koefficiens	*/
+double Coeff_3(double sigma, double r); // Feltételezve, hogy Coeff_3 a dust_physics.c-ben van
+
+/*	u_gas = -3/(Sigma*R^0.5)*(d/dR)(nu*Sigma*R^0.5) kiszamolasa	*/
+void u_gas(disk_t *disk_params); // disk_params nem const, mert módosítva van az ugvec tagja
+
+// GetMass függvény prototípusa
+void GetMass(int n, double (*partmassind)[5], int indii, int indio, int indoi, int indoo, double *massiout, double *massoout, const simulation_options_t *sim_opts);
+
+double a_drift(double sigmad, double r, double p, double dp, double rho_p, const disk_t *disk_params);
+double a_turb(double sigma, double r, double rho_p, const disk_t *disk_params);
+double a_df(double sigma, double r, double p, double dp, double rho_p, const disk_t *disk_params);
+
+/*	a reszecskek novekedesenek idoskalaja	*/
+double tauGr(double r, double eps, const disk_t *disk_params);
+
+/*	kiszamolja az adott helyen a reszecske meretet --> BIRNSTIEL CIKK	*/
+double getSize(double prad, double pdens, double sigma, double sigmad, double y, double p, double dpress_val, double dt, const disk_t *disk_params);
+
+// Porkorong sűrűségének számítása
+void Get_Sigmad(double max_param, double min_param, double rad[][2], double radmicr[][2],
+                double *sigma_d, double *sigma_dm, double *massvec,
+                double *massmicrvec,double *rd, double *rmic,
+                const simulation_options_t *sim_opts, const disk_t *disk_params);
+
+/*	Fuggveny a sigma, p, dp kiszamolasara	*/
+// disk_params nem const, mert módosítva van a sigmavec, pressvec, dpressvec tagjai
+void Get_Sigma_P_dP(const simulation_options_t *sim_opts, disk_t *disk_params);
+
+/*	Fuggveny a porszemcsek uj tavolsaganak elraktarozasara		*/
+void Get_Radius(const char *nev, int opt, double radius[][2], const double *sigmad, const double *rdvec,
+                double deltat, double t, int n, const simulation_options_t *sim_opts, const disk_t *disk_params);
+
 
 
 #endif // DUST_PHYSICS_H

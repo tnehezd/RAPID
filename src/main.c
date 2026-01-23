@@ -2,7 +2,6 @@
 #include <string.h>
 #include <math.h>
 #include <time.h>
-#include <stdio.h> // Hozzáadva a fprintf és NULL használatához
 
 // Header files
 #include "config.h"           // Declarations of global variables and constants
@@ -12,7 +11,7 @@
 #include "dust_physics.h"     // Functions from dust_physics.c
 #include "simulation_core.h"  // Functions from simulation_core.c
 #include "utils.h"            // Functions from utils.h
-#include "globals.h"
+
 // NEW: Include your simulation_types.h and parser.h
 #include "simulation_types.h"
 #include "parser.h"           // Now includes function declarations for parsing
@@ -58,14 +57,7 @@ int main(int argc, const char **argv) {
     output_files.surface_file = NULL;
     output_files.dust_file = NULL;
     output_files.micron_dust_file = NULL;
-
-    // Initialize disk_params pointers to NULL to prevent dangling pointers if allocation fails
-    disk_params.rvec = NULL;
-    disk_params.sigmavec = NULL;
-    disk_params.pressvec = NULL;
-    disk_params.dpressvec = NULL;
-    disk_params.ugvec = NULL;
-    disk_params.sigmadustvec = NULL; // ÚJ: inicializáljuk NULL-ra
+    output_files.size_file = NULL;
 
     /* Populate the simulation_options_t struct from 'def' (parsed options) */
     sim_opts.evol = def.evol;
@@ -102,31 +94,27 @@ int main(int argc, const char **argv) {
     disk_params.uFrag = def.ufrag;
     disk_params.fDrift = 0.55; // set by Birnstiel 2012
     disk_params.PDENSITY = def.pdensity_val;
-    // --- IDE ADD HOZZÁ EZT A SORT: A poros-gáz arány beállítása a disk_params-ban ---
-    disk_params.eps = def.eps_val; // Ezt a sort adtad hozzá
-    fprintf(stderr, "DEBUG [main]: disk_params.eps set to %.2e from def.eps_val.\n", disk_params.eps); // Debug kiírás
 
     // Set sim_opts->dzone based on dead zone radii from disk_params
     sim_opts.dzone = (disk_params.r_dze_i > 0.0 || disk_params.r_dze_o > 0.0) ? 1.0 : 0.0;
 
     // --- Output directory handling ---
-    // create_output_directory contains the numbering logic if the directory already exists.
-    create_output_directory(def.output_dir_name); // Creates the main output folder, potentially with a number.
-    fprintf(stderr, "DEBUG [main]: After create_output_directory (base dir), def.output_dir_name is now: '%s'\n", def.output_dir_name);
+    // Mk_Dir contains the numbering logic if the directory already exists.
+    Mk_Dir(def.output_dir_name); // Creates the main output folder, potentially with a number.
+    fprintf(stderr, "DEBUG [main]: After Mk_Dir (base dir), def.output_dir_name is now: '%s'\n", def.output_dir_name);
 
     char initial_dir_path[MAX_PATH_LEN];
     char logs_dir_path[MAX_PATH_LEN];
 
     // Create the 'initial' subdirectory using CONFIG_DIR
     snprintf(initial_dir_path, sizeof(initial_dir_path), "%s/%s", def.output_dir_name, CONFIG_DIR);
-    create_output_directory(initial_dir_path);
+    Mk_Dir(initial_dir_path);
 
     // Create the 'LOGS' subdirectory using LOGS_DIR
     snprintf(logs_dir_path, sizeof(logs_dir_path), "%s/%s", def.output_dir_name, LOGS_DIR);
     fprintf(stderr, "DEBUG [main]: logs_dir_path assembled as: '%s'\n", logs_dir_path);
 
-    create_output_directory(logs_dir_path);
-
+    Mk_Dir(logs_dir_path);
 
     // CRITICAL: Populate sim_opts.output_dir_name from def.output_dir_name
     strncpy(sim_opts.output_dir_name, def.output_dir_name, MAX_PATH_LEN - 1);
@@ -149,7 +137,7 @@ int main(int argc, const char **argv) {
         fprintf(stderr, "DEBUG [main]: Input file specified: '%s'. Attempting to read initial profile.\n", current_inputsig_file);
 
         // disk_params.NGRID update from file *before* allocation.
-        disk_params.NGRID = get_particle_count(current_inputsig_file); // Update NGRID from file (for GAS grid)
+        disk_params.NGRID = reszecskek_szama(current_inputsig_file); // Update NGRID from file (for GAS grid)
 
         // Recalculate DD based on the updated NGRID
         if (disk_params.NGRID > 1) {
@@ -161,23 +149,22 @@ int main(int argc, const char **argv) {
 
         // --- Dynamic Memory Allocation for Disk Arrays ---
         // This happens ONLY HERE, because run_init_tool is not called!
-        disk_params.rvec = (double *)calloc((disk_params.NGRID + 2), sizeof(double)); // calloc to zero-initialize
-        disk_params.sigmavec = (double *)calloc((disk_params.NGRID + 2), sizeof(double));
-        disk_params.pressvec = (double *)calloc((disk_params.NGRID + 2), sizeof(double));
-        disk_params.dpressvec = (double *)calloc((disk_params.NGRID + 2), sizeof(double));
-        disk_params.ugvec = (double *)calloc((disk_params.NGRID + 2), sizeof(double));
+        disk_params.rvec = (double *)malloc((disk_params.NGRID + 2) * sizeof(double));
+        disk_params.sigmavec = (double *)malloc((disk_params.NGRID + 2) * sizeof(double));
+        disk_params.pressvec = (double *)malloc((disk_params.NGRID + 2) * sizeof(double));
+        disk_params.dpressvec = (double *)malloc((disk_params.NGRID + 2) * sizeof(double));
+        disk_params.ugvec = (double *)malloc((disk_params.NGRID + 2) * sizeof(double));
 
         if (!disk_params.rvec || !disk_params.sigmavec || !disk_params.pressvec || !disk_params.dpressvec || !disk_params.ugvec) {
-            fprintf(stderr, "ERROR [main]: Failed to allocate memory for gas disk arrays (input file branch). Exiting.\n");
-            // Free already allocated memory before exiting on error
-            if (disk_params.rvec) free(disk_params.rvec);
-            if (disk_params.sigmavec) free(disk_params.sigmavec);
-            if (disk_params.pressvec) free(disk_params.pressvec);
-            if (disk_params.dpressvec) free(disk_params.dpressvec);
-            if (disk_params.ugvec) free(disk_params.ugvec);
+            fprintf(stderr, "ERROR [main]: Failed to allocate memory for disk arrays (input file branch). Exiting.\n");
             return 1;
         }
-        fprintf(stderr, "DEBUG [main]: Gas disk profile arrays dynamically allocated with size NGRID+2 = %d (input file branch).\n", disk_params.NGRID + 2);
+        fprintf(stderr, "DEBUG [main]: Disk profile arrays dynamically allocated with size NGRID+2 = %d (input file branch).\n", disk_params.NGRID + 2);
+
+        // Call disk_param_be because run_init_tool is not called
+        fprintf(stderr, "DEBUG [main]: Calling disk_param_be to calculate derived disk parameters for main disk_params struct (input file branch).\n");
+        disk_param_be(&disk_params);
+        fprintf(stderr, "DEBUG [main]: disk_param_be completed (input file branch).\n");
 
         // Copy input profile file to the 'initial' directory
         snprintf(cmd_buffer, sizeof(cmd_buffer), "cp %s %s/", current_inputsig_file, initial_dir_path);
@@ -220,18 +207,19 @@ int main(int argc, const char **argv) {
         fprintf(stderr, "DEBUG [main]: Calling run_init_tool(&init_tool_params, &disk_params)...\n");
         strncpy(init_tool_params.output_base_path, initial_dir_path, MAX_PATH_LEN - 1);
         init_tool_params.output_base_path[MAX_PATH_LEN - 1] = '\0';
-        // run_init_tool is responsible for allocating and populating gas disk_params members (rvec, sigmavec, etc.)
-        run_init_tool(&init_tool_params, &disk_params, &sim_opts);
-        fprintf(stderr, "DEBUG [main]: run_init_tool completed. disk_params gas arrays allocated and populated.\n");
+        // run_init_tool is responsible for allocating and populating disk_params members
+        run_init_tool(&init_tool_params, &disk_params);
+        fprintf(stderr, "DEBUG [main]: run_init_tool completed. disk_params allocated and populated.\n");
 
         // Now current_inputsig_file points to the generated file in initial_dir_path
+        // CHANGE HERE: FILENAME_INIT_PROFILE -> FILENAME_INIT_GAS_PROFILE
         snprintf(current_inputsig_file, sizeof(current_inputsig_file), "%s/%s", initial_dir_path, FILENAME_INIT_GAS_PROFILE);
         fprintf(stderr, "DEBUG [main]: Generated GAS profile will be loaded from '%s'.\n", current_inputsig_file);
 
-        // --- Update NGRID from the generated file (critical for read_gas_profile sizing) ---
+        // --- Update NGRID from the generated file (critical for sigIn sizing) ---
         // Important: Here, the number of lines should be read from FILENAME_INIT_GAS_PROFILE,
         // provided that init_tool_module.c creates this file.
-        disk_params.NGRID = get_particle_count(current_inputsig_file);
+        disk_params.NGRID = reszecskek_szama(current_inputsig_file);
 
         if (disk_params.NGRID > 1) {
             disk_params.DD = (disk_params.RMAX - disk_params.RMIN) / (disk_params.NGRID - 1.0);
@@ -244,32 +232,15 @@ int main(int argc, const char **argv) {
         // since run_init_tool created them directly in initial_dir_path.
     }
 
-    // --- CRITICAL ALLOCATION: Allocate disk_params.sigmadustvec here ---
-    // This allocation is needed regardless of whether an input file was used or a profile was generated,
-    // as disk_params.NGRID should be correctly set by now in both branches.
-    disk_params.sigmadustvec = (double *)calloc(disk_params.NGRID, sizeof(double));
-    if (disk_params.sigmadustvec == NULL) {
-        fprintf(stderr, "ERROR [main]: Failed to allocate memory for disk_params.sigmadustvec. Exiting.\n");
-        // Free previously allocated memory before exiting on error
-        if (disk_params.rvec) free(disk_params.rvec);
-        if (disk_params.sigmavec) free(disk_params.sigmavec);
-        if (disk_params.pressvec) free(disk_params.pressvec);
-        if (disk_params.dpressvec) free(disk_params.dpressvec);
-        if (disk_params.ugvec) free(disk_params.ugvec);
-        return 1;
-    }
-    fprintf(stderr, "DEBUG [main]: disk_params.sigmadustvec dynamically allocated with size NGRID = %d.\n", disk_params.NGRID);
-
-
     // --- CRITICAL STEP: Now that current_inputsig_file is set,
     //     copy it to sim_opts.input_filename for tIntegrate. ---
-    // This is the gas profile filename that read_gas_profile reads.
+    // This is the gas profile filename that sigIn reads.
     strncpy(sim_opts.input_filename, current_inputsig_file, MAX_PATH_LEN - 1);
     sim_opts.input_filename[MAX_PATH_LEN - 1] = '\0'; // Ensure null-termination
     fprintf(stderr, "DEBUG [main]: sim_opts.input_filename set to '%s' for tIntegrate (gas profile).\n", sim_opts.input_filename);
 
     // --- NEW PART: Set the dust profile filename in sim_opts.dust_input_filename ---
-    // This is the dust profile filename that ReadDustFile reads within tIntegrate.
+    // This is the dust profile filename that por_be reads within tIntegrate.
     char current_inputdust_file[MAX_PATH_LEN];
     snprintf(current_inputdust_file, sizeof(current_inputdust_file), "%s/%s", initial_dir_path, FILENAME_INIT_DUST_PROFILE);
     strncpy(sim_opts.dust_input_filename, current_inputdust_file, MAX_PATH_LEN - 1);
@@ -278,35 +249,23 @@ int main(int argc, const char **argv) {
 
     // --- CRITICAL STEP: Set the global PARTICLE_NUMBER based on the actual dust particle file. ---
     // This ensures PARTICLE_NUMBER reflects the *dust* particle count, not the gas grid count.
-    PARTICLE_NUMBER = get_particle_count(sim_opts.dust_input_filename); // Read lines from the dust profile
+    PARTICLE_NUMBER = reszecskek_szama(sim_opts.dust_input_filename); // Read lines from the dust profile
     fprintf(stderr, "DEBUG [main]: Global PARTICLE_NUMBER set to %d (from dust input file: %s).\n", PARTICLE_NUMBER, sim_opts.dust_input_filename);
 
+    // The disk_param_be call has already occurred in the appropriate branch (if using input file)
+    // or was called by run_init_tool (if generating).
 
-//    fprintf(stderr, "DEBUG [main]: Initial profile loading for read_gas_profile...\n");
-//    read_gas_profile(&disk_params, current_inputsig_file); // This populates disk_params.sigmavec and rvec
-//    fprintf(stderr, "DEBUG [main]: read_gas_profile completed. Calling calculate_boundary for disk_params.rvec and disk_params.sigmavec...\n");
-//    calculate_boundary(disk_params.rvec, &disk_params);
-//    calculate_boundary(disk_params.sigmavec, &disk_params);
-//    fprintf(stderr, "DEBUG [main]: calculate_boundary calls completed for initial profile.\n");
+    fprintf(stderr, "DEBUG [main]: Initial profile loading for sigIn...\n");
+    sigIn(&disk_params, current_inputsig_file); // This populates disk_params.sigmavec and rvec
+    fprintf(stderr, "DEBUG [main]: sigIn completed. Calling Perem for disk_params.rvec and disk_params.sigmavec...\n");
+    Perem(disk_params.rvec, &disk_params);
+    Perem(disk_params.sigmavec, &disk_params);
+    fprintf(stderr, "DEBUG [main]: Perem calls completed for initial profile.\n");
 
     // Print current information
-    fprintf(stderr, "DEBUG [main]: Calling write_summary_log...\n");
+    fprintf(stderr, "DEBUG [main]: Calling infoCurrent...\n");
     // Here, def.output_dir_name is passed, which already contains the numbered folder name
-    write_summary_log(def.output_dir_name, &disk_params, &sim_opts);
-
-
-    for (int i = disk_params.NGRID - 120; i <= disk_params.NGRID; i++) {
-        fprintf(stderr, "INIT CHECK i=%d: sigma=%.4e, dust=%.4e, press=%.4e, dpress=%.4e\n",
-            i,
-            disk_params.sigmavec[i],
-            disk_params.sigmadustvec[i],
-            disk_params.pressvec[i],
-            disk_params.dpressvec[i]);
-    }
-
-
-
-    exit(EXIT_SUCCESS);
+    infoCurrent(def.output_dir_name, &disk_params, &sim_opts);
 
     // Run simulation or exit based on options
     if(sim_opts.evol == 0. && sim_opts.drift == 0.) {
@@ -316,7 +275,7 @@ int main(int argc, const char **argv) {
         snprintf(dens_name_initial, sizeof(dens_name_initial), "%s/%s", initial_dir_path, FILENAME_INIT_GAS_PROFILE);
         fprintf(stderr, "DEBUG [main]: Printing initial surface density to %s.\n", dens_name_initial);
 
-        // Special handling for write_gas_profile_to_file when only initial output is needed
+        // Special handling for Print_Sigma when only initial output is needed
         output_files_t temp_output_for_initial_print;
         temp_output_for_initial_print.surface_file = fopen(dens_name_initial, "w");
         if (temp_output_for_initial_print.surface_file != NULL) {
@@ -328,7 +287,7 @@ int main(int argc, const char **argv) {
             fprintf(temp_output_for_initial_print.surface_file, "# Data generated by Dust Drift Simulation (Initial State)\n");
             fflush(temp_output_for_initial_print.surface_file);
 
-            write_gas_profile_to_file(&disk_params, &temp_output_for_initial_print);
+            Print_Sigma(&disk_params, &temp_output_for_initial_print);
             fclose(temp_output_for_initial_print.surface_file);
             temp_output_for_initial_print.surface_file = NULL;
             fprintf(stderr, "DEBUG [main]: Closed %s.\n", dens_name_initial);
@@ -336,19 +295,9 @@ int main(int argc, const char **argv) {
             fprintf(stderr, "ERROR [main]: Could not open %s for initial surface output.\n", dens_name_initial);
         }
 
-        fprintf(stderr, "DEBUG [main]: write_gas_profile_to_file completed. Program exiting.\n");
+        fprintf(stderr, "DEBUG [main]: Print_Sigma completed. Program exiting.\n");
     } else {
-        fprintf(stderr, "DEBUG [main]: sim_opts.input_filename (gas) for tIntegrate: '%s'\n", sim_opts.input_filename);
-        fprintf(stderr, "DEBUG [main]: sim_opts.dust_input_filename (dust) for tIntegrate: '%s'\n", sim_opts.dust_input_filename);
-        fprintf(stderr, "DEBUG [main]: Global PARTICLE_NUMBER before tIntegrate: %d\n", PARTICLE_NUMBER);
-
-        // KULCSFONTOSSÁGÚ DEBUG KIÍRÁSOK ITT:
-        fprintf(stderr, "DEBUG [main]: Verifying disk_params.eps before tIntegrate: %.10e\n", disk_params.eps);
-        // Néhány sigmavec érték ellenőrzése
-        fprintf(stderr, "DEBUG [main]: Verifying disk_params.sigmavec[0]: %.10e\n", disk_params.sigmavec[0]);
-        fprintf(stderr, "DEBUG [main]: Verifying disk_params.sigmavec[NGRID/2]: %.10e\n", disk_params.sigmavec[disk_params.NGRID / 2]);
-        fprintf(stderr, "DEBUG [main]: Verifying disk_params.sigmavec[NGRID-1]: %.10e\n", disk_params.sigmavec[disk_params.NGRID - 1]);
-
+        fprintf(stderr, "DEBUG [main]: Evolution (sim_opts.evol=%.2f) or drift (sim_opts.drift=%.2f) is ON. Starting main simulation loop.\n", sim_opts.evol, sim_opts.drift);
         fprintf(stderr, "DEBUG [main]: Calling tIntegrate...\n");
         // Pass sim_opts to tIntegrate.
         // tIntegrate must ensure to use the correct (numbered) output_dir_name.
@@ -360,14 +309,11 @@ int main(int argc, const char **argv) {
     // Free the memory allocated for disk_params.rvec, sigmavec, etc.
     // This allocation happened in the 'if' branch if an input file was used,
     // or within run_init_tool in the 'else' branch.
-    // The sigmadustvec is freed here as well.
     if (disk_params.rvec) free(disk_params.rvec);
     if (disk_params.sigmavec) free(disk_params.sigmavec);
     if (disk_params.pressvec) free(disk_params.pressvec);
     if (disk_params.dpressvec) free(disk_params.dpressvec);
     if (disk_params.ugvec) free(disk_params.ugvec);
-    if (disk_params.sigmadustvec) free(disk_params.sigmadustvec); // ÚJ: felszabadítás
-
     fprintf(stderr, "DEBUG [main]: Dynamically allocated disk arrays freed.\n");
 
     fprintf(stderr, "DEBUG [main]: Program exiting normally.\n");

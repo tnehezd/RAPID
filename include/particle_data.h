@@ -1,31 +1,30 @@
-// PARTICLE_DATA_H
+// src/particle_data.h
+
 #ifndef PARTICLE_DATA_H
 #define PARTICLE_DATA_H
 
-#include "dust_particle.h" // Include the specific dust particle definition
+#include <stddef.h> // size_t-hoz
 
-/**
- * @brief This structure stores the dynamically allocated arrays for particle populations.
- *
- * It acts as a container for the main and micron-sized dust particle arrays,
- * which hold the evolving properties of each particle.
- * This is the ONLY place where particle data arrays are managed globally.
- */
+// Struktúra a dinamikusan allokált részecskeadatok tárolására
 typedef struct {
-    // ÚJ és kizárólagos deklarációk az egységesített részecskestruktúra használatával
-    // Ezek a tömbök fogják tartalmazni az összes részecske aktuális állapotát.
-    dust_particle_t *particles_pop1;      ///< Pointer to an array of dust_particle_t for population 1 (cm-sized)
-    dust_particle_t *particles_pop2;      ///< Pointer to an array of dust_particle_t for population 2 (micron-sized, if twopop)
-
-    int num_particles_pop1;             ///< Number of particles in population 1
-    int num_particles_pop2;             ///< Number of particles in population 2 (0 if twopop is disabled)
-
-
+    double (*radius)[2];
+    double (*radiusmicr)[2];
+    double (*radius_rec)[2]; // Temp array for inverse radii calculations
+    double *massvec;
+    double *massmicrvec;
+    double (*partmassind)[5];
+    double (*partmassmicrind)[5];
+    double *sigmad;
+    double *sigmadm;
+    double *rdvec;
+    double *rmicvec;
+    size_t allocated_particle_number; // Az aktuálisan allokált részecskék száma
 } ParticleData_t;
 
+// Függvény a memóriafoglalásra
+int allocate_particle_data(ParticleData_t *p_data, size_t particle_count, int is_twopop_enabled);
 
-// Function prototypes
-void allocate_particle_data(ParticleData_t *p_data, int num_particles_pop1, int num_particles_pop2, int twopop_enabled);
+// Függvény a memória felszabadítására
 void free_particle_data(ParticleData_t *p_data);
 
 #endif // PARTICLE_DATA_H

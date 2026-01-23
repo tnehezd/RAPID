@@ -34,7 +34,7 @@ void Parabola(double *vec, int i1, int i2, int i3, double *a, double *b, double 
 
 
 /*	A peremen parabolat illeszt	*/
-void calculate_boundary(double *vec, const disk_t *disk_params) {					/*	boundary condition for sigma, p, dp...	*/
+void Perem(double *vec, const disk_t *disk_params) {					/*	boundary condition for sigma, p, dp...	*/
 
 	double a, b, c; 
 
@@ -47,68 +47,25 @@ void calculate_boundary(double *vec, const disk_t *disk_params) {					/*	boundar
 }
 
 
-/* egy megadott, diszkret pontokban ismert fuggvenyt interpolal a reszecske aktualis helyere */
+/*	egy megadott, diszkret pontokban ismert fuggvenyt interpolal a reszecske aktualis helyere	*/
 void interpol(double *invec, double *rvec, double pos, double *out, double rd, int opt, const disk_t *disk_params) {
-    // Védőfeltétel a pos értékére
-    if (isnan(pos) || isinf(pos) || pos < disk_params->RMIN || pos > disk_params->RMAX) {
-        fprintf(stderr, "DEBUG [interpol]: Invalid position %.4e AU. Returning 0.\n", pos);
-        *out = 0.0;
-        return;
-    }
 
-    // Ellenőrizd a bemeneti tömbök érvényességét
-    if (invec == NULL || rvec == NULL) {
-        fprintf(stderr, "ERROR [interpol]: Input vectors are NULL. Returning 0.\n");
-        *out = 0.0;
-        return;
-    }
-    
-    int index;
-    double rmid, rindex, coef1, temp;
+	double rmid, rindex, coef1, temp;
+	int index; 
 
-    // A rács indexének kiszámítása
     rmid = pos - disk_params->RMIN;
-    rmid = rmid / rd;
-    index = (int) floor(rmid);
+	rmid = rmid / rd;     						/* 	the integer part of this gives at which index is the body	*/
+	index = (int) floor(rmid);					/* 	ez az rmid egesz resze	(kerekites 0.5-tol)			*/
+	rindex = rvec[index];       					/* 	the corresponding r, e.g rd[ind] < r < rd[ind+1]		*/
 
-    // Biztonsági ellenőrzés a tömb határainál
-    if (index < 0) {
-        index = 0;
-    }
-    if (index >= disk_params->NGRID - 1) {
-        index = disk_params->NGRID - 2;
-    }
+ 	coef1 = (invec[index + 1] - invec[index]) / rd; 		/*	ez az alabbi ket sor a linearis interpolacio - remelem, jo!!!	*/
+	temp = invec[index] + coef1 * (pos - rindex);          		/*	a beerkezo dimenzionak megfelelo mertekegysegben		*/
 
-    rindex = rvec[index];
-    
-    // Védőfeltételek a nullával való osztás ellen
-    if (fabs(rvec[index + 1] - rvec[index]) < 1e-12) {
-        fprintf(stderr, "ERROR [interpol]: Grid spacing is too small or zero at index %d. Returning value from current point.\n", index);
-        *out = invec[index];
-        return;
-    }
-    
-    coef1 = (invec[index + 1] - invec[index]) / (rvec[index + 1] - rvec[index]);
-    temp = invec[index] + coef1 * (pos - rindex);
+	if(opt == 1) if(temp < 0) temp = -1.*temp;
 
-    // Fizikailag értelmetlen értékek ellenőrzése
-    // Ezeket a feltételeket csak fizikai mennyiségekre kell alkalmazni, amelyeknek pozitívnak kell lenniük.
-    // Tegyük fel, hogy opt=1 a gáznyomásra (gas_pressure) vonatkozik.
-    if (opt == 1 && temp < 0.0) {
-        // Ha az érték negatív, de fizikailag pozitívnak kellene lennie, akkor beállítjuk egy kis pozitív számra.
-        fprintf(stderr, "WARNING [interpol]: Interpolated value is negative (%.4e) for a positive quantity. Clamping to 0.0.\n", temp);
-        temp = 0.0; // Vagy egy nagyon kicsi pozitív érték, pl. 1e-30
-    }
+	*out = temp;
 
-    // Végleges ellenőrzés NaN/inf értékekre
-    if (isnan(temp) || isinf(temp)) {
-        fprintf(stderr, "CRITICAL ERROR [interpol]: Interpolated value is NaN/INF (%.4e) at pos=%.4e. Clamping to 0.0.\n", temp, pos);
-        *out = 0.0;
-    } else {
-        *out = temp;
-    }
 }
-
 
 
 /*	megkeresi egy tomb maximumat	*/
@@ -237,10 +194,10 @@ void find_r_annulus(double rin, double *ind_ii, double *ind_io,
     *ind_oi = 0.0;
     *ind_oo = 0.0;
 
-    // --- ITT HÍVJUK MEG A calculate_scale_height-et EGYSZER, ÉS MENTSÜK EL AZ EREDMÉNYT ---
-    double h_rin = calculate_scale_height(rin, disk_params); // Első hívás, eredmény mentése
+    // --- ITT HÍVJUK MEG A scale_height-et EGYSZER, ÉS MENTSÜK EL AZ EREDMÉNYT ---
+    double h_rin = scale_height(rin, disk_params); // Első hívás, eredmény mentése
 
-    double h_rout = calculate_scale_height(rout, disk_params); // Rout-ra is számoljuk ki egyszer
+    double h_rout = scale_height(rout, disk_params); // Rout-ra is számoljuk ki egyszer
 
     // Számítsuk ki a határokhoz szükséges "rin +/- h_rin" és "rout +/- h_rout" értékeket
     // Ezeket a változókat használjuk majd a riimH, roimH stb. számításoknál
@@ -395,7 +352,7 @@ void kerekit(double in[][3], int n, const disk_t *disk_params) {
 
 	double dd = (disk_params->RMAX - disk_params->RMIN) / (PARTICLE_NUMBER-1);
 	int dker = (int)(1./dd);//
-	dker = dker * ROUND_PRECISION_FACTOR;
+	dker = dker * KEREK;
 	double ddker = (double) dker;
 	int i;
 	int temp;
@@ -493,31 +450,4 @@ void Count_Mass(double radin[][2], double partmassindin[][5], double *massvecin,
  	
 	}
 
-}
-
-
-void validate_disk_state(const disk_t *disk) {
-    if (!disk || !disk->rvec || !disk->sigmavec || !disk->pressvec || !disk->dpressvec || !disk->ugvec) {
-        fprintf(stderr, "ERROR [validate_full_disk_state]: One or more disk arrays are NULL.\n");
-        return;
-    }
-
-    int nan_count = 0, neg_count = 0;
-    for (int i = 0; i <= disk->NGRID + 1; i++) {
-        if (!isfinite(disk->rvec[i]) || disk->rvec[i] <= 0.0) {
-            fprintf(stderr, "BAD rvec[%d] = %.4e\n", i, disk->rvec[i]);
-            exit(EXIT_SUCCESS);            
-        }
-        if (!isfinite(disk->sigmavec[i]) || disk->sigmavec[i] < 0.0) {
-            nan_count++;
-        }
-        if (!isfinite(disk->pressvec[i]) || !isfinite(disk->dpressvec[i]) || !isfinite(disk->ugvec[i])) {
-            fprintf(stderr, "BAD physics at i=%d: press=%.4e, dpress=%.4e, ug=%.4e\n", i, disk->pressvec[i], disk->dpressvec[i], disk->ugvec[i]);
-            exit(EXIT_SUCCESS);
-        }
-    }
-
-    if (nan_count > 0) {
-        fprintf(stderr, "WARNING [validate_full_disk_state]: %d entries in sigmavec are NaN or negative.\n", nan_count);
-    }
 }

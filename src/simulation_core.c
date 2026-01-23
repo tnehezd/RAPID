@@ -1,108 +1,55 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-#include <string.h>
+
+// src/simulation_core.c
+
+// Standard C Library Includes
+#include <stdio.h>    // For printf, fopen, fclose, fscanf, snprintf, sprintf
+#include <stdlib.h>   // For exit, EXIT_FAILURE, EXIT_SUCCESS, system
+#include <math.h>     // For M_PI, fmod, HUGE_VAL (and pow if used by other functions)
+#include <string.h>   // For snprintf, sprintf
+
 #include <omp.h>
-#include <unistd.h> // For access()
 
-#include "config.h"
-#include "io_utils.h"
-#include "disk_model.h"
-#include "dust_physics.h"
-#include "utils.h"
+// Your Project Header Includes
+#include "config.h"       // For PARTICLE_NUMBER, TMAX, WO, RMIN, DT, optdr, sim_opts->twopop, sim_opts->growth, optev, r_dze_i, r_dze_o
+#include "io_utils.h"     // For timePar (though not called in tIntegrate, it's io-related), reszecskek_szama, por_be, Print_Sigma, Print_Pormozg_Size, Print_Mass, Print_Sigmad. Also for globals: filenev1, filenev3, fout, foutmicr, massfil
+#include "disk_model.h"   // If any disk_model functions are called (e.g., Perem indirectly if sigma/press depend on it) - Though not directly visible in tIntegrate, often needed for global disk parameters. Add if you hit implicit declaration for disk_model functions.
+#include "dust_physics.h" // For Count_Mass, secondaryGrowth, find_max, find_min, Get_Sigmad, Get_Radius
+#include "utils.h"        // For time_step, Get_Sigma_P_dP, and potentially other utility functions
 #include "simulation_core.h"
-#include "particle_data.h"
-#include "globals.h"
+#include "particle_data.h" // Új include
 
-// A pici érték (epsilon) definíciója, a nullával való osztás
-// elkerülésére. Ezt a fájl elejére kell beilleszteni.
-#define EPSILON_SIZE 1e-30
 
-// NOTE: PARTICLE_NUMBER is assumed to be defined as a global variable (e.g., in config.h)
-// and represents the number of particles in a *single* population.
-// If twopop is enabled, both populations will have PARTICLE_NUMBER particles.
-extern int PARTICLE_NUMBER;
+/*	Kiszamolja az 1D-s driftet	*/
+/*  	dr/dt = St/(1+St*St)*H(r)/r*dlnP/dlnr*cs = St/(1+St*St) * (H/r) * (r/P) * (dP/dr) * cs		*/
+void eqrhs(double pradius, double dp, double sigma, double ug, double r, double *drdt, const disk_t *disk_params) {
 
-/* Kiszámolja az 1D-s driftet */
-void eqrhs(double prad, double dp, double sigma, double ug, double r, double *drdt, const disk_t *disk_params) {
     double P, H, dPdr, St, csound;
-
-    *drdt = 0.0;
-
-    if (isnan(prad) || isinf(prad) || prad < EPSILON_SIZE) {
-        fprintf(stderr, "ERROR [eqrhs]: Invalid prad (%.10lg) for r=%.10lg. Setting drdt to 0.\n", prad, r);
-        return;
-    }
-    if (isnan(sigma) || isinf(sigma) || sigma < EPSILON_SIZE) {
-        fprintf(stderr, "ERROR [eqrhs]: Invalid sigma (%.10lg) for r=%.10lg. Setting drdt to 0.\n", sigma, r);
-        return;
-    }
-    if (isnan(r) || isinf(r) || r < EPSILON_SIZE || r > disk_params->RMAX) {
-        if (r > disk_params->RMAX) {
-            fprintf(stderr, "INFO [eqrhs]: Particle is outside RMAX (r=%.10lg, RMAX=%.10lg). Setting drdt to 0.\n", r, disk_params->RMAX);
-        } else {
-            fprintf(stderr, "ERROR [eqrhs]: Invalid r (%.10lg). Setting drdt to 0.\n", r);
-        }
-        return;
-    }
-    if (isnan(ug) || isinf(ug)) {
-        fprintf(stderr, "ERROR [eqrhs]: Invalid ug (%.10lg) for r=%.10lg. Setting drdt to 0.\n", ug, r);
-        return;
-    }
-    
-    if (isnan(dp) || isinf(dp)) {
-        fprintf(stderr, "ERROR [eqrhs]: Invalid dp (%.10lg) for r=%.10lg. Setting drdt to 0.\n", dp, r);
-        return;
-    }
-
-    St = calculate_stokes_number(prad, sigma, r, disk_params);
-    H = calculate_scale_height(r, disk_params);
-    P = calculate_gas_pressure(sigma, r, disk_params);
+      
+    St = Stokes_Number(pradius,sigma,disk_params);
+    H = scale_height(r,disk_params);   
+    P = press(sigma,r,disk_params);
     dPdr = dp;
-    csound = calculate_local_sound_speed(r, disk_params);
+    csound = c_sound(r,disk_params); 
 
-    if (isnan(St) || isinf(St) || isnan(H) || isinf(H) || isnan(P) || isinf(P) || isnan(csound) || isinf(csound)) {
-        fprintf(stderr, "ERROR [eqrhs]: One of the intermediate values is invalid. St: %.10lg, H: %.10lg, P: %.10lg, csound: %.10lg. Setting drdt to 0.\n", St, H, P, csound);
-        return;
-    }
-
-    double denominator = 1.0 + St * St;
-    if (fabs(denominator) < EPSILON_SIZE) {
-        fprintf(stderr, "ERROR [eqrhs]: Denominator (1+St*St) is too close to zero (%.10lg) for r=%.10lg. Setting drdt to 0.\n", denominator, r);
-        return;
-    }
-    
-    double term1 = ug / denominator;
-    double term2 = St / denominator * H / P * dPdr * csound;
-    
-    *drdt = term1 + term2;
-
-    if (isnan(*drdt) || isinf(*drdt)) {
-        fprintf(stderr, "CRITICAL ERROR [eqrhs]: Final drdt BECAME NaN/INF (%.10lg) for particle at r=%.10lg!\n", *drdt, r);
-        fprintf(stderr, "DEBUG [eqrhs]: Components: ug=%.10lg, St=%.10lg, H=%.10lg, P=%.10lg, dPdr=%.10lg, csound=%.10lg\n", ug, St, H, P, dPdr, csound);
-        *drdt = 0.0;
-    }
+    *drdt = ug / (1. + St * St) + St / (1. + St * St) * H / P * dPdr * csound;	/* bearamlas sebessege: Birnstiel PHD	*/
 }
 
-/* for solving d(sigma*nu)/dt = 3*nu*d2(sigma*nu)/dr2 + 9*hu/(2*r)*dsigma/dr   --> 3*nu = Coeff_1  */
-double Coeff_1(double r, const disk_t *disk_params){              
-    double A;
-    A = 3.0 * calculate_gas_viscosity(r, disk_params);
-//        fprintf(stderr, "DEBUG: Coeff_1 result: %e\n", A);
 
+/* for solving d(sigma*nu)/dt = 3*nu*d2(sigma*nu)/dr2 + 9*hu/(2*r)*dsigma/dr	--> 3*nu = Coeff_1 	*/
+double Coeff_1(double r, const disk_t *disk_params){					
+    double A;
+    A = 3.0 * visc(r, disk_params);
     return A;
 }
 
-/* for solving d(sigma*nu)/dt = 3*nu*d2(sigma*nu)/dr2 + 9*hu/(2*r)*dsigma/dr   --> 9*nu /(2*r) = Coeff_2    */
-double Coeff_2(double r, const disk_t *disk_params){                    
+/* for solving d(sigma*nu)/dt = 3*nu*d2(sigma*nu)/dr2 + 9*hu/(2*r)*dsigma/dr	--> 9*nu /(2*r) = Coeff_2 	*/
+double Coeff_2(double r, const disk_t *disk_params){							
     double B;
-    B = 9.0 * calculate_gas_viscosity(r, disk_params) / (2.0 * r);
-//    fprintf(stderr, "DEBUG: Coeff_2 result: %e\n", B);
-
+    B = 9.0 * visc(r,disk_params) / (2.0 * r);
     return B;
 }
 
-double time_step(const disk_t *disk_params) {
+double time_step(const disk_t *disk_params) { // Add const here too
     double A_max, stepping;
     int i;
 
@@ -114,430 +61,366 @@ double time_step(const disk_t *disk_params) {
         }
     }
     stepping = disk_params->DD * disk_params->DD / (2.0 * A_max);
+    fprintf(stderr," Actual time_step: DD = %.2e, stepping = %.2e\n", disk_params->DD, stepping);
+
     return stepping;
 }
 
-/* Runge-Kutta4 integrator */
-void int_step(double t,
-              double psize,
-              double current_r,
-              double step,
-              double *new_prad_ptr,
-              double *new_size_ptr,
-              const double *aggregated_sigmad_ptr,
-              const double *aggregated_rdvec_ptr,
-              int num_grid_points,
-              double grid_dd,
-              double grid_rmin,
-              const disk_t *disk_params,
-              const simulation_options_t *sim_opts) {
-    
-    if (psize < EPSILON_SIZE) {
-        psize = EPSILON_SIZE;
-    }
-    
-    double ytemp, dpress_temp, sigma_gas_temp, ugas_temp, sigma_dust_temp;
-    double dy1, dy2, dy3, dy4;
 
-    // Runge-Kutta 4th-order method
-    // 1. lépés
-    interpol(disk_params->sigmavec, disk_params->rvec, current_r, &sigma_gas_temp, disk_params->DD, sim_opts, disk_params);
-    interpol(disk_params->dpressvec, disk_params->rvec, current_r, &dpress_temp, disk_params->DD, sim_opts, disk_params);
-    interpol(disk_params->ugvec, disk_params->rvec, current_r, &ugas_temp, disk_params->DD, sim_opts, disk_params);
+/*	Runge-Kutta4 integrator	*/
+// prad bemenet: AU-ban!
+void int_step(double time, double prad, const double *sigmad, const double *rdvec, double step, double y, double *ynew, double *pradnew, const disk_t *disk_params, const simulation_options_t *sim_opts){
+    double dy1,dy2,dy3,dy4;
+    double ytemp, ytemp2;
+    double sigma, dpress, ugas; 
+    double pdens, p;
+    double pradtemp;
+    int opt = 0;
+    double sigmadd = 0.0;
     
-    if (sigma_gas_temp < EPSILON_SIZE) {
-        fprintf(stderr, "WARNING [int_step]: Interpolated sigma_gas is <= 0 for r=%.10lg. Skipping step.\n", current_r);
-        *new_prad_ptr = current_r;
-        *new_size_ptr = psize;
-        return;
-    }
+/*	Mivel a kulongozo parametereket csak a megadott gridcella pontokban ismerjuk, de ez nem feltetlen egyezik meg a reszecskek pozicijaval, ezert minden fontos parametert interpolalunk a reszecskek tavolsagara	*/
+    interpol(disk_params->sigmavec,disk_params->rvec,y,&sigma,disk_params->DD,opt,disk_params);
+    interpol(disk_params->dpressvec,disk_params->rvec,y,&dpress,disk_params->DD,opt,disk_params);
+    interpol(disk_params->ugvec,disk_params->rvec,y,&ugas,disk_params->DD,opt,disk_params);
 
-    eqrhs(psize, dpress_temp, sigma_gas_temp, ugas_temp, current_r, &dy1, disk_params);
+    double dd = (disk_params->RMAX - disk_params->RMIN) / (PARTICLE_NUMBER-1);
+    int dker = (int)(1./dd);//
+    dker = dker * KEREK;
+    double ddker = (double) dker;
+    int temp;
 
-    // 2. lépés
-    ytemp = current_r + 0.5 * step * dy1;
-    if (ytemp < disk_params->RMIN) {
-        ytemp = disk_params->RMIN;
-    }
-    if (ytemp > disk_params->RMAX) {
-        ytemp = disk_params->RMAX;
-    }
-    interpol(disk_params->sigmavec, disk_params->rvec, ytemp, &sigma_gas_temp, disk_params->DD, sim_opts, disk_params);
-    interpol(disk_params->dpressvec, disk_params->rvec, ytemp, &dpress_temp, disk_params->DD, sim_opts, disk_params);
-    interpol(disk_params->ugvec, disk_params->rvec, ytemp, &ugas_temp, disk_params->DD, sim_opts, disk_params);
+    temp = (int)floor(y * ddker+0.5);
+    ytemp2 = (double)temp / ddker;
     
-    if (sigma_gas_temp < EPSILON_SIZE) {
-        fprintf(stderr, "WARNING [int_step]: Interpolated sigma_gas is <= 0 for r=%.10lg. Skipping step.\n", ytemp);
-        *new_prad_ptr = current_r;
-        *new_size_ptr = psize;
-        return;
-    }
-    
-    eqrhs(psize, dpress_temp, sigma_gas_temp, ugas_temp, ytemp, &dy2, disk_params);
-
-    // 3. lépés
-    ytemp = current_r + 0.5 * step * dy2;
-    if (ytemp < disk_params->RMIN) {
-        ytemp = disk_params->RMIN;
-    }
-    if (ytemp > disk_params->RMAX) {
-        ytemp = disk_params->RMAX;
-    }
-    interpol(disk_params->sigmavec, disk_params->rvec, ytemp, &sigma_gas_temp, disk_params->DD, sim_opts, disk_params);
-    interpol(disk_params->dpressvec, disk_params->rvec, ytemp, &dpress_temp, disk_params->DD, sim_opts, disk_params);
-    interpol(disk_params->ugvec, disk_params->rvec, ytemp, &ugas_temp, disk_params->DD, sim_opts, disk_params);
-    
-    if (sigma_gas_temp < EPSILON_SIZE) {
-        fprintf(stderr, "WARNING [int_step]: Interpolated sigma_gas is <= 0 for r=%.10lg. Skipping step.\n", ytemp);
-        *new_prad_ptr = current_r;
-        *new_size_ptr = psize;
-        return;
-    }
-    
-    eqrhs(psize, dpress_temp, sigma_gas_temp, ugas_temp, ytemp, &dy3, disk_params);
-    
-    // 4. lépés
-    ytemp = current_r + step * dy3;
-    if (ytemp < disk_params->RMIN) {
-        ytemp = disk_params->RMIN;
-    }
-    if (ytemp > disk_params->RMAX) {
-        ytemp = disk_params->RMAX;
-    }
-    interpol(disk_params->sigmavec, disk_params->rvec, ytemp, &sigma_gas_temp, disk_params->DD, sim_opts, disk_params);
-    interpol(disk_params->dpressvec, disk_params->rvec, ytemp, &dpress_temp, disk_params->DD, sim_opts, disk_params);
-    interpol(disk_params->ugvec, disk_params->rvec, ytemp, &ugas_temp, disk_params->DD, sim_opts, disk_params);
-
-    if (sigma_gas_temp < EPSILON_SIZE) {
-        fprintf(stderr, "WARNING [int_step]: Interpolated sigma_gas is <= 0 for r=%.10lg. Skipping step.\n", ytemp);
-        *new_prad_ptr = current_r;
-        *new_size_ptr = psize;
-        return;
-    }
-    
-    eqrhs(psize, dpress_temp, sigma_gas_temp, ugas_temp, ytemp, &dy4, disk_params);
-
-    *new_prad_ptr = current_r + step * (dy1 + 2.0 * dy2 + 2.0 * dy3 + dy4) / 6.0;
-    if (*new_prad_ptr < disk_params->RMIN) {
-        *new_prad_ptr = disk_params->RMIN;
-    }
-    if (*new_prad_ptr > disk_params->RMAX) {
-        *new_prad_ptr = disk_params->RMAX;
-    }
-
-    if (sim_opts->growth == 1.0) {
-        interpol(aggregated_sigmad_ptr, aggregated_rdvec_ptr, current_r, &sigma_dust_temp, grid_dd, sim_opts, disk_params);
-        *new_size_ptr = update_particle_size(psize,
-                                             disk_params->PDENSITY,
-                                             sigma_gas_temp,
-                                             sigma_dust_temp,
-                                             current_r,
-                                             disk_params->dpressvec[(int)((current_r - disk_params->RMIN)/disk_params->DD)],
-                                             dpress_temp,
-                                             step,
-                                             disk_params);
-    }
-}
-
-// Helper function to get max particle distance (distance_au)
-double get_max_particle_distance(const dust_particle_t *particles_array, int num_particles) {
-    if (particles_array == NULL || num_particles <= 0) return 0.0;
-    double max_dist = 0.0;
-    for (int k = 0; k < num_particles; ++k) {
-        if (particles_array[k].distance_au > max_dist) {
-            max_dist = particles_array[k].distance_au;
+    int i;
+    for(i=0;i<PARTICLE_NUMBER;i++) {
+        if(ytemp2 == rdvec[i]) {
+            sigmadd = sigmad[i];
+            break;
         }
     }
-    return max_dist;
-}
 
-// Helper function to get min particle distance (distance_au)
-double get_min_particle_distance(const dust_particle_t *particles_array, int num_particles, double min_dist_cutoff) {
-    if (particles_array == NULL || num_particles <= 0) return HUGE_VAL; 
-    double max_reciprocal = 0.0; 
-    
-    for (int k = 0; k < num_particles; ++k) {
-        if (particles_array[k].distance_au > min_dist_cutoff && particles_array[k].distance_au > 0.0) {
-            double current_reciprocal = 1.0 / particles_array[k].distance_au;
-            if (current_reciprocal > max_reciprocal) {
-                max_reciprocal = current_reciprocal;
-            }
+    if(sim_opts->growth == 1.) {		// ha van reszecskenovekedes
+        if(time != 0.) {	// ha nem t0 idopontban vagyunk
+            pradtemp = prad;
+            interpol(disk_params->pressvec,disk_params->rvec,y,&p,disk_params->DD,opt,disk_params);
+            pdens = disk_params->PDENSITY; 
+            pradtemp = getSize(prad,pdens,sigma,sigmadd,y,p,dpress,step,disk_params);	// itt szamolja a reszecskenovekedest
+            prad = pradtemp;
         }
     }
-    return (max_reciprocal > 0.0) ? (1.0 / max_reciprocal) : 0.0; 
+
+    *pradnew = prad;
+
+/*	Itt szamolja a reszecske poziciojat	*/
+    eqrhs(prad, dpress, sigma, ugas, y, &dy1,disk_params);
+
+    ytemp = y + 0.5 * step * dy1;
+    eqrhs(prad, dpress, sigma, ugas, ytemp, &dy2,disk_params);
+        
+    ytemp = y + 0.5 * step * dy2;
+    eqrhs(prad, dpress, sigma, ugas, ytemp, &dy3,disk_params);
+    
+    ytemp = y + step * dy3;
+    eqrhs(prad, dpress, sigma, ugas, ytemp, &dy4,disk_params);
+
+    *ynew = y + step * (dy1 + 2.0 * dy2 + 2.0 * dy3 + dy4) / 6.0;
+
 }
 
-// Function to find minimum of three doubles (from utils.h or similar)
-double find_min_three(double val1, double val2, double val3) {
-    double min_val = val1;
-    if (val2 < min_val) min_val = val2;
-    if (val3 < min_val) min_val = val3;
-    return min_val;
-}
+
 
 void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, output_files_t *output_files) {
-    const double CFL_FACTOR_DRIFT = 0.05;
-    const double CFL_FACTOR_KEPLER = 0.005;
-    const double MIN_TIMESTEP_YEARS = 1.0e-10;
-    const double MAX_TIMESTEP_ABSOLUTE_YEARS = 1.0;
-
     ParticleData_t p_data;
-    HeaderData_t header_data_for_files;
+    HeaderData_t header_data_for_files; // Később inicializáljuk a setup_initial_output_files-ban
 
-    double initial_max_drdt = 0.0;
-    double particle_dt_suggestion_in_years;
 
-    p_data.particles_pop1 = NULL;
-    p_data.particles_pop2 = NULL;
-    p_data.num_particles_pop1 = PARTICLE_NUMBER;
-    p_data.num_particles_pop2 = PARTICLE_NUMBER;
+    double L = 0.; // Években mért "pillanatfelvétel" időzítő
 
-    double L = 0.;
     if (disk_params == NULL) {
-        fprintf(stderr, "ERROR [tIntegrate]: disk_params pointer is NULL!\n");
-        exit(EXIT_FAILURE);
+        fprintf(stderr, "ERROR [tIntegrate]: disk_params_ptr is NULL!\n");
+        exit(1); // Program leállítása, ha kritikus hiba van
     }
+
+    // --- Inicializálási szakasz ---
     if (sim_opts->drift == 1.) {
-        PARTICLE_NUMBER = get_particle_count(sim_opts->dust_input_filename);
+        PARTICLE_NUMBER = reszecskek_szama(sim_opts->dust_input_filename);
     } else {
+        fprintf(stderr, "ERROR [tIntegrate]: Particle drift is OFF. PARTICLE_NUMBER set to 0.\n");
         PARTICLE_NUMBER = 0;
     }
-    if (PARTICLE_NUMBER > 0) {
-        int num_pop2 = (sim_opts->twopop == 1.0) ? PARTICLE_NUMBER : 0;
-        allocate_particle_data(&p_data, PARTICLE_NUMBER, num_pop2, (int)sim_opts->twopop);
+
+    if (PARTICLE_NUMBER > 0 && allocate_particle_data(&p_data, PARTICLE_NUMBER, (int)sim_opts->twopop) != 0) {
+        fprintf(stderr, "ERROR: Failed to allocate particle data. Exiting.\n");
+        exit(EXIT_FAILURE);
     }
+
+    // Fájl inicializálás a meglévő io_utils függvény hívásával
     if (sim_opts->drift == 1.) {
-        if (initialize_mass_accumulation_file(output_files, sim_opts, disk_params, &header_data_for_files) != 0) {
+        if (setup_initial_output_files(output_files, sim_opts, disk_params, &header_data_for_files) != 0) {
             fprintf(stderr, "ERROR: Failed to set up initial output files. Exiting.\n");
-            free_particle_data(&p_data);
             exit(EXIT_FAILURE);
         }
-        load_dust_particles(&p_data, sim_opts->dust_input_filename, disk_params, sim_opts);
+        // por_be hívása a részecskeadatok beolvasására
+        por_be(p_data.radius, p_data.radiusmicr, p_data.massvec, p_data.massmicrvec, sim_opts->dust_input_filename);
     }
 
-    double max_dist_pop1 = 0.0;
-    double min_dist_pop1 = 0.0;
-    double max_dist_pop2 = 0.0;
-    double min_dist_pop2 = 0.0;
-
+    // További inicializálások
+    double max = 0.0, min = 0.0, max2 = 0.0, min2 = 0.0;
+    int i; // Hagyjuk meg ezt a ciklusváltozót a C89 kompatibilitás kedvéért, ha szükséges
+    
+    // Ideiglenes puffer a fájlneveknek a ciklusban
     char dens_name[MAX_PATH_LEN] = "";
     char dust_name[MAX_PATH_LEN] = "";
-    char micron_dust_name[MAX_PATH_LEN] = "";
+    char dust_name2[MAX_PATH_LEN] = "";
+    char size_name[MAX_PATH_LEN] = "";
 
     double t = 0.0;
-    double t_integration_in_internal_units = sim_opts->TMAX * (2.0 * M_PI);
-    const double delta_r_uniform_grid = (disk_params->RMAX - disk_params->RMIN) / (double)(disk_params->NGRID - 1);
-    double gas_dt_suggestion_in_years = time_step(disk_params);
+    double t_integration = sim_opts->TMAX * 2.0 * M_PI;
+    double deltat = time_step(disk_params) / 5.0;
 
-    if (sim_opts->drift == 1.0 && p_data.num_particles_pop1 > 0) {
-        for (int i = 0; i < p_data.num_particles_pop1; ++i) {
-            // A drdt értékét használjuk, feltételezve, hogy az már be van állítva
-            if (p_data.particles_pop1[i].drdt != HUGE_VAL) {
-                if (fabs(p_data.particles_pop1[i].drdt) > initial_max_drdt) {
-                    initial_max_drdt = fabs(p_data.particles_pop1[i].drdt);
-                }
-            }
+    // DT felülbírálása, ha a felhasználó megadott kisebb értéket
+    if (sim_opts->DT > 0.0 && sim_opts->DT < deltat) {
+        ((simulation_options_t *)sim_opts)->DT = deltat; // Az eredeti kód hibásan a deltat-t vette át, ha sim_opts->DT nagyobb volt
+    } else {
+        ((simulation_options_t *)sim_opts)->DT = deltat; // Az eredeti kód szerint, ha nem kisebb, akkor deltat a DT
+    }
+
+    // Mass accumulation változók
+    double masstempiin = 0, massmtempiin = 0, masstempoin = 0, massmtempoin = 0;
+    double masstempiout = 0, massmtempiout = 0, masstempoout = 0, massmtempoout = 0;
+    double tavin = 0, tavout = 0; // Távolságok a Print_Mass-hoz
+
+
+    if (sim_opts->twopop == 0 && PARTICLE_NUMBER > 0) {
+        for (i = 0; i < PARTICLE_NUMBER; i++) {
+            p_data.radiusmicr[i][0] = 0;
+            p_data.radiusmicr[i][1] = 0;
+            p_data.partmassmicrind[i][0] = 0;
+            p_data.partmassmicrind[i][1] = 0;
+            p_data.massmicrvec[i] = 0;
         }
     }
 
-    fprintf(stderr,"init max drdt %lg\n", initial_max_drdt);
-    
-    if (initial_max_drdt > 1e-15) {
-        particle_dt_suggestion_in_years = CFL_FACTOR_DRIFT * delta_r_uniform_grid / initial_max_drdt;
-    } else {
-        particle_dt_suggestion_in_years = MAX_TIMESTEP_ABSOLUTE_YEARS;
-    }
-
-    double deltat_in_years = fmin(gas_dt_suggestion_in_years, particle_dt_suggestion_in_years);
-    if (sim_opts->DT > 0.0) {
-        deltat_in_years = fmin(deltat_in_years, sim_opts->DT);
-    }
-    deltat_in_years = fmax(deltat_in_years, MIN_TIMESTEP_YEARS);
-    deltat_in_years = fmin(deltat_in_years, MAX_TIMESTEP_ABSOLUTE_YEARS);
-    
-    double output_interval_years = sim_opts->TMAX / sim_opts->WO;
-    deltat_in_years = fmin(deltat_in_years, output_interval_years);
-    double deltat = deltat_in_years * (2.0 * M_PI);
-    
-    double overall_min_dist = HUGE_VAL;
-    double overall_max_dist = 0.0;
-
+    // --- Fő szimulációs ciklus ---
     do {
         if (sim_opts->drift == 1.) {
-            for (int i = 0; i < p_data.num_particles_pop1; i++) {
-                if (p_data.particles_pop1[i].distance_au > 0.0) {
-                    p_data.particles_pop1[i].distance_au_reciprocal = 1.0 / p_data.particles_pop1[i].distance_au;
+
+            // Radius reciprok számítása a min/max kereséshez
+            for (i = 0; i < PARTICLE_NUMBER; i++) {
+                if (p_data.radius[i][0] > 0. && p_data.radius[i][0] > disk_params->RMIN) {
+                    p_data.radius_rec[i][0] = 1. / p_data.radius[i][0];
                 } else {
-                    p_data.particles_pop1[i].distance_au_reciprocal = 0.0;
+                    p_data.radius_rec[i][0] = 0.; // Vagy valamilyen "érvénytelen" érték, ami kizárja a min/max keresésből
                 }
             }
-            max_dist_pop1 = get_max_particle_distance(p_data.particles_pop1, p_data.num_particles_pop1);
-            min_dist_pop1 = get_min_particle_distance(p_data.particles_pop1, p_data.num_particles_pop1, disk_params->RMIN);
+
+            max = find_max(p_data.radius, PARTICLE_NUMBER);
+            min = find_max(p_data.radius_rec, PARTICLE_NUMBER); // Megkeresi a távolság reciprokának maximumát
+            min = 1. / min; // Ebből lesz a távolság minimuma
+
+            double mint, maxt;
 
             if (sim_opts->twopop == 1) {
-                for (int i = 0; i < p_data.num_particles_pop2; i++) {
-                    if (p_data.particles_pop2[i].distance_au > 0.0) {
-                        p_data.particles_pop2[i].distance_au_reciprocal = 1.0 / p_data.particles_pop2[i].distance_au;
+                // Micron részecskék radius reciprok számítása
+                for (i = 0; i < PARTICLE_NUMBER; i++) {
+                    if (p_data.radiusmicr[i][0] > 0. && p_data.radiusmicr[i][0] > disk_params->RMIN) {
+                        p_data.radius_rec[i][0] = 1. / p_data.radiusmicr[i][0];
                     } else {
-                        p_data.particles_pop2[i].distance_au_reciprocal = 0.0;
+                        p_data.radius_rec[i][0] = 0.;
                     }
                 }
-                max_dist_pop2 = get_max_particle_distance(p_data.particles_pop2, p_data.num_particles_pop2);
-                min_dist_pop2 = get_min_particle_distance(p_data.particles_pop2, p_data.num_particles_pop2, disk_params->RMIN);
-                overall_min_dist = fmin(min_dist_pop1, min_dist_pop2);
-                overall_max_dist = fmax(max_dist_pop1, max_dist_pop2);
+
+                max2 = find_max(p_data.radiusmicr, PARTICLE_NUMBER);
+                min2 = find_max(p_data.radius_rec, PARTICLE_NUMBER);
+                min2 = 1. / min2;
+
+                mint = find_min(min, min2, HUGE_VAL); // Itt a te find_min(s1, s2, s3) függvényedet használjuk
+                // Ahogy korábban beszéltük, ha find_max(s1,s2,s3) lenne, az jobb lenne,
+                // de a meglévő find_min-t használva a reciprok trükkkel:
+                maxt = find_min(1. / max, 1. / max2, HUGE_VAL);
+                maxt = 1. / maxt;
             } else {
-                overall_min_dist = min_dist_pop1;
-                overall_max_dist = max_dist_pop1;
+                mint = min;
+                maxt = max;
             }
 
+            // --- Kimeneti adatok (pillanatfelvétel) kezelése ---
             double current_time_years = t / (2.0 * M_PI);
-            
-            if ((fmod(current_time_years, output_interval_years) < deltat_in_years || current_time_years == 0) &&
-                (current_time_years >= L - (deltat_in_years * 0.5))) {
+            if ((fmod(current_time_years, (sim_opts->TMAX / sim_opts->WO)) < deltat || current_time_years == 0) && L - current_time_years < deltat) {
                 fprintf(stderr,"\n--- Simulation Time: %.2e years (Internal time: %.2e, L: %.2e) ---\n", current_time_years, t, L);
 
-                if (sim_opts->evol == 1 || current_time_years == 0) {
-                    snprintf(dens_name, MAX_PATH_LEN, "%s/%s/%s_%08d.dat", sim_opts->output_dir_name, LOGS_DIR, FILE_DENS_PREFIX, (int)L);
-                }
-                snprintf(dust_name, MAX_PATH_LEN, "%s/%s/%s_%08d.dat", sim_opts->output_dir_name, LOGS_DIR, FILE_DUST_PREFIX,(int)L);
-                snprintf(micron_dust_name, MAX_PATH_LEN, "%s/%s/micron_%s_%08d.dat", sim_opts->output_dir_name, LOGS_DIR, FILE_DUST_PREFIX, (int)L);
 
-                if (sim_opts->evol == 1 || current_time_years == 0) {
-                    output_files->surface_file = fopen(dens_name, "w");
-                    if (output_files->surface_file != NULL) {
+                if (current_time_years != 0) {
+                    if (sim_opts->evol == 1) {
+                        snprintf(dens_name, MAX_PATH_LEN, "%s/%s/%s_%08d.dat", sim_opts->output_dir_name, LOGS_DIR, FILE_DENS_PREFIX, (int)L);
+                    }
+                }
+
+                snprintf(dust_name, MAX_PATH_LEN, "%s/%s/dust.%i.dat", sim_opts->output_dir_name, LOGS_DIR, (int)L);
+                snprintf(dust_name2, MAX_PATH_LEN, "%s/%s/dustmic.%i.dat", sim_opts->output_dir_name, LOGS_DIR, (int)L);
+                snprintf(size_name, MAX_PATH_LEN, "%s/%s/size.%d.dat", sim_opts->output_dir_name, LOGS_DIR, (int)L);
+
+                // Fájlok megnyitása és fejlécek írása
+                output_files->surface_file = fopen(dens_name, "w");
+                if(L != 0) {
+                    if (output_files->surface_file == NULL) {
+                        fprintf(stderr, "ERROR: Could not open %s for writing.\n", dens_name);
+                    } else {
                         HeaderData_t gas_header_data = {.current_time = current_time_years, .is_initial_data = (current_time_years == 0.0)};
-                        write_file_header(output_files->surface_file, FILE_TYPE_GAS_DENSITY, &gas_header_data);
+                        print_file_header(output_files->surface_file, FILE_TYPE_GAS_DENSITY, &gas_header_data);
                     }
                 }
 
                 output_files->dust_file = fopen(dust_name, "w");
-                if (output_files->dust_file != NULL) {
+                if (output_files->dust_file == NULL) {
+                    fprintf(stderr, "ERROR: Could not open %s for writing.\n", dust_name);
+                } else {
                     HeaderData_t dust_header_data = {.current_time = current_time_years, .is_initial_data = (current_time_years == 0.0)};
-                    write_file_header(output_files->dust_file, FILE_TYPE_DUST_EVOL, &dust_header_data);
+                    print_file_header(output_files->dust_file, FILE_TYPE_DUST_MOTION, &dust_header_data);
                 }
 
                 if (sim_opts->twopop == 1.) {
-                    output_files->micron_dust_file = fopen(micron_dust_name, "w");
-                    if (output_files->micron_dust_file != NULL) {
+                    output_files->micron_dust_file = fopen(dust_name2, "w");
+                    if (output_files->micron_dust_file == NULL) {
+                        fprintf(stderr, "ERROR: Could not open %s for writing.\n", dust_name2);
+                    } else {
                         HeaderData_t micron_dust_header_data = {.current_time = current_time_years, .is_initial_data = (current_time_years == 0.0)};
-                        write_file_header(output_files->micron_dust_file, FILE_TYPE_MICRON_DUST_EVOL, &micron_dust_header_data);
+                        print_file_header(output_files->micron_dust_file, FILE_TYPE_MICRON_MOTION, &micron_dust_header_data);
                     }
                 }
 
-                if (sim_opts->growth == 1.) {
-                    calculate_dust_density_grid(&p_data, disk_params, sim_opts);
+                // Eredeti t==0 logika
+                if (current_time_years == 0) {
+                    Count_Mass(p_data.radius, p_data.partmassind, p_data.massvec, t, PARTICLE_NUMBER, disk_params);
+                    if (sim_opts->twopop == 1) Count_Mass(p_data.radiusmicr, p_data.partmassmicrind, p_data.massmicrvec, t, PARTICLE_NUMBER, disk_params);
+
+                    if (sim_opts->growth == 1.) {
+                        Get_Sigmad(max, min, p_data.radius, p_data.radiusmicr, p_data.sigmad, p_data.sigmadm, p_data.massvec, p_data.massmicrvec, p_data.rdvec, p_data.rmicvec, sim_opts, disk_params);
+                    }
                 }
 
+                // Gas density output
                 if (sim_opts->evol == 1 || current_time_years == 0) {
-                    write_gas_profile_to_file(disk_params, output_files);
+                    if(L != 0) Print_Sigma(disk_params, output_files);
                 }
+
+                // Particle position and size output
+                if (sim_opts->drift == 1) {
+                    Print_Pormozg_Size(size_name, (int)L, p_data.radius, p_data.radiusmicr, disk_params, sim_opts, output_files);
+                }
+
+                // Reset mass accumulation variables for next interval
+                masstempiout = 0;
+                massmtempiout = 0;
+                masstempoout = 0;
+                massmtempoout = 0;
+
+
+                // Resetting partmassind[k][3] and [k][4]
+                if (sim_opts->dzone == 1.0 && PARTICLE_NUMBER > 0) { // Ellenőrzés PARTICLE_NUMBER-re
+                    for (int k = 0; k < PARTICLE_NUMBER; k++) {
+                        p_data.partmassind[k][3] = 0.0;
+                        p_data.partmassind[k][4] = 0.0;
+                    }
+                    
+                }
+
+                Print_Mass(L, p_data.partmassind, p_data.partmassmicrind, t, masstempiin, masstempoin, massmtempiin, massmtempoin, &masstempiout, &masstempoout, &massmtempiout, &massmtempoout, &tavin, &tavout, disk_params, sim_opts, output_files);
+                // Update input mass for next Print_Mass call
+                masstempiin = masstempiout;
+                massmtempiin = massmtempiout;
+                masstempoin = masstempoout;
+                massmtempoin = massmtempoout;
+
                 if (sim_opts->growth == 1.) {
-                    write_dust_profile_to_file((int)L, &p_data, disk_params, sim_opts, output_files);
+                    Print_Sigmad(p_data.rdvec, p_data.rmicvec, p_data.sigmad, p_data.sigmadm, disk_params, sim_opts, output_files);
                 }
-                L = L + output_interval_years;
-                close_snapshot_files(output_files, dens_name, dust_name, micron_dust_name, sim_opts);
+                fprintf(stderr,"L set to %lg\n",L);
+
+                L = L + (double)(sim_opts->TMAX / sim_opts->WO);
+                // Fájlok bezárása, amelyek csak ezen időintervallumban voltak nyitva
+                close_snapshot_files(output_files, dens_name, dust_name, dust_name2, sim_opts);
             }
 
+            // Gas evolution
             if (sim_opts->evol == 1.) {
-                get_gas_surface_density_pressure_pressure_gradient(sim_opts, disk_params, deltat);
-                validate_disk_state(disk_params);  // ← IDE!
-
+                Get_Sigma_P_dP(sim_opts, disk_params);
             }
 
-            if (p_data.particles_pop1 == NULL) {
-                fprintf(stderr, "ERROR [tIntegrate]: particles_pop1 is NULL before update_particle_positions call!\n");
-                exit(EXIT_FAILURE);
+            // Count masses and get sigma_d for the next step (always done)
+            Count_Mass(p_data.radius, p_data.partmassind, p_data.massvec, t, PARTICLE_NUMBER, disk_params);
+            if (sim_opts->twopop == 1) Count_Mass(p_data.radiusmicr, p_data.partmassmicrind, p_data.massmicrvec, t, PARTICLE_NUMBER, disk_params);
+
+            if (sim_opts->growth == 1.) {
+                Get_Sigmad(max, min, p_data.radius, p_data.radiusmicr, p_data.sigmad, p_data.sigmadm, p_data.massvec, p_data.massmicrvec, p_data.rdvec, p_data.rmicvec, sim_opts, disk_params);
             }
-            if (disk_params == NULL) {
-                fprintf(stderr, "ERROR [tIntegrate]: disk_params is NULL before update_particle_positions call!\n");
-                exit(EXIT_FAILURE);
-            }
-            update_particle_positions(p_data.particles_pop1, PARTICLE_NUMBER, deltat, t, sim_opts, disk_params);
+
+            // Get radii for next step
+            int optsize = 0;
+            Get_Radius(sim_opts->output_dir_name, optsize, p_data.radius, p_data.sigmad, p_data.rdvec, deltat, t, PARTICLE_NUMBER, sim_opts, disk_params);
+
             if (sim_opts->twopop == 1.) {
-                update_particle_positions(p_data.particles_pop2, PARTICLE_NUMBER, deltat, t, sim_opts, disk_params);
-            }
-            double particle_dt_drift_limit_in_years = HUGE_VAL;
-            if (sim_opts->drift == 1.0 && PARTICLE_NUMBER > 0) {
-                double max_abs_drdt_from_current_step = 0.0;
-                for (int i = 0; i < p_data.num_particles_pop1; ++i) {
-                    if (p_data.particles_pop1[i].drdt != HUGE_VAL) {
-                        if (fabs(p_data.particles_pop1[i].drdt) > max_abs_drdt_from_current_step) {
-                            max_abs_drdt_from_current_step = fabs(p_data.particles_pop1[i].drdt);
-                        }
-                    }
-                }
-                if (sim_opts->twopop == 1) {
-                    for (int i = 0; i < p_data.num_particles_pop2; ++i) {
-                        if (p_data.particles_pop2[i].drdt != HUGE_VAL) {
-                            if (fabs(p_data.particles_pop2[i].drdt) > max_abs_drdt_from_current_step) {
-                                max_abs_drdt_from_current_step = fabs(p_data.particles_pop2[i].drdt);
-                            }
-                        }
-                    }
-                }
-                if (max_abs_drdt_from_current_step > 1e-15) {
-                    particle_dt_drift_limit_in_years = CFL_FACTOR_DRIFT * delta_r_uniform_grid / max_abs_drdt_from_current_step;
-                } else {
-                    particle_dt_drift_limit_in_years = MAX_TIMESTEP_ABSOLUTE_YEARS;
-                }
-            } else {
-                particle_dt_drift_limit_in_years = MAX_TIMESTEP_ABSOLUTE_YEARS;
+                optsize = 1;
+                Get_Radius(sim_opts->output_dir_name, optsize, p_data.radiusmicr, p_data.sigmadm, p_data.rmicvec, deltat, t, PARTICLE_NUMBER, sim_opts, disk_params);
+
             }
 
-            deltat_in_years = fmin(gas_dt_suggestion_in_years, particle_dt_drift_limit_in_years);
-            if (sim_opts->DT > 0.0) {
-                deltat_in_years = fmin(deltat_in_years, sim_opts->DT);
-            }
-            deltat_in_years = fmax(deltat_in_years, MIN_TIMESTEP_YEARS);
-            deltat_in_years = fmin(deltat_in_years, MAX_TIMESTEP_ABSOLUTE_YEARS);
-            deltat_in_years = fmin(deltat_in_years, output_interval_years);
-            deltat = deltat_in_years * (2.0 * M_PI);
             t = t + deltat;
 
-            double current_time_years_after_step = t / (2.0 * M_PI);
-            if (!(overall_max_dist >= disk_params->RMIN && overall_min_dist != overall_max_dist)) {
-                fprintf(stderr,"DEBUG [tIntegrate]: Simulation termination condition met (overall_max_dist < RMIN or overall_min_dist == overall_max_dist) at time: %.2e years.\n", current_time_years_after_step);
-                goto cleanup;
-            }
-        } else {
+            // Kilépési feltétel a drift == 1 ágon
+            // Fontos: maxt és mint frissül az előző szakaszban, azt használjuk itt.
+//            if (!(maxt >= disk_params->RMIN && mint != maxt)) {
+//                fprintf(stderr,"DEBUG [tIntegrate]: Simulation termination condition met (maxt < RMIN or mint == maxt) at time: %lg.\n",L);
+
+//                goto cleanup; // Ugrás a tisztításra
+//            }
+
+        } else { // sim_opts->drift == 0. (Gas-only simulation)
             double current_time_years = t / (2.0 * M_PI);
-            double output_interval_years = sim_opts->TMAX / sim_opts->WO;
-            if ((fmod(current_time_years, output_interval_years) < deltat_in_years || current_time_years == 0) && L - current_time_years < deltat_in_years * 0.5) {
+
+            if ((fmod(current_time_years, (sim_opts->TMAX / sim_opts->WO)) < deltat || current_time_years == 0) && L - current_time_years < deltat) {
                 fprintf(stderr,"\n--- Simulation Time: %.2e years (Internal time: %.2e, L: %.2e) ---\n", current_time_years, t, L);
+
                 fprintf(stderr,"DEBUG [tIntegrate]: Outputting data for gas-only simulation at time %.2e. L=%.2e\n", current_time_years, L);
                 snprintf(dens_name, MAX_PATH_LEN, "%s/%s/%s_%08d.dat", sim_opts->output_dir_name, LOGS_DIR, FILE_DENS_PREFIX, (int)L);
-                fprintf(stderr, "DEBUG [tIntegrate]: Outputting %s_%08d.dat to %s.\n", dens_name, (int)L, dens_name);
+                fprintf(stderr, "DEBUG [tIntegrate]: Outputting %s_%08d.dat to %s.\n", FILE_DENS_PREFIX, (int)L, dens_name);
+
                 output_files->surface_file = fopen(dens_name, "w");
                 if (output_files->surface_file == NULL) {
                     fprintf(stderr, "ERROR: Could not open %s for writing in gas-only branch.\n", dens_name);
                 } else {
                     fprintf(stderr, "DEBUG [tIntegrate]: Opened %s for writing in gas-only branch.\n", dens_name);
                     HeaderData_t gas_header_data = {.current_time = current_time_years, .is_initial_data = (current_time_years == 0.0)};
-                    write_file_header(output_files->surface_file, FILE_TYPE_GAS_DENSITY, &gas_header_data);
+                    print_file_header(output_files->surface_file, FILE_TYPE_GAS_DENSITY, &gas_header_data);
                 }
-                write_gas_profile_to_file(disk_params, output_files);
+
+                Print_Sigma(disk_params, output_files);
+
+
                 if (output_files->surface_file != NULL) {
                     fclose(output_files->surface_file);
                     output_files->surface_file = NULL;
                     fprintf(stderr, "DEBUG [tIntegrate]: Closed %s in gas-only branch.\n", dens_name);
                 }
-                L = L + output_interval_years;
+
+                L = L + (double)(sim_opts->TMAX / sim_opts->WO);
                 fprintf(stderr,"DEBUG [tIntegrate]: Updated L to %.2e.\n", L);
             }
-            fprintf(stderr,"DEBUG [tIntegrate]: Calling get_gas_surface_density_pressure_pressure_gradient for gas-only evolution.\n");
-            get_gas_surface_density_pressure_pressure_gradient(sim_opts, disk_params,deltat);
-            validate_disk_state(disk_params);  // ← IDE!
 
+            fprintf(stderr,"DEBUG [tIntegrate]: Calling Get_Sigma_P_dP for gas-only evolution.\n");
+            Get_Sigma_P_dP(sim_opts, disk_params);
+            
             t = t + deltat;
         }
-    } while (t <= t_integration_in_internal_units);
+
+    } while (t <= t_integration);
 
     fprintf(stderr,"\n\nDEBUG [tIntegrate]: Main simulation loop finished (t > t_integration).\n");
 
 cleanup:
+    // --- Tisztítási szakasz ---
     cleanup_simulation_resources(&p_data, output_files, sim_opts);
     fprintf(stderr,"DEBUG [tIntegrate]: Cleanup completed.\n");
 }
-
 

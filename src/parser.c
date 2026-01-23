@@ -6,7 +6,7 @@
 
 #include "parser.h" // Include its own header
 #include "simulation_types.h" // In case simulation_types.h defines something else needed here
-#include "globals.h"
+
 /* --- create_default_options: Sets default values for the 'options_t' structure --- */
 void create_default_options(options_t *opt) {
     fprintf(stderr, "DEBUG [create_default_options]: Setting default values for options_t.\n");

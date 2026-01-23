@@ -1,93 +1,99 @@
 // src/particle_data.c
+
+#include "particle_data.h"
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h> // For memset
-#include "particle_data.h" // Includes dust_particle.h
+#include <stdlib.h> // malloc, free, exit
 
-/**
- * @brief Allocates memory for the ParticleData_t structure based on particle counts.
- *
- * This function creates contiguous memory blocks for Pop1 and (if enabled) Pop2 particles.
- * It also initializes the particle counts.
- *
- * @param p_data Pointer to the ParticleData_t structure to be allocated.
- * @param num_particles_pop1 The total number of particles for Population 1.
- * @param num_particles_pop2 The total number of particles for Population 2.
- * @param twopop_enabled Flag indicating if a second particle population is active.
- */
-void allocate_particle_data(ParticleData_t *p_data, int num_particles_pop1, int num_particles_pop2, int twopop_enabled) {
+int allocate_particle_data(ParticleData_t *p_data, size_t particle_count, int is_twopop_enabled) {
     if (p_data == NULL) {
-        fprintf(stderr, "ERROR [allocate_particle_data]: p_data pointer is NULL.\n");
-        exit(EXIT_FAILURE);
+        fprintf(stderr, "ERROR [allocate_particle_data]: ParticleData_t pointer is NULL.\n");
+        return 1; // Hiba
     }
 
-    // Initialize all pointers to NULL for safety before allocation
-    p_data->particles_pop1 = NULL;
-    p_data->particles_pop2 = NULL;
+    // Inicializálás NULL-ra
+    p_data->radius = NULL;
+    p_data->radiusmicr = NULL;
+    p_data->radius_rec = NULL;
+    p_data->massvec = NULL;
+    p_data->massmicrvec = NULL;
+    p_data->partmassind = NULL;
+    p_data->partmassmicrind = NULL;
+    p_data->sigmad = NULL;
+    p_data->sigmadm = NULL;
+    p_data->rdvec = NULL;
+    p_data->rmicvec = NULL;
+    p_data->allocated_particle_number = 0;
 
-    p_data->num_particles_pop1 = num_particles_pop1;
-    p_data->num_particles_pop2 = num_particles_pop2;
-
-    fprintf(stderr, "DEBUG [allocate_particle_data]: Allocating for Lagrangian particles. Pop1: %d, Pop2: %d, twopop_enabled: %d\n",
-            num_particles_pop1, num_particles_pop2, twopop_enabled);
-
-    // Allocate for Population 1 particles
-    if (num_particles_pop1 > 0) {
-        p_data->particles_pop1 = (dust_particle_t *)malloc(num_particles_pop1 * sizeof(dust_particle_t));
-        if (p_data->particles_pop1 == NULL) {
-            fprintf(stderr, "ERROR [allocate_particle_data]: Memory allocation failed for particles_pop1 (size: %zu bytes).\n",
-                    num_particles_pop1 * sizeof(dust_particle_t));
-            exit(EXIT_FAILURE);
-        }
-        // Initialize allocated memory to zeros (good practice)
-        memset(p_data->particles_pop1, 0, num_particles_pop1 * sizeof(dust_particle_t));
-        fprintf(stderr, "DEBUG [allocate_particle_data]: Allocated %d particles for Pop1.\n", num_particles_pop1);
+    if (particle_count == 0) {
+        fprintf(stderr, "DEBUG [allocate_particle_data]: Particle count is 0. No particle arrays allocated.\n");
+        return 0; // Sikeres, de nincs allokáció
     }
 
-    // Allocate for Population 2 particles if twopop is enabled
-    if (twopop_enabled && num_particles_pop2 > 0) {
-        p_data->particles_pop2 = (dust_particle_t *)malloc(num_particles_pop2 * sizeof(dust_particle_t));
-        if (p_data->particles_pop2 == NULL) {
-            fprintf(stderr, "ERROR [allocate_particle_data]: Memory allocation failed for particles_pop2 (size: %zu bytes).\n",
-                    num_particles_pop2 * sizeof(dust_particle_t));
-            // Clean up Pop1 if Pop2 allocation fails
-            free(p_data->particles_pop1);
-            p_data->particles_pop1 = NULL;
-            exit(EXIT_FAILURE);
-        }
-        memset(p_data->particles_pop2, 0, num_particles_pop2 * sizeof(dust_particle_t));
-        fprintf(stderr, "DEBUG [allocate_particle_data]: Allocated %d particles for Pop2.\n", num_particles_pop2);
+    // Fő részecske tömbök
+    p_data->radius = malloc(particle_count * sizeof(*p_data->radius));
+    p_data->radiusmicr = malloc(particle_count * sizeof(*p_data->radiusmicr));
+    p_data->radius_rec = malloc(particle_count * sizeof(*p_data->radius_rec));
+    p_data->massvec = malloc(particle_count * sizeof(double));
+    p_data->massmicrvec = malloc(particle_count * sizeof(double));
+    p_data->partmassind = malloc(particle_count * sizeof(*p_data->partmassind));
+    p_data->partmassmicrind = malloc(particle_count * sizeof(*p_data->partmassmicrind));
+    p_data->sigmad = malloc(particle_count * sizeof(double));
+    p_data->sigmadm = malloc(particle_count * sizeof(double));
+    p_data->rdvec = malloc(particle_count * sizeof(double));
+    p_data->rmicvec = malloc(particle_count * sizeof(double));
+
+    // Ellenőrzés
+    if (!p_data->radius || !p_data->radiusmicr || !p_data->radius_rec || !p_data->massvec || !p_data->massmicrvec ||
+        !p_data->partmassind || !p_data->partmassmicrind || !p_data->sigmad || !p_data->sigmadm ||
+        !p_data->rdvec || !p_data->rmicvec) {
+        fprintf(stderr, "ERROR [allocate_particle_data]: Primary particle array allocation failed!\n");
+        free_particle_data(p_data); // Felszabadítás, ha valami elszállt
+        return 1; // Hiba
     }
 
-    fprintf(stderr, "DEBUG [allocate_particle_data]: ParticleData_t structure allocated.\n");
+    // Secondary particles (csak ha twopop engedélyezve van, feltételezve, hogy a growth ehhez kapcsolódik)
+    // A 4-szeres méretet a Get_Radius függvényben látottak alapján vettem.
+    if (is_twopop_enabled) {
+
+    } else {
+        fprintf(stderr, "DEBUG [allocate_particle_data]: Two-population model is OFF. Secondary particle arrays not allocated.\n");
+    }
+
+    p_data->allocated_particle_number = particle_count;
+    fprintf(stderr, "DEBUG [allocate_particle_data]: Particle arrays allocated for %zu particles.\n", particle_count);
+    return 0; // Sikeres allokáció
 }
 
-/**
- * @brief Frees memory allocated for the ParticleData_t structure.
- *
- * Sets pointers to NULL after freeing to prevent dangling pointers.
- *
- * @param p_data Pointer to the ParticleData_t structure to be freed.
- */
 void free_particle_data(ParticleData_t *p_data) {
     if (p_data == NULL) {
-        return; // Nothing to free
+        return; // Nincs mit felszabadítani
     }
 
-    fprintf(stderr, "DEBUG [free_particle_data]: Freeing Lagrangian particle data.\n");
+    free(p_data->radius);
+    free(p_data->radiusmicr);
+    free(p_data->radius_rec);
+    free(p_data->massvec);
+    free(p_data->massmicrvec);
+    free(p_data->partmassind);
+    free(p_data->partmassmicrind);
+    free(p_data->sigmad);
+    free(p_data->sigmadm);
+    free(p_data->rdvec);
+    free(p_data->rmicvec);
 
-    if (p_data->particles_pop1 != NULL) {
-        free(p_data->particles_pop1);
-        p_data->particles_pop1 = NULL;
-    }
-    if (p_data->particles_pop2 != NULL) {
-        free(p_data->particles_pop2);
-        p_data->particles_pop2 = NULL;
-    }
-    
-    // Reset particle counts for clarity
-    p_data->num_particles_pop1 = 0;
-    p_data->num_particles_pop2 = 0;
+    // Fontos: a pointereket NULL-ra állítjuk felszabadítás után, hogy elkerüljük a dangling pointereket
+    p_data->radius = NULL;
+    p_data->radiusmicr = NULL;
+    p_data->radius_rec = NULL;
+    p_data->massvec = NULL;
+    p_data->massmicrvec = NULL;
+    p_data->partmassind = NULL;
+    p_data->partmassmicrind = NULL;
+    p_data->sigmad = NULL;
+    p_data->sigmadm = NULL;
+    p_data->rdvec = NULL;
+    p_data->rmicvec = NULL;
+    p_data->allocated_particle_number = 0;
 
-    fprintf(stderr, "DEBUG [free_particle_data]: ParticleData_t structure freed.\n");
+    fprintf(stderr, "DEBUG [free_particle_data]: Particle arrays freed.\n");
 }

@@ -10,7 +10,7 @@
 
 // Függvény deklarációk (prototípusok)
 void Parabola(double *vec, int i1, int i2, int i3, double *a, double *b, double *c, double dd, const disk_t *disk_params);
-void calculate_boundary(double *vec,const disk_t *disk_params);
+void Perem(double *vec,const disk_t *disk_params);
 /*	egy megadott, diszkret pontokban ismert fuggvenyt interpolal a reszecske aktualis helyere	*/
 void interpol(double *invec, double *rvec, double pos, double *out, double rd, int opt, const disk_t *disk_params);
 
@@ -32,7 +32,7 @@ double find_zero(int i, const double *rvec, const double *dp);
 double calculate_index_from_radius(double r_coord, disk_t *disk_params);
 
 /* A nyomasi maximum korul 1H tavolsagban jeloli ki a korgyurut */
-// Feltehetően a disk_model.h tartalmazza a calculate_scale_height deklarációját.
+// Feltehetően a disk_model.h tartalmazza a scale_height deklarációját.
 void find_r_annulus(double rin_val, double *ind_ii, double *ind_io, double rout_val, double *ind_oi, double *ind_oo, const simulation_options_t *sim_opts, disk_t *disk_params);
 
 //fuggveny egy tomb elemeinek sorbarendezesere --> ezt jelenleg nem hasznalja sehol a program	
@@ -57,8 +57,4 @@ void Count_Mass(double radin[][2], double partmassindin[][5], double *massvecin,
 // double calculate_average(double *data, int count);
 // void print_timestamp(FILE *f);
 
-
-void validate_disk_state(const disk_t *disk);
-
 #endif // UTILS_H
-
