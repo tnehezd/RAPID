@@ -306,7 +306,7 @@ void Get_Sigmad(double max_param, double min_param, double rad[][2], double radm
     double sigdtemp[PARTICLE_NUMBER][3];
     double sigdmicrtemp[PARTICLE_NUMBER][3];
 
-    // Inicializálás, ha szükséges (bár a loadSigDust valószínűleg felülírja)
+    // Inicializálás, ha szükséges (bár a calculateDustSurfaceDensity valószínűleg felülírja)
     for(i=0; i<PARTICLE_NUMBER; i++){
         sigdtemp[i][0] = 0.0; sigdtemp[i][1] = 0.0; sigdtemp[i][2] = 0.0;
         sigdmicrtemp[i][0] = 0.0; sigdmicrtemp[i][1] = 0.0; sigdmicrtemp[i][2] = 0.0;
@@ -317,14 +317,14 @@ void Get_Sigmad(double max_param, double min_param, double rad[][2], double radm
     }
 
 
-    // loadSigDust és contract függvények hívásai:
+    // calculateDustSurfaceDensity és contract függvények hívásai:
     // Ezek valószínűleg szekvenciálisak, hacsak a függvények belsejében nincs OpenMP.
     // Ha ezek a függvények valamilyen globális állapotot módosítanak, akkor kritikusak.
     // Feltételezve, hogy a 'sigdtemp' és 'sigdmicrtemp' kizárólagosan a hívásaikban vannak feldolgozva,
     // és nem ütköznek más szálakkal globális adatokon keresztül.
-    loadSigDust(rad, massvec, sigdtemp, PARTICLE_NUMBER,disk_params);
+    calculateDustSurfaceDensity(rad, massvec, sigdtemp, PARTICLE_NUMBER,disk_params);
     if (sim_opts->twopop == 1.0) { // Használjunk double összehasonlítást
-        loadSigDust(radmicr, massmicrvec, sigdmicrtemp, PARTICLE_NUMBER,disk_params);
+        calculateDustSurfaceDensity(radmicr, massmicrvec, sigdmicrtemp, PARTICLE_NUMBER,disk_params);
     }
 
     contract(sigdtemp, dd, PARTICLE_NUMBER,disk_params);
