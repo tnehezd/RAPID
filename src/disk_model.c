@@ -1,12 +1,12 @@
 // src/disk_model.c
 
-#include "disk_model.h"   // Saját header
-#include "config.h"       // Globális változók és konstansok
+#include "disk_model.h"   
+#include "config.h"       
 #include "simulation_types.h"
 
-#include "dust_physics.h" // press, dpress, u_gas függvények deklarációi
-#include "io_utils.h"     // sigIn és egyéb I/O függvények deklarációi (ha használja)
-#include "utils.h" // Hogy a disk_model.c lássa a Parabola prototípusát
+#include "dust_physics.h" 
+#include "io_utils.h"     
+#include "utils.h" 
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,7 +17,7 @@
 
 /*	Reads the parameters of the disk	*/
 void readDiskParameters(disk_t *disk_params) {
-    // Ellenőrzés, ha a pointer NULL (jó gyakorlat)
+    // Check if the pointer is NULL
     if (disk_params == NULL) {
         fprintf(stderr, "ERROR [readDiskParameters]: Received NULL disk_params pointer.\n");
         exit(EXIT_FAILURE);
@@ -25,14 +25,7 @@ void readDiskParameters(disk_t *disk_params) {
 
     fprintf(stderr, "DEBUG [readDiskParameters]: Calculating derived disk parameters and writing to output file.\n");
 
-
-    // A PDENSITYDIMLESS számítása a PDENSITY, csillagtömeg és más konstansok alapján
     disk_params->PDENSITYDIMLESS = disk_params->PDENSITY / SUN2GR * AU2CM * AU2CM * AU2CM;
-
-    // Az eredeti kódodban volt egy másik képlet is, ami a SUN2GR-t használta:
-    // disk_params->PDENSITYDIMLESS = disk_params->PDENSITY / SUN2GR * AU2CM * AU2CM * AU2CM;
-    // Kérlek, ellenőrizd, melyik a helyes dimenziómentesítés a te modellben!
-    // A fenti verziót használtam, mert az tűnik konzisztensebbnek azzal, ahogy a G_GRAV_CONST-t is használtad.
 
     fprintf(stderr, "DEBUG [readDiskParameters]: Calculated PDENSITY = %.2e, PDENSITYDIMLESS = %.2e.\n",
            disk_params->PDENSITY, disk_params->PDENSITYDIMLESS);
@@ -41,7 +34,7 @@ void readDiskParameters(disk_t *disk_params) {
 
 
 
-/*	r vektor (gridcellák) inicializálása	*/
+/*	Initialize radial grid	*/
 void createRadialGrid(disk_t *disk_params) {
 	
 	int i;
@@ -51,7 +44,7 @@ void createRadialGrid(disk_t *disk_params) {
 	}
 }
 
-/*	a sigmara kezdeti profil betoltese	*/
+/*	Create the initial gas surface density profile	*/
 void createInitialGasSurfaceDensity(disk_t *disk_params){		/*	initial profile of sigma		*/
 
   	int i;
@@ -65,7 +58,7 @@ void createInitialGasSurfaceDensity(disk_t *disk_params){		/*	initial profile of
 
 }
 
-void Initial_Press(disk_t *disk_params){		/*	initial profile of pressure		*/
+void createInitialGasPressure(disk_t *disk_params){		/*	initial profile of pressure		*/
 
   	int i;
   
@@ -77,7 +70,7 @@ void Initial_Press(disk_t *disk_params){		/*	initial profile of pressure		*/
 
 }
 
-void Initial_dPress(disk_t *disk_params){		/*	initial profile of pressure		*/
+void createInitialGasPressureGradient(disk_t *disk_params){		/*	initial profile of pressure		*/
 
 	dpress(disk_params);
    	Perem(disk_params->dpressvec,disk_params);
@@ -86,7 +79,7 @@ void Initial_dPress(disk_t *disk_params){		/*	initial profile of pressure		*/
 }
 
 /*	ug vektor feltoltese az u_gas ertekevel	*/
-void Initial_Ugas(disk_t *disk_params){		/*	initial profile of pressure		*/
+void createInitialGasVelocity(disk_t *disk_params){		/*	initial profile of pressure		*/
  	
 	u_gas(disk_params);
   	Perem(disk_params->ugvec,disk_params);
@@ -94,7 +87,7 @@ void Initial_Ugas(disk_t *disk_params){		/*	initial profile of pressure		*/
 
 
 
-void loadSigDust(double radin[][2], double *massin, double out[][3], int n, const disk_t *disk_params) {
+void calculateDustSurfaceDensity(double radin[][2], double *massin, double out[][3], int n, const disk_t *disk_params) {
 
 	int i;
 

@@ -1,6 +1,6 @@
 #include "init_tool_module.h"
 #include "config.h" // For FILENAME_INIT_DUST_PROFILE, FILENAME_DISK_PARAM, SDCONV, G_GRAV_CONST, SNOWLINE, ICEFACTOR, CMPSECTOAUPYRP2PI
-#include "disk_model.h" // Contains declarations for createRadialGrid, createInitialGasSurfaceDensity, Initial_Press, Initial_dPress, Initial_Ugas, readDiskParameters, scale_height, v_kep, kep_freq, c_sound, press, rho_mp
+#include "disk_model.h" // Contains declarations for createRadialGrid, createInitialGasSurfaceDensity, createInitialGasPressure, createInitialGasPressureGradient, createInitialGasVelocity, readDiskParameters, scale_height, v_kep, kep_freq, c_sound, press, rho_mp
 #include "dust_physics.h" // May contain GetMass, etc.
 #include "utils.h" // For find_max, find_min, etc. and for interpolation functions
 #include "io_utils.h" // For Mk_Dir (if used internally here)
@@ -286,9 +286,9 @@ int run_init_tool(init_tool_options_t *opts, disk_t *disk_params) {
     readDiskParameters(disk_params);
     createRadialGrid(disk_params);
     createInitialGasSurfaceDensity(disk_params);
-    Initial_Press(disk_params);
-    Initial_dPress(disk_params);
-    Initial_Ugas(disk_params);
+    createInitialGasPressure(disk_params);
+    createInitialGasPressureGradient(disk_params);
+    createInitialGasVelocity(disk_params);
 
     // --- NEW SECTION: Write Gas Density Profile (to fout_dens) ---
     // This loop iterates over the gas grid points (opts->n_grid_points)
