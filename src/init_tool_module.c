@@ -1,6 +1,6 @@
 #include "init_tool_module.h"
 #include "config.h" // For FILENAME_INIT_DUST_PROFILE, FILENAME_DISK_PARAM, SDCONV, G_GRAV_CONST, SNOWLINE, ICEFACTOR, CMPSECTOAUPYRP2PI
-#include "disk_model.h" // Contains declarations for createRadialGrid, createInitialGasSurfaceDensity, createInitialGasPressure, createInitialGasPressureGradient, createInitialGasVelocity, readDiskParameters, scale_height, v_kep, kep_freq, c_sound, press, rho_mp
+#include "disk_model.h" // Contains declarations for createRadialGrid, createInitialGasSurfaceDensity, createInitialGasPressure, createInitialGasPressureGradient, createInitialGasVelocity, readDiskParameters, scale_height, calculateKeplerianVelocity, kep_freq, c_sound, press, rho_mp
 #include "dust_physics.h" // May contain GetMass, etc.
 #include "utils.h" // For find_max, find_min, etc. and for interpolation functions
 #include "io_utils.h" // For Mk_Dir (if used internally here)
@@ -348,8 +348,8 @@ int run_init_tool(init_tool_options_t *opts, disk_t *disk_params) {
             s_max_cm = opts->one_size_particle_cm;
         } else {
             // Use interpolated gas properties for calculations
-            // double H_au = scaleHeight(r_dust_particle_au, disk_params); // Removed: unused
-            double v_kep_au_yr2pi = v_kep(r_dust_particle_au, disk_params);
+            // double H_au = calculatePressureScaleHeight(r_dust_particle_au, disk_params); // Removed: unused
+            double calculateKeplerianVelocity_au_yr2pi = calculateKeplerianVelocity(r_dust_particle_au, disk_params);
             // double omega_yr2pi = kep_freq(r_dust_particle_au, disk_params); // Removed: unused
             double sound_speed_au_yr2pi = c_sound(r_dust_particle_au, disk_params);
             double sound_speed_sq = sound_speed_au_yr2pi * sound_speed_au_yr2pi;
@@ -368,7 +368,7 @@ int run_init_tool(init_tool_options_t *opts, disk_t *disk_params) {
             }
 
             double s_drift = opts->f_drift * 2.0 / M_PI * sigma_dust_local_cgs / opts->dust_density_g_cm3 *
-                             (v_kep_au_yr2pi * v_kep_au_yr2pi) / sound_speed_sq * fabs(1.0 / dlnPdlnr_local);
+                             (calculateKeplerianVelocity_au_yr2pi * calculateKeplerianVelocity_au_yr2pi) / sound_speed_sq * fabs(1.0 / dlnPdlnr_local);
 
             double s_frag = opts->f_frag * 2.0 / (3.0 * M_PI) * sigma_gas_local_cgs /
                             (opts->dust_density_g_cm3 * calculateTurbulentAlpha(r_dust_particle_au, disk_params)) *
@@ -380,7 +380,7 @@ int run_init_tool(init_tool_options_t *opts, disk_t *disk_params) {
                 fprintf(stderr, "Error: Denominator is near zero in s_df calculation at r = %lg. Check dlnPdlnr value. Setting s_df to a large value.\n", r_dust_particle_au);
                 s_df = 1e99;
             } else {
-                s_df = u_frag_au_yr2pi * v_kep_au_yr2pi / dlnPdlnr_abs_cs2_half * 2.0 * sigma_gas_local_cgs / (M_PI * opts->dust_density_g_cm3);
+                s_df = u_frag_au_yr2pi * calculateKeplerianVelocity_au_yr2pi / dlnPdlnr_abs_cs2_half * 2.0 * sigma_gas_local_cgs / (M_PI * opts->dust_density_g_cm3);
             }
 
             s_max_cm = find_minimum_double(s_drift, s_frag, s_df);

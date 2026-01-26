@@ -19,13 +19,13 @@ double calculateTurbulentAlpha(double r, const disk_t *disk_params);
 double calculateStokesNumber(double pradius, double sigma, disk_t *disk_params);
 
 /*	Lokalis viszkozitas erteke	*/
-double kinematicViscosity(double r, const disk_t *disk_params);
+double calculateKinematicViscosity(double r, const disk_t *disk_params);
 
 /*	local scale height	*/
-double scaleHeight(double r, const disk_t *disk_params);
+double calculatePressureScaleHeight(double r, const disk_t *disk_params);
 
 /*	lokális kepleri sebesség	*/
-double v_kep(double r, const disk_t *disk_params);
+double calculateKeplerianVelocity(double r, const disk_t *disk_params);
 
 /*	lokalis kepleri korfrekvencia	*/
 double kep_freq(double r, const disk_t *disk_params);
