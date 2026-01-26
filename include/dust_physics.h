@@ -16,7 +16,7 @@
 double calculateTurbulentAlpha(double r, const disk_t *disk_params);
 
 /*	kiszamolja az adott reszecskehez tartozo Stokes szamot	*/
-double stokesNumber(double pradius, double sigma, disk_t *disk_params);
+double calculateStokesNumber(double pradius, double sigma, disk_t *disk_params);
 
 /*	Lokalis viszkozitas erteke	*/
 double kinematicViscosity(double r, const disk_t *disk_params);

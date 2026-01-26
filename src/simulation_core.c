@@ -25,7 +25,7 @@ void eqrhs(double pradius, double dp, double sigma, double ug, double r, double 
 
     double P, H, dPdr, St, csound;
       
-    St = stokesNumber(pradius,sigma,disk_params);
+    St = calculateStokesNumber(pradius,sigma,disk_params);
     H = scaleHeight(r,disk_params);   
     P = press(sigma,r,disk_params);
     dPdr = dp;

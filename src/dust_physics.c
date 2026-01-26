@@ -26,7 +26,7 @@ double calculateTurbulentAlpha(double r, const disk_t *disk_params) {
 
 /*	Calculates the Stokes number for each particle	*/
 /*	St = rho_particle * radius_particle * PI / (2 * sigma)	*/
-double stokesNumber(double pradius, double sigma, disk_t *disk_params) { /*	in the Epstein drag regime	*/
+double calculateStokesNumber(double pradius, double sigma, disk_t *disk_params) { /*	in the Epstein drag regime	*/
     return disk_params->PDENSITYDIMLESS * pradius * M_PI / (2.0 * sigma);
 }
 
