@@ -13,6 +13,7 @@
 #include "utils.h"            // Functions from utils.h
 #include "gas_physics.h"
 #include "boundary_conditions.h"
+#include "integrator.h"
 
 
 // NEW: Include your simulation_types.h and parser.h

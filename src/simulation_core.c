@@ -19,6 +19,7 @@
 #include "particle_data.h" // Új include
 #include "gas_physics.h"
 #include "boundary_conditions.h"
+#include "integrator.h"
 
 
 /*	Kiszamolja az 1D-s driftet	*/
@@ -67,69 +68,6 @@ double time_step(const disk_t *disk_params) { // Add const here too
 
     return stepping;
 }
-
-
-/*	Runge-Kutta4 integrator	*/
-// prad bemenet: AU-ban!
-void int_step(double time, double prad, const double *sigmad, const double *rdvec, double step, double y, double *ynew, double *pradnew, const disk_t *disk_params, const simulation_options_t *sim_opts){
-    double dy1,dy2,dy3,dy4;
-    double ytemp, ytemp2;
-    double sigma, dpress, ugas; 
-    double pdens, p;
-    double pradtemp;
-    int opt = 0;
-    double sigmadd = 0.0;
-    
-/*	Mivel a kulongozo parametereket csak a megadott gridcella pontokban ismerjuk, de ez nem feltetlen egyezik meg a reszecskek pozicijaval, ezert minden fontos parametert interpolalunk a reszecskek tavolsagara	*/
-    interpol(disk_params->sigmavec,disk_params->rvec,y,&sigma,disk_params->DD,opt,disk_params);
-    interpol(disk_params->dpressvec,disk_params->rvec,y,&dpress,disk_params->DD,opt,disk_params);
-    interpol(disk_params->ugvec,disk_params->rvec,y,&ugas,disk_params->DD,opt,disk_params);
-
-    double dd = (disk_params->RMAX - disk_params->RMIN) / (PARTICLE_NUMBER-1);
-    int dker = (int)(1./dd);//
-    dker = dker * KEREK;
-    double ddker = (double) dker;
-    int temp;
-
-    temp = (int)floor(y * ddker+0.5);
-    ytemp2 = (double)temp / ddker;
-    
-    int i;
-    for(i=0;i<PARTICLE_NUMBER;i++) {
-        if(ytemp2 == rdvec[i]) {
-            sigmadd = sigmad[i];
-            break;
-        }
-    }
-
-    if(sim_opts->growth == 1.) {		// ha van reszecskenovekedes
-        if(time != 0.) {	// ha nem t0 idopontban vagyunk
-            pradtemp = prad;
-            interpol(disk_params->pressvec,disk_params->rvec,y,&p,disk_params->DD,opt,disk_params);
-            pdens = disk_params->PDENSITY; 
-            pradtemp = calculateDustParticleSize(prad,pdens,sigma,sigmadd,y,p,dpress,step,disk_params);	// itt szamolja a reszecskenovekedest
-            prad = pradtemp;
-        }
-    }
-
-    *pradnew = prad;
-
-/*	Itt szamolja a reszecske poziciojat	*/
-    eqrhs(prad, dpress, sigma, ugas, y, &dy1,disk_params);
-
-    ytemp = y + 0.5 * step * dy1;
-    eqrhs(prad, dpress, sigma, ugas, ytemp, &dy2,disk_params);
-        
-    ytemp = y + 0.5 * step * dy2;
-    eqrhs(prad, dpress, sigma, ugas, ytemp, &dy3,disk_params);
-    
-    ytemp = y + step * dy3;
-    eqrhs(prad, dpress, sigma, ugas, ytemp, &dy4,disk_params);
-
-    *ynew = y + step * (dy1 + 2.0 * dy2 + 2.0 * dy3 + dy4) / 6.0;
-
-}
-
 
 
 void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, output_files_t *output_files) {
