@@ -13,6 +13,7 @@
 #include "utils.h"            // Functions from utils.h
 #include "gas_physics.h"
 #include "boundary_conditions.h"
+#include "integrator.h"
 
 
 // NEW: Include your simulation_types.h and parser.h
@@ -260,10 +261,10 @@ int main(int argc, const char **argv) {
 
     fprintf(stderr, "DEBUG [main]: Initial profile loading for sigIn...\n");
     sigIn(&disk_params, current_inputsig_file); // This populates disk_params.sigmavec and rvec
-    fprintf(stderr, "DEBUG [main]: sigIn completed. Calling Perem for disk_params.rvec and disk_params.sigmavec...\n");
-    Perem(disk_params.rvec, &disk_params);
-    Perem(disk_params.sigmavec, &disk_params);
-    fprintf(stderr, "DEBUG [main]: Perem calls completed for initial profile.\n");
+    fprintf(stderr, "DEBUG [main]: sigIn completed. Calling applyBoundaryConditions for disk_params.rvec and disk_params.sigmavec...\n");
+    applyBoundaryConditions(disk_params.rvec, &disk_params);
+    applyBoundaryConditions(disk_params.sigmavec, &disk_params);
+    fprintf(stderr, "DEBUG [main]: applyBoundaryConditions calls completed for initial profile.\n");
 
     // Print current information
     fprintf(stderr, "DEBUG [main]: Calling infoCurrent...\n");

@@ -3,7 +3,7 @@
 #include "config.h"       // Szükséges lehet a globális konstansokhoz (pl. PARTICLE_NUMBER, AU2CM, RMIN, RMAX, NGRID, G_GRAV_CONST, STAR, SDCONV, CMPSECTOAUPYRP2PI, uFrag, fFrag, PDENSITYDIMLESS, HASP, M_PI, DD, sim_opts->dzone, sim_opts->twopop, RMIN, RMAX, FLIND, alpha_visc, a_mod, r_dze_i, r_dze_o, Dr_dze_i, Dr_dze_o)
 #include "simulation_types.h" // Például output_files_t, disk_t struktúrákhoz
 #include "boundary_conditions.h"
-#include "simulation_core.h" // int_step, Perem, find_num_zero, find_zero, find_r_annulus függvényekhez
+#include "simulation_core.h" // int_step, applyBoundaryConditions, find_num_zero, find_zero, find_r_annulus függvényekhez
 #include "utils.h"           // find_min függvényhez
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,7 +34,7 @@ double calculateKinematicViscosity(double r, const disk_t *disk_params) {
     double cs, H;
 
     H = calculatePressureScaleHeight(r,disk_params);
-    cs = c_sound(r,disk_params);
+    cs = calculateLocalSoundSpeed(r,disk_params);
 
     nu = calculateTurbulentAlpha(r, disk_params) * cs * H;
     return nu;
@@ -59,27 +59,27 @@ double calculateKeplerianVelocity(double r, const disk_t *disk_params) {
 }
 
 /*  lokalis kepleri korfrekvencia   */
-double kep_freq(double r, const disk_t *disk_params) {
+double calculateKeplerianFrequency(double r, const disk_t *disk_params) {
     return sqrt(G_GRAV_CONST * disk_params->STAR_MASS / r / r / r);
 }
 
 /*  local sound speed       */
-double c_sound(double r, const disk_t *disk_params) {
-    return kep_freq(r,disk_params) * calculatePressureScaleHeight(r,disk_params);
+double calculateLocalSoundSpeed(double r, const disk_t *disk_params) {
+    return calculateKeplerianFrequency(r,disk_params) * calculatePressureScaleHeight(r,disk_params);
 }
 
 /*  Suruseg a midplane-ben  */
-double rho_mp(double sigma, double r, const disk_t *disk_params) {
+double calcualteMidplaneGasDensity(double sigma, double r, const disk_t *disk_params) {
     return 1. / sqrt(2.0 * M_PI) * sigma / calculatePressureScaleHeight(r,disk_params);
 }
 
 /* local pressure of the gas p = rho_gas * cs * cs kepletbol!!  */
-double press(double sigma, double r, const disk_t *disk_params) {
-    return rho_mp(sigma, r, disk_params) * c_sound(r,disk_params) * c_sound(r, disk_params);
+double calculateGasPressure(double sigma, double r, const disk_t *disk_params) {
+    return calcualteMidplaneGasDensity(sigma, r, disk_params) * calculateLocalSoundSpeed(r,disk_params) * calculateLocalSoundSpeed(r, disk_params);
 }
 
 /*  a nyomas derivaltja */
-void dpress(disk_t *disk_params) {
+void calculateGasPressureGradient(disk_t *disk_params) {
     int i;
     double ptemp, pvec[disk_params->NGRID + 2];
 
@@ -95,13 +95,13 @@ void dpress(disk_t *disk_params) {
 
 }
 
-/*  u_gas kiszamolasahoz eltarolt koefficiens   */
-double Coeff_3(double sigma, double r) {
+/*  calculateGasRadialVelocity kiszamolasahoz eltarolt koefficiens   */
+double coefficientForGasRadialVelocity(double sigma, double r) {
     return -1.0 * (3.0 / (sigma * sqrt(r)));
 }
 
-/*  u_gas = -3/(Sigma*R^0.5)*(d/dR)(nu*Sigma*R^0.5) kiszamolasa */
-void u_gas(disk_t *disk_params) {
+/*  calculateGasRadialVelocity = -3/(Sigma*R^0.5)*(d/dR)(nu*Sigma*R^0.5) kiszamolasa */
+void calculateGasRadialVelocity(disk_t *disk_params) {
 
     double tempug;
     // Lokális tömbök, méret NGRID-hez igazítva disk_params-ból
@@ -124,8 +124,8 @@ void u_gas(disk_t *disk_params) {
     #pragma omp parallel for private(i, tempug)
     for (i = 1; i <= disk_params->NGRID; i++) { // Használd a disk_params->NGRID-et
         tempug = (ugvec[i + 1] - ugvec[i - 1]) / (2.0 * disk_params->DD); // Használd a disk_params->DD-t
-        // Coeff_3 hívása, ha szükséges, átadva neki a disk_params-ot
-        ugvectemp[i] = Coeff_3(disk_params->sigmavec[i], disk_params->rvec[i]) * tempug;
+        // coefficientForGasRadialVelocity hívása, ha szükséges, átadva neki a disk_params-ot
+        ugvectemp[i] = coefficientForGasRadialVelocity(disk_params->sigmavec[i], disk_params->rvec[i]) * tempug;
     }
 
     // Harmadik ciklus: Az eredményt bemásolja a disk_params->ugvec-be
@@ -135,7 +135,7 @@ void u_gas(disk_t *disk_params) {
 }
 
 /*  Fuggveny a sigma, p, dp kiszamolasara   */
-void Get_Sigma_P_dP(const simulation_options_t *sim_opts, disk_t *disk_params) { // Added sim_opts
+void refreshGasSurfaceDensityPressurePressureGradient(const simulation_options_t *sim_opts, disk_t *disk_params) { // Added sim_opts
 
     double u, u_bi, u_fi;
     double sigma_temp[disk_params->NGRID + 2]; // Use disk_params->NGRID
@@ -175,19 +175,19 @@ void Get_Sigma_P_dP(const simulation_options_t *sim_opts, disk_t *disk_params) {
     for (i = 1; i <= disk_params->NGRID; i++) { // Use disk_params->NGRID
         // Update disk_params' own arrays
         disk_params->sigmavec[i] = sigma_temp[i] / calculateKinematicViscosity(disk_params->rvec[i], disk_params);
-        disk_params->pressvec[i] = press(disk_params->sigmavec[i], disk_params->rvec[i], disk_params); // Assuming press takes disk_params
+        disk_params->pressvec[i] = calculateGasPressure(disk_params->sigmavec[i], disk_params->rvec[i], disk_params); // Assuming calculateGasPressure takes disk_params
     }
 
     // These calls likely remain sequential or require their own internal OpenMP if large
-    // If Perem, dpress also update members of disk_params, they should take disk_params as a parameter.
+    // If applyBoundaryConditions, dpress also update members of disk_params, they should take disk_params as a parameter.
     // And if they are modifying the *content* of the arrays within disk_params, then disk_params should NOT be const in *their* parameter list.
-    // However, since Get_Sigma_P_dP is modifying them, disk_params *here* cannot be const.
-    // Let's remove 'const' from disk_params in Get_Sigma_P_dP signature if it modifies them.
-    // void Get_Sigma_P_dP(disk_t *disk_params, const simulation_options_t *sim_opts) { ... }
+    // However, since refreshGasSurfaceDensityPressurePressureGradient is modifying them, disk_params *here* cannot be const.
+    // Let's remove 'const' from disk_params in refreshGasSurfaceDensityPressurePressureGradient signature if it modifies them.
+    // void refreshGasSurfaceDensityPressurePressureGradient(disk_t *disk_params, const simulation_options_t *sim_opts) { ... }
     
     // Assuming these helper functions need disk_params to access *its* internal arrays
-    dpress(disk_params); // Assuming dpress takes arrays and disk_params
-    Perem(disk_params->sigmavec, disk_params); // First argument is the array, second is the disk_t pointer
-    Perem(disk_params->pressvec, disk_params);
-    Perem(disk_params->dpressvec, disk_params);
+    calculateGasPressureGradient(disk_params); // Assuming dpress takes arrays and disk_params
+    applyBoundaryConditions(disk_params->sigmavec, disk_params); // First argument is the array, second is the disk_t pointer
+    applyBoundaryConditions(disk_params->pressvec, disk_params);
+    applyBoundaryConditions(disk_params->dpressvec, disk_params);
 }

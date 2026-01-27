@@ -54,7 +54,7 @@ void createInitialGasSurfaceDensity(disk_t *disk_params){		/*	initial profile of
     }
   
 
-  	Perem(disk_params->sigmavec,disk_params);
+  	applyBoundaryConditions(disk_params->sigmavec,disk_params);
 
 }
 
@@ -63,17 +63,17 @@ void createInitialGasPressure(disk_t *disk_params){
   	int i;
   
   	for(i = 1; i <= disk_params->NGRID; i++) {
-    		disk_params->pressvec[i] = press(disk_params->sigmavec[i],disk_params->rvec[i],disk_params);
+    		disk_params->pressvec[i] = calculateGasPressure(disk_params->sigmavec[i],disk_params->rvec[i],disk_params);
   	}
-  	Perem(disk_params->pressvec,disk_params);
+  	applyBoundaryConditions(disk_params->pressvec,disk_params);
 
 
 }
 
 void createInitialGasPressureGradient(disk_t *disk_params){
 
-	dpress(disk_params);
-   	Perem(disk_params->dpressvec,disk_params);
+	calculateGasPressureGradient(disk_params);
+   	applyBoundaryConditions(disk_params->dpressvec,disk_params);
 
 
 }
@@ -81,13 +81,13 @@ void createInitialGasPressureGradient(disk_t *disk_params){
 /*	Update radial gas velovity	*/
 void createInitialGasVelocity(disk_t *disk_params){	
  	
-	u_gas(disk_params);
-  	Perem(disk_params->ugvec,disk_params);
+	calculateGasRadialVelocity(disk_params);
+  	applyBoundaryConditions(disk_params->ugvec,disk_params);
 }
 
 
 
-void calculateDustSurfaceDensity(double radin[][2], double *massin, double out[][3], int n, const disk_t *disk_params) {
+void calculateInitialDustSurfaceDensity(double radin[][2], double *massin, double out[][3], int n, const disk_t *disk_params) {
 
 	int i;
 

@@ -1,7 +1,7 @@
 #include "init_tool_module.h"
 #include "config.h" // For FILENAME_INIT_DUST_PROFILE, FILENAME_DISK_PARAM, SDCONV, G_GRAV_CONST, SNOWLINE, ICEFACTOR, CMPSECTOAUPYRP2PI
-#include "disk_model.h" // Contains declarations for createRadialGrid, createInitialGasSurfaceDensity, createInitialGasPressure, createInitialGasPressureGradient, createInitialGasVelocity, readDiskParameters, scale_height, calculateKeplerianVelocity, kep_freq, c_sound, press, rho_mp
-#include "dust_physics.h" // May contain GetMass, etc.
+#include "disk_model.h" // Contains declarations for createRadialGrid, createInitialGasSurfaceDensity, createInitialGasPressure, createInitialGasPressureGradient, createInitialGasVelocity, readDiskParameters, scale_height, calculateKeplerianVelocity, kep_freq, calculateLocalSoundSpeed, press, calcualteMidplaneGasDensity
+#include "dust_physics.h" // May contain calculateParticleMass, etc.
 #include "utils.h" // For find_max, find_min, etc. and for interpolation functions
 #include "io_utils.h" // For Mk_Dir (if used internally here)
 #include "gas_physics.h"
@@ -351,8 +351,8 @@ int run_init_tool(init_tool_options_t *opts, disk_t *disk_params) {
             // Use interpolated gas properties for calculations
             // double H_au = calculatePressureScaleHeight(r_dust_particle_au, disk_params); // Removed: unused
             double calculateKeplerianVelocity_au_yr2pi = calculateKeplerianVelocity(r_dust_particle_au, disk_params);
-            // double omega_yr2pi = kep_freq(r_dust_particle_au, disk_params); // Removed: unused
-            double sound_speed_au_yr2pi = c_sound(r_dust_particle_au, disk_params);
+            // double omega_yr2pi = calculateKeplerianFrequency(r_dust_particle_au, disk_params); // Removed: unused
+            double sound_speed_au_yr2pi = calculateLocalSoundSpeed(r_dust_particle_au, disk_params);
             double sound_speed_sq = sound_speed_au_yr2pi * sound_speed_au_yr2pi;
 
             long double sigma_dust_local = calculate_dust_surface_density(r_dust_particle_au, opts, current_sigma0_gas);

@@ -16,27 +16,27 @@
 /*	kiszamolja az adott reszecskehez tartozo Stokes szamot	*/
 double calculateStokesNumber(double pradius, double sigma, disk_t *disk_params);
 
-// GetMass függvény prototípusa
-void GetMass(int n, double (*partmassind)[5], int indii, int indio, int indoi, int indoo, double *massiout, double *massoout, const simulation_options_t *sim_opts);
+// calculateParticleMass függvény prototípusa
+void calculateParticleMass(int n, double (*partmassind)[5], int indii, int indio, int indoi, int indoo, double *massiout, double *massoout, const simulation_options_t *sim_opts);
 
-double a_drift(double sigmad, double r, double p, double dp, double rho_p, const disk_t *disk_params);
-double a_turb(double sigma, double r, double rho_p, const disk_t *disk_params);
-double a_df(double sigma, double r, double p, double dp, double rho_p, const disk_t *disk_params);
+double calculateRadialDriftBarrier(double sigmad, double r, double p, double dp, double rho_p, const disk_t *disk_params);
+double calculateTurbulentFragmentationBarrier(double sigma, double r, double rho_p, const disk_t *disk_params);
+double calculateDriftInducedFragmentationBarrier(double sigma, double r, double p, double dp, double rho_p, const disk_t *disk_params);
 
 /*	a reszecskek novekedesenek idoskalaja	*/
-double tauGr(double r, double eps, const disk_t *disk_params);
+double calculateGrowthTimescale(double r, double eps, const disk_t *disk_params);
 
 /*	kiszamolja az adott helyen a reszecske meretet --> BIRNSTIEL CIKK	*/
-double getSize(double prad, double pdens, double sigma, double sigmad, double y, double p, double dpress_val, double dt, const disk_t *disk_params);
+double calculateDustParticleSize(double prad, double pdens, double sigma, double sigmad, double y, double p, double dpress_val, double dt, const disk_t *disk_params);
 
 // Porkorong sűrűségének számítása
-void Get_Sigmad(double max_param, double min_param, double rad[][2], double radmicr[][2],
+void calculateDustSurfaceDensity(double max_param, double min_param, double rad[][2], double radmicr[][2],
                 double *sigma_d, double *sigma_dm, double *massvec,
                 double *massmicrvec,double *rd, double *rmic,
                 const simulation_options_t *sim_opts, const disk_t *disk_params);
 
 /*	Fuggveny a porszemcsek uj tavolsaganak elraktarozasara		*/
-void Get_Radius(const char *nev, int opt, double radius[][2], const double *sigmad, const double *rdvec,
+void calculateDustDistance(const char *nev, int opt, double radius[][2], const double *sigmad, const double *rdvec,
                 double deltat, double t, int n, const simulation_options_t *sim_opts, const disk_t *disk_params);
 
 
