@@ -14,7 +14,7 @@
 #include "io_utils.h"     // For timePar (though not called in tIntegrate, it's io-related), reszecskek_szama, por_be, Print_Sigma, Print_Pormozg_Size, Print_Mass, Print_Sigmad. Also for globals: filenev1, filenev3, fout, foutmicr, massfil
 #include "disk_model.h"   // If any disk_model functions are called (e.g., applyBoundaryConditions indirectly if sigma/calculateGasPressure depend on it) - Though not directly visible in tIntegrate, often needed for global disk parameters. Add if you hit implicit declaration for disk_model functions.
 #include "dust_physics.h" // For Count_Mass, secondaryGrowth, find_max, find_min, calculateDustSurfaceDensity, calculateDustDistance
-#include "utils.h"        // For time_step, Get_Sigma_P_dP, and potentially other utility functions
+#include "utils.h"        // For time_step, refreshGasSurfaceDensityPressurePressureGradient, and potentially other utility functions
 #include "simulation_core.h"
 #include "particle_data.h" // Új include
 #include "gas_physics.h"
@@ -285,7 +285,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
 
             // Gas evolution
             if (sim_opts->evol == 1.) {
-                Get_Sigma_P_dP(sim_opts, disk_params);
+                refreshGasSurfaceDensityPressurePressureGradient(sim_opts, disk_params);
             }
 
             // Count masses and get sigma_d for the next step (always done)
@@ -348,8 +348,8 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                 fprintf(stderr,"DEBUG [tIntegrate]: Updated L to %.2e.\n", L);
             }
 
-            fprintf(stderr,"DEBUG [tIntegrate]: Calling Get_Sigma_P_dP for gas-only evolution.\n");
-            Get_Sigma_P_dP(sim_opts, disk_params);
+            fprintf(stderr,"DEBUG [tIntegrate]: Calling refreshGasSurfaceDensityPressurePressureGradient for gas-only evolution.\n");
+            refreshGasSurfaceDensityPressurePressureGradient(sim_opts, disk_params);
             
             t = t + deltat;
         }

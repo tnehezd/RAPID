@@ -69,13 +69,13 @@ double calculateLocalSoundSpeed(double r, const disk_t *disk_params) {
 }
 
 /*  Suruseg a midplane-ben  */
-double rho_mp(double sigma, double r, const disk_t *disk_params) {
+double calcualteMidplaneGasDensity(double sigma, double r, const disk_t *disk_params) {
     return 1. / sqrt(2.0 * M_PI) * sigma / calculatePressureScaleHeight(r,disk_params);
 }
 
 /* local pressure of the gas p = rho_gas * cs * cs kepletbol!!  */
 double calculateGasPressure(double sigma, double r, const disk_t *disk_params) {
-    return rho_mp(sigma, r, disk_params) * calculateLocalSoundSpeed(r,disk_params) * calculateLocalSoundSpeed(r, disk_params);
+    return calcualteMidplaneGasDensity(sigma, r, disk_params) * calculateLocalSoundSpeed(r,disk_params) * calculateLocalSoundSpeed(r, disk_params);
 }
 
 /*  a nyomas derivaltja */
@@ -135,7 +135,7 @@ void calculateGasRadialVelocity(disk_t *disk_params) {
 }
 
 /*  Fuggveny a sigma, p, dp kiszamolasara   */
-void Get_Sigma_P_dP(const simulation_options_t *sim_opts, disk_t *disk_params) { // Added sim_opts
+void refreshGasSurfaceDensityPressurePressureGradient(const simulation_options_t *sim_opts, disk_t *disk_params) { // Added sim_opts
 
     double u, u_bi, u_fi;
     double sigma_temp[disk_params->NGRID + 2]; // Use disk_params->NGRID
@@ -181,9 +181,9 @@ void Get_Sigma_P_dP(const simulation_options_t *sim_opts, disk_t *disk_params) {
     // These calls likely remain sequential or require their own internal OpenMP if large
     // If applyBoundaryConditions, dpress also update members of disk_params, they should take disk_params as a parameter.
     // And if they are modifying the *content* of the arrays within disk_params, then disk_params should NOT be const in *their* parameter list.
-    // However, since Get_Sigma_P_dP is modifying them, disk_params *here* cannot be const.
-    // Let's remove 'const' from disk_params in Get_Sigma_P_dP signature if it modifies them.
-    // void Get_Sigma_P_dP(disk_t *disk_params, const simulation_options_t *sim_opts) { ... }
+    // However, since refreshGasSurfaceDensityPressurePressureGradient is modifying them, disk_params *here* cannot be const.
+    // Let's remove 'const' from disk_params in refreshGasSurfaceDensityPressurePressureGradient signature if it modifies them.
+    // void refreshGasSurfaceDensityPressurePressureGradient(disk_t *disk_params, const simulation_options_t *sim_opts) { ... }
     
     // Assuming these helper functions need disk_params to access *its* internal arrays
     calculateGasPressureGradient(disk_params); // Assuming dpress takes arrays and disk_params

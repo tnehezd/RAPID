@@ -19,10 +19,10 @@ double calculateKeplerianVelocity(double r, const disk_t *disk_params);
 double calculateKeplerianFrequency(double r, const disk_t *disk_params);
 
 /*	local sound speed		*/
-double c_sound(double r, const disk_t *disk_params);
+double calculateLocalSoundSpeed(double r, const disk_t *disk_params);
 
 /*	Suruseg a midplane-ben	*/
-double rho_mp(double sigma, double r, const disk_t *disk_params);
+double calcualteMidplaneGasDensity(double sigma, double r, const disk_t *disk_params);
 
 /* local pressure of the gas p = rho_gas * cs * cs kepletbol!!	*/
 double calculateGasPressure(double sigma, double r, const disk_t *disk_params);
@@ -38,6 +38,6 @@ void calculateGasRadialVelocity(disk_t *disk_params); // disk_params nem const, 
 
 /*	Fuggveny a sigma, p, dp kiszamolasara	*/
 // disk_params nem const, mert módosítva van a sigmavec, pressvec, dpressvec tagjai
-void Get_Sigma_P_dP(const simulation_options_t *sim_opts, disk_t *disk_params);
+void refreshGasSurfaceDensityPressurePressureGradient(const simulation_options_t *sim_opts, disk_t *disk_params);
 
 #endif // GAS_PHYSICS_H
