@@ -16,7 +16,7 @@ double calculatePressureScaleHeight(double r, const disk_t *disk_params);
 double calculateKeplerianVelocity(double r, const disk_t *disk_params);
 
 /*	lokalis kepleri korfrekvencia	*/
-double kep_freq(double r, const disk_t *disk_params);
+double calculateKeplerianFrequency(double r, const disk_t *disk_params);
 
 /*	local sound speed		*/
 double c_sound(double r, const disk_t *disk_params);
@@ -25,16 +25,16 @@ double c_sound(double r, const disk_t *disk_params);
 double rho_mp(double sigma, double r, const disk_t *disk_params);
 
 /* local pressure of the gas p = rho_gas * cs * cs kepletbol!!	*/
-double press(double sigma, double r, const disk_t *disk_params);
+double calculateGasPressure(double sigma, double r, const disk_t *disk_params);
 
 /*	a nyomas derivaltja	*/
-void dpress(disk_t *disk_params);
+void calculateGasPressureGradient(disk_t *disk_params);
 
-/*	u_gas kiszamolasahoz eltarolt koefficiens	*/
-double Coeff_3(double sigma, double r); // Feltételezve, hogy Coeff_3 a dust_physics.c-ben van
+/*	calculateGasRadialVelocity kiszamolasahoz eltarolt koefficiens	*/
+double coefficientForGasRadialVelocity(double sigma, double r); // Feltételezve, hogy coefficientForGasRadialVelocity a dust_physics.c-ben van
 
-/*	u_gas = -3/(Sigma*R^0.5)*(d/dR)(nu*Sigma*R^0.5) kiszamolasa	*/
-void u_gas(disk_t *disk_params); // disk_params nem const, mert módosítva van az ugvec tagja
+/*	calculateGasRadialVelocity = -3/(Sigma*R^0.5)*(d/dR)(nu*Sigma*R^0.5) kiszamolasa	*/
+void calculateGasRadialVelocity(disk_t *disk_params); // disk_params nem const, mert módosítva van az ugvec tagja
 
 /*	Fuggveny a sigma, p, dp kiszamolasara	*/
 // disk_params nem const, mert módosítva van a sigmavec, pressvec, dpressvec tagjai
