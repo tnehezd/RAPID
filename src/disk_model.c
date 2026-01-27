@@ -54,7 +54,7 @@ void createInitialGasSurfaceDensity(disk_t *disk_params){		/*	initial profile of
     }
   
 
-  	Perem(disk_params->sigmavec,disk_params);
+  	applyBoundaryConditions(disk_params->sigmavec,disk_params);
 
 }
 
@@ -65,7 +65,7 @@ void createInitialGasPressure(disk_t *disk_params){
   	for(i = 1; i <= disk_params->NGRID; i++) {
     		disk_params->pressvec[i] = press(disk_params->sigmavec[i],disk_params->rvec[i],disk_params);
   	}
-  	Perem(disk_params->pressvec,disk_params);
+  	applyBoundaryConditions(disk_params->pressvec,disk_params);
 
 
 }
@@ -73,7 +73,7 @@ void createInitialGasPressure(disk_t *disk_params){
 void createInitialGasPressureGradient(disk_t *disk_params){
 
 	dpress(disk_params);
-   	Perem(disk_params->dpressvec,disk_params);
+   	applyBoundaryConditions(disk_params->dpressvec,disk_params);
 
 
 }
@@ -82,7 +82,7 @@ void createInitialGasPressureGradient(disk_t *disk_params){
 void createInitialGasVelocity(disk_t *disk_params){	
  	
 	u_gas(disk_params);
-  	Perem(disk_params->ugvec,disk_params);
+  	applyBoundaryConditions(disk_params->ugvec,disk_params);
 }
 
 

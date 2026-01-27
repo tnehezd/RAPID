@@ -60,7 +60,7 @@ void parabolicExtrapolationToGhostCells(double *vec, int i1, int i2, int i3, dou
 }
 
 
-void Perem(double *vec, const disk_t *disk_params) {					/*	boundary condition for sigma, p, dp...	*/
+void applyBoundaryConditions(double *vec, const disk_t *disk_params) {					/*	boundary condition for sigma, p, dp...	*/
 
 
 // OPEN BOUNDARY: mind a sebességre, mind a többi fizikai mennyiségre parabola illesztést használunk

@@ -3,7 +3,7 @@
 #include "config.h"       // Szükséges lehet a globális konstansokhoz (pl. PARTICLE_NUMBER, AU2CM, RMIN, RMAX, NGRID, G_GRAV_CONST, STAR, SDCONV, CMPSECTOAUPYRP2PI, uFrag, fFrag, PDENSITYDIMLESS, HASP, M_PI, DD, sim_opts->dzone, sim_opts->twopop, RMIN, RMAX, FLIND, alpha_visc, a_mod, r_dze_i, r_dze_o, Dr_dze_i, Dr_dze_o)
 #include "simulation_types.h" // Például output_files_t, disk_t struktúrákhoz
 #include "boundary_conditions.h"
-#include "simulation_core.h" // int_step, Perem, find_num_zero, find_zero, find_r_annulus függvényekhez
+#include "simulation_core.h" // int_step, applyBoundaryConditions, find_num_zero, find_zero, find_r_annulus függvényekhez
 #include "utils.h"           // find_min függvényhez
 #include <stdio.h>
 #include <stdlib.h>
@@ -179,7 +179,7 @@ void Get_Sigma_P_dP(const simulation_options_t *sim_opts, disk_t *disk_params) {
     }
 
     // These calls likely remain sequential or require their own internal OpenMP if large
-    // If Perem, dpress also update members of disk_params, they should take disk_params as a parameter.
+    // If applyBoundaryConditions, dpress also update members of disk_params, they should take disk_params as a parameter.
     // And if they are modifying the *content* of the arrays within disk_params, then disk_params should NOT be const in *their* parameter list.
     // However, since Get_Sigma_P_dP is modifying them, disk_params *here* cannot be const.
     // Let's remove 'const' from disk_params in Get_Sigma_P_dP signature if it modifies them.
@@ -187,7 +187,7 @@ void Get_Sigma_P_dP(const simulation_options_t *sim_opts, disk_t *disk_params) {
     
     // Assuming these helper functions need disk_params to access *its* internal arrays
     dpress(disk_params); // Assuming dpress takes arrays and disk_params
-    Perem(disk_params->sigmavec, disk_params); // First argument is the array, second is the disk_t pointer
-    Perem(disk_params->pressvec, disk_params);
-    Perem(disk_params->dpressvec, disk_params);
+    applyBoundaryConditions(disk_params->sigmavec, disk_params); // First argument is the array, second is the disk_t pointer
+    applyBoundaryConditions(disk_params->pressvec, disk_params);
+    applyBoundaryConditions(disk_params->dpressvec, disk_params);
 }
