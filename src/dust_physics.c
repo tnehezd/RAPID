@@ -25,7 +25,7 @@ double calculateStokesNumber(double pradius, double sigma, disk_t *disk_params) 
     return disk_params->PDENSITYDIMLESS * pradius * M_PI / (2.0 * sigma);
 }
 
-void GetMass(int n, double (*partmassind)[5], int indii, int indio, int indoi, int indoo, double *massiout, double *massoout, const simulation_options_t *sim_opts) {
+void calculateParticleMass(int n, double (*partmassind)[5], int indii, int indio, int indoi, int indoo, double *massiout, double *massoout, const simulation_options_t *sim_opts) {
 
     // Debug üzenet frissítve az indexekre
 
@@ -98,7 +98,7 @@ void GetMass(int n, double (*partmassind)[5], int indii, int indio, int indoi, i
 
 //reprezentativ reszecske kezdeti meretenek meghatarozasa
 // 1. radialis drift altal meghatarozott maximalis meret			--> kimenet cm-ben!
-double a_drift(double sigmad, double r, double p, double dp, double rho_p, const disk_t *disk_params) {
+double calculateRadialDriftBarrier(double sigmad, double r, double p, double dp, double rho_p, const disk_t *disk_params) {
 
     double Sigmad_cgs = sigmad / SDCONV;
 
@@ -112,7 +112,7 @@ double a_drift(double sigmad, double r, double p, double dp, double rho_p, const
 }
 
 // 2. a kis skalaju turbulencia altal okozott fragmentacio szerinti maximalis meret	--> kimenet cm-ben!
-double a_turb(double sigma, double r, double rho_p, const disk_t *disk_params) {
+double calculateTurbulentFragmentationBarrier(double sigma, double r, double rho_p, const disk_t *disk_params) {
 
     double s_frag, u_frag, u_frag2, Sigma_cgs, c_s, c_s2;
 
@@ -128,7 +128,7 @@ double a_turb(double sigma, double r, double rho_p, const disk_t *disk_params) {
 }
 
 // 3. radialis drift altal okozott fragmentacio szerinti maximalis meret		--> kimenet cm-ben!
-double a_df(double sigma, double r, double p, double dp, double rho_p, const disk_t *disk_params) {
+double calculateDriftInducedFragmentationBarrier(double sigma, double r, double p, double dp, double rho_p, const disk_t *disk_params) {
 
     double u_frag, vkep, dlnPdlnr, c_s, c_s2, s_df, Sigma_cgs;
 
@@ -145,22 +145,22 @@ double a_df(double sigma, double r, double p, double dp, double rho_p, const dis
 }
 
 /*	a reszecskek novekedesenek idoskalaja	*/
-double tauGr(double r, double eps,const disk_t *disk_params) {
+double calculateGrowthTimescale(double r, double eps,const disk_t *disk_params) {
     double omega = kep_freq(r,disk_params);
-    double taugr = eps / omega;
-    return taugr;
+    double calculateGrowthTimescale = eps / omega;
+    return calculateGrowthTimescale;
 }
 
 /*	kiszamolja az adott helyen a reszecske meretet --> BIRNSTIEL CIKK	*/
-double getSize(double prad, double pdens, double sigma, double sigmad, double y, double p, double dpress_val, double dt, const disk_t *disk_params) {
+double calculateDustParticleSize(double prad, double pdens, double sigma, double sigmad, double y, double p, double dpress_val, double dt, const disk_t *disk_params) {
 
-    double sturb = a_turb(sigma, y, pdens, disk_params);           // cm-ben
-    double sdf = a_df(sigma, y, p, dpress_val, pdens,disk_params); // cm-ben
-    double srdf = a_drift(sigmad, y, p, dpress_val, pdens, disk_params); // cm-ben
+    double sturb = calculateTurbulentFragmentationBarrier(sigma, y, pdens, disk_params);           // cm-ben
+    double sdf = calculateDriftInducedFragmentationBarrier(sigma, y, p, dpress_val, pdens,disk_params); // cm-ben
+    double srdf = calculateRadialDriftBarrier(sigmad, y, p, dpress_val, pdens, disk_params); // cm-ben
     double smin = find_min(sturb, sdf, srdf);         // cm-ben -- megadja, hogy a fenti ket reszecske korlatbol melyik ad kisebb meretet (az a reszecskenovekedes felso korlatja
     //	double eps = sigma / 100.;
     double eps = sigmad / sigma; // A korábbi kódban fordítva volt, feltételezem, hogy eps = (por sűrűség) / (gáz sűrűség)
-    double tau_gr = tauGr(y, eps, disk_params);
+    double tau_gr = calculateGrowthTimescale(y, eps, disk_params);
     double rt = 0.0;
 
     smin = smin / AU2CM; // AU-ban
@@ -176,7 +176,7 @@ double getSize(double prad, double pdens, double sigma, double sigmad, double y,
 }
 
 
-void Get_Sigmad(double max_param, double min_param, double rad[][2], double radmicr[][2], 
+void calculateDustSurfaceDensity(double max_param, double min_param, double rad[][2], double radmicr[][2], 
                 double *sigma_d, double *sigma_dm,  double *massvec, double *massmicrvec,  
                 double *rd, double *rmic, const simulation_options_t *sim_opts, const disk_t *disk_params) {
 
@@ -207,9 +207,9 @@ void Get_Sigmad(double max_param, double min_param, double rad[][2], double radm
     // Ha ezek a függvények valamilyen globális állapotot módosítanak, akkor kritikusak.
     // Feltételezve, hogy a 'sigdtemp' és 'sigdmicrtemp' kizárólagosan a hívásaikban vannak feldolgozva,
     // és nem ütköznek más szálakkal globális adatokon keresztül.
-    calculateDustSurfaceDensity(rad, massvec, sigdtemp, PARTICLE_NUMBER,disk_params);
+    calculateInitialDustSurfaceDensity(rad, massvec, sigdtemp, PARTICLE_NUMBER,disk_params);
     if (sim_opts->twopop == 1.0) { // Használjunk double összehasonlítást
-        calculateDustSurfaceDensity(radmicr, massmicrvec, sigdmicrtemp, PARTICLE_NUMBER,disk_params);
+        calculateInitialDustSurfaceDensity(radmicr, massmicrvec, sigdmicrtemp, PARTICLE_NUMBER,disk_params);
     }
 
     contract(sigdtemp, dd, PARTICLE_NUMBER,disk_params);
@@ -232,7 +232,7 @@ void Get_Sigmad(double max_param, double min_param, double rad[][2], double radm
 
 
 /*	Fuggveny a porszemcsek uj tavolsaganak elraktarozasara		*/
-void Get_Radius(const char *nev, int opt, double radius[][2], const double *sigmad, const double *rdvec,
+void calculateDustDistance(const char *nev, int opt, double radius[][2], const double *sigmad, const double *rdvec,
                 double deltat, double t, int n, const simulation_options_t *sim_opts, const disk_t *disk_params){
 
     int i;
@@ -275,7 +275,7 @@ void Get_Radius(const char *nev, int opt, double radius[][2], const double *sigm
                         if (fout2 != NULL) {
                             fprintf(fout2, "%lg %lg\n", radius[i][0], (radius[i][0] / current_drdt_val) / (2.0 * M_PI));
                         } else {
-                            fprintf(stderr, "ERROR: fout2 is NULL during write in Get_Radius (t=0 block).\n");
+                            fprintf(stderr, "ERROR: fout2 is NULL during write in calculateDustDistance (t=0 block).\n");
                         }
                     }
                 }

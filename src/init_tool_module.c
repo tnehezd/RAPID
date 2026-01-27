@@ -1,7 +1,7 @@
 #include "init_tool_module.h"
 #include "config.h" // For FILENAME_INIT_DUST_PROFILE, FILENAME_DISK_PARAM, SDCONV, G_GRAV_CONST, SNOWLINE, ICEFACTOR, CMPSECTOAUPYRP2PI
 #include "disk_model.h" // Contains declarations for createRadialGrid, createInitialGasSurfaceDensity, createInitialGasPressure, createInitialGasPressureGradient, createInitialGasVelocity, readDiskParameters, scale_height, calculateKeplerianVelocity, kep_freq, c_sound, press, rho_mp
-#include "dust_physics.h" // May contain GetMass, etc.
+#include "dust_physics.h" // May contain calculateParticleMass, etc.
 #include "utils.h" // For find_max, find_min, etc. and for interpolation functions
 #include "io_utils.h" // For Mk_Dir (if used internally here)
 #include "gas_physics.h"

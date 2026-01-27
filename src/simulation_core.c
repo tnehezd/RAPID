@@ -13,7 +13,7 @@
 #include "config.h"       // For PARTICLE_NUMBER, TMAX, WO, RMIN, DT, optdr, sim_opts->twopop, sim_opts->growth, optev, r_dze_i, r_dze_o
 #include "io_utils.h"     // For timePar (though not called in tIntegrate, it's io-related), reszecskek_szama, por_be, Print_Sigma, Print_Pormozg_Size, Print_Mass, Print_Sigmad. Also for globals: filenev1, filenev3, fout, foutmicr, massfil
 #include "disk_model.h"   // If any disk_model functions are called (e.g., Perem indirectly if sigma/press depend on it) - Though not directly visible in tIntegrate, often needed for global disk parameters. Add if you hit implicit declaration for disk_model functions.
-#include "dust_physics.h" // For Count_Mass, secondaryGrowth, find_max, find_min, Get_Sigmad, Get_Radius
+#include "dust_physics.h" // For Count_Mass, secondaryGrowth, find_max, find_min, calculateDustSurfaceDensity, calculateDustDistance
 #include "utils.h"        // For time_step, Get_Sigma_P_dP, and potentially other utility functions
 #include "simulation_core.h"
 #include "particle_data.h" // Új include
@@ -107,7 +107,7 @@ void int_step(double time, double prad, const double *sigmad, const double *rdve
             pradtemp = prad;
             interpol(disk_params->pressvec,disk_params->rvec,y,&p,disk_params->DD,opt,disk_params);
             pdens = disk_params->PDENSITY; 
-            pradtemp = getSize(prad,pdens,sigma,sigmadd,y,p,dpress,step,disk_params);	// itt szamolja a reszecskenovekedest
+            pradtemp = calculateDustParticleSize(prad,pdens,sigma,sigmadd,y,p,dpress,step,disk_params);	// itt szamolja a reszecskenovekedest
             prad = pradtemp;
         }
     }
@@ -298,7 +298,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                     if (sim_opts->twopop == 1) Count_Mass(p_data.radiusmicr, p_data.partmassmicrind, p_data.massmicrvec, t, PARTICLE_NUMBER, disk_params);
 
                     if (sim_opts->growth == 1.) {
-                        Get_Sigmad(max, min, p_data.radius, p_data.radiusmicr, p_data.sigmad, p_data.sigmadm, p_data.massvec, p_data.massmicrvec, p_data.rdvec, p_data.rmicvec, sim_opts, disk_params);
+                        calculateDustSurfaceDensity(max, min, p_data.radius, p_data.radiusmicr, p_data.sigmad, p_data.sigmadm, p_data.massvec, p_data.massmicrvec, p_data.rdvec, p_data.rmicvec, sim_opts, disk_params);
                     }
                 }
 
@@ -355,16 +355,16 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
             if (sim_opts->twopop == 1) Count_Mass(p_data.radiusmicr, p_data.partmassmicrind, p_data.massmicrvec, t, PARTICLE_NUMBER, disk_params);
 
             if (sim_opts->growth == 1.) {
-                Get_Sigmad(max, min, p_data.radius, p_data.radiusmicr, p_data.sigmad, p_data.sigmadm, p_data.massvec, p_data.massmicrvec, p_data.rdvec, p_data.rmicvec, sim_opts, disk_params);
+                calculateDustSurfaceDensity(max, min, p_data.radius, p_data.radiusmicr, p_data.sigmad, p_data.sigmadm, p_data.massvec, p_data.massmicrvec, p_data.rdvec, p_data.rmicvec, sim_opts, disk_params);
             }
 
             // Get radii for next step
             int optsize = 0;
-            Get_Radius(sim_opts->output_dir_name, optsize, p_data.radius, p_data.sigmad, p_data.rdvec, deltat, t, PARTICLE_NUMBER, sim_opts, disk_params);
+            calculateDustDistance(sim_opts->output_dir_name, optsize, p_data.radius, p_data.sigmad, p_data.rdvec, deltat, t, PARTICLE_NUMBER, sim_opts, disk_params);
 
             if (sim_opts->twopop == 1.) {
                 optsize = 1;
-                Get_Radius(sim_opts->output_dir_name, optsize, p_data.radiusmicr, p_data.sigmadm, p_data.rmicvec, deltat, t, PARTICLE_NUMBER, sim_opts, disk_params);
+                calculateDustDistance(sim_opts->output_dir_name, optsize, p_data.radiusmicr, p_data.sigmadm, p_data.rmicvec, deltat, t, PARTICLE_NUMBER, sim_opts, disk_params);
 
             }
 

@@ -52,7 +52,7 @@ int allocate_particle_data(ParticleData_t *p_data, size_t particle_count, int is
     }
 
     // Secondary particles (csak ha twopop engedélyezve van, feltételezve, hogy a growth ehhez kapcsolódik)
-    // A 4-szeres méretet a Get_Radius függvényben látottak alapján vettem.
+    // A 4-szeres méretet a calculateDustDistance függvényben látottak alapján vettem.
     if (is_twopop_enabled) {
 
     } else {

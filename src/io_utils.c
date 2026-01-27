@@ -341,13 +341,13 @@ void Print_Mass(double step, double (*partmassind)[5], double (*partmassmicrind)
     double massiim = 0, massoim = 0;
     double massis = 0, massos = 0;
 
-    GetMass(PARTICLE_NUMBER, partmassind, 
+    calculateParticleMass(PARTICLE_NUMBER, partmassind, 
             (int)ind_ii, (int)ind_io, 
             (int)ind_oi, (int)ind_oo, 
             &massii, &massoi, sim_opts); 
 
     if(sim_opts->twopop == 1.0) {
-        GetMass(PARTICLE_NUMBER, partmassmicrind, 
+        calculateParticleMass(PARTICLE_NUMBER, partmassmicrind, 
                 (int)ind_ii, (int)ind_io, 
                 (int)ind_oi, (int)ind_oo, 
                 &massiim, &massoim, sim_opts);
