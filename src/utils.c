@@ -1,6 +1,6 @@
-#include "utils.h"    // Ezt kell includolni, mert ebben lesz a Parabola deklarációja
-#include "config.h"   // Szükséges a RMIN és DD makrók miatt, amiket a Parabola használ
-#include <math.h>     // Bár a Parabola most nem használ math.h függvényt,
+#include "utils.h"    // Ezt kell includolni, mert ebben lesz a parabolicExtrapolationToGhostCells deklarációja
+#include "config.h"   // Szükséges a RMIN és DD makrók miatt, amiket a parabolicExtrapolationToGhostCells használ
+#include <math.h>     // Bár a parabolicExtrapolationToGhostCells most nem használ math.h függvényt,
 #include <stdlib.h>                      // más utility függvényeknek szüksége lehet rá.
                       // Jó gyakorlat ide tenni.
 
