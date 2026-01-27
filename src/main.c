@@ -11,6 +11,9 @@
 #include "dust_physics.h"     // Functions from dust_physics.c
 #include "simulation_core.h"  // Functions from simulation_core.c
 #include "utils.h"            // Functions from utils.h
+#include "gas_physics.h"
+#include "boundary_conditions.h"
+
 
 // NEW: Include your simulation_types.h and parser.h
 #include "simulation_types.h"

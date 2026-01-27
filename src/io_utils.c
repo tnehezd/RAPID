@@ -20,6 +20,7 @@
 #include "dust_physics.h"   // If needed for any specific function interactions
 #include "utils.h"          // For find_num_zero, find_zero, find_r_annulus
 #include "simulation_types.h" // For disk_t, simulation_options_t, output_files_t
+#include "boundary_conditions.h"
 
 
 #define INIT_DATA_HEADER_LINES 5

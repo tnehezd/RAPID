@@ -17,6 +17,8 @@
 #include "utils.h"        // For time_step, Get_Sigma_P_dP, and potentially other utility functions
 #include "simulation_core.h"
 #include "particle_data.h" // Új include
+#include "gas_physics.h"
+#include "boundary_conditions.h"
 
 
 /*	Kiszamolja az 1D-s driftet	*/
@@ -25,8 +27,8 @@ void eqrhs(double pradius, double dp, double sigma, double ug, double r, double 
 
     double P, H, dPdr, St, csound;
       
-    St = stokesNumber(pradius,sigma,disk_params);
-    H = scaleHeight(r,disk_params);   
+    St = calculateStokesNumber(pradius,sigma,disk_params);
+    H = calculatePressureScaleHeight(r,disk_params);   
     P = press(sigma,r,disk_params);
     dPdr = dp;
     csound = c_sound(r,disk_params); 
@@ -38,14 +40,14 @@ void eqrhs(double pradius, double dp, double sigma, double ug, double r, double 
 /* for solving d(sigma*nu)/dt = 3*nu*d2(sigma*nu)/dr2 + 9*hu/(2*r)*dsigma/dr	--> 3*nu = Coeff_1 	*/
 double Coeff_1(double r, const disk_t *disk_params){					
     double A;
-    A = 3.0 * kinematicViscosity(r, disk_params);
+    A = 3.0 * calculateKinematicViscosity(r, disk_params);
     return A;
 }
 
 /* for solving d(sigma*nu)/dt = 3*nu*d2(sigma*nu)/dr2 + 9*hu/(2*r)*dsigma/dr	--> 9*nu /(2*r) = Coeff_2 	*/
 double Coeff_2(double r, const disk_t *disk_params){							
     double B;
-    B = 9.0 * kinematicViscosity(r,disk_params) / (2.0 * r);
+    B = 9.0 * calculateKinematicViscosity(r,disk_params) / (2.0 * r);
     return B;
 }
 

@@ -3,11 +3,11 @@
 #include "disk_model.h"   
 #include "config.h"       
 #include "simulation_types.h"
-
+#include "gas_physics.h"
 #include "dust_physics.h" 
 #include "io_utils.h"     
 #include "utils.h" 
-
+#include "boundary_conditions.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -58,7 +58,7 @@ void createInitialGasSurfaceDensity(disk_t *disk_params){		/*	initial profile of
 
 }
 
-void createInitialGasPressure(disk_t *disk_params){		/*	initial profile of pressure		*/
+void createInitialGasPressure(disk_t *disk_params){	
 
   	int i;
   
@@ -70,7 +70,7 @@ void createInitialGasPressure(disk_t *disk_params){		/*	initial profile of press
 
 }
 
-void createInitialGasPressureGradient(disk_t *disk_params){		/*	initial profile of pressure		*/
+void createInitialGasPressureGradient(disk_t *disk_params){
 
 	dpress(disk_params);
    	Perem(disk_params->dpressvec,disk_params);
@@ -78,8 +78,8 @@ void createInitialGasPressureGradient(disk_t *disk_params){		/*	initial profile 
 
 }
 
-/*	ug vektor feltoltese az u_gas ertekevel	*/
-void createInitialGasVelocity(disk_t *disk_params){		/*	initial profile of pressure		*/
+/*	Update radial gas velovity	*/
+void createInitialGasVelocity(disk_t *disk_params){	
  	
 	u_gas(disk_params);
   	Perem(disk_params->ugvec,disk_params);
@@ -93,20 +93,21 @@ void calculateDustSurfaceDensity(double radin[][2], double *massin, double out[]
 
 	for(i=0;i<n;i++){
 
-/*	cm-es por feluletisurusegenek kiszamolasa	*/
-/*	ha a reszecske tavolsaga nagyobb, mint disk_params->RMIN, azaz a szamolas tartomanyan belul van, a feluletisuruseget az altala kepviselt tomegbol szamolja vissza a program	*/
+/*	Calcualte the surface density of the dust grains	*/
+/*	If the dust grain is within the simulated regine (above RMIN)
+ 	the surface density is calculated from the representative mass of the dust grain	*/
 		if((radin[i][0] >= disk_params->RMIN)) {
-			out[i][0] = massin[i] / (2. * (radin[i][0]-disk_params->DD/2.) * M_PI * disk_params->DD);	// sigma = m /(2 * r * pi * dr) --> itt a dr az a tavolsag, ami porreszecske "generalo" programban az eredeti gridfelbontas
-			out[i][1] = radin[i][0];					// elmenti a reszecske tavolsagat is
+			out[i][0] = massin[i] / (2. * (radin[i][0]-disk_params->DD/2.) * M_PI * disk_params->DD);	// sigma = m /(2 * r * pi * dr) --> dr is the original grid step
+			out[i][1] = radin[i][0];																	// Saves the radial distance of the dust grain
 
-  			double rmid = (radin[i][0] - disk_params->RMIN) / disk_params->DD;     						/* 	The integer part of this gives at which index is the body			*/
-			int rindex = (int) floor(rmid);							/* 	Ez az rmid egesz resze --> floor egeszreszre kerekit lefele, a +0.5-el elerheto, hogy .5 felett felfele, .5 alatt lefele kerekitsen						*/
+  			double rmid = (radin[i][0] - disk_params->RMIN) / disk_params->DD;     						// 	The integer part of this gives at which index is the body		
+			int rindex = (int) floor(rmid);																// 	The "whole part of rmin" --> floor rounds down, +0.5 allows us to solve the rounding correctly
 			out[i][2] = (double) rindex;
 
-/*	ha a reszecske disk_params->RMIN-en belul van, akkor az o "tavolsagaban" a feluletisuruseg 0		*/	
+/*	If the dust grain is drifted below  RMIN, the surface density is set to 0*/	
 		} else {
 			out[i][0] = 0;
-			out[i][1] = 0;					// r = 0, mert ha disk_params->RMIN-en belulre kerult a reszecske, akkor a program automatikusan kinullazza a reszecske tavolsagat. Itt tehat a sigdtemp[i][1] = 0 lesz!
+			out[i][1] = 0;																				// Set r to 0!
 			out[i][2] = 0;
 		}
 	}

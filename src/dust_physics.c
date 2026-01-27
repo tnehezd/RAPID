@@ -2,8 +2,9 @@
 #include "dust_physics.h" // A saját headerjét mindig includolni kell
 #include "config.h"       // Szükséges lehet a globális konstansokhoz (pl. PARTICLE_NUMBER, AU2CM, RMIN, RMAX, NGRID, G_GRAV_CONST, STAR, SDCONV, CMPSECTOAUPYRP2PI, uFrag, fFrag, PDENSITYDIMLESS, HASP, M_PI, DD, sim_opts->dzone, sim_opts->twopop, RMIN, RMAX, FLIND, alpha_visc, a_mod, r_dze_i, r_dze_o, Dr_dze_i, Dr_dze_o)
 #include "simulation_types.h" // Például output_files_t, disk_t struktúrákhoz
-
+#include "gas_physics.h"
 #include "simulation_core.h" // int_step, Perem, find_num_zero, find_zero, find_r_annulus függvényekhez
+#include "boundary_conditions.h"
 #include "utils.h"           // find_min függvényhez
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,126 +18,12 @@
 // vagy csak az extern kulcsszót meghagyni!
 
 
-/*	alpha turbulens paraméter kiszámolása --> alfa csökkentése alpha_r-rel	*/
-double calculateTurbulentAlpha(double r, const disk_t *disk_params) {
-    double alpha_r;
-    alpha_r = 1.0 - 0.5 * (1.0 - disk_params->a_mod) * (tanh((r - disk_params->r_dze_i) / disk_params->Dr_dze_i) + tanh((disk_params->r_dze_o - r) / disk_params->Dr_dze_o));
-    return alpha_r * disk_params->alpha_visc;
-}
 
 /*	Calculates the Stokes number for each particle	*/
 /*	St = rho_particle * radius_particle * PI / (2 * sigma)	*/
-double stokesNumber(double pradius, double sigma, disk_t *disk_params) { /*	in the Epstein drag regime	*/
+double calculateStokesNumber(double pradius, double sigma, disk_t *disk_params) { /*	in the Epstein drag regime	*/
     return disk_params->PDENSITYDIMLESS * pradius * M_PI / (2.0 * sigma);
 }
-
-/*	Lokalis viszkozitas erteke	*/
-double kinematicViscosity(double r, const disk_t *disk_params) {
-    double nu;
-    double cs, H;
-
-    H = scaleHeight(r,disk_params);
-    cs = c_sound(r,disk_params);
-
-    nu = calculateTurbulentAlpha(r, disk_params) * cs * H;
-    return nu;
-}
-
-/*	local scale height	*/
-double scaleHeight(double r, const disk_t *disk_params) {
-
-    if (disk_params == NULL) {
-        fprintf(stderr, "ERROR [scale_height]: disk_params is NULL!\n");
-        return 0.0; // Vagy valamilyen hibakód/NaN
-    }
-
-    // Itt van az eredeti számítás
-    double calculated_result = pow(r, 1. + disk_params->FLIND) * disk_params->HASP;
-    return calculated_result;
-}
-
-/*	lokális kepleri sebesség	*/
-double v_kep(double r, const disk_t *disk_params) {
-    return sqrt(G_GRAV_CONST * disk_params->STAR_MASS / r);
-}
-
-/*	lokalis kepleri korfrekvencia	*/
-double kep_freq(double r, const disk_t *disk_params) {
-    return sqrt(G_GRAV_CONST * disk_params->STAR_MASS / r / r / r);
-}
-
-/*	local sound speed		*/
-double c_sound(double r, const disk_t *disk_params) {
-    return kep_freq(r,disk_params) * scaleHeight(r,disk_params);
-}
-
-/*	Suruseg a midplane-ben	*/
-double rho_mp(double sigma, double r, const disk_t *disk_params) {
-    return 1. / sqrt(2.0 * M_PI) * sigma / scaleHeight(r,disk_params);
-}
-
-/* local pressure of the gas p = rho_gas * cs * cs kepletbol!!	*/
-double press(double sigma, double r, const disk_t *disk_params) {
-    return rho_mp(sigma, r, disk_params) * c_sound(r,disk_params) * c_sound(r, disk_params);
-}
-
-/*	a nyomas derivaltja	*/
-void dpress(disk_t *disk_params) {
-    int i;
-    double ptemp, pvec[disk_params->NGRID + 2];
-
-    for (i = 1; i <= disk_params->NGRID; i++) {
-        ptemp = (disk_params->pressvec[i + 1] - disk_params->pressvec[i - 1]) / (2.0 * disk_params->DD);
-        pvec[i] = ptemp;
-
-    }
-    for (i = 1; i <= disk_params->NGRID; i++) {
-        disk_params->dpressvec[i] = pvec[i];
-    }
-
-
-}
-
-/*	u_gas kiszamolasahoz eltarolt koefficiens	*/
-double Coeff_3(double sigma, double r) {
-    return -1.0 * (3.0 / (sigma * sqrt(r)));
-}
-
-/*	u_gas = -3/(Sigma*R^0.5)*(d/dR)(nu*Sigma*R^0.5) kiszamolasa	*/
-void u_gas(disk_t *disk_params) {
-
-    double tempug;
-    // Lokális tömbök, méret NGRID-hez igazítva disk_params-ból
-    double ugvec[disk_params->NGRID + 2];
-    double ugvectemp[disk_params->NGRID + 1]; // Eredeti kód NGRID+1-et használt
-
-    int i;
-
-    // Első ciklus: feltölti a lokális ugvec tömböt
-    #pragma omp parallel for private(i)
-    for (i = 0; i <= disk_params->NGRID + 1; i++) { // Használd a disk_params->NGRID-et
-        // Hozzáférés a disk_params tagjaihoz
-        ugvec[i] = disk_params->sigmavec[i] * kinematicViscosity(disk_params->rvec[i], disk_params) * sqrt(disk_params->rvec[i]);
-        // Megjegyzés: A sqrt() függvénynek általában csak egy double paramétere van.
-        // Ha valami komplexebb számítást akarsz, akkor lehet, hogy egy saját
-        // függvényt hívsz, amihez disk_params is kell. Ellenőrizd a sqrt prototípusát!
-    }
-
-    // Második ciklus: feltölti a lokális ugvectemp tömböt
-    #pragma omp parallel for private(i, tempug)
-    for (i = 1; i <= disk_params->NGRID; i++) { // Használd a disk_params->NGRID-et
-        tempug = (ugvec[i + 1] - ugvec[i - 1]) / (2.0 * disk_params->DD); // Használd a disk_params->DD-t
-        // Coeff_3 hívása, ha szükséges, átadva neki a disk_params-ot
-        ugvectemp[i] = Coeff_3(disk_params->sigmavec[i], disk_params->rvec[i]) * tempug;
-    }
-
-    // Harmadik ciklus: Az eredményt bemásolja a disk_params->ugvec-be
-    for (i = 1; i <= disk_params->NGRID; i++) { // Használd a disk_params->NGRID-et
-        disk_params->ugvec[i] = ugvectemp[i]; // Így éri el a struktúrán belüli ugvec-et
-    }
-}
-
-
 
 void GetMass(int n, double (*partmassind)[5], int indii, int indio, int indoi, int indoo, double *massiout, double *massoout, const simulation_options_t *sim_opts) {
 
@@ -215,7 +102,7 @@ double a_drift(double sigmad, double r, double p, double dp, double rho_p, const
 
     double Sigmad_cgs = sigmad / SDCONV;
 
-    double vkep = v_kep(r,disk_params);
+    double vkep = calculateKeplerianVelocity(r,disk_params);
     double vkep2 = vkep * vkep;
     double c_s = c_sound(r,disk_params);
     double c_s2 = c_s * c_s;
@@ -250,7 +137,7 @@ double a_df(double sigma, double r, double p, double dp, double rho_p, const dis
     c_s = c_sound(r,disk_params);
     c_s2 = c_s * c_s;
     dlnPdlnr = r / p * dp;
-    vkep = v_kep(r,disk_params);
+    vkep = calculateKeplerianVelocity(r,disk_params);
 
     s_df = u_frag * vkep / fabs(dlnPdlnr * c_s2 * 0.5) * 2.0 * Sigma_cgs / (M_PI * rho_p);
 
@@ -287,8 +174,6 @@ double getSize(double prad, double pdens, double sigma, double sigmad, double y,
 
     return rt;
 }
-
-
 
 
 void Get_Sigmad(double max_param, double min_param, double rad[][2], double radmicr[][2], 
@@ -345,64 +230,6 @@ void Get_Sigmad(double max_param, double min_param, double rad[][2], double radm
     }
 }
 
-
-/*	Fuggveny a sigma, p, dp kiszamolasara	*/
-void Get_Sigma_P_dP(const simulation_options_t *sim_opts, disk_t *disk_params) { // Added sim_opts
-
-    double u, u_bi, u_fi;
-    double sigma_temp[disk_params->NGRID + 2]; // Use disk_params->NGRID
-    double uvec[disk_params->NGRID + 2];     // Use disk_params->NGRID
-
-    int i;
-
-    // Boundary conditions - access via disk_params
-    sigma_temp[0] = disk_params->sigmavec[0];
-    sigma_temp[disk_params->NGRID + 1] = disk_params->sigmavec[disk_params->NGRID + 1];
-
-    // uvec temporary array initialization
-    uvec[0] = disk_params->sigmavec[0] * kinematicViscosity(disk_params->rvec[0], disk_params); // Use disk_params->rvec
-    uvec[disk_params->NGRID + 1] = disk_params->sigmavec[disk_params->NGRID + 1] * kinematicViscosity(disk_params->rvec[disk_params->NGRID + 1], disk_params); // Use disk_params->rvec
-
-    #pragma omp parallel for
-    for(i = 1; i <= disk_params->NGRID; i++) { // Use disk_params->NGRID
-        uvec[i] = disk_params->sigmavec[i] * kinematicViscosity(disk_params->rvec[i], disk_params); // Use disk_params->sigmavec and disk_params->rvec
-    }
-
-    // This loop is critical due to data dependencies. Keep it sequential for correctness
-    for (i = 1; i <= disk_params->NGRID; i++) { // Use disk_params->NGRID
-        u = uvec[i];
-        u_bi = uvec[i - 1];
-        u_fi = uvec[i + 1];
-
-        // Access DD and deltat through the appropriate structs
-        // Assuming Coeff_1 and Coeff_2 also take disk_params (and sim_opts if they need it)
-        double temp = Coeff_1(disk_params->rvec[i], disk_params) * (u_fi - 2.0 * u + u_bi) / (disk_params->DD * disk_params->DD) +
-                      Coeff_2(disk_params->rvec[i], disk_params) * (u_fi - u_bi) / (2.0 * disk_params->DD);
-        
-        sigma_temp[i] = uvec[i] + sim_opts->DT * temp; // Use sim_opts->DT for deltat
-    }
-
-    // This loop is parallelizable
-    #pragma omp parallel for
-    for (i = 1; i <= disk_params->NGRID; i++) { // Use disk_params->NGRID
-        // Update disk_params' own arrays
-        disk_params->sigmavec[i] = sigma_temp[i] / kinematicViscosity(disk_params->rvec[i], disk_params);
-        disk_params->pressvec[i] = press(disk_params->sigmavec[i], disk_params->rvec[i], disk_params); // Assuming press takes disk_params
-    }
-
-    // These calls likely remain sequential or require their own internal OpenMP if large
-    // If Perem, dpress also update members of disk_params, they should take disk_params as a parameter.
-    // And if they are modifying the *content* of the arrays within disk_params, then disk_params should NOT be const in *their* parameter list.
-    // However, since Get_Sigma_P_dP is modifying them, disk_params *here* cannot be const.
-    // Let's remove 'const' from disk_params in Get_Sigma_P_dP signature if it modifies them.
-    // void Get_Sigma_P_dP(disk_t *disk_params, const simulation_options_t *sim_opts) { ... }
-    
-    // Assuming these helper functions need disk_params to access *its* internal arrays
-    dpress(disk_params); // Assuming dpress takes arrays and disk_params
-	Perem(disk_params->sigmavec, disk_params); // First argument is the array, second is the disk_t pointer
-	Perem(disk_params->pressvec, disk_params);
-	Perem(disk_params->dpressvec, disk_params);
-}
 
 /*	Fuggveny a porszemcsek uj tavolsaganak elraktarozasara		*/
 void Get_Radius(const char *nev, int opt, double radius[][2], const double *sigmad, const double *rdvec,
