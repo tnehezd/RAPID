@@ -4,7 +4,8 @@
 #include "dust_physics.h" // May contain GetMass, etc.
 #include "utils.h" // For find_max, find_min, etc. and for interpolation functions
 #include "io_utils.h" // For Mk_Dir (if used internally here)
-
+#include "gas_physics.h"
+#include "boundary_conditions.h"
 #include "simulation_types.h"
 
 

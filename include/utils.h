@@ -8,9 +8,7 @@
 // de ha más utility függvények lennének itt, azoknak lehetnének.
 // Jelenleg nem szükséges ide tenni semmit a Parabola miatt.
 
-// Függvény deklarációk (prototípusok)
-void Parabola(double *vec, int i1, int i2, int i3, double *a, double *b, double *c, double dd, const disk_t *disk_params);
-void Perem(double *vec,const disk_t *disk_params);
+
 /*	egy megadott, diszkret pontokban ismert fuggvenyt interpolal a reszecske aktualis helyere	*/
 void interpol(double *invec, double *rvec, double pos, double *out, double rd, int opt, const disk_t *disk_params);
 

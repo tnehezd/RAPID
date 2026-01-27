@@ -17,6 +17,8 @@
 #include "utils.h"        // For time_step, Get_Sigma_P_dP, and potentially other utility functions
 #include "simulation_core.h"
 #include "particle_data.h" // Új include
+#include "gas_physics.h"
+#include "boundary_conditions.h"
 
 
 /*	Kiszamolja az 1D-s driftet	*/
