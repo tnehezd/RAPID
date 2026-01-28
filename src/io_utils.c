@@ -95,7 +95,7 @@ void loadDustParticlesFromFile(double radius[][2], double radiusmicr[][2], doubl
     }
 
 
-    for (i = 0; i < PARTICLE_NUMBER; i++) {
+    for (i = 0; i < particle_number; i++) {
         if(fscanf(load_dust_particles_file,"%d %lg %Lg %Lg %lg %lg",&dummy,&distance,&reprmass,&reprmassmicr,&particle_radius,&radmicr) == 6) {
             radius[i][0] = distance;
             radius[i][1] = particle_radius / AU2CM; // AU2CM from config.h
@@ -341,13 +341,13 @@ void printMassGrowthAtDZEFile(double step, double (*partmassind)[5], double (*pa
     double massiim = 0, massoim = 0;
     double massis = 0, massos = 0;
 
-    calculateParticleMass(PARTICLE_NUMBER, partmassind, 
+    calculateParticleMass(particle_number, partmassind, 
             (int)ind_ii, (int)ind_io, 
             (int)ind_oi, (int)ind_oo, 
             &massii, &massoi, sim_opts); 
 
     if(sim_opts->twopop == 1.0) {
-        calculateParticleMass(PARTICLE_NUMBER, partmassmicrind, 
+        calculateParticleMass(particle_number, partmassmicrind, 
                 (int)ind_ii, (int)ind_io, 
                 (int)ind_oi, (int)ind_oo, 
                 &massiim, &massoim, sim_opts);
@@ -419,7 +419,7 @@ void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const 
         return;
     }
 
-    for(i=0;i<PARTICLE_NUMBER;i++){ // PARTICLE_NUMBER from config.h
+    for(i=0;i<particle_number;i++){ // particle_number from config.h
         if (r[i] >= disk_params->RMIN) { // Using disk_params->RMIN
             fprintf(output_files->dust_file,"%.11lg  %lg \n",r[i],sigmad[i]);
         }
@@ -452,7 +452,7 @@ void printDustParticleSizeFile(char *size_name, int step, double (*rad)[2], doub
         }
     }
 
-    for (i = 0; i < PARTICLE_NUMBER; i++) { // PARTICLE_NUMBER from config.h
+    for (i = 0; i < particle_number; i++) { // particle_number from config.h
 
         if (output_files->por_motion_file != NULL) {
             if (rad[i][0] >= disk_params->RMIN) { // Using disk_params->RMIN
@@ -657,7 +657,7 @@ int setupInitialOutputFiles(output_files_t *output_files, const simulation_optio
 
 
 void cleanupSimulationResources(ParticleData_t *p_data, output_files_t *output_files, const simulation_options_t *sim_opts) {
-    if (PARTICLE_NUMBER > 0) {
+    if (particle_number > 0) {
         free(p_data->radius); p_data->radius = NULL;
         free(p_data->radiusmicr); p_data->radiusmicr = NULL;
         free(p_data->radius_rec); p_data->radius_rec = NULL;

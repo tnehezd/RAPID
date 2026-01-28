@@ -1,6 +1,6 @@
 // src/dust_physics.c
 #include "dust_physics.h" // A saját headerjét mindig includolni kell
-#include "config.h"       // Szükséges lehet a globális konstansokhoz (pl. PARTICLE_NUMBER, AU2CM, RMIN, RMAX, NGRID, G_GRAV_CONST, STAR, SDCONV, CMPSECTOAUPYRP2PI, uFrag, fFrag, PDENSITYDIMLESS, HASP, M_PI, DD, sim_opts->dzone, sim_opts->twopop, RMIN, RMAX, FLIND, alpha_visc, a_mod, r_dze_i, r_dze_o, Dr_dze_i, Dr_dze_o)
+#include "config.h"       // Szükséges lehet a globális konstansokhoz (pl. particle_number, AU2CM, RMIN, RMAX, NGRID, G_GRAV_CONST, STAR, SDCONV, CMPSECTOAUPYRP2PI, uFrag, fFrag, PDENSITYDIMLESS, HASP, M_PI, DD, sim_opts->dzone, sim_opts->twopop, RMIN, RMAX, FLIND, alpha_visc, a_mod, r_dze_i, r_dze_o, Dr_dze_i, Dr_dze_o)
 #include "simulation_types.h" // Például output_files_t, disk_t struktúrákhoz
 #include "gas_physics.h"
 #include "simulation_core.h" 
@@ -184,15 +184,15 @@ void calculateDustSurfaceDensity(double max_param, double min_param, double rad[
     (void)max_param;
     (void)min_param;
 
-    double dd = (disk_params->RMAX - disk_params->RMIN) / (PARTICLE_NUMBER - 1);
+    double dd = (disk_params->RMAX - disk_params->RMIN) / (particle_number - 1);
     int i;
 
     // A temp tömbök deklarálását érdemes a scope tetejére tenni
-    double sigdtemp[PARTICLE_NUMBER][3];
-    double sigdmicrtemp[PARTICLE_NUMBER][3];
+    double sigdtemp[particle_number][3];
+    double sigdmicrtemp[particle_number][3];
 
     // Inicializálás, ha szükséges (bár a calculateDustSurfaceDensity valószínűleg felülírja)
-    for(i=0; i<PARTICLE_NUMBER; i++){
+    for(i=0; i<particle_number; i++){
         sigdtemp[i][0] = 0.0; sigdtemp[i][1] = 0.0; sigdtemp[i][2] = 0.0;
         sigdmicrtemp[i][0] = 0.0; sigdmicrtemp[i][1] = 0.0; sigdmicrtemp[i][2] = 0.0;
         rd[i] = 0.0;
@@ -207,19 +207,19 @@ void calculateDustSurfaceDensity(double max_param, double min_param, double rad[
     // Ha ezek a függvények valamilyen globális állapotot módosítanak, akkor kritikusak.
     // Feltételezve, hogy a 'sigdtemp' és 'sigdmicrtemp' kizárólagosan a hívásaikban vannak feldolgozva,
     // és nem ütköznek más szálakkal globális adatokon keresztül.
-    calculateInitialDustSurfaceDensity(rad, massvec, sigdtemp, PARTICLE_NUMBER,disk_params);
+    calculateInitialDustSurfaceDensity(rad, massvec, sigdtemp, particle_number,disk_params);
     if (sim_opts->twopop == 1.0) { // Használjunk double összehasonlítást
-        calculateInitialDustSurfaceDensity(radmicr, massmicrvec, sigdmicrtemp, PARTICLE_NUMBER,disk_params);
+        calculateInitialDustSurfaceDensity(radmicr, massmicrvec, sigdmicrtemp, particle_number,disk_params);
     }
 
-    mergeParticlesByRadius(sigdtemp, dd, PARTICLE_NUMBER,disk_params);
+    mergeParticlesByRadius(sigdtemp, dd, particle_number,disk_params);
     if (sim_opts->twopop == 1.0) { // Használjunk double összehasonlítást
-        mergeParticlesByRadius(sigdmicrtemp, dd, PARTICLE_NUMBER,disk_params);
+        mergeParticlesByRadius(sigdmicrtemp, dd, particle_number,disk_params);
     }
 
     // Utolsó másoló ciklus: Ez is jól párhuzamosítható.
     #pragma omp parallel for private(i)
-    for (i = 0; i < PARTICLE_NUMBER; i++) {
+    for (i = 0; i < particle_number; i++) {
         rd[i] = sigdtemp[i][1];
         sigma_d[i] = sigdtemp[i][0];
 

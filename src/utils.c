@@ -265,14 +265,14 @@ void histogram(double r, int *hist, double dd, disk_t *disk_params) {
 
     // 2. Explicitly check and clamp the index to the array bounds
     // Assuming 'hist' is an array of size NGRID, valid indices are 0 to NGRID - 1.
-    // Replace NGRID with PARTICLE_NUMBER if that's the actual array size used for hist.
+    // Replace NGRID with particle_number if that's the actual array size used for hist.
     if (index < 0) {
         index = 0; // Ensure index is not negative
         // Optionally, you could print a debug message if this happens unexpectedly:
         // fprintf(stderr, "DEBUG WARNING: histogram index became negative. Clamped to 0. r=%.10f, RMIN=%.10f, dd=%.10e, rmid=%.10f\n", r, RMIN, dd, rmid);
     }
     // Make sure NGRID is the correct size of the array 'hist'
-    // If hist is int hist[PARTICLE_NUMBER], then upper bound is PARTICLE_NUMBER-1
+    // If hist is int hist[particle_number], then upper bound is particle_number-1
     if (index >= disk_params->NGRID) { // NGRID should be defined and accessible here
         index = disk_params->NGRID - 1; // Ensure index does not exceed the array's upper bound
         // Optionally print a debug message:
@@ -314,7 +314,7 @@ void sortAnArrayarray(double rv[][3],int n) {
 
 void roundParticleRadii(double in[][3], int n, const disk_t *disk_params) {
 
-	double dd = (disk_params->RMAX - disk_params->RMIN) / (PARTICLE_NUMBER-1);
+	double dd = (disk_params->RMAX - disk_params->RMIN) / (particle_number-1);
 	int dker = (int)(1./dd);//
 	dker = dker * KEREK;
 	double ddker = (double) dker;
@@ -405,7 +405,7 @@ void updateParticleGridIndices(double radin[][2], double partmassindin[][5], dou
         if(isnan(rmid)) rindex = 0;
 
 
-		if(n == PARTICLE_NUMBER) partmassindin[i][0] = massvecin[i];							/*	mass of the particles				*/
+		if(n == particle_number) partmassindin[i][0] = massvecin[i];							/*	mass of the particles				*/
 		partmassindin[i][1] = rindex;							/*	initial distance of the particles				*/
 		if(t == 0) {
 			partmassindin[i][2] = partmassindin[i][0];							/*	initial distance of the particles				*/

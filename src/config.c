@@ -2,7 +2,7 @@
 #include "config.h"
 #include "simulation_types.h"
 
-int PARTICLE_NUMBER;
+int particle_number;
 
 // --- Global File Pointer Definitions ---
 FILE *drift_timescale_file = NULL;

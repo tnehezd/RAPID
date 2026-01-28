@@ -86,13 +86,13 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
 
     // --- Inicializálási szakasz ---
     if (sim_opts->drift == 1.) {
-        PARTICLE_NUMBER = calculateNumbersOfParticles(sim_opts->dust_input_filename);
+        particle_number = calculateNumbersOfParticles(sim_opts->dust_input_filename);
     } else {
-        fprintf(stderr, "ERROR [timeIntegrationForTheSystem]: Particle drift is OFF. PARTICLE_NUMBER set to 0.\n");
-        PARTICLE_NUMBER = 0;
+        fprintf(stderr, "ERROR [timeIntegrationForTheSystem]: Particle drift is OFF. particle_number set to 0.\n");
+        particle_number = 0;
     }
 
-    if (PARTICLE_NUMBER > 0 && allocateParticleData(&p_data, PARTICLE_NUMBER, (int)sim_opts->twopop) != 0) {
+    if (particle_number > 0 && allocateParticleData(&p_data, particle_number, (int)sim_opts->twopop) != 0) {
         fprintf(stderr, "ERROR: Failed to allocate particle data. Exiting.\n");
         exit(EXIT_FAILURE);
     }
@@ -134,8 +134,8 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
     double tavin = 0, tavout = 0; // Távolságok a printMassGrowthAtDZEFile-hoz
 
 
-    if (sim_opts->twopop == 0 && PARTICLE_NUMBER > 0) {
-        for (i = 0; i < PARTICLE_NUMBER; i++) {
+    if (sim_opts->twopop == 0 && particle_number > 0) {
+        for (i = 0; i < particle_number; i++) {
             p_data.radiusmicr[i][0] = 0;
             p_data.radiusmicr[i][1] = 0;
             p_data.partmassmicrind[i][0] = 0;
@@ -149,7 +149,7 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
         if (sim_opts->drift == 1.) {
 
             // Radius reciprok számítása a min/max kereséshez
-            for (i = 0; i < PARTICLE_NUMBER; i++) {
+            for (i = 0; i < particle_number; i++) {
                 if (p_data.radius[i][0] > 0. && p_data.radius[i][0] > disk_params->RMIN) {
                     p_data.radius_rec[i][0] = 1. / p_data.radius[i][0];
                 } else {
@@ -157,15 +157,15 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
                 }
             }
 
-            max = findMaximumOfAnArray(p_data.radius, PARTICLE_NUMBER);
-            min = findMaximumOfAnArray(p_data.radius_rec, PARTICLE_NUMBER); // Megkeresi a távolság reciprokának maximumát
+            max = findMaximumOfAnArray(p_data.radius, particle_number);
+            min = findMaximumOfAnArray(p_data.radius_rec, particle_number); // Megkeresi a távolság reciprokának maximumát
             min = 1. / min; // Ebből lesz a távolság minimuma
 
             double mint, maxt;
 
             if (sim_opts->twopop == 1) {
                 // Micron részecskék radius reciprok számítása
-                for (i = 0; i < PARTICLE_NUMBER; i++) {
+                for (i = 0; i < particle_number; i++) {
                     if (p_data.radiusmicr[i][0] > 0. && p_data.radiusmicr[i][0] > disk_params->RMIN) {
                         p_data.radius_rec[i][0] = 1. / p_data.radiusmicr[i][0];
                     } else {
@@ -173,8 +173,8 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
                     }
                 }
 
-                max2 = findMaximumOfAnArray(p_data.radiusmicr, PARTICLE_NUMBER);
-                min2 = findMaximumOfAnArray(p_data.radius_rec, PARTICLE_NUMBER);
+                max2 = findMaximumOfAnArray(p_data.radiusmicr, particle_number);
+                min2 = findMaximumOfAnArray(p_data.radius_rec, particle_number);
                 min2 = 1. / min2;
 
                 mint = findMinimumOfAnArray(min, min2, HUGE_VAL); // Itt a te findMinimumOfAnArray(s1, s2, s3) függvényedet használjuk
@@ -234,8 +234,8 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
 
                 // Eredeti t==0 logika
                 if (current_time_years == 0) {
-                    updateParticleGridIndices(p_data.radius, p_data.partmassind, p_data.massvec, t, PARTICLE_NUMBER, disk_params);
-                    if (sim_opts->twopop == 1) updateParticleGridIndices(p_data.radiusmicr, p_data.partmassmicrind, p_data.massmicrvec, t, PARTICLE_NUMBER, disk_params);
+                    updateParticleGridIndices(p_data.radius, p_data.partmassind, p_data.massvec, t, particle_number, disk_params);
+                    if (sim_opts->twopop == 1) updateParticleGridIndices(p_data.radiusmicr, p_data.partmassmicrind, p_data.massmicrvec, t, particle_number, disk_params);
 
                     if (sim_opts->growth == 1.) {
                         calculateDustSurfaceDensity(max, min, p_data.radius, p_data.radiusmicr, p_data.sigmad, p_data.sigmadm, p_data.massvec, p_data.massmicrvec, p_data.rdvec, p_data.rmicvec, sim_opts, disk_params);
@@ -260,8 +260,8 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
 
 
                 // Resetting partmassind[k][3] and [k][4]
-                if (sim_opts->dzone == 1.0 && PARTICLE_NUMBER > 0) { // Ellenőrzés PARTICLE_NUMBER-re
-                    for (int k = 0; k < PARTICLE_NUMBER; k++) {
+                if (sim_opts->dzone == 1.0 && particle_number > 0) { // Ellenőrzés particle_number-re
+                    for (int k = 0; k < particle_number; k++) {
                         p_data.partmassind[k][3] = 0.0;
                         p_data.partmassind[k][4] = 0.0;
                     }
@@ -291,8 +291,8 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
             }
 
             // Count masses and get sigma_d for the next step (always done)
-            updateParticleGridIndices(p_data.radius, p_data.partmassind, p_data.massvec, t, PARTICLE_NUMBER, disk_params);
-            if (sim_opts->twopop == 1) updateParticleGridIndices(p_data.radiusmicr, p_data.partmassmicrind, p_data.massmicrvec, t, PARTICLE_NUMBER, disk_params);
+            updateParticleGridIndices(p_data.radius, p_data.partmassind, p_data.massvec, t, particle_number, disk_params);
+            if (sim_opts->twopop == 1) updateParticleGridIndices(p_data.radiusmicr, p_data.partmassmicrind, p_data.massmicrvec, t, particle_number, disk_params);
 
             if (sim_opts->growth == 1.) {
                 calculateDustSurfaceDensity(max, min, p_data.radius, p_data.radiusmicr, p_data.sigmad, p_data.sigmadm, p_data.massvec, p_data.massmicrvec, p_data.rdvec, p_data.rmicvec, sim_opts, disk_params);
@@ -300,11 +300,11 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
 
             // Get radii for next step
             int optsize = 0;
-            calculateDustDistance(sim_opts->output_dir_name, optsize, p_data.radius, p_data.sigmad, p_data.rdvec, deltat, t, PARTICLE_NUMBER, sim_opts, disk_params);
+            calculateDustDistance(sim_opts->output_dir_name, optsize, p_data.radius, p_data.sigmad, p_data.rdvec, deltat, t, particle_number, sim_opts, disk_params);
 
             if (sim_opts->twopop == 1.) {
                 optsize = 1;
-                calculateDustDistance(sim_opts->output_dir_name, optsize, p_data.radiusmicr, p_data.sigmadm, p_data.rmicvec, deltat, t, PARTICLE_NUMBER, sim_opts, disk_params);
+                calculateDustDistance(sim_opts->output_dir_name, optsize, p_data.radiusmicr, p_data.sigmadm, p_data.rmicvec, deltat, t, particle_number, sim_opts, disk_params);
 
             }
 

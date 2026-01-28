@@ -10,7 +10,7 @@
 #include <omp.h>
 
 // Your Project Header Includes
-#include "config.h"       // For PARTICLE_NUMBER, TMAX, WO, RMIN, DT, optdr, sim_opts->twopop, sim_opts->growth, optev, r_dze_i, r_dze_o
+#include "config.h"       // For particle_number, TMAX, WO, RMIN, DT, optdr, sim_opts->twopop, sim_opts->growth, optev, r_dze_i, r_dze_o
 #include "io_utils.h"     
 #include "disk_model.h"   
 #include "dust_physics.h" 
@@ -39,7 +39,7 @@ void integrateParticleRungeKutta4(double time, double prad, const double *sigmad
     linearInterpolation(disk_params->dpressvec,disk_params->rvec,y,&dpress,disk_params->DD,opt,disk_params);
     linearInterpolation(disk_params->ugvec,disk_params->rvec,y,&ugas,disk_params->DD,opt,disk_params);
 
-    double dd = (disk_params->RMAX - disk_params->RMIN) / (PARTICLE_NUMBER-1);
+    double dd = (disk_params->RMAX - disk_params->RMIN) / (particle_number-1);
     int dker = (int)(1./dd);//
     dker = dker * KEREK;
     double ddker = (double) dker;
@@ -49,7 +49,7 @@ void integrateParticleRungeKutta4(double time, double prad, const double *sigmad
     ytemp2 = (double)temp / ddker;
     
     int i;
-    for(i=0;i<PARTICLE_NUMBER;i++) {
+    for(i=0;i<particle_number;i++) {
         if(ytemp2 == rdvec[i]) {
             sigmadd = sigmad[i];
             break;

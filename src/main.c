@@ -23,8 +23,8 @@
 // Function declaration for default init_tool options, assuming it's in init_tool_module.h
 extern void initializeDefaultOptions(init_tool_options_t *def);
 
-// Global variable definition for PARTICLE_NUMBER (if not defined elsewhere)
-// Ensure this is only defined in ONE .c file, and declared as 'extern int PARTICLE_NUMBER;' in config.h
+// Global variable definition for particle_number (if not defined elsewhere)
+// Ensure this is only defined in ONE .c file, and declared as 'extern int particle_number;' in config.h
 
 int main(int argc, const char **argv) {
     // DEBUG: Program start
@@ -251,10 +251,10 @@ int main(int argc, const char **argv) {
     sim_opts.dust_input_filename[MAX_PATH_LEN - 1] = '\0'; // Ensure null-termination
     fprintf(stderr, "DEBUG [main]: sim_opts.dust_input_filename set to '%s' for timeIntegrationForTheSystem (dust profile).\n", sim_opts.dust_input_filename);
 
-    // --- CRITICAL STEP: Set the global PARTICLE_NUMBER based on the actual dust particle file. ---
-    // This ensures PARTICLE_NUMBER reflects the *dust* particle count, not the gas grid count.
-    PARTICLE_NUMBER = calculateNumbersOfParticles(sim_opts.dust_input_filename); // Read lines from the dust profile
-    fprintf(stderr, "DEBUG [main]: Global PARTICLE_NUMBER set to %d (from dust input file: %s).\n", PARTICLE_NUMBER, sim_opts.dust_input_filename);
+    // --- CRITICAL STEP: Set the global particle_number based on the actual dust particle file. ---
+    // This ensures particle_number reflects the *dust* particle count, not the gas grid count.
+    particle_number = calculateNumbersOfParticles(sim_opts.dust_input_filename); // Read lines from the dust profile
+    fprintf(stderr, "DEBUG [main]: Global particle_number set to %d (from dust input file: %s).\n", particle_number, sim_opts.dust_input_filename);
 
     // The readDiskParameters call has already occurred in the appropriate branch (if using input file)
     // or was called by runInitialization (if generating).

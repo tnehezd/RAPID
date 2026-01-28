@@ -5,12 +5,8 @@
 #include <math.h>  // Required for M_PI (for TWOPI macro)
 
 // --- Global Variable Declarations (extern) ---
-// Disk parameters
-
-
-
 // Dust parameters
-extern int PARTICLE_NUMBER;
+extern int particle_number;
 
 
 // --- Global File Pointer Declarations (extern) ---
