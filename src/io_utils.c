@@ -32,14 +32,14 @@
 
 /* Visszaadja, hogy hány sora van a beolvasandó fájlnak,
  * ez jelen esetben megadja a beolvasandó részecskék számát. */
-int reszecskek_szama(const char *filenev) {
+int calculateNumbersOfParticles(const char *filenev) {
     FILE *fp = NULL;
     char line_buffer[1024];
     int line_count = 0; // Counter for data lines
 
     fp = fopen(filenev, "r");
     if (fp == NULL) {
-        fprintf(stderr, "ERROR [reszecskek_szama]: Could not open file '%s'.\n", filenev);
+        fprintf(stderr, "ERROR [calculateNumbersOfParticles]: Could not open file '%s'.\n", filenev);
         perror("Reason"); // Prints system error message
         exit(EXIT_FAILURE);
     }
@@ -48,7 +48,7 @@ int reszecskek_szama(const char *filenev) {
     for (int i = 0; i < INIT_DATA_HEADER_LINES; i++) {
         if (fgets(line_buffer, sizeof(line_buffer), fp) == NULL) {
             // If file ends before all header lines are skipped, it's an error
-            fprintf(stderr, "ERROR [reszecskek_szama]: Unexpected end of file while skipping %d header lines in '%s'.\n", INIT_DATA_HEADER_LINES, filenev);
+            fprintf(stderr, "ERROR [calculateNumbersOfParticles]: Unexpected end of file while skipping %d header lines in '%s'.\n", INIT_DATA_HEADER_LINES, filenev);
             fclose(fp);
             exit(EXIT_FAILURE);
         }
@@ -68,7 +68,7 @@ int reszecskek_szama(const char *filenev) {
 }
 
 /* A porreszecskek adatainak beolvasasa */
-void por_be(double radius[][2], double radiusmicr[][2], double *mass, double *massmicr, const char *filename) {
+void loadDustParticlesFromFile(double radius[][2], double radiusmicr[][2], double *mass, double *massmicr, const char *filename) {
 
     int i, dummy;
     double distance, particle_radius, radmicr;
@@ -79,7 +79,7 @@ void por_be(double radius[][2], double radiusmicr[][2], double *mass, double *ma
     fin1 = fopen(filename,"r"); // Use the passed filename
 
     if (fin1 == NULL) {
-        fprintf(stderr, "ERROR [por_be]: Could not open file '%s'.\n", filename);
+        fprintf(stderr, "ERROR [loadDustParticlesFromFile]: Could not open file '%s'.\n", filename);
         perror("Reason");
         exit(EXIT_FAILURE);
     }
@@ -88,7 +88,7 @@ void por_be(double radius[][2], double radiusmicr[][2], double *mass, double *ma
     char line_buffer[1024];
     for (int k = 0; k < INIT_DATA_HEADER_LINES; k++) {
         if (fgets(line_buffer, sizeof(line_buffer), fin1) == NULL) {
-            fprintf(stderr, "ERROR [por_be]: Unexpected end of file while skipping headers in '%s'.\n", filename);
+            fprintf(stderr, "ERROR [loadDustParticlesFromFile]: Unexpected end of file while skipping headers in '%s'.\n", filename);
             fclose(fin1);
             exit(EXIT_FAILURE);
         }
@@ -117,12 +117,12 @@ void por_be(double radius[][2], double radiusmicr[][2], double *mass, double *ma
 }
 
 
-void sigIn(disk_t *disk_params, const char *filename) {
+void loadGasSurfaceDensityFromFile(disk_t *disk_params, const char *filename) {
     const char *input_filename = filename;
 
     FILE *fp = fopen(input_filename, "r");
     if (fp == NULL) {
-        fprintf(stderr, "ERROR [sigIn]: Could not open input file '%s'.\n", input_filename);
+        fprintf(stderr, "ERROR [loadGasSurfaceDensityFromFile]: Could not open input file '%s'.\n", input_filename);
         perror("Reason");
         exit(EXIT_FAILURE);
     }
@@ -145,7 +145,7 @@ void sigIn(disk_t *disk_params, const char *filename) {
 
     // Ha a fájl üres vagy csak kommenteket tartalmaz
     if (feof(fp) && (line[0] == '#' || strncmp(line, "---", 3) == 0)) {
-        fprintf(stderr, "ERROR [sigIn]: File '%s' is empty or only contains comments/headers.\n", input_filename);
+        fprintf(stderr, "ERROR [loadGasSurfaceDensityFromFile]: File '%s' is empty or only contains comments/headers.\n", input_filename);
         fclose(fp);
         exit(EXIT_FAILURE);
     }
@@ -162,7 +162,7 @@ void sigIn(disk_t *disk_params, const char *filename) {
         if (fscanf(fp, "%lf %lf %lf %lf",
                          &r_val, &sigma_gas_val, &pressure_gas_val, &dpressure_dr_val) != 4) {
             // Hiba kezelése, ha nem tudunk 4 double értéket beolvasni
-            fprintf(stderr, "ERROR [sigIn]: Failed to read 4 values for row %d from file '%s'. File may be malformed or ended unexpectedly.\n", i, input_filename);
+            fprintf(stderr, "ERROR [loadGasSurfaceDensityFromFile]: Failed to read 4 values for row %d from file '%s'. File may be malformed or ended unexpectedly.\n", i, input_filename);
             fclose(fp);
             exit(EXIT_FAILURE);
         }
@@ -178,7 +178,7 @@ void sigIn(disk_t *disk_params, const char *filename) {
             disk_params->pressvec[i + 1] = pressure_gas_val;
             disk_params->dpressvec[i + 1] = dpressure_dr_val;
         } else {
-            fprintf(stderr, "WARNING [sigIn]: Attempted to write to out-of-bounds index %d. Max allowed index: %d (NGRID+1).\n", i + 1, disk_params->NGRID + 1);
+            fprintf(stderr, "WARNING [loadGasSurfaceDensityFromFile]: Attempted to write to out-of-bounds index %d. Max allowed index: %d (NGRID+1).\n", i + 1, disk_params->NGRID + 1);
         }
 
     }
@@ -188,7 +188,7 @@ void sigIn(disk_t *disk_params, const char *filename) {
 }
 
 
-void Mk_Dir(char *dir_path) {
+void createRunDirectory(char *dir_path) {
     char tmp_path[MAX_PATH_LEN];
     int counter = 0;
 
@@ -199,19 +199,19 @@ void Mk_Dir(char *dir_path) {
     while (access(tmp_path, F_OK) == 0) {  // Fájl vagy mappa létezik
         snprintf(tmp_path, MAX_PATH_LEN, "%s_%04d", dir_path, ++counter);
         if (counter > 99) {
-            fprintf(stderr, "ERROR [Mk_Dir]: Too many existing directories with similar names.\n");
+            fprintf(stderr, "ERROR [createRunDirectory]: Too many existing directories with similar names.\n");
             exit(1);
         }
     }
 
     int result = MKDIR_CALL(tmp_path);
     if (result != 0) {
-        perror("ERROR [Mk_Dir]: mkdir failed");
-        fprintf(stderr, "ERROR [Mk_Dir]: Could not create directory: '%s'\n", tmp_path);
+        perror("ERROR [createRunDirectory]: mkdir failed");
+        fprintf(stderr, "ERROR [createRunDirectory]: Could not create directory: '%s'\n", tmp_path);
         exit(1);
     }
 
-    fprintf(stderr, "DEBUG [Mk_Dir]: Directory '%s' created successfully.\n", tmp_path);
+    fprintf(stderr, "DEBUG [createRunDirectory]: Directory '%s' created successfully.\n", tmp_path);
 
     // Másold vissza a létrehozott mappa nevét a bemenetbe
     strncpy(dir_path, tmp_path, MAX_PATH_LEN - 1);
@@ -222,7 +222,7 @@ void Mk_Dir(char *dir_path) {
 
 /* Elkészít egy fájlt, ami tartalmazza a jelenlegi futás paramétereit,
  * és hogy melyik mappában találhatóak a fájlok */
-void infoCurrent(const char *nev, const disk_t *disk_params, const simulation_options_t *sim_opts) {
+void printCurrentInformationAboutRun(const char *nev, const disk_t *disk_params, const simulation_options_t *sim_opts) {
 
     char full_path[MAX_PATH_LEN]; // Használjuk a MAX_PATH_LEN-t a biztonságos puffereléshez
     char file_name[100]; // Csak a fájlnév, pl. "run_0.dat"
@@ -232,12 +232,12 @@ void infoCurrent(const char *nev, const disk_t *disk_params, const simulation_op
     // Építsük fel a teljes elérési utat: <nev>/<file_name>
     snprintf(full_path, sizeof(full_path), "%s/%s", nev, file_name);
 
-    fprintf(stderr, "DEBUG [infoCurrent]: Attempting to open file: '%s'\n", full_path);
+    fprintf(stderr, "DEBUG [printCurrentInformationAboutRun]: Attempting to open file: '%s'\n", full_path);
 
     jelfut = fopen(full_path, "w"); // Most már a teljes elérési utat használja
 
     if (jelfut == NULL) {
-        fprintf(stderr, "ERROR [infoCurrent]: Could not open file '%s'.\n", full_path);
+        fprintf(stderr, "ERROR [printCurrentInformationAboutRun]: Could not open file '%s'.\n", full_path);
         perror("Reason");
         // Don't exit here, it's not critical, just warn and return
         return;
@@ -254,7 +254,7 @@ void infoCurrent(const char *nev, const disk_t *disk_params, const simulation_op
 }
 
 
-void Print_Mass(double step, double (*partmassind)[5], double (*partmassmicrind)[5], double t, double massbtempii, double massbtempoi, double massmtempii, double massmtempoi, 
+void printMassGrowthAtDZEFile(double step, double (*partmassind)[5], double (*partmassmicrind)[5], double t, double massbtempii, double massbtempoi, double massmtempii, double massmtempoi, 
                 double *massbtempio, double *massbtempoo, double *massmtempio, double *massmtempoo, double *tavin, double *tavout, 
                 const disk_t *disk_params, const simulation_options_t *sim_opts,output_files_t *output_files) {
 
@@ -268,7 +268,7 @@ void Print_Mass(double step, double (*partmassind)[5], double (*partmassmicrind)
     double *r_count = (double *)malloc(sizeof(double) * dim); 
 
     if (dim > 0 && r_count == NULL) {
-        fprintf(stderr, "ERROR [Print_Mass]: Failed to allocate memory for r_count. Exiting.\n");
+        fprintf(stderr, "ERROR [printMassGrowthAtDZEFile]: Failed to allocate memory for r_count. Exiting.\n");
         exit(EXIT_FAILURE);
     }
 
@@ -293,7 +293,7 @@ void Print_Mass(double step, double (*partmassind)[5], double (*partmassmicrind)
                     r_count[j] = temp_new;
                     j++;
                 } else {
-                    fprintf(stderr, "WARNING [Print_Mass]: r_count array overflow, skipping data. dim: %d, j: %d\n", dim, j);
+                    fprintf(stderr, "WARNING [printMassGrowthAtDZEFile]: r_count array overflow, skipping data. dim: %d, j: %d\n", dim, j);
                 }
             }
             if(sim_opts->dzone == 0.0) { 
@@ -382,7 +382,7 @@ void Print_Mass(double step, double (*partmassind)[5], double (*partmassmicrind)
         fprintf(output_files->mass_file, "%lg %lg %lg %lg %lg\n", step, *tavin, massi+massim, *tavout, masso+massom);
         fflush(output_files->mass_file);
     } else {
-        fprintf(stderr, "WARNING: output_files->mass_file is NULL in Print_Mass. Cannot write mass data or fflush.\n");
+        fprintf(stderr, "WARNING: output_files->mass_file is NULL in printMassGrowthAtDZEFile. Cannot write mass data or fflush.\n");
     }
 
     if (dim > 0) {
@@ -501,9 +501,9 @@ void timePar(double tMax_val, double stepping_val, double current_val, simulatio
 
 
 // Függvény a fájl fejlécek kiírására
-void print_file_header(FILE *file, FileType_e file_type, const HeaderData_t *header_data) {
+void printFileHeader(FILE *file, FileType_e file_type, const HeaderData_t *header_data) {
     if (file == NULL) {
-        fprintf(stderr, "ERROR [print_file_header]: Attempted to write header to a NULL file pointer!\n");
+        fprintf(stderr, "ERROR [printFileHeader]: Attempted to write header to a NULL file pointer!\n");
         return;
     }
 
@@ -587,7 +587,7 @@ void print_file_header(FILE *file, FileType_e file_type, const HeaderData_t *hea
             break;
 
         default:
-            fprintf(stderr, "WARNING [print_file_header]: Unknown file type for header generation: %d!\n", file_type);
+            fprintf(stderr, "WARNING [printFileHeader]: Unknown file type for header generation: %d!\n", file_type);
             break;
     }
     fflush(file);
@@ -624,7 +624,7 @@ int setup_initial_output_files(output_files_t *output_files, const simulation_op
         fprintf(stderr, "ERROR: Could not open %s\n", porout);
         return 1; // Hiba
     }
-    print_file_header(output_files->por_motion_file, FILE_TYPE_DUST_MOTION, header_data_for_files);
+    printFileHeader(output_files->por_motion_file, FILE_TYPE_DUST_MOTION, header_data_for_files);
 
     if (sim_opts->twopop == 1.0) {
         output_files->micron_motion_file = fopen(poroutmicr, "w");
@@ -635,7 +635,7 @@ int setup_initial_output_files(output_files_t *output_files, const simulation_op
             output_files->por_motion_file = NULL;
             return 1; // Hiba
         }
-        print_file_header(output_files->micron_motion_file, FILE_TYPE_MICRON_MOTION, header_data_for_files);
+        printFileHeader(output_files->micron_motion_file, FILE_TYPE_MICRON_MOTION, header_data_for_files);
     }
 
     output_files->mass_file = fopen(massout, "w");
@@ -650,7 +650,7 @@ int setup_initial_output_files(output_files_t *output_files, const simulation_op
         }
         return 1; // Hiba
     }
-    print_file_header(output_files->mass_file, FILE_TYPE_MASS_ACCUMULATION, header_data_for_files);
+    printFileHeader(output_files->mass_file, FILE_TYPE_MASS_ACCUMULATION, header_data_for_files);
 
     return 0; // Siker
 }

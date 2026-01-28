@@ -13,28 +13,28 @@ extern FILE *fin1, *fin2, *fmo, *fout, *foutmicr, *fout3, *massfil, *jelfut;
 
 // --- FÜGGVÉNY DEKLARÁCIÓK ---
 
-/* reszecskek_szama függvény deklaráció */
-int reszecskek_szama(const char *filenev);
+/* calculateNumbersOfParticles függvény deklaráció */
+int calculateNumbersOfParticles(const char *filenev);
 
 /* A porreszecskek adatainak beolvasasa */
-// FIX: The original had 'void por_be(double radius[][2], double radiusmicr[][2], double *mass, double *massmicr);'
+// FIX: The original had 'void loadDustParticlesFromFile(double radius[][2], double radiusmicr[][2], double *mass, double *massmicr);'
 // You are missing the 'const char *filename' parameter in the .h file.
-void por_be(double radius[][2], double radiusmicr[][2], double *mass, double *massmicr, const char *filename);
+void loadDustParticlesFromFile(double radius[][2], double radiusmicr[][2], double *mass, double *massmicr, const char *filename);
 
 /* A sigmat tartalmazo file parametereinek beolvasasa */
-void sigIn(disk_t *disk_params, const char *filename);
+void loadGasSurfaceDensityFromFile(disk_t *disk_params, const char *filename);
 
 /* Fuggveny az adott futashoz mappa letrehozasara */
-void Mk_Dir(char *dir_path);
+void createRunDirectory(char *dir_path);
 
 /* Elkeszit egy file-t, ami tartalmazza a jelenlegi futas parametereit, es hogy melyik mappaban talalhatoak a file-ok */
-// FIX: The original had 'void infoCurrent(const char *nev);'
+// FIX: The original had 'void printCurrentInformationAboutRun(const char *nev);'
 // You are missing 'const disk_t *disk_params' and 'const simulation_options_t *sim_opts'.
-void infoCurrent(const char *nev, const disk_t *disk_params, const simulation_options_t *sim_opts);
+void printCurrentInformationAboutRun(const char *nev, const disk_t *disk_params, const simulation_options_t *sim_opts);
 
 /* Fuggveny a tomegfile kiiratasara */
 // FIX: The original was missing 'const disk_t *disk_params' and 'const simulation_options_t *sim_opts'.
-void Print_Mass(double step, 
+void printMassGrowthAtDZEFile(double step, 
                 double (*partmassind)[5], double (*partmassmicrind)[5], 
                 double t, // Ezt továbbra is meghagyjuk, ha az időre szükség van
                 double massbtempii, double massbtempoi, double massmtempii, double massmtempoi, 
@@ -104,7 +104,7 @@ typedef struct {
 
 // Függvény a fejlécek kiírására
 // Az 'header_data' opcionális lehet (NULL is átadható), ha az adott fájltípushoz nem kell
-void print_file_header(FILE *file, FileType_e file_type, const HeaderData_t *header_data);
+void printFileHeader(FILE *file, FileType_e file_type, const HeaderData_t *header_data);
 
 
 // Függvény a kezdeti kimeneti fájlok beállítására és fejlécek írására

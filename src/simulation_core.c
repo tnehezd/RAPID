@@ -11,7 +11,7 @@
 
 // Your Project Header Includes
 #include "config.h"       // For PARTICLE_NUMBER, TMAX, WO, RMIN, DT, optdr, sim_opts->twopop, sim_opts->growth, optev, r_dze_i, r_dze_o
-#include "io_utils.h"     // For timePar (though not called in timeIntegrationForTheSystem, it's io-related), reszecskek_szama, por_be, Print_Sigma, Print_Pormozg_Size, Print_Mass, Print_Sigmad. Also for globals: filenev1, filenev3, fout, foutmicr, massfil
+#include "io_utils.h"     // For timePar (though not called in timeIntegrationForTheSystem, it's io-related), calculateNumbersOfParticles, loadDustParticlesFromFile, Print_Sigma, Print_Pormozg_Size, printMassGrowthAtDZEFile, Print_Sigmad. Also for globals: filenev1, filenev3, fout, foutmicr, massfil
 #include "disk_model.h"   // If any disk_model functions are called (e.g., applyBoundaryConditions indirectly if sigma/calculateGasPressure depend on it) - Though not directly visible in timeIntegrationForTheSystem, often needed for global disk parameters. Add if you hit implicit declaration for disk_model functions.
 #include "dust_physics.h" // For Count_Mass, secondaryGrowth, find_max, find_min, calculateDustSurfaceDensity, calculateDustDistance
 #include "utils.h"        // For calculateTimeStep, refreshGasSurfaceDensityPressurePressureGradient, and potentially other utility functions
@@ -86,7 +86,7 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
 
     // --- Inicializálási szakasz ---
     if (sim_opts->drift == 1.) {
-        PARTICLE_NUMBER = reszecskek_szama(sim_opts->dust_input_filename);
+        PARTICLE_NUMBER = calculateNumbersOfParticles(sim_opts->dust_input_filename);
     } else {
         fprintf(stderr, "ERROR [timeIntegrationForTheSystem]: Particle drift is OFF. PARTICLE_NUMBER set to 0.\n");
         PARTICLE_NUMBER = 0;
@@ -103,8 +103,8 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
             fprintf(stderr, "ERROR: Failed to set up initial output files. Exiting.\n");
             exit(EXIT_FAILURE);
         }
-        // por_be hívása a részecskeadatok beolvasására
-        por_be(p_data.radius, p_data.radiusmicr, p_data.massvec, p_data.massmicrvec, sim_opts->dust_input_filename);
+        // loadDustParticlesFromFile hívása a részecskeadatok beolvasására
+        loadDustParticlesFromFile(p_data.radius, p_data.radiusmicr, p_data.massvec, p_data.massmicrvec, sim_opts->dust_input_filename);
     }
 
     // További inicializálások
@@ -131,7 +131,7 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
     // Mass accumulation változók
     double masstempiin = 0, massmtempiin = 0, masstempoin = 0, massmtempoin = 0;
     double masstempiout = 0, massmtempiout = 0, masstempoout = 0, massmtempoout = 0;
-    double tavin = 0, tavout = 0; // Távolságok a Print_Mass-hoz
+    double tavin = 0, tavout = 0; // Távolságok a printMassGrowthAtDZEFile-hoz
 
 
     if (sim_opts->twopop == 0 && PARTICLE_NUMBER > 0) {
@@ -210,7 +210,7 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
                         fprintf(stderr, "ERROR: Could not open %s for writing.\n", dens_name);
                     } else {
                         HeaderData_t gas_header_data = {.current_time = current_time_years, .is_initial_data = (current_time_years == 0.0)};
-                        print_file_header(output_files->surface_file, FILE_TYPE_GAS_DENSITY, &gas_header_data);
+                        printFileHeader(output_files->surface_file, FILE_TYPE_GAS_DENSITY, &gas_header_data);
                     }
                 }
 
@@ -219,7 +219,7 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
                     fprintf(stderr, "ERROR: Could not open %s for writing.\n", dust_name);
                 } else {
                     HeaderData_t dust_header_data = {.current_time = current_time_years, .is_initial_data = (current_time_years == 0.0)};
-                    print_file_header(output_files->dust_file, FILE_TYPE_DUST_MOTION, &dust_header_data);
+                    printFileHeader(output_files->dust_file, FILE_TYPE_DUST_MOTION, &dust_header_data);
                 }
 
                 if (sim_opts->twopop == 1.) {
@@ -228,7 +228,7 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
                         fprintf(stderr, "ERROR: Could not open %s for writing.\n", dust_name2);
                     } else {
                         HeaderData_t micron_dust_header_data = {.current_time = current_time_years, .is_initial_data = (current_time_years == 0.0)};
-                        print_file_header(output_files->micron_dust_file, FILE_TYPE_MICRON_MOTION, &micron_dust_header_data);
+                        printFileHeader(output_files->micron_dust_file, FILE_TYPE_MICRON_MOTION, &micron_dust_header_data);
                     }
                 }
 
@@ -268,8 +268,8 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
                     
                 }
 
-                Print_Mass(L, p_data.partmassind, p_data.partmassmicrind, t, masstempiin, masstempoin, massmtempiin, massmtempoin, &masstempiout, &masstempoout, &massmtempiout, &massmtempoout, &tavin, &tavout, disk_params, sim_opts, output_files);
-                // Update input mass for next Print_Mass call
+                printMassGrowthAtDZEFile(L, p_data.partmassind, p_data.partmassmicrind, t, masstempiin, masstempoin, massmtempiin, massmtempoin, &masstempiout, &masstempoout, &massmtempiout, &massmtempoout, &tavin, &tavout, disk_params, sim_opts, output_files);
+                // Update input mass for next printMassGrowthAtDZEFile call
                 masstempiin = masstempiout;
                 massmtempiin = massmtempiout;
                 masstempoin = masstempoout;
@@ -334,7 +334,7 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
                 } else {
                     fprintf(stderr, "DEBUG [timeIntegrationForTheSystem]: Opened %s for writing in gas-only branch.\n", dens_name);
                     HeaderData_t gas_header_data = {.current_time = current_time_years, .is_initial_data = (current_time_years == 0.0)};
-                    print_file_header(output_files->surface_file, FILE_TYPE_GAS_DENSITY, &gas_header_data);
+                    printFileHeader(output_files->surface_file, FILE_TYPE_GAS_DENSITY, &gas_header_data);
                 }
 
                 Print_Sigma(disk_params, output_files);

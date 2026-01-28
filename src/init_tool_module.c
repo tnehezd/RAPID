@@ -3,7 +3,7 @@
 #include "disk_model.h" // Contains declarations for createRadialGrid, createInitialGasSurfaceDensity, createInitialGasPressure, createInitialGasPressureGradient, createInitialGasVelocity, readDiskParameters, scale_height, calculateKeplerianVelocity, kep_freq, calculateLocalSoundSpeed, press, calcualteMidplaneGasDensity
 #include "dust_physics.h" // May contain calculateParticleMass, etc.
 #include "utils.h" // For find_max, find_min, etc. and for linearInterpolationation functions
-#include "io_utils.h" // For Mk_Dir (if used internally here)
+#include "io_utils.h" 
 #include "gas_physics.h"
 #include "boundary_conditions.h"
 #include "simulation_types.h"
@@ -101,7 +101,7 @@ static long double calculateDustSurfaceDensityInitTool(double r_au, init_tool_op
 }
 
 // Finds the minimum of three double values.
-static double find_minimum_double(double s1, double s2, double s3) {
+static double findMinimumForThreeNumbersInitTool(double s1, double s2, double s3) {
     double min_val = s1;
     if (s2 < min_val) {
         min_val = s2;
@@ -114,7 +114,7 @@ static double find_minimum_double(double s1, double s2, double s3) {
 
 // --- Main Init Tool Function ---
 
-int run_init_tool(init_tool_options_t *opts, disk_t *disk_params) {
+int runInitialization(init_tool_options_t *opts, disk_t *disk_params) {
     FILE *fout_data = NULL; // For dust particle profile
     FILE *fout_params = NULL; // For disk parameters
     FILE *fout_dens = NULL; // For gas density profile
@@ -123,19 +123,19 @@ int run_init_tool(init_tool_options_t *opts, disk_t *disk_params) {
 
     // --- Input parameter validation ---
     if (opts->r_inner <= 0.0) {
-        fprintf(stderr, "ERROR [run_init_tool]: Inner radius (r_inner) must be positive. Current value: %lg\n", opts->r_inner);
+        fprintf(stderr, "ERROR [runInitialization]: Inner radius (r_inner) must be positive. Current value: %lg\n", opts->r_inner);
         return 1;
     }
     if (opts->r_outer <= opts->r_inner) {
-        fprintf(stderr, "ERROR [run_init_tool]: Outer radius (r_outer) must be greater than inner radius (r_inner). R_inner: %lg, R_outer: %lg\n", opts->r_inner, opts->r_outer);
+        fprintf(stderr, "ERROR [runInitialization]: Outer radius (r_outer) must be greater than inner radius (r_inner). R_inner: %lg, R_outer: %lg\n", opts->r_inner, opts->r_outer);
         return 1;
     }
     if (opts->n_grid_points <= 0) {
-        fprintf(stderr, "ERROR [run_init_tool]: Number of gas grid points (n_grid_points) must be positive. Current value: %d\n", opts->n_grid_points);
+        fprintf(stderr, "ERROR [runInitialization]: Number of gas grid points (n_grid_points) must be positive. Current value: %d\n", opts->n_grid_points);
         return 1;
     }
     if (opts->n_dust_particles <= 0) { // NEW: Validate n_dust_particles
-        fprintf(stderr, "ERROR [run_init_tool]: Number of dust particles (n_dust_particles) must be positive. Current value: %d\n", opts->n_dust_particles);
+        fprintf(stderr, "ERROR [runInitialization]: Number of dust particles (n_dust_particles) must be positive. Current value: %d\n", opts->n_dust_particles);
         return 1;
     }
     // --- End of input parameter validation ---
@@ -227,13 +227,13 @@ int run_init_tool(init_tool_options_t *opts, disk_t *disk_params) {
 
     // --- Write Headers using the new function ---
     if (fout_data != NULL) {
-        print_file_header(fout_data, FILE_TYPE_PARTICLE_SIZE, &initial_header_data);
+        printFileHeader(fout_data, FILE_TYPE_PARTICLE_SIZE, &initial_header_data);
     }
     if (fout_dens != NULL) {
-        print_file_header(fout_dens, FILE_TYPE_GAS_DENSITY, &initial_header_data);
+        printFileHeader(fout_dens, FILE_TYPE_GAS_DENSITY, &initial_header_data);
     }
     if (fout_params != NULL) {
-        print_file_header(fout_params, FILE_TYPE_DISK_PARAM, &initial_header_data);
+        printFileHeader(fout_params, FILE_TYPE_DISK_PARAM, &initial_header_data);
     }
 
     // Physical Constants
@@ -270,7 +270,7 @@ int run_init_tool(init_tool_options_t *opts, disk_t *disk_params) {
     disk_params->ugvec = (double *)malloc((disk_params->NGRID + 2) * sizeof(double));
 
     if (!disk_params->rvec || !disk_params->sigmavec || !disk_params->pressvec || !disk_params->dpressvec || !disk_params->ugvec) {
-        fprintf(stderr, "ERROR [run_init_tool]: Failed to allocate disk arrays. Exiting.\n");
+        fprintf(stderr, "ERROR [runInitialization]: Failed to allocate disk arrays. Exiting.\n");
         if (fout_data) fclose(fout_data);
         if (fout_params) fclose(fout_params);
         if (fout_dens) fclose(fout_dens);
@@ -384,7 +384,7 @@ int run_init_tool(init_tool_options_t *opts, disk_t *disk_params) {
                 s_df = u_frag_au_yr2pi * calculateKeplerianVelocity_au_yr2pi / dlnPdlnr_abs_cs2_half * 2.0 * sigma_gas_local_cgs / (M_PI * opts->dust_density_g_cm3);
             }
 
-            s_max_cm = find_minimum_double(s_drift, s_frag, s_df);
+            s_max_cm = findMinimumForThreeNumbersInitTool(s_drift, s_frag, s_df);
         }
 
         if (s_max_cm <= 0) {
@@ -419,8 +419,8 @@ int run_init_tool(init_tool_options_t *opts, disk_t *disk_params) {
 
     // Write parameters to FILENAME_DISK_PARAM (fout_params)
     // CORRECTION: Negate SigmaExp value so that the actual negative exponent is written to the file.
-    // Here, we are not calling print_file_header, because data writing is a separate line, not part of the header.
-    // The header was already written by the print_file_header(fout_params, FILE_TYPE_DISK_PARAM, &initial_header_data); call above.
+    // Here, we are not calling printFileHeader, because data writing is a separate line, not part of the header.
+    // The header was already written by the printFileHeader(fout_params, FILE_TYPE_DISK_PARAM, &initial_header_data); call above.
     fprintf(fout_params, "%-15.6e %-15.6e %-10d %-15.6e %-20.12Lg %-15.6e %-15.6e %-15.6e %-20.12e %-20.12e %-15.6e %-15.6e %-15.6e %-15.6e %-15.6e\n",
             opts->r_inner, opts->r_outer, opts->n_grid_points, -opts->sigma_exponent, current_sigma0_gas,
             G_GRAV_CONST, opts->deadzone_r_inner, opts->deadzone_r_outer,
