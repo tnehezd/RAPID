@@ -108,17 +108,17 @@ int main(int argc, const char **argv) {
     fprintf(stderr, "DEBUG [main]: After createRunDirectory (base dir), def.output_dir_name is now: '%s'\n", def.output_dir_name);
 
     char initial_dir_path[MAX_PATH_LEN];
-    char logs_dir_path[MAX_PATH_LEN];
+    char kLogFilesDirectory_path[MAX_PATH_LEN];
 
-    // Create the 'initial' subdirectory using CONFIG_DIR
-    snprintf(initial_dir_path, sizeof(initial_dir_path), "%s/%s", def.output_dir_name, CONFIG_DIR);
+    // Create the 'initial' subdirectory using kConfigFilesDirectory
+    snprintf(initial_dir_path, sizeof(initial_dir_path), "%s/%s", def.output_dir_name, kConfigFilesDirectory);
     createRunDirectory(initial_dir_path);
 
-    // Create the 'LOGS' subdirectory using LOGS_DIR
-    snprintf(logs_dir_path, sizeof(logs_dir_path), "%s/%s", def.output_dir_name, LOGS_DIR);
-    fprintf(stderr, "DEBUG [main]: logs_dir_path assembled as: '%s'\n", logs_dir_path);
+    // Create the 'LOGS' subdirectory using kLogFilesDirectory
+    snprintf(kLogFilesDirectory_path, sizeof(kLogFilesDirectory_path), "%s/%s", def.output_dir_name, kLogFilesDirectory);
+    fprintf(stderr, "DEBUG [main]: kLogFilesDirectory_path assembled as: '%s'\n", kLogFilesDirectory_path);
 
-    createRunDirectory(logs_dir_path);
+    createRunDirectory(kLogFilesDirectory_path);
 
     // CRITICAL: Populate sim_opts.output_dir_name from def.output_dir_name
     strncpy(sim_opts.output_dir_name, def.output_dir_name, MAX_PATH_LEN - 1);
@@ -175,10 +175,10 @@ int main(int argc, const char **argv) {
         dummy_sys_ret = system(cmd_buffer); (void)dummy_sys_ret;
         fprintf(stderr, "DEBUG [main]: Copied initial profile file '%s' to '%s/'.\n", current_inputsig_file, initial_dir_path);
 
-        // Copy disk_config.dat (FILENAME_DISK_PARAM) file to the 'initial' directory
-        snprintf(cmd_buffer, sizeof(cmd_buffer), "cp %s %s/", FILENAME_DISK_PARAM, initial_dir_path);
+        // Copy disk_config.dat (kDiskConfigFile) file to the 'initial' directory
+        snprintf(cmd_buffer, sizeof(cmd_buffer), "cp %s %s/", kDiskConfigFile, initial_dir_path);
         dummy_sys_ret = system(cmd_buffer); (void)dummy_sys_ret;
-        fprintf(stderr, "DEBUG [main]: Copied %s to %s/\n", FILENAME_DISK_PARAM, initial_dir_path);
+        fprintf(stderr, "DEBUG [main]: Copied %s to %s/\n", kDiskConfigFile, initial_dir_path);
 
     } else {
         // If NO input file is specified:
@@ -216,12 +216,12 @@ int main(int argc, const char **argv) {
         fprintf(stderr, "DEBUG [main]: runInitialization completed. disk_params allocated and populated.\n");
 
         // Now current_inputsig_file points to the generated file in initial_dir_path
-        // CHANGE HERE: FILENAME_INIT_PROFILE -> FILENAME_INIT_GAS_PROFILE
-        snprintf(current_inputsig_file, sizeof(current_inputsig_file), "%s/%s", initial_dir_path, FILENAME_INIT_GAS_PROFILE);
+        // CHANGE HERE: FILENAME_INIT_PROFILE -> kInitialGasProfileFileName
+        snprintf(current_inputsig_file, sizeof(current_inputsig_file), "%s/%s", initial_dir_path, kInitialGasProfileFileName);
         fprintf(stderr, "DEBUG [main]: Generated GAS profile will be loaded from '%s'.\n", current_inputsig_file);
 
         // --- Update NGRID from the generated file (critical for loadGasSurfaceDensityFromFile sizing) ---
-        // Important: Here, the number of lines should be read from FILENAME_INIT_GAS_PROFILE,
+        // Important: Here, the number of lines should be read from kInitialGasProfileFileName,
         // provided that init_tool_module.c creates this file.
         disk_params.NGRID = calculateNumbersOfParticles(current_inputsig_file);
 
@@ -232,7 +232,7 @@ int main(int argc, const char **argv) {
         }
         fprintf(stderr, "DEBUG [main]: NGRID updated from generated file: %d. DD calculated as %.4e.\n", disk_params.NGRID, disk_params.DD);
 
-        // No need for 'cp' here for FILENAME_DISK_PARAM or FILENAME_INIT_PROFILE,
+        // No need for 'cp' here for kDiskConfigFile or FILENAME_INIT_PROFILE,
         // since runInitialization created them directly in initial_dir_path.
     }
 
@@ -246,7 +246,7 @@ int main(int argc, const char **argv) {
     // --- NEW PART: Set the dust profile filename in sim_opts.dust_input_filename ---
     // This is the dust profile filename that loadDustParticlesFromFile reads within timeIntegrationForTheSystem.
     char current_inputdust_file[MAX_PATH_LEN];
-    snprintf(current_inputdust_file, sizeof(current_inputdust_file), "%s/%s", initial_dir_path, FILENAME_INIT_DUST_PROFILE);
+    snprintf(current_inputdust_file, sizeof(current_inputdust_file), "%s/%s", initial_dir_path, kInitialDustProfileFileName);
     strncpy(sim_opts.dust_input_filename, current_inputdust_file, MAX_PATH_LEN - 1);
     sim_opts.dust_input_filename[MAX_PATH_LEN - 1] = '\0'; // Ensure null-termination
     fprintf(stderr, "DEBUG [main]: sim_opts.dust_input_filename set to '%s' for timeIntegrationForTheSystem (dust profile).\n", sim_opts.dust_input_filename);
@@ -276,7 +276,7 @@ int main(int argc, const char **argv) {
         fprintf(stderr, "DEBUG [main]: Evolution (sim_opts.evol=%.2f) and drift (sim_opts.drift=%.2f) are OFF.\n", sim_opts.evol, sim_opts.drift);
 
         char dens_name_initial[MAX_PATH_LEN];
-        snprintf(dens_name_initial, sizeof(dens_name_initial), "%s/%s", initial_dir_path, FILENAME_INIT_GAS_PROFILE);
+        snprintf(dens_name_initial, sizeof(dens_name_initial), "%s/%s", initial_dir_path, kInitialGasProfileFileName);
         fprintf(stderr, "DEBUG [main]: Printing initial surface density to %s.\n", dens_name_initial);
 
         // Special handling for printGasSurfaceDensityPressurePressureDerivateFile when only initial output is needed

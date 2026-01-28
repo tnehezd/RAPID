@@ -1,5 +1,5 @@
 #include "init_tool_module.h"
-#include "config.h" // For FILENAME_INIT_DUST_PROFILE, FILENAME_DISK_PARAM, SDCONV, G_GRAV_CONST, SNOWLINE, ICEFACTOR, CMPSECTOAUPYRP2PI
+#include "config.h" // For kInitialDustProfileFileName, kDiskConfigFile, SDCONV, G_GRAV_CONST, SNOWLINE, ICEFACTOR, CMPSECTOAUPYRP2PI
 #include "disk_model.h" // Contains declarations for createRadialGrid, createInitialGasSurfaceDensity, createInitialGasPressure, createInitialGasPressureGradient, createInitialGasVelocity, readDiskParameters, scale_height, calculateKeplerianVelocity, kep_freq, calculateLocalSoundSpeed, press, calcualteMidplaneGasDensity
 #include "dust_physics.h" // May contain calculateParticleMass, etc.
 #include "utils.h" 
@@ -164,9 +164,9 @@ int runInitialization(init_tool_options_t *opts, disk_t *disk_params) {
     char full_disk_param_path[MAX_PATH_LEN];
     char full_init_density_path[MAX_PATH_LEN];
 
-    snprintf(full_init_dust_profile_path, sizeof(full_init_dust_profile_path), "%s/%s", opts->output_base_path, FILENAME_INIT_DUST_PROFILE);
-    snprintf(full_disk_param_path, sizeof(full_disk_param_path), "%s/%s", opts->output_base_path, FILENAME_DISK_PARAM);
-    snprintf(full_init_density_path, sizeof(full_init_density_path), "%s/%s", opts->output_base_path, FILENAME_INIT_GAS_PROFILE);
+    snprintf(full_init_dust_profile_path, sizeof(full_init_dust_profile_path), "%s/%s", opts->output_base_path, kInitialDustProfileFileName);
+    snprintf(full_disk_param_path, sizeof(full_disk_param_path), "%s/%s", opts->output_base_path, kDiskConfigFile);
+    snprintf(full_init_density_path, sizeof(full_init_density_path), "%s/%s", opts->output_base_path, kInitialGasProfileFileName);
 
     // --- Open Output Files with full paths ---
     fout_data = fopen(full_init_dust_profile_path, "w");
@@ -399,7 +399,7 @@ int runInitialization(init_tool_options_t *opts, disk_t *disk_params) {
         long double repr_mass_pop1 = representative_mass_total_in_cell * opts->two_pop_ratio;
         long double repr_mass_pop2 = representative_mass_total_in_cell * (1.0 - opts->two_pop_ratio);
 
-        // Write data to FILENAME_INIT_DUST_PROFILE (fout_data)
+        // Write data to kInitialDustProfileFileName (fout_data)
         fprintf(fout_data, "%-5d %-15.6e %-20.12Lg %-20.12Lg %-15.6e %-15.6e\n",
                 i_loop, r_dust_particle_au, // Use r_dust_particle_au
                 repr_mass_pop1,
@@ -417,7 +417,7 @@ int runInitialization(init_tool_options_t *opts, disk_t *disk_params) {
 
     fprintf(stderr,"Particle data file created (%s). Writing disk parameters file!\n\n", full_init_dust_profile_path);
 
-    // Write parameters to FILENAME_DISK_PARAM (fout_params)
+    // Write parameters to kDiskConfigFile (fout_params)
     // CORRECTION: Negate SigmaExp value so that the actual negative exponent is written to the file.
     // Here, we are not calling printFileHeader, because data writing is a separate line, not part of the header.
     // The header was already written by the printFileHeader(fout_params, FILE_TYPE_DISK_PARAM, &initial_header_data); call above.

@@ -22,22 +22,22 @@ const char *inputsig = NULL;
 // These cannot be modified at runtime.
 
 // CRITICAL CHANGE: Define separate names for gas and dust profiles
-const char * const FILENAME_INIT_GAS_PROFILE = "initial_gas_profile.dat";   // This is the one you need for loadGasSurfaceDensityFromFile!
-const char * const FILENAME_INIT_DUST_PROFILE = "initial_dust_profile.dat"; // This is your existing dust file
+const char * const kInitialGasProfileFileName = "initial_gas_profile.dat";   // This is the one you need for loadGasSurfaceDensityFromFile!
+const char * const kInitialDustProfileFileName = "initial_dust_profile.dat"; // This is your existing dust file
 
 // You can now remove 'FILENAME_INIT_PROFILE' as it's redundant/conflicting
 // with the more specific names above, unless it serves another generic purpose.
 // If you keep it, make sure its usage is unambiguous.
 
-const char * const FILE_DENS_PREFIX = "density_profile";
-const char * const FILE_MASS_ACCUMULATE = "mass_accumulation_dze_edge.dat";
-const char * const FILE_DUST_EVOLUTION = "dust_particle_evolution.dat";
+const char * const kGasDensityProfileFilePrefix = "density_profile";
+const char * const kDustAccumulationFileName = "mass_accumulation_dze_edge.dat";
+const char * const kDustParticleEvolutionFile = "dust_particle_evolution.dat";
 
 
 
-const char * const FILENAME_DISK_PARAM = "disk_config.dat";
+const char * const kDiskConfigFile = "disk_config.dat";
 
 
 
-const char * const LOGS_DIR = "LOGS";
-const char * const CONFIG_DIR = "config";
+const char * const kLogFilesDirectory = "LOGS";
+const char * const kConfigFilesDirectory = "config";

@@ -49,19 +49,19 @@ extern FILE *fil;
 
 // --- Global Filename Declarations (extern) ---
 // Define distinct names for gas and dust initial profiles
-extern const char * const FILENAME_INIT_GAS_PROFILE;   // NEW: For initial gas profile
-extern const char * const FILENAME_INIT_DUST_PROFILE;  // NEW: For initial dust profile
+extern const char * const kInitialGasProfileFileName;   // NEW: For initial gas profile
+extern const char * const kInitialDustProfileFileName;  // NEW: For initial dust profile
 // You can remove or repurpose FILENAME_INIT_PROFILE if it's no longer generic.
 // For clarity, I recommend using the more specific names above.
 
-extern const char * const FILE_DENS_PREFIX;
-extern const char * const FILE_MASS_ACCUMULATE;
-extern const char * const FILE_DUST_EVOLUTION;
+extern const char * const kGasDensityProfileFilePrefix;
+extern const char * const kDustAccumulationFileName;
+extern const char * const kDustParticleEvolutionFile;
 
-extern const char * const FILENAME_DISK_PARAM;
+extern const char * const kDiskConfigFile;
 
-extern const char * const LOGS_DIR;
-extern const char * const CONFIG_DIR;
+extern const char * const kLogFilesDirectory;
+extern const char * const kConfigFilesDirectory;
 
 extern const char *inputsig; // Parameter controls
 

@@ -195,7 +195,7 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
 
                 if (current_time_years != 0) {
                     if (sim_opts->evol == 1) {
-                        snprintf(dens_name, MAX_PATH_LEN, "%s/%s/%s_%08d.dat", sim_opts->output_dir_name, LOGS_DIR, FILE_DENS_PREFIX, (int)L);
+                        snprintf(dens_name, MAX_PATH_LEN, "%s/%s/%s_%08d.dat", sim_opts->output_dir_name, LOGS_DIR, kGasDensityProfileFilePrefix, (int)L);
                     }
                 }
 
@@ -325,8 +325,8 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
                 fprintf(stderr,"\n--- Simulation Time: %.2e years (Internal time: %.2e, L: %.2e) ---\n", current_time_years, t, L);
 
                 fprintf(stderr,"DEBUG [timeIntegrationForTheSystem]: Outputting data for gas-only simulation at time %.2e. L=%.2e\n", current_time_years, L);
-                snprintf(dens_name, MAX_PATH_LEN, "%s/%s/%s_%08d.dat", sim_opts->output_dir_name, LOGS_DIR, FILE_DENS_PREFIX, (int)L);
-                fprintf(stderr, "DEBUG [timeIntegrationForTheSystem]: Outputting %s_%08d.dat to %s.\n", FILE_DENS_PREFIX, (int)L, dens_name);
+                snprintf(dens_name, MAX_PATH_LEN, "%s/%s/%s_%08d.dat", sim_opts->output_dir_name, LOGS_DIR, kGasDensityProfileFilePrefix, (int)L);
+                fprintf(stderr, "DEBUG [timeIntegrationForTheSystem]: Outputting %s_%08d.dat to %s.\n", kGasDensityProfileFilePrefix, (int)L, dens_name);
 
                 output_files->surface_file = fopen(dens_name, "w");
                 if (output_files->surface_file == NULL) {
