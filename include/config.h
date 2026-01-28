@@ -56,10 +56,12 @@ extern const char * const kGasDensityProfileFilePrefix;
 extern const char * const kDustAccumulationFileName;
 extern const char * const kDustParticleEvolutionFile;
 extern const char * const kDriftTimescaleFileName;
+extern const char * const kDustMicronParticleEvolutionFile;
 extern const char * const kDiskConfigFile;
 extern const char * const kLogFilesDirectory;
 extern const char * const kConfigFilesDirectory;
 extern const char * const kFileNamesSuffix;
+extern const char * const kCurrentInfoFile;
 
 void initialize_derived_config_variables();
 

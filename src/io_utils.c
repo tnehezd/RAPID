@@ -227,7 +227,7 @@ void printCurrentInformationAboutRun(const char *nev, const disk_t *disk_params,
     char full_path[MAX_PATH_LEN]; // Használjuk a MAX_PATH_LEN-t a biztonságos puffereléshez
     char file_name[100]; // Csak a fájlnév, pl. "run_0.dat"
 
-    sprintf(file_name, "run_%i.dat", (int)sim_opts->TCURR);
+    sprintf(file_name, "%s%s", kCurrentInfoFile,kFileNamesSuffix);
     
     // Építsük fel a teljes elérési utat: <nev>/<file_name>
     snprintf(full_path, sizeof(full_path), "%s/%s", nev, file_name);
@@ -612,7 +612,7 @@ int setupInitialOutputFiles(output_files_t *output_files, const simulation_optio
     snprintf(porout, MAX_PATH_LEN, "%s/%s/%s%s", sim_opts->output_dir_name, kLogFilesDirectory, kDustAccumulationFileName,kFileNamesSuffix);
 
     if (sim_opts->twopop == 1.0) {
-        snprintf(poroutmicr, MAX_PATH_LEN, "%s/%s/micron_particle_evolution.dat", sim_opts->output_dir_name, kLogFilesDirectory);
+        snprintf(poroutmicr, MAX_PATH_LEN, "%s/%s/%s%st", sim_opts->output_dir_name, kLogFilesDirectory,kDustMicronParticleEvolutionFile,kFileNamesSuffix);
     }
     snprintf(massout, MAX_PATH_LEN, "%s/%s/%s%s", sim_opts->output_dir_name, kLogFilesDirectory, kDustAccumulationFileName,kFileNamesSuffix);
 
@@ -681,7 +681,7 @@ void cleanupSimulationResources(ParticleData_t *p_data, output_files_t *output_f
     if (output_files->micron_motion_file != NULL) { // Ellenőrzés twopop-ra itt is
         fclose(output_files->micron_motion_file);
         output_files->micron_motion_file = NULL;
-        fprintf(stderr, "DEBUG [cleanupSimulationResources]: Closed micron_particle_evolution.dat\n");
+        fprintf(stderr, "DEBUG [cleanupSimulationResources]: Closed %s%s\n",kDustMicronParticleEvolutionFile,kFileNamesSuffix);
     }
     if (output_files->mass_file != NULL) {
         fclose(output_files->mass_file);
