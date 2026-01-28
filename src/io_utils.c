@@ -155,8 +155,8 @@ void loadGasSurfaceDensityFromFile(disk_t *disk_params, const char *filename) {
     double pressure_gas_val;
     double dpressure_dr_val;
 
-    // A ciklus disk_params->NGRID-ig megy
-    for (int i = 0; i < disk_params->NGRID; i++) {
+    // A ciklus disk_params->grid_number-ig megy
+    for (int i = 0; i < disk_params->grid_number; i++) {
         // MOST MÁR PONTOSAN A FÁJLOD FORMÁTUMÁT OLVASSUK BE:
         // Radius_AU, GasSurfDensity, GasPressure, GasPressureDeriv (4 oszlop, mind double)
         if (fscanf(fp, "%lf %lf %lf %lf",
@@ -170,15 +170,15 @@ void loadGasSurfaceDensityFromFile(disk_t *disk_params, const char *filename) {
         // Hozzárendelés a disk_params tömbökhöz
         // Az indexelés 'i + 1' a 0-ás indexű szellemcella miatt (ahogy a disk_t definíciója és a applyBoundaryConditions függvény valószínűsíti).
         // Fontos: ellenőrizzük, hogy az 'i + 1' index a tömb határain belül van-e.
-        // A tömbök mérete disk_params->NGRID + 2, tehát az érvényes indexek 0-tól NGRID+1-ig mennek.
-        // A "valós" adatok 1-től NGRID-ig kerülnek, a 0 és NGRID+1 pedig a applyBoundaryConditions-hez.
-        if ((i + 1) >= 0 && (i + 1) <= disk_params->NGRID + 1) { 
+        // A tömbök mérete disk_params->grid_number + 2, tehát az érvényes indexek 0-tól grid_number+1-ig mennek.
+        // A "valós" adatok 1-től grid_number-ig kerülnek, a 0 és grid_number+1 pedig a applyBoundaryConditions-hez.
+        if ((i + 1) >= 0 && (i + 1) <= disk_params->grid_number + 1) { 
             disk_params->rvec[i + 1] = r_val;
             disk_params->sigmavec[i + 1] = sigma_gas_val;
             disk_params->pressvec[i + 1] = pressure_gas_val;
             disk_params->dpressvec[i + 1] = dpressure_dr_val;
         } else {
-            fprintf(stderr, "WARNING [loadGasSurfaceDensityFromFile]: Attempted to write to out-of-bounds index %d. Max allowed index: %d (NGRID+1).\n", i + 1, disk_params->NGRID + 1);
+            fprintf(stderr, "WARNING [loadGasSurfaceDensityFromFile]: Attempted to write to out-of-bounds index %d. Max allowed index: %d (grid_number+1).\n", i + 1, disk_params->grid_number + 1);
         }
 
     }
@@ -244,8 +244,8 @@ void printCurrentInformationAboutRun(const char *nev, const disk_t *disk_params,
     }
 
     fprintf(current_info_file,"The current run is in the %s directory!\n",nev);
-    fprintf(current_info_file,"\n\nThe parameters of the disk:\nRMIN: %lg, RMAX: %lg\nSIGMA0: %lg, SIGMA_EXP: %lg, flaring index: %lg\nALPHA_VISC: %lg, ALPHA_MOD: %lg\nR_DZE_I: %lg, R_DZE_O: %lg, DR_DZEI: %lg, DR_DZE_O: %lg   (*** R_DZE_I/O = 0, akkor azt a DZE-t nem szimulálja a futás! ***)\n\n\n",
-              disk_params->RMIN, disk_params->RMAX,
+    fprintf(current_info_file,"\n\nThe parameters of the disk:\nr_min: %lg, RMAX: %lg\nSIGMA0: %lg, SIGMA_EXP: %lg, flaring index: %lg\nALPHA_VISC: %lg, ALPHA_MOD: %lg\nR_DZE_I: %lg, R_DZE_O: %lg, DR_DZEI: %lg, DR_DZE_O: %lg   (*** R_DZE_I/O = 0, akkor azt a DZE-t nem szimulálja a futás! ***)\n\n\n",
+              disk_params->r_min, disk_params->RMAX,
               disk_params->SIGMA0, disk_params->SIGMAP_EXP, disk_params->FLIND,
               disk_params->alpha_visc, disk_params->a_mod,
               disk_params->r_dze_i, disk_params->r_dze_o, disk_params->Dr_dze_i, disk_params->Dr_dze_o);
@@ -285,7 +285,7 @@ void printMassGrowthAtDZEFile(double step, double (*partmassind)[5], double (*pa
     int j = 0, i;
 
     if(dim != 0) {
-        for(i = 0; i < disk_params->NGRID; i++) {
+        for(i = 0; i < disk_params->grid_number; i++) {
             // Itt a findZeroPoint valószínűleg disk_params->rvec és disk_params->dpressvec-et használ
             temp_new = findZeroPoint(i,disk_params->rvec,disk_params->dpressvec); 
             if(temp != temp_new && i > 3 && temp_new != 0.0) {
@@ -402,7 +402,7 @@ void printGasSurfaceDensityPressurePressureDerivateFile(const disk_t *disk_param
     }
 
 //%-15.6e %-15.6Lg %-15.6e %-15.6e\n",
-    for(i = 1; i <= disk_params->NGRID; i++) { // Using disk_params->NGRID
+    for(i = 1; i <= disk_params->grid_number; i++) { // Using disk_params->grid_number
         fprintf(output_files->surface_file, "%-15.6e %-15.6lg %-15.6e %15.6e\n", disk_params->rvec[i], disk_params->sigmavec[i], disk_params->pressvec[i], disk_params->dpressvec[i]);
     }
 
@@ -420,12 +420,12 @@ void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const 
     }
 
     for(i=0;i<particle_number;i++){ // particle_number from config.h
-        if (r[i] >= disk_params->RMIN) { // Using disk_params->RMIN
+        if (r[i] >= disk_params->r_min) { // Using disk_params->r_min
             fprintf(output_files->dust_file,"%.11lg  %lg \n",r[i],sigmad[i]);
         }
 
         if(sim_opts->twopop == 1.0 && output_files->micron_dust_file != NULL) {
-            if (rm[i] >= disk_params->RMIN) { // Using disk_params->RMIN
+            if (rm[i] >= disk_params->r_min) { // Using disk_params->r_min
                 fprintf(output_files->micron_dust_file,"%lg  %lg \n",rm[i],sigmadm[i]);
             }
         }
@@ -455,7 +455,7 @@ void printDustParticleSizeFile(char *size_name, int step, double (*rad)[2], doub
     for (i = 0; i < particle_number; i++) { // particle_number from config.h
 
         if (output_files->por_motion_file != NULL) {
-            if (rad[i][0] >= disk_params->RMIN) { // Using disk_params->RMIN
+            if (rad[i][0] >= disk_params->r_min) { // Using disk_params->r_min
                 fprintf(output_files->por_motion_file, "%lg %d %lg\n", (double)step, i, rad[i][0]);
             }
         } else {
@@ -463,13 +463,13 @@ void printDustParticleSizeFile(char *size_name, int step, double (*rad)[2], doub
         }
 
         if (sim_opts->twopop == 1.0 && output_files->micron_motion_file != NULL) {
-            if (radmicr[i][0] >= disk_params->RMIN) { // Using disk_params->RMIN
+            if (radmicr[i][0] >= disk_params->r_min) { // Using disk_params->r_min
                 fprintf(output_files->micron_motion_file, "%lg %d %lg\n", (double)step, i, radmicr[i][0]);
             }
         }
 
         if (sim_opts->growth == 1.0 && fout_size != NULL) {
-            if (rad[i][0] >= disk_params->RMIN) { // Using disk_params->RMIN
+            if (rad[i][0] >= disk_params->r_min) { // Using disk_params->r_min
                 fprintf(fout_size, "%lg %lg %lg \n", (double)step, rad[i][0], rad[i][1] * AU_IN_CM); // AU_IN_CM from config.h
             }
         }
@@ -605,7 +605,7 @@ int setupInitialOutputFiles(output_files_t *output_files, const simulation_optio
     // Készítsük elő a header_data_for_files struktúrát a specifikus adatokkal
     header_data_for_files->current_time = 0.0;
     header_data_for_files->is_initial_data = 1;
-    header_data_for_files->R_in = disk_params->RMIN;
+    header_data_for_files->R_in = disk_params->r_min;
     header_data_for_files->R_out = disk_params->RMAX;
 
     // Fájlnevek generálása

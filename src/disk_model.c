@@ -25,10 +25,10 @@ void readDiskParameters(disk_t *disk_params) {
 
     fprintf(stderr, "DEBUG [readDiskParameters]: Calculating derived disk parameters and writing to output file.\n");
 
-    disk_params->PDENSITYDIMLESS = disk_params->PDENSITY / SOLAR_MASS_IN_GRAMS * AU_IN_CM * AU_IN_CM * AU_IN_CM;
+    disk_params->particle_density_dimensionless = disk_params->particle_density / SOLAR_MASS_IN_GRAMS * AU_IN_CM * AU_IN_CM * AU_IN_CM;
 
-    fprintf(stderr, "DEBUG [readDiskParameters]: Calculated PDENSITY = %.2e, PDENSITYDIMLESS = %.2e.\n",
-           disk_params->PDENSITY, disk_params->PDENSITYDIMLESS);
+    fprintf(stderr, "DEBUG [readDiskParameters]: Calculated particle_density = %.2e, particle_density_dimensionless = %.2e.\n",
+           disk_params->particle_density, disk_params->particle_density_dimensionless);
 }
 
 
@@ -38,8 +38,8 @@ void readDiskParameters(disk_t *disk_params) {
 void createRadialGrid(disk_t *disk_params) {
 	
 	int i;
- 	for(i = 0; i <= disk_params->NGRID+1; i++) {						/*	load an array of radii	*/
- 		disk_params->rvec[i] = disk_params->RMIN + (i-1) * disk_params->DD;
+ 	for(i = 0; i <= disk_params->grid_number+1; i++) {						/*	load an array of radii	*/
+ 		disk_params->rvec[i] = disk_params->r_min + (i-1) * disk_params->DD;
 //        fprintf(stderr, "DEBUG [createRadialGrid]: r: %lg\n", disk_params->rvec[i]);
 	}
 }
@@ -49,7 +49,7 @@ void createInitialGasSurfaceDensity(disk_t *disk_params){		/*	initial profile of
 
   	int i;
   
-  	for(i = 1; i <= disk_params->NGRID; i++) {
+  	for(i = 1; i <= disk_params->grid_number; i++) {
     		disk_params->sigmavec[i] = disk_params->SIGMA0 * pow(disk_params->rvec[i],disk_params->SIGMAP_EXP);		/*	sigma0*r^x (x could be eg. -1/2)	*/
     }
   
@@ -62,7 +62,7 @@ void createInitialGasPressure(disk_t *disk_params){
 
   	int i;
   
-  	for(i = 1; i <= disk_params->NGRID; i++) {
+  	for(i = 1; i <= disk_params->grid_number; i++) {
     		disk_params->pressvec[i] = calculateGasPressure(disk_params->sigmavec[i],disk_params->rvec[i],disk_params);
   	}
   	applyBoundaryConditions(disk_params->pressvec,disk_params);
@@ -94,17 +94,17 @@ void calculateInitialDustSurfaceDensity(double radin[][2], double *massin, doubl
 	for(i=0;i<n;i++){
 
 /*	Calcualte the surface density of the dust grains	*/
-/*	If the dust grain is within the simulated regine (above RMIN)
+/*	If the dust grain is within the simulated regine (above r_min)
  	the surface density is calculated from the representative mass of the dust grain	*/
-		if((radin[i][0] >= disk_params->RMIN)) {
+		if((radin[i][0] >= disk_params->r_min)) {
 			out[i][0] = massin[i] / (2. * (radin[i][0]-disk_params->DD/2.) * M_PI * disk_params->DD);	// sigma = m /(2 * r * pi * dr) --> dr is the original grid step
 			out[i][1] = radin[i][0];																	// Saves the radial distance of the dust grain
 
-  			double rmid = (radin[i][0] - disk_params->RMIN) / disk_params->DD;     						// 	The integer part of this gives at which index is the body		
+  			double rmid = (radin[i][0] - disk_params->r_min) / disk_params->DD;     						// 	The integer part of this gives at which index is the body		
 			int rindex = (int) floor(rmid);																// 	The "whole part of rmin" --> floor rounds down, +0.5 allows us to solve the rounding correctly
 			out[i][2] = (double) rindex;
 
-/*	If the dust grain is drifted below  RMIN, the surface density is set to 0*/	
+/*	If the dust grain is drifted below  r_min, the surface density is set to 0*/	
 		} else {
 			out[i][0] = 0;
 			out[i][1] = 0;																				// Set r to 0!

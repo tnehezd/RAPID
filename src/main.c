@@ -80,9 +80,9 @@ int main(int argc, const char **argv) {
     fprintf(stderr, "DEBUG [main]: Evolution (sim_opts.evol=%.2f) or drift (sim_opts.drift=%.2f) is ON. Starting main simulation loop.\n", sim_opts.evol, sim_opts.drift);
 
     // --- Populate disk_t with parameters from 'def' ---
-    disk_params.RMIN = def.rmin_val;
+    disk_params.r_min = def.rmin_val;
     disk_params.RMAX = def.rmax_val;
-    disk_params.NGRID = def.ngrid_val; // NGRID (gas grid points) is from parsed options
+    disk_params.grid_number = def.ngrid_val; // grid_number (gas grid points) is from parsed options
     disk_params.SIGMA0 = def.sigma0_val;
     disk_params.SIGMAP_EXP = def.sigmap_exp_val;
     disk_params.alpha_visc = def.alpha_visc_val;
@@ -97,7 +97,7 @@ int main(int argc, const char **argv) {
     disk_params.fFrag = def.ffrag;
     disk_params.uFrag = def.ufrag;
     disk_params.fDrift = 0.55; // set by Birnstiel 2012
-    disk_params.PDENSITY = def.pdensity_val;
+    disk_params.particle_density = def.pdensity_val;
 
     // Set sim_opts->dzone based on dead zone radii from disk_params
     sim_opts.dzone = (disk_params.r_dze_i > 0.0 || disk_params.r_dze_o > 0.0) ? 1.0 : 0.0;
@@ -140,30 +140,30 @@ int main(int argc, const char **argv) {
         current_inputsig_file[MAX_PATH_LEN - 1] = '\0';
         fprintf(stderr, "DEBUG [main]: Input file specified: '%s'. Attempting to read initial profile.\n", current_inputsig_file);
 
-        // disk_params.NGRID update from file *before* allocation.
-        disk_params.NGRID = calculateNumbersOfParticles(current_inputsig_file); // Update NGRID from file (for GAS grid)
+        // disk_params.grid_number update from file *before* allocation.
+        disk_params.grid_number = calculateNumbersOfParticles(current_inputsig_file); // Update grid_number from file (for GAS grid)
 
-        // Recalculate DD based on the updated NGRID
-        if (disk_params.NGRID > 1) {
-            disk_params.DD = (disk_params.RMAX - disk_params.RMIN) / (disk_params.NGRID - 1.0);
+        // Recalculate DD based on the updated grid_number
+        if (disk_params.grid_number > 1) {
+            disk_params.DD = (disk_params.RMAX - disk_params.r_min) / (disk_params.grid_number - 1.0);
         } else {
             disk_params.DD = 0.0;
         }
-        fprintf(stderr, "DEBUG [main]: NGRID set from input file: %d. DD calculated as %.4e.\n", disk_params.NGRID, disk_params.DD);
+        fprintf(stderr, "DEBUG [main]: grid_number set from input file: %d. DD calculated as %.4e.\n", disk_params.grid_number, disk_params.DD);
 
         // --- Dynamic Memory Allocation for Disk Arrays ---
         // This happens ONLY HERE, because runInitialization is not called!
-        disk_params.rvec = (double *)malloc((disk_params.NGRID + 2) * sizeof(double));
-        disk_params.sigmavec = (double *)malloc((disk_params.NGRID + 2) * sizeof(double));
-        disk_params.pressvec = (double *)malloc((disk_params.NGRID + 2) * sizeof(double));
-        disk_params.dpressvec = (double *)malloc((disk_params.NGRID + 2) * sizeof(double));
-        disk_params.ugvec = (double *)malloc((disk_params.NGRID + 2) * sizeof(double));
+        disk_params.rvec = (double *)malloc((disk_params.grid_number + 2) * sizeof(double));
+        disk_params.sigmavec = (double *)malloc((disk_params.grid_number + 2) * sizeof(double));
+        disk_params.pressvec = (double *)malloc((disk_params.grid_number + 2) * sizeof(double));
+        disk_params.dpressvec = (double *)malloc((disk_params.grid_number + 2) * sizeof(double));
+        disk_params.ugvec = (double *)malloc((disk_params.grid_number + 2) * sizeof(double));
 
         if (!disk_params.rvec || !disk_params.sigmavec || !disk_params.pressvec || !disk_params.dpressvec || !disk_params.ugvec) {
             fprintf(stderr, "ERROR [main]: Failed to allocate memory for disk arrays (input file branch). Exiting.\n");
             return 1;
         }
-        fprintf(stderr, "DEBUG [main]: Disk profile arrays dynamically allocated with size NGRID+2 = %d (input file branch).\n", disk_params.NGRID + 2);
+        fprintf(stderr, "DEBUG [main]: Disk profile arrays dynamically allocated with size grid_number+2 = %d (input file branch).\n", disk_params.grid_number + 2);
 
         // Call readDiskParameters because runInitialization is not called
         fprintf(stderr, "DEBUG [main]: Calling readDiskParameters to calculate derived disk parameters for main disk_params struct (input file branch).\n");
@@ -185,8 +185,8 @@ int main(int argc, const char **argv) {
         fprintf(stderr, "DEBUG [main]: No input file specified (-i flag not used). Generating default grid and profile.\n");
 
         // Populate init_tool_options_t from 'def' (command-line) values
-        init_tool_params.n_grid_points = disk_params.NGRID; // This is the gas grid resolution
-        init_tool_params.r_inner= disk_params.RMIN;
+        init_tool_params.n_grid_points = disk_params.grid_number; // This is the gas grid resolution
+        init_tool_params.r_inner= disk_params.r_min;
         init_tool_params.r_outer = disk_params.RMAX;
         init_tool_params.sigma0_gas_au = disk_params.SIGMA0;
         init_tool_params.sigma_exponent = disk_params.SIGMAP_EXP;
@@ -220,17 +220,17 @@ int main(int argc, const char **argv) {
         snprintf(current_inputsig_file, sizeof(current_inputsig_file), "%s/%s%s", initial_dir_path, kInitialGasProfileFileName,kFileNamesSuffix);
         fprintf(stderr, "DEBUG [main]: Generated GAS profile will be loaded from '%s'.\n", current_inputsig_file);
 
-        // --- Update NGRID from the generated file (critical for loadGasSurfaceDensityFromFile sizing) ---
+        // --- Update grid_number from the generated file (critical for loadGasSurfaceDensityFromFile sizing) ---
         // Important: Here, the number of lines should be read from kInitialGasProfileFileName,
         // provided that init_tool_module.c creates this file.
-        disk_params.NGRID = calculateNumbersOfParticles(current_inputsig_file);
+        disk_params.grid_number = calculateNumbersOfParticles(current_inputsig_file);
 
-        if (disk_params.NGRID > 1) {
-            disk_params.DD = (disk_params.RMAX - disk_params.RMIN) / (disk_params.NGRID - 1.0);
+        if (disk_params.grid_number > 1) {
+            disk_params.DD = (disk_params.RMAX - disk_params.r_min) / (disk_params.grid_number - 1.0);
         } else {
             disk_params.DD = 0.0;
         }
-        fprintf(stderr, "DEBUG [main]: NGRID updated from generated file: %d. DD calculated as %.4e.\n", disk_params.NGRID, disk_params.DD);
+        fprintf(stderr, "DEBUG [main]: grid_number updated from generated file: %d. DD calculated as %.4e.\n", disk_params.grid_number, disk_params.DD);
 
         // No need for 'cp' here for kDiskConfigFile or FILENAME_INIT_PROFILE,
         // since runInitialization created them directly in initial_dir_path.

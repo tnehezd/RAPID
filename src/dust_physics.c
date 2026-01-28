@@ -22,7 +22,7 @@
 /*	Calculates the Stokes number for each particle	*/
 /*	St = rho_particle * radius_particle * PI / (2 * sigma)	*/
 double calculateStokesNumber(double pradius, double sigma, disk_t *disk_params) { /*	in the Epstein drag regime	*/
-    return disk_params->PDENSITYDIMLESS * pradius * M_PI / (2.0 * sigma);
+    return disk_params->particle_density_dimensionless * pradius * M_PI / (2.0 * sigma);
 }
 
 void calculateParticleMass(int n, double (*partmassind)[5], int indii, int indio, int indoi, int indoo, double *massiout, double *massoout, const simulation_options_t *sim_opts) {
@@ -184,7 +184,7 @@ void calculateDustSurfaceDensity(double max_param, double min_param, double rad[
     (void)max_param;
     (void)min_param;
 
-    double dd = (disk_params->RMAX - disk_params->RMIN) / (particle_number - 1);
+    double dd = (disk_params->RMAX - disk_params->r_min) / (particle_number - 1);
     int i;
 
     // A temp tömbök deklarálását érdemes a scope tetejére tenni
@@ -256,9 +256,9 @@ void calculateDustDistance(const char *nev, int opt, double radius[][2], const d
     // Az `i` ciklus független iterációkkal rendelkezik, minden szál a saját `radius[i]` elemen dolgozik.
     #pragma omp parallel for private(y, y_out, prad_new, particle_radius)
     for (i = 0; i < n; i++) {
-        // Csak a RMIN és RMAX közötti részecskékkel foglalkozunk.
+        // Csak a r_min és RMAX közötti részecskékkel foglalkozunk.
         // A 0.0-ra állítás kívül esik a párhuzamos részen, ha az if feltétel nem teljesül.
-        if (radius[i][0] > disk_params->RMIN && radius[i][0] < disk_params->RMAX) {
+        if (radius[i][0] > disk_params->r_min && radius[i][0] < disk_params->RMAX) {
             y = radius[i][0];
             particle_radius = radius[i][1];
 
@@ -288,7 +288,7 @@ void calculateDustDistance(const char *nev, int opt, double radius[][2], const d
                 radius[i][0] = y_out;
             }
         } else {
-            // Ha a részecske RMIN vagy RMAX kívülre kerül, 0.0-ra állítjuk a pozícióját.
+            // Ha a részecske r_min vagy RMAX kívülre kerül, 0.0-ra állítjuk a pozícióját.
             // Ez a hozzárendelés iterációnként független, így párhuzamosítható.
             radius[i][0] = 0.0;
         }

@@ -60,7 +60,7 @@ double calculateTimeStep(const disk_t *disk_params) { // Add const here too
 
     A_max = -10000.0;
     
-    for(i = 0; i < disk_params->NGRID; i++) {
+    for(i = 0; i < disk_params->grid_number; i++) {
         if(ftcsSecondDerivativeCoefficient(disk_params->rvec[i], disk_params) > A_max) {
             A_max = ftcsSecondDerivativeCoefficient(disk_params->rvec[i], disk_params);
         }
@@ -150,7 +150,7 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
 
             // Radius reciprok számítása a min/max kereséshez
             for (i = 0; i < particle_number; i++) {
-                if (p_data.radius[i][0] > 0. && p_data.radius[i][0] > disk_params->RMIN) {
+                if (p_data.radius[i][0] > 0. && p_data.radius[i][0] > disk_params->r_min) {
                     p_data.radius_rec[i][0] = 1. / p_data.radius[i][0];
                 } else {
                     p_data.radius_rec[i][0] = 0.; // Vagy valamilyen "érvénytelen" érték, ami kizárja a min/max keresésből
@@ -166,7 +166,7 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
             if (sim_opts->twopop == 1) {
                 // Micron részecskék radius reciprok számítása
                 for (i = 0; i < particle_number; i++) {
-                    if (p_data.radiusmicr[i][0] > 0. && p_data.radiusmicr[i][0] > disk_params->RMIN) {
+                    if (p_data.radiusmicr[i][0] > 0. && p_data.radiusmicr[i][0] > disk_params->r_min) {
                         p_data.radius_rec[i][0] = 1. / p_data.radiusmicr[i][0];
                     } else {
                         p_data.radius_rec[i][0] = 0.;
@@ -312,8 +312,8 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
 
             // Kilépési feltétel a drift == 1 ágon
             // Fontos: maxt és mint frissül az előző szakaszban, azt használjuk itt.
-//            if (!(maxt >= disk_params->RMIN && mint != maxt)) {
-//                fprintf(stderr,"DEBUG [timeIntegrationForTheSystem]: Simulation termination condition met (maxt < RMIN or mint == maxt) at time: %lg.\n",L);
+//            if (!(maxt >= disk_params->r_min && mint != maxt)) {
+//                fprintf(stderr,"DEBUG [timeIntegrationForTheSystem]: Simulation termination condition met (maxt < r_min or mint == maxt) at time: %lg.\n",L);
 
 //                goto cleanup; // Ugrás a tisztításra
 //            }

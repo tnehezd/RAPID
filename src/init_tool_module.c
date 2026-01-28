@@ -68,7 +68,7 @@ static long double calculateSigm0FromDiskMass(init_tool_options_t *init_opts) {
     }
 
     if (fabs(denominator) < 1e-12) {
-        fprintf(stderr, "Error: Denominator is zero or too small in Sigma0 calculation! Check RMAX, RMIN, and SIGMA_EXP values.\n");
+        fprintf(stderr, "Error: Denominator is zero or too small in Sigma0 calculation! Check RMAX, r_min, and SIGMA_EXP values.\n");
         return 0.0;
     }
     // Md = 2 * PI * Sigma0 * epsilon * Integral(r^(1-index) dr) from Ri to Ro
@@ -242,8 +242,8 @@ int runInitialization(init_tool_options_t *opts, disk_t *disk_params) {
     double u_frag_sq_au_yr2pi_sq = u_frag_au_yr2pi * u_frag_au_yr2pi;
 
     // Populate disk_params structure and allocate its arrays
-    disk_params->NGRID = opts->n_grid_points; // Gas grid resolution
-    disk_params->RMIN = opts->r_inner;
+    disk_params->grid_number = opts->n_grid_points; // Gas grid resolution
+    disk_params->r_min = opts->r_inner;
     disk_params->RMAX = opts->r_outer;
     disk_params->SIGMA0 = current_sigma0_gas;
     disk_params->SIGMAP_EXP = opts->sigma_exponent;
@@ -256,18 +256,18 @@ int runInitialization(init_tool_options_t *opts, disk_t *disk_params) {
     disk_params->HASP = opts->aspect_ratio;
     disk_params->FLIND = opts->flaring_index;
     disk_params->STAR_MASS = opts->star_mass;
-    disk_params->PDENSITY = opts->dust_density_g_cm3;
-    if (disk_params->NGRID > 1) {
-        disk_params->DD = (disk_params->RMAX - disk_params->RMIN) / ((double)disk_params->NGRID - 1.0);
+    disk_params->particle_density = opts->dust_density_g_cm3;
+    if (disk_params->grid_number > 1) {
+        disk_params->DD = (disk_params->RMAX - disk_params->r_min) / ((double)disk_params->grid_number - 1.0);
     } else {
         disk_params->DD = 0.0;
     }
-    // Allocate arrays for the GAS grid (based on NGRID)
-    disk_params->rvec = (double *)malloc((disk_params->NGRID + 2) * sizeof(double));
-    disk_params->sigmavec = (double *)malloc((disk_params->NGRID + 2) * sizeof(double));
-    disk_params->pressvec = (double *)malloc((disk_params->NGRID + 2) * sizeof(double));
-    disk_params->dpressvec = (double *)malloc((disk_params->NGRID + 2) * sizeof(double));
-    disk_params->ugvec = (double *)malloc((disk_params->NGRID + 2) * sizeof(double));
+    // Allocate arrays for the GAS grid (based on grid_number)
+    disk_params->rvec = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
+    disk_params->sigmavec = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
+    disk_params->pressvec = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
+    disk_params->dpressvec = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
+    disk_params->ugvec = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
 
     if (!disk_params->rvec || !disk_params->sigmavec || !disk_params->pressvec || !disk_params->dpressvec || !disk_params->ugvec) {
         fprintf(stderr, "ERROR [runInitialization]: Failed to allocate disk arrays. Exiting.\n");
@@ -283,7 +283,7 @@ int runInitialization(init_tool_options_t *opts, disk_t *disk_params) {
         return 1;
     }
 
-    // Initialize gas disk properties on the NGRID grid
+    // Initialize gas disk properties on the grid_number grid
     readDiskParameters(disk_params);
     createRadialGrid(disk_params);
     createInitialGasSurfaceDensity(disk_params);
