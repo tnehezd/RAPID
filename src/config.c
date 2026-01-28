@@ -6,13 +6,8 @@ int PARTICLE_NUMBER;
 
 // --- Global File Pointer Definitions ---
 FILE *drift_timescale_file = NULL;
-FILE *fout3 = NULL;
-FILE *foutmicr = NULL;
-FILE *massfil = NULL;
-FILE *jelfut = NULL;
-FILE *fin1 = NULL;
-FILE *fin2 = NULL;
-FILE *fil = NULL;
+FILE *current_info_file = NULL;
+FILE *load_dust_particles_file = NULL;
 const char *inputsig = NULL;
 
 // --- Global Filename Definitions (Constant Pointers) ---

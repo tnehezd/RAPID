@@ -15,13 +15,8 @@ extern int PARTICLE_NUMBER;
 
 // --- Global File Pointer Declarations (extern) ---
 extern FILE *drift_timescale_file;
-extern FILE *fout3;
-extern FILE *foutmicr;
-extern FILE *massfil;
-extern FILE *jelfut;
-extern FILE *fin1;
-extern FILE *fin2;
-extern FILE *fil;
+extern FILE *current_info_file;
+extern FILE *load_dust_particles_file;
 
 #include "simulation_types.h"
 

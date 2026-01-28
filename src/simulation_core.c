@@ -10,11 +10,11 @@
 #include <omp.h>
 
 // Your Project Header Includes
-#include "config.h"       // For PARTICLE_NUMBER, TMAX, WO, RMIN, DT, optdr, sim_opts->twopop, sim_opts->growth, optev, r_dze_i, r_dze_o
-#include "io_utils.h"     // For printTimeStampFile (though not called in timeIntegrationForTheSystem, it's io-related), calculateNumbersOfParticles, loadDustParticlesFromFile, printGasSurfaceDensityPressurePressureDerivateFile, printDustParticleSizeFile, printMassGrowthAtDZEFile, printDustSurfaceDensityPressurePressureDerivateFile. Also for globals: filenev1, filenev3, fout, foutmicr, massfil
-#include "disk_model.h"   // If any disk_model functions are called (e.g., applyBoundaryConditions indirectly if sigma/calculateGasPressure depend on it) - Though not directly visible in timeIntegrationForTheSystem, often needed for global disk parameters. Add if you hit implicit declaration for disk_model functions.
-#include "dust_physics.h" // For updateParticleGridIndices, secondaryGrowth, findMaximumOfAnArray, findMinimumOfAnArray, calculateDustSurfaceDensity, calculateDustDistance
-#include "utils.h"        // For calculateTimeStep, refreshGasSurfaceDensityPressurePressureGradient, and potentially other utility functions
+#include "config.h"       
+#include "io_utils.h"     
+#include "disk_model.h"   
+#include "dust_physics.h" 
+#include "utils.h"        
 #include "simulation_core.h"
 #include "particle_data.h" // Új include
 #include "gas_physics.h"

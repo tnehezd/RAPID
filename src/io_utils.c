@@ -16,7 +16,7 @@
 
 // Local includes
 #include "io_utils.h"
-#include "config.h"         // Defines PARTICLE_NUMBER, AU2CM, FILENAME_INIT_PROFILE, and declares extern FILE *fin1, extern FILE *jelfut
+#include "config.h"         
 #include "dust_physics.h"   // If needed for any specific function interactions
 #include "utils.h"          // For countZeroPoints, findZeroPoint, findRAnnulusAroundDZE
 #include "simulation_types.h" // For disk_t, simulation_options_t, output_files_t
@@ -75,10 +75,10 @@ void loadDustParticlesFromFile(double radius[][2], double radiusmicr[][2], doubl
     long double reprmass;
     long double reprmassmicr;
 
-    // Use the global 'fin1' which is declared extern in config.h
-    fin1 = fopen(filename,"r"); // Use the passed filename
+    // Use the global 'load_dust_particles_file' which is declared extern in config.h
+    load_dust_particles_file = fopen(filename,"r"); // Use the passed filename
 
-    if (fin1 == NULL) {
+    if (load_dust_particles_file == NULL) {
         fprintf(stderr, "ERROR [loadDustParticlesFromFile]: Could not open file '%s'.\n", filename);
         perror("Reason");
         exit(EXIT_FAILURE);
@@ -87,16 +87,16 @@ void loadDustParticlesFromFile(double radius[][2], double radiusmicr[][2], doubl
 
     char line_buffer[1024];
     for (int k = 0; k < INIT_DATA_HEADER_LINES; k++) {
-        if (fgets(line_buffer, sizeof(line_buffer), fin1) == NULL) {
+        if (fgets(line_buffer, sizeof(line_buffer), load_dust_particles_file) == NULL) {
             fprintf(stderr, "ERROR [loadDustParticlesFromFile]: Unexpected end of file while skipping headers in '%s'.\n", filename);
-            fclose(fin1);
+            fclose(load_dust_particles_file);
             exit(EXIT_FAILURE);
         }
     }
 
 
     for (i = 0; i < PARTICLE_NUMBER; i++) {
-        if(fscanf(fin1,"%d %lg %Lg %Lg %lg %lg",&dummy,&distance,&reprmass,&reprmassmicr,&particle_radius,&radmicr) == 6) {
+        if(fscanf(load_dust_particles_file,"%d %lg %Lg %Lg %lg %lg",&dummy,&distance,&reprmass,&reprmassmicr,&particle_radius,&radmicr) == 6) {
             radius[i][0] = distance;
             radius[i][1] = particle_radius / AU2CM; // AU2CM from config.h
             mass[i] = reprmass;
@@ -108,12 +108,12 @@ void loadDustParticlesFromFile(double radius[][2], double radiusmicr[][2], doubl
             fprintf(stderr, "\n\n******************* ERROR!      *********************\n\n");
             fprintf(stderr, "   Failed to read line %d from particle data file '%s'!\n", i, filename);
             fprintf(stderr, "   Expected 6 values, but fscanf failed. Program will exit.\n");
-            fclose(fin1);
+            fclose(load_dust_particles_file);
             exit(EXIT_FAILURE);
         }
     }
 
-    fclose(fin1);
+    fclose(load_dust_particles_file);
 }
 
 
@@ -225,7 +225,7 @@ void createRunDirectory(char *dir_path) {
 void printCurrentInformationAboutRun(const char *nev, const disk_t *disk_params, const simulation_options_t *sim_opts) {
 
     char full_path[MAX_PATH_LEN]; // Használjuk a MAX_PATH_LEN-t a biztonságos puffereléshez
-    char file_name[100]; // Csak a fájlnév, pl. "run_0.dat"
+    char file_name[100]; 
 
     sprintf(file_name, "%s%s", kCurrentInfoFile,kFileNamesSuffix);
     
@@ -234,23 +234,23 @@ void printCurrentInformationAboutRun(const char *nev, const disk_t *disk_params,
 
     fprintf(stderr, "DEBUG [printCurrentInformationAboutRun]: Attempting to open file: '%s'\n", full_path);
 
-    jelfut = fopen(full_path, "w"); // Most már a teljes elérési utat használja
+    current_info_file = fopen(full_path, "w"); // Most már a teljes elérési utat használja
 
-    if (jelfut == NULL) {
+    if (current_info_file == NULL) {
         fprintf(stderr, "ERROR [printCurrentInformationAboutRun]: Could not open file '%s'.\n", full_path);
         perror("Reason");
         // Don't exit here, it's not critical, just warn and return
         return;
     }
 
-    fprintf(jelfut,"A jelenlegi futás a %s mappaban taláható!\n",nev);
-    fprintf(jelfut,"\n\nA korong paraméterei:\nRMIN: %lg, RMAX: %lg\nSIGMA0: %lg, SIGMA_EXP: %lg, flaring index: %lg\nALPHA_VISC: %lg, ALPHA_MOD: %lg\nR_DZE_I: %lg, R_DZE_O: %lg, DR_DZEI: %lg, DR_DZE_O: %lg   (*** R_DZE_I/O = 0, akkor azt a DZE-t nem szimulálja a futás! ***)\n\n\n",
+    fprintf(current_info_file,"The current run is in the %s directory!\n",nev);
+    fprintf(current_info_file,"\n\nThe parameters of the disk:\nRMIN: %lg, RMAX: %lg\nSIGMA0: %lg, SIGMA_EXP: %lg, flaring index: %lg\nALPHA_VISC: %lg, ALPHA_MOD: %lg\nR_DZE_I: %lg, R_DZE_O: %lg, DR_DZEI: %lg, DR_DZE_O: %lg   (*** R_DZE_I/O = 0, akkor azt a DZE-t nem szimulálja a futás! ***)\n\n\n",
               disk_params->RMIN, disk_params->RMAX,
               disk_params->SIGMA0, disk_params->SIGMAP_EXP, disk_params->FLIND,
               disk_params->alpha_visc, disk_params->a_mod,
               disk_params->r_dze_i, disk_params->r_dze_o, disk_params->Dr_dze_i, disk_params->Dr_dze_o);
-    fprintf(jelfut,"A központi csillag tömege: %lg M_Sun\n", disk_params->STAR_MASS);
-    fclose(jelfut);
+    fprintf(current_info_file,"The mass of the central star: %lg M_Sun\n", disk_params->STAR_MASS);
+    fclose(current_info_file);
 }
 
 
