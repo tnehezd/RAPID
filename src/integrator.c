@@ -41,7 +41,7 @@ void integrateParticleRungeKutta4(double time, double prad, const double *sigmad
 
     double dd = (disk_params->RMAX - disk_params->RMIN) / (particle_number-1);
     int dker = (int)(1./dd);//
-    dker = dker * KEREK;
+    dker = dker * ROUNDING_FACTOR;
     double ddker = (double) dker;
     int temp;
 

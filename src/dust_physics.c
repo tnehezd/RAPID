@@ -1,11 +1,11 @@
 // src/dust_physics.c
-#include "dust_physics.h" // A saját headerjét mindig includolni kell
-#include "config.h"       // Szükséges lehet a globális konstansokhoz (pl. particle_number, AU2CM, RMIN, RMAX, NGRID, G_GRAV_CONST, STAR, SDCONV, CMPSECTOAUPYRP2PI, uFrag, fFrag, PDENSITYDIMLESS, HASP, M_PI, DD, sim_opts->dzone, sim_opts->twopop, RMIN, RMAX, FLIND, alpha_visc, a_mod, r_dze_i, r_dze_o, Dr_dze_i, Dr_dze_o)
-#include "simulation_types.h" // Például output_files_t, disk_t struktúrákhoz
+#include "dust_physics.h" 
+#include "config.h"       
+#include "simulation_types.h" 
 #include "gas_physics.h"
 #include "simulation_core.h" 
 #include "boundary_conditions.h"
-#include "utils.h"           // findMinimumOfAnArray függvényhez
+#include "utils.h"          
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -100,7 +100,7 @@ void calculateParticleMass(int n, double (*partmassind)[5], int indii, int indio
 // 1. radialis drift altal meghatarozott maximalis meret			--> kimenet cm-ben!
 double calculateRadialDriftBarrier(double sigmad, double r, double p, double dp, double rho_p, const disk_t *disk_params) {
 
-    double Sigmad_cgs = sigmad / SDCONV;
+    double Sigmad_cgs = sigmad / SURFACE_DENSITY_CONVERSION_FACTOR;
 
     double vkep = calculateKeplerianVelocity(r,disk_params);
     double vkep2 = vkep * vkep;
@@ -116,10 +116,10 @@ double calculateTurbulentFragmentationBarrier(double sigma, double r, double rho
 
     double s_frag, u_frag, u_frag2, Sigma_cgs, c_s, c_s2;
 
-    u_frag = disk_params->uFrag * CMPSECTOAUPYRP2PI; /*	cm/sec --> AU / (yr/2pi)	*/
+    u_frag = disk_params->uFrag * CM_PER_SEC_TO_AU_PER_YEAR_2PI; /*	cm/sec --> AU / (yr/2pi)	*/
     u_frag2 = u_frag * u_frag;
-    Sigma_cgs = sigma / SDCONV;
-    c_s = calculateLocalSoundSpeed(r,disk_params); // / CMPSECTOAUPYRP2PI; // Komment ki, ha a calculateLocalSoundSpeed már megfelelő mértékegységben van
+    Sigma_cgs = sigma / SURFACE_DENSITY_CONVERSION_FACTOR;
+    c_s = calculateLocalSoundSpeed(r,disk_params); // / CM_PER_SEC_TO_AU_PER_YEAR_2PI; // Komment ki, ha a calculateLocalSoundSpeed már megfelelő mértékegységben van
     c_s2 = c_s * c_s;
 
     s_frag = disk_params->fFrag * 2.0 / (3.0 * M_PI) * Sigma_cgs / (rho_p * calculateTurbulentAlpha(r,disk_params)) * u_frag2 / c_s2;
@@ -132,8 +132,8 @@ double calculateDriftInducedFragmentationBarrier(double sigma, double r, double 
 
     double u_frag, vkep, dlnPdlnr, c_s, c_s2, s_df, Sigma_cgs;
 
-    u_frag = disk_params->uFrag * CMPSECTOAUPYRP2PI; /*	cm/sec --> AU / (yr/2pi)	*/
-    Sigma_cgs = sigma / SDCONV;
+    u_frag = disk_params->uFrag * CM_PER_SEC_TO_AU_PER_YEAR_2PI; /*	cm/sec --> AU / (yr/2pi)	*/
+    Sigma_cgs = sigma / SURFACE_DENSITY_CONVERSION_FACTOR;
     c_s = calculateLocalSoundSpeed(r,disk_params);
     c_s2 = c_s * c_s;
     dlnPdlnr = r / p * dp;
@@ -163,7 +163,7 @@ double calculateDustParticleSize(double prad, double pdens, double sigma, double
     double tau_gr = calculateGrowthTimescale(y, eps, disk_params);
     double rt = 0.0;
 
-    smin = smin / AU2CM; // AU-ban
+    smin = smin / AU_IN_CM; // AU-ban
 
     /*	kiszamolja, hogy a fenti smin, vagy a novekedesi idoskalabol szarmazo meret korlatozza a reszecske meretet	*/
     if (prad < smin) {

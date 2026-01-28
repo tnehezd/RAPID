@@ -1,7 +1,7 @@
 #include "init_tool_module.h"
 #include "config.h" 
-#include "disk_model.h" // Contains declarations for createRadialGrid, createInitialGasSurfaceDensity, createInitialGasPressure, createInitialGasPressureGradient, createInitialGasVelocity, readDiskParameters, scale_height, calculateKeplerianVelocity, kep_freq, calculateLocalSoundSpeed, press, calcualteMidplaneGasDensity
-#include "dust_physics.h" // May contain calculateParticleMass, etc.
+#include "disk_model.h" 
+#include "dust_physics.h" 
 #include "utils.h" 
 #include "io_utils.h" 
 #include "gas_physics.h"
@@ -92,8 +92,8 @@ static long double calculateDustSurfaceDensityInitTool(double r_au, init_tool_op
     long double sigma_dust = calculateGasSurfaceDensityInitTool(r_au, init_opts, current_sigma0) * init_opts->dust_to_gas_ratio;
 
     // --- Snowline and Ice Factor Handling (Uncomment and adjust if needed) ---
-    // if (r_au >= SNOWLINE) {
-    //     sigma_dust *= ICEFACTOR;
+    // if (r_au >= SNOWLINE_RADIUS_AU) {
+    //     sigma_dust *= ICE_LINE_DUST_ENHANCEMENT_FACTOR;
     // }
     // ---------------------------------------------------------------------
 
@@ -195,8 +195,8 @@ int runInitialization(init_tool_options_t *opts, disk_t *disk_params) {
     fprintf(stderr,"Inner disk edge (AU): %lg\n", opts->r_inner);
     fprintf(stderr,"Outer disk edge (AU): %lg\n", opts->r_outer);
     fprintf(stderr,"Surface density profile exponent: %lg\n", -opts->sigma_exponent);
-    fprintf(stderr,"Snowline position (AU): %lg\n", SNOWLINE);
-    fprintf(stderr,"Ice factor beyond snowline: %lg\n", ICEFACTOR);
+    fprintf(stderr,"Snowline position (AU): %lg\n", SNOWLINE_RADIUS_AU);
+    fprintf(stderr,"Ice factor beyond snowline: %lg\n", ICE_LINE_DUST_ENHANCEMENT_FACTOR);
     fprintf(stderr,"Gas surface density at 1 AU (Solar Mass/AU^2): %Lg\n", current_sigma0_gas);
     fprintf(stderr,"Dust to gas ratio: %lg\n", opts->dust_to_gas_ratio);
     fprintf(stderr,"Number of gas grid points: %d\n", opts->n_grid_points); // Clarified for gas grid
@@ -212,7 +212,7 @@ int runInitialization(init_tool_options_t *opts, disk_t *disk_params) {
     initial_header_data.R_out = opts->r_outer;
     initial_header_data.sigma_exponent = opts->sigma_exponent;
     initial_header_data.sigma0_gas_au = current_sigma0_gas;
-    initial_header_data.grav_const = G_GRAV_CONST;
+    initial_header_data.grav_const = G_DIMENSIONLESS;
     initial_header_data.dz_r_inner = opts->deadzone_r_inner;
     initial_header_data.dz_r_outer = opts->deadzone_r_outer;
     initial_header_data.dz_dr_inner_calc = drdze_inner_calculated;
@@ -238,7 +238,7 @@ int runInitialization(init_tool_options_t *opts, disk_t *disk_params) {
 
     // Physical Constants
     double u_frag_cm_s = 1000.0;
-    double u_frag_au_yr2pi = u_frag_cm_s * CMPSECTOAUPYRP2PI;
+    double u_frag_au_yr2pi = u_frag_cm_s * CM_PER_SEC_TO_AU_PER_YEAR_2PI;
     double u_frag_sq_au_yr2pi_sq = u_frag_au_yr2pi * u_frag_au_yr2pi;
 
     // Populate disk_params structure and allocate its arrays
@@ -356,8 +356,8 @@ int runInitialization(init_tool_options_t *opts, disk_t *disk_params) {
             double sound_speed_sq = sound_speed_au_yr2pi * sound_speed_au_yr2pi;
 
             long double sigma_dust_local = calculateDustSurfaceDensityInitTool(r_dust_particle_au, opts, current_sigma0_gas);
-            long double sigma_dust_local_cgs = sigma_dust_local / SDCONV;
-            double sigma_gas_local_cgs = (double)sigma_gas_local / SDCONV;
+            long double sigma_dust_local_cgs = sigma_dust_local / SURFACE_DENSITY_CONVERSION_FACTOR;
+            double sigma_gas_local_cgs = (double)sigma_gas_local / SURFACE_DENSITY_CONVERSION_FACTOR;
 
 
             double dlnPdlnr_local;
@@ -423,7 +423,7 @@ int runInitialization(init_tool_options_t *opts, disk_t *disk_params) {
     // The header was already written by the printFileHeader(fout_params, FILE_TYPE_DISK_PARAM, &initial_header_data); call above.
     fprintf(fout_params, "%-15.6e %-15.6e %-10d %-15.6e %-20.12Lg %-15.6e %-15.6e %-15.6e %-20.12e %-20.12e %-15.6e %-15.6e %-15.6e %-15.6e %-15.6e\n",
             opts->r_inner, opts->r_outer, opts->n_grid_points, -opts->sigma_exponent, current_sigma0_gas,
-            G_GRAV_CONST, opts->deadzone_r_inner, opts->deadzone_r_outer,
+            G_DIMENSIONLESS, opts->deadzone_r_inner, opts->deadzone_r_outer,
             drdze_inner_calculated, drdze_outer_calculated,
             opts->deadzone_alpha_mod, opts->dust_density_g_cm3, opts->alpha_viscosity, opts->star_mass, opts->flaring_index);
 

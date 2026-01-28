@@ -25,7 +25,7 @@ void readDiskParameters(disk_t *disk_params) {
 
     fprintf(stderr, "DEBUG [readDiskParameters]: Calculating derived disk parameters and writing to output file.\n");
 
-    disk_params->PDENSITYDIMLESS = disk_params->PDENSITY / SUN2GR * AU2CM * AU2CM * AU2CM;
+    disk_params->PDENSITYDIMLESS = disk_params->PDENSITY / SOLAR_MASS_IN_GRAMS * AU_IN_CM * AU_IN_CM * AU_IN_CM;
 
     fprintf(stderr, "DEBUG [readDiskParameters]: Calculated PDENSITY = %.2e, PDENSITYDIMLESS = %.2e.\n",
            disk_params->PDENSITY, disk_params->PDENSITYDIMLESS);

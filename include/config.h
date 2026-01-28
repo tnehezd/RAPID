@@ -20,20 +20,16 @@ extern FILE *load_dust_particles_file;
 // These constants have been moved here from init_tool.c for global access,
 // to prevent duplication or static limitations.
 
-#define SDCONV            1.12521e-7          // Surface density conversion factor
-#define ICEFACTOR         3.0                 // Factor for dust density beyond snowline
-#define SNOWLINE          2.7                 // Snowline radius in AU
-#define G_GRAV_CONST 1.0 // Gravitációs Konstans (dimenziótlan G=1 rendszerben)
+#define SURFACE_DENSITY_CONVERSION_FACTOR            1.12521e-7          // Surface density conversion factor
+#define ICE_LINE_DUST_ENHANCEMENT_FACTOR         3.0                 // Factor for dust density beyond snowline
+#define SNOWLINE_RADIUS_AU          2.7                 // Snowline radius in AU
+#define G_DIMENSIONLESS 1.0 // Gravitációs Konstans (dimenziótlan G=1 rendszerben)
 // Ha az init_tool_module.c is ezt a G-t akarja használni, akkor itt lehet egy alias
-#define G_GRAV_CONST2 (G_GRAV_CONST * G_GRAV_CONST) // Vagy (G*G) ha az aliast használod
-#define AUPDAY2CMPSEC     1.7314568e8         // AU/Day to cm/sec conversion
-#define CMPSECTOAUPYRP2PI 3.35725e-07         // cm/sec to AU/(yr/2pi) conversion
-#define GRPCM32MSUNAU3    1.68329e6           // gr/cm^3 to M_sun/AU^3 conversion
+#define CM_PER_SEC_TO_AU_PER_YEAR_2PI 3.35725e-07         // cm/sec to AU/(yr/2pi) conversion
 
-#define SUN2GR 1.989e33            // Solar Mass in grams (M_solar -> g) - PLEASE VERIFY THIS VALUE!
-#define AU2CM 1.496e13            // Astronomical Unit in centimeters (AU -> cm) - PLEASE VERIFY THIS VALUE!
-#define TWOPI (2.0 * M_PI)        // Added parentheses for safety with expressions
-#define KEREK 1.0                 // Make sure this value is correct for your physics model!
+#define SOLAR_MASS_IN_GRAMS 1.989e33            // Solar Mass in grams (M_solar -> g) - PLEASE VERIFY THIS VALUE!
+#define AU_IN_CM 1.496e13            // Astronomical Unit in centimeters (AU -> cm) - PLEASE VERIFY THIS VALUE!
+#define ROUNDING_FACTOR 1.0                 // Make sure this value is correct for your physics model!
 
 
 // --- Global Filename Declarations (extern) ---
@@ -54,6 +50,5 @@ extern const char * const kConfigFilesDirectory;
 extern const char * const kFileNamesSuffix;
 extern const char * const kCurrentInfoFile;
 
-void initialize_derived_config_variables();
 
 #endif // CONFIG_H

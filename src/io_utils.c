@@ -98,11 +98,11 @@ void loadDustParticlesFromFile(double radius[][2], double radiusmicr[][2], doubl
     for (i = 0; i < particle_number; i++) {
         if(fscanf(load_dust_particles_file,"%d %lg %Lg %Lg %lg %lg",&dummy,&distance,&reprmass,&reprmassmicr,&particle_radius,&radmicr) == 6) {
             radius[i][0] = distance;
-            radius[i][1] = particle_radius / AU2CM; // AU2CM from config.h
+            radius[i][1] = particle_radius / AU_IN_CM; // AU_IN_CM from config.h
             mass[i] = reprmass;
 
             radiusmicr[i][0] = distance;
-            radiusmicr[i][1] = radmicr / AU2CM; // AU2CM from config.h
+            radiusmicr[i][1] = radmicr / AU_IN_CM; // AU_IN_CM from config.h
             massmicr[i] = reprmassmicr;
         } else {
             fprintf(stderr, "\n\n******************* ERROR!      *********************\n\n");
@@ -470,7 +470,7 @@ void printDustParticleSizeFile(char *size_name, int step, double (*rad)[2], doub
 
         if (sim_opts->growth == 1.0 && fout_size != NULL) {
             if (rad[i][0] >= disk_params->RMIN) { // Using disk_params->RMIN
-                fprintf(fout_size, "%lg %lg %lg \n", (double)step, rad[i][0], rad[i][1] * AU2CM); // AU2CM from config.h
+                fprintf(fout_size, "%lg %lg %lg \n", (double)step, rad[i][0], rad[i][1] * AU_IN_CM); // AU_IN_CM from config.h
             }
         }
     }

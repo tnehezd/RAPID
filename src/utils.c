@@ -316,7 +316,7 @@ void roundParticleRadii(double in[][3], int n, const disk_t *disk_params) {
 
 	double dd = (disk_params->RMAX - disk_params->RMIN) / (particle_number-1);
 	int dker = (int)(1./dd);//
-	dker = dker * KEREK;
+	dker = dker * ROUNDING_FACTOR;
 	double ddker = (double) dker;
 	int i;
 	int temp;

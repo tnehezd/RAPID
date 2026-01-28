@@ -1,7 +1,7 @@
 // src/dust_physics.c
-#include "gas_physics.h" // A saját headerjét mindig includolni kell
-#include "config.h"       // Szükséges lehet a globális konstansokhoz (pl. particle_number, AU2CM, RMIN, RMAX, NGRID, G_GRAV_CONST, STAR, SDCONV, CMPSECTOAUPYRP2PI, uFrag, fFrag, PDENSITYDIMLESS, HASP, M_PI, DD, sim_opts->dzone, sim_opts->twopop, RMIN, RMAX, FLIND, alpha_visc, a_mod, r_dze_i, r_dze_o, Dr_dze_i, Dr_dze_o)
-#include "simulation_types.h" // Például output_files_t, disk_t struktúrákhoz
+#include "gas_physics.h" 
+#include "config.h"       
+#include "simulation_types.h" 
 #include "boundary_conditions.h"
 #include "simulation_core.h" 
 #include "utils.h"           
@@ -55,12 +55,12 @@ double calculatePressureScaleHeight(double r, const disk_t *disk_params) {
 
 /*  lokális kepleri sebesség    */
 double calculateKeplerianVelocity(double r, const disk_t *disk_params) {
-    return sqrt(G_GRAV_CONST * disk_params->STAR_MASS / r);
+    return sqrt(G_DIMENSIONLESS * disk_params->STAR_MASS / r);
 }
 
 /*  lokalis kepleri korfrekvencia   */
 double calculateKeplerianFrequency(double r, const disk_t *disk_params) {
-    return sqrt(G_GRAV_CONST * disk_params->STAR_MASS / r / r / r);
+    return sqrt(G_DIMENSIONLESS * disk_params->STAR_MASS / r / r / r);
 }
 
 /*  local sound speed       */
