@@ -13,28 +13,28 @@ extern FILE *fin1, *fin2, *fmo, *fout, *foutmicr, *fout3, *massfil, *jelfut;
 
 // --- FÜGGVÉNY DEKLARÁCIÓK ---
 
-/* reszecskek_szama függvény deklaráció */
-int reszecskek_szama(const char *filenev);
+/* calculateNumbersOfParticles függvény deklaráció */
+int calculateNumbersOfParticles(const char *filenev);
 
 /* A porreszecskek adatainak beolvasasa */
-// FIX: The original had 'void por_be(double radius[][2], double radiusmicr[][2], double *mass, double *massmicr);'
+// FIX: The original had 'void loadDustParticlesFromFile(double radius[][2], double radiusmicr[][2], double *mass, double *massmicr);'
 // You are missing the 'const char *filename' parameter in the .h file.
-void por_be(double radius[][2], double radiusmicr[][2], double *mass, double *massmicr, const char *filename);
+void loadDustParticlesFromFile(double radius[][2], double radiusmicr[][2], double *mass, double *massmicr, const char *filename);
 
 /* A sigmat tartalmazo file parametereinek beolvasasa */
-void sigIn(disk_t *disk_params, const char *filename);
+void loadGasSurfaceDensityFromFile(disk_t *disk_params, const char *filename);
 
 /* Fuggveny az adott futashoz mappa letrehozasara */
-void Mk_Dir(char *dir_path);
+void createRunDirectory(char *dir_path);
 
 /* Elkeszit egy file-t, ami tartalmazza a jelenlegi futas parametereit, es hogy melyik mappaban talalhatoak a file-ok */
-// FIX: The original had 'void infoCurrent(const char *nev);'
+// FIX: The original had 'void printCurrentInformationAboutRun(const char *nev);'
 // You are missing 'const disk_t *disk_params' and 'const simulation_options_t *sim_opts'.
-void infoCurrent(const char *nev, const disk_t *disk_params, const simulation_options_t *sim_opts);
+void printCurrentInformationAboutRun(const char *nev, const disk_t *disk_params, const simulation_options_t *sim_opts);
 
 /* Fuggveny a tomegfile kiiratasara */
 // FIX: The original was missing 'const disk_t *disk_params' and 'const simulation_options_t *sim_opts'.
-void Print_Mass(double step, 
+void printMassGrowthAtDZEFile(double step, 
                 double (*partmassind)[5], double (*partmassmicrind)[5], 
                 double t, // Ezt továbbra is meghagyjuk, ha az időre szükség van
                 double massbtempii, double massbtempoi, double massmtempii, double massmtempoi, 
@@ -45,22 +45,22 @@ void Print_Mass(double step,
 
 /* Fuggveny a sigma, p, dp kiiratasara */
 // FIX: The original was missing 'const disk_t *disk_params'.
-void Print_Sigma(const disk_t *disk_params, output_files_t *output_files);
+void printGasSurfaceDensityPressurePressureDerivateFile(const disk_t *disk_params, output_files_t *output_files);
 
 /* Fuggveny a por feluletisurusegenek kiiratasara */
 // FIX: The original was missing 'const disk_t *disk_params' and 'const simulation_options_t *sim_opts'.
-void Print_Sigmad(const double *r, const double *rm, const double *sigmad, const double *sigmadm,
+void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const double *rm, const double *sigmad, const double *sigmadm,
                   const disk_t *disk_params, const simulation_options_t *sim_opts,
                   output_files_t *output_files);
 /* Fuggveny a pormozgas es reszecskemeret kiiratasara */
 // FIX: The original was missing 'const disk_t *disk_params' and 'const simulation_options_t *sim_opts'.
-void Print_Pormozg_Size(char *size_name, int step, double (*rad)[2], double (*radmicr)[2],
+void printDustParticleSizeFile(char *size_name, int step, double (*rad)[2], double (*radmicr)[2],
                         const disk_t *disk_params, const simulation_options_t *sim_opts,
                         output_files_t *output_files);
 
 /* Az idot tartalmazo file parametereinek beolvasasa (vagy beallitasa) */
 // FIX: The original was missing 'simulation_options_t *sim_opts'.
-void timePar(double tMax_val, double stepping_val, double current_val, simulation_options_t *sim_opts);
+void printTimeStampFile(double tMax_val, double stepping_val, double current_val, simulation_options_t *sim_opts);
 
 
 
@@ -104,17 +104,17 @@ typedef struct {
 
 // Függvény a fejlécek kiírására
 // Az 'header_data' opcionális lehet (NULL is átadható), ha az adott fájltípushoz nem kell
-void print_file_header(FILE *file, FileType_e file_type, const HeaderData_t *header_data);
+void printFileHeader(FILE *file, FileType_e file_type, const HeaderData_t *header_data);
 
 
 // Függvény a kezdeti kimeneti fájlok beállítására és fejlécek írására
-int setup_initial_output_files(output_files_t *output_files, const simulation_options_t *sim_opts,
+int setupInitialOutputFiles(output_files_t *output_files, const simulation_options_t *sim_opts,
                                const disk_t *disk_params, HeaderData_t *header_data_for_files);
 
 
-void cleanup_simulation_resources(ParticleData_t *p_data, output_files_t *output_files, const simulation_options_t *sim_opts);
+void cleanupSimulationResources(ParticleData_t *p_data, output_files_t *output_files, const simulation_options_t *sim_opts);
 
-void close_snapshot_files(output_files_t *output_files, const char *dens_name, const char *dust_name, const char *dust_name2, const simulation_options_t *sim_opts);
+void closeSnapshotFiles(output_files_t *output_files, const char *dens_name, const char *dust_name, const char *dust_name2, const simulation_options_t *sim_opts);
 
 
 #endif // IO_UTILS_H

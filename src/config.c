@@ -22,7 +22,7 @@ const char *inputsig = NULL;
 // These cannot be modified at runtime.
 
 // CRITICAL CHANGE: Define separate names for gas and dust profiles
-const char * const FILENAME_INIT_GAS_PROFILE = "initial_gas_profile.dat";   // This is the one you need for sigIn!
+const char * const FILENAME_INIT_GAS_PROFILE = "initial_gas_profile.dat";   // This is the one you need for loadGasSurfaceDensityFromFile!
 const char * const FILENAME_INIT_DUST_PROFILE = "initial_dust_profile.dat"; // This is your existing dust file
 
 // You can now remove 'FILENAME_INIT_PROFILE' as it's redundant/conflicting

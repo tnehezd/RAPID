@@ -7,9 +7,9 @@
 #include "parser.h" // Include its own header
 #include "simulation_types.h" // In case simulation_types.h defines something else needed here
 
-/* --- create_default_options: Sets default values for the 'options_t' structure --- */
-void create_default_options(options_t *opt) {
-    fprintf(stderr, "DEBUG [create_default_options]: Setting default values for options_t.\n");
+/* --- createDefaultOptions: Sets default values for the 'options_t' structure --- */
+void createDefaultOptions(options_t *opt) {
+    fprintf(stderr, "DEBUG [createDefaultOptions]: Setting default values for options_t.\n");
     // Simulation control options
     opt->drift           = 1.;
     opt->growth          = 1.;
@@ -59,8 +59,8 @@ void create_default_options(options_t *opt) {
     fprintf(stderr, "Default options setting complete.\n");
 }
 
-/* --- print_usage: Prints a help message for command-line arguments --- */
-void print_usage() {
+/* --- printUsageToTerminal: Prints a help message for command-line arguments --- */
+void printUsageToTerminal() {
     fprintf(stderr, "Usage: simulation [OPTIONS]\n");
     fprintf(stderr, "Simulation control options:\n");
     fprintf(stderr, "  -drift <val>   Enable/disable drift (0. or 1., default: 1.0)\n");
@@ -104,52 +104,52 @@ void print_usage() {
 }
 
 
-/* --- parse_options: Parses command-line arguments and fills the 'options_t' struct --- */
-int parse_options(int argc, const char **argv, options_t *opt){
-    fprintf(stderr, "DEBUG [parse_options]: Parsing command-line arguments (%d total).\n", argc);
+/* --- parseCLIOptions: Parses command-line arguments and fills the 'options_t' struct --- */
+int parseCLIOptions(int argc, const char **argv, options_t *opt){
+    fprintf(stderr, "DEBUG [parseCLIOptions]: Parsing command-line arguments (%d total).\n", argc);
     int i = 1;
 
     while (i < argc) {
-//        fprintf(stderr, "DEBUG [parse_options]: Processing argument %d: %s\n", i, argv[i]);
+//        fprintf(stderr, "DEBUG [parseCLIOptions]: Processing argument %d: %s\n", i, argv[i]);
         if(strcmp(argv[i], "-drift") == 0) {
             i++;
             if (i < argc) opt->drift = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -drift.\n"); return 1; }
-//            fprintf(stderr, "DEBUG [parse_options]:   -drift set to %.2f\n", opt->drift);
+//            fprintf(stderr, "DEBUG [parseCLIOptions]:   -drift set to %.2f\n", opt->drift);
         }
         else if (strcmp(argv[i], "-growth") == 0) {
             i++;
             if (i < argc) opt->growth = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -growth.\n"); return 1; }
-//            fprintf(stderr, "DEBUG [parse_options]:   -growth set to %.2f\n", opt->growth);
+//            fprintf(stderr, "DEBUG [parseCLIOptions]:   -growth set to %.2f\n", opt->growth);
         }
         else if (strcmp(argv[i], "-evol") == 0) {
             i++;
             if (i < argc) opt->evol = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -evol.\n"); return 1; }
-//            fprintf(stderr, "DEBUG [parse_options]:   -evol set to %.2f\n", opt->evol);
+//            fprintf(stderr, "DEBUG [parseCLIOptions]:   -evol set to %.2f\n", opt->evol);
         }
         else if (strcmp(argv[i], "-twopop") == 0) {
             i++;
             if (i < argc) opt->twopop = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -twopop.\n"); return 1; }
-//            fprintf(stderr, "DEBUG [parse_options]:   -twopop set to %.2f\n", opt->twopop);
+//            fprintf(stderr, "DEBUG [parseCLIOptions]:   -twopop set to %.2f\n", opt->twopop);
         }
         else if (strcmp(argv[i], "-ufrag") == 0) {
             i++;
             if (i < argc) opt->ufrag = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -ufrag.\n"); return 1; }
-//            fprintf(stderr, "DEBUG [parse_options]:   -ufrag set to %.2f\n", opt->ufrag);
+//            fprintf(stderr, "DEBUG [parseCLIOptions]:   -ufrag set to %.2f\n", opt->ufrag);
         }
         else if (strcmp(argv[i], "-ffrag") == 0) {
             i++;
             if (i < argc) opt->ffrag = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -ffrag.\n"); return 1; }
-//            fprintf(stderr, "DEBUG [parse_options]:   -ffrag set to %.2f\n", opt->ffrag);
+//            fprintf(stderr, "DEBUG [parseCLIOptions]:   -ffrag set to %.2f\n", opt->ffrag);
         }
         else if (strcmp(argv[i], "-tStep") == 0) {
             i++;
             if (i < argc) opt->tStep = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -tStep.\n"); return 1; }
-//            fprintf(stderr, "DEBUG [parse_options]:   -tStep set to %.2e\n", opt->tStep);
+//            fprintf(stderr, "DEBUG [parseCLIOptions]:   -tStep set to %.2e\n", opt->tStep);
         }
         else if (strcmp(argv[i], "-n") == 0) { // Main simulation NGRID (and also init_tool's NGRID)
             i++;
             if (i < argc) opt->ngrid_val = atoi(argv[i]); else { fprintf(stderr, "Error: Missing value for -n.\n"); return 1; }
-//            fprintf(stderr, "DEBUG [parse_options]:   -n (NGRID) set to %d\n", opt->ngrid_val);
+//            fprintf(stderr, "DEBUG [parseCLIOptions]:   -n (NGRID) set to %d\n", opt->ngrid_val);
         }
         else if (strcmp(argv[i], "-ndust") == 0) { 
             i++;
@@ -158,7 +158,7 @@ int parse_options(int argc, const char **argv, options_t *opt){
         else if (strcmp(argv[i], "-i") == 0) {
             i++;
             if (i < argc) opt->input_file = argv[i]; else { fprintf(stderr, "Error: Missing value for -i.\n"); return 1; }
-//            fprintf(stderr, "DEBUG [parse_options]:   -i (input_file) set to '%s'\n", opt->input_file);
+//            fprintf(stderr, "DEBUG [parseCLIOptions]:   -i (input_file) set to '%s'\n", opt->input_file);
         }
         else if (strcmp(argv[i], "-o") == 0) { // Output directory name
             i++;
@@ -166,7 +166,7 @@ int parse_options(int argc, const char **argv, options_t *opt){
                 // Ensure output_dir_name has enough space and use strncpy for safety
                 strncpy(opt->output_dir_name, argv[i], sizeof(opt->output_dir_name) - 1);
                 opt->output_dir_name[sizeof(opt->output_dir_name) - 1] = '\0'; // Ensure null termination
-//                fprintf(stderr, "DEBUG [parse_options]:   -o (output_dir_name) set to '%s'\n", opt->output_dir_name);
+//                fprintf(stderr, "DEBUG [parseCLIOptions]:   -o (output_dir_name) set to '%s'\n", opt->output_dir_name);
             } else {
                 fprintf(stderr, "Error: Missing value for -o.\n");
                 return 1;
@@ -175,55 +175,55 @@ int parse_options(int argc, const char **argv, options_t *opt){
         else if (strcmp(argv[i], "-tmax") == 0) {
             i++;
             if (i < argc) opt->totalTime = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -tmax.\n"); return 1; }
-//            fprintf(stderr, "DEBUG [parse_options]:   -tmax set to %.2e\n", opt->totalTime);
+//            fprintf(stderr, "DEBUG [parseCLIOptions]:   -tmax set to %.2e\n", opt->totalTime);
         }
         else if (strcmp(argv[i], "-outfreq") == 0) {
             i++;
             if (i < argc) opt->outputFrequency = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -outfreq.\n"); return 1; }
-//            fprintf(stderr, "DEBUG [parse_options]:   -outfreq set to %.2e\n", opt->outputFrequency);
+//            fprintf(stderr, "DEBUG [parseCLIOptions]:   -outfreq set to %.2e\n", opt->outputFrequency);
         }
         else if (strcmp(argv[i], "-curr") == 0) {
             i++;
             if (i < argc) opt->startTime = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -curr.\n"); return 1; }
-//            fprintf(stderr, "DEBUG [parse_options]:   -curr (startTime) set to %.2e\n", opt->startTime);
+//            fprintf(stderr, "DEBUG [parseCLIOptions]:   -curr (startTime) set to %.2e\n", opt->startTime);
         }
         // --- Init_tool specific options processed in the main parser ---
         // Note: -n is already handled above for both sim and init
-        else if (strcmp(argv[i], "-ri") == 0) { i++; if (i < argc) opt->rmin_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -ri.\n"); return 1; }; } //fprintf(stderr, "DEBUG [parse_options]:   -ri (RMIN for init) set to %.2f\n", opt->rmin_val); }
-        else if (strcmp(argv[i], "-ro") == 0) { i++; if (i < argc) opt->rmax_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -ro.\n"); return 1; }; } // fprintf(stderr, "DEBUG [parse_options]:   -ro (RMAX for init) set to %.2f\n", opt->rmax_val); }
-        else if (strcmp(argv[i], "-sigma0_init") == 0) { i++; if (i < argc) opt->sigma0_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -sigma0_init.\n"); return 1; }; } // fprintf(stderr, "DEBUG [parse_options]:   -sigma0_init set to %.2e\n", opt->sigma0_val); }
-        else if (strcmp(argv[i], "-index_init") == 0) { i++; if (i < argc) opt->sigmap_exp_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -index_init.\n"); return 1; }; } // fprintf(stderr, "DEBUG [parse_options]:   -index_init set to %.2f\n", opt->sigmap_exp_val); }
-        else if (strcmp(argv[i], "-rdzei") == 0) { i++; if (i < argc) opt->r_dze_i_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -rdzei.\n"); return 1; }; } // fprintf(stderr, "DEBUG [parse_options]:   -rdzei set to %.2f\n", opt->r_dze_i_val); }
-        else if (strcmp(argv[i], "-rdzeo") == 0) { i++; if (i < argc) opt->r_dze_o_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -rdzeo.\n"); return 1; }; } // fprintf(stderr, "DEBUG [parse_options]:   -rdzeo set to %.2f\n", opt->r_dze_o_val); }
-        else if (strcmp(argv[i], "-drdzei") == 0) { i++; if (i < argc) opt->dr_dze_i_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -drdzei.\n"); return 1; }; } // fprintf(stderr, "DEBUG [parse_options]:   -drdzei set to %.2f\n", opt->dr_dze_i_val); }
-        else if (strcmp(argv[i], "-drdzeo") == 0) { i++; if (i < argc) opt->dr_dze_o_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -drdzeo.\n"); return 1; }; } // fprintf(stderr, "DEBUG [parse_options]:   -drdzeo set to %.2f\n", opt->dr_dze_o_val); }
-        else if (strcmp(argv[i], "-alpha_init") == 0) { i++; if (i < argc) opt->alpha_visc_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -alpha_init.\n"); return 1; }; } // fprintf(stderr, "DEBUG [parse_options]:   -alpha_init set to %.2e\n", opt->alpha_visc_val); }
-        else if (strcmp(argv[i], "-amod") == 0) { i++; if (i < argc) opt->a_mod_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -amod.\n"); return 1; }; } // fprintf(stderr, "DEBUG [parse_options]:   -amod set to %.2f\n", opt->a_mod_val); }
-        else if (strcmp(argv[i], "-h_init") == 0) { i++; if (i < argc) opt->hasp_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -h_init.\n"); return 1; }; } // fprintf(stderr, "DEBUG [parse_options]:   -h_init set to %.2f\n", opt->hasp_val); }
-        else if (strcmp(argv[i], "-flind_init") == 0) { i++; if (i < argc) opt->flind_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -flind_init.\n"); return 1; }; } // fprintf(stderr, "DEBUG [parse_options]:   -flind_init set to %.2f\n", opt->flind_val); }
-        else if (strcmp(argv[i], "-m0_init") == 0) { i++; if (i < argc) opt->star_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -m0_init.\n"); return 1; }; } // fprintf(stderr, "DEBUG [parse_options]:   -m0_init set to %.2f\n", opt->star_val); }
-        else if (strcmp(argv[i], "-eps") == 0) { i++; if (i < argc) opt->eps_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -eps.\n"); return 1; } ; } //fprintf(stderr, "DEBUG [parse_options]:   -eps set to %.2e\n", opt->eps_val); }
-        else if (strcmp(argv[i], "-ratio") == 0) { i++; if (i < argc) opt->ratio_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -ratio.\n"); return 1; }; } // fprintf(stderr, "DEBUG [parse_options]:   -ratio set to %.2e\n", opt->ratio_val); }
-        else if (strcmp(argv[i], "-mic") == 0) { i++; if (i < argc) opt->mic_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -mic.\n"); return 1; }; } // fprintf(stderr, "DEBUG [parse_options]:   -mic set to %.2e\n", opt->mic_val); }
-        else if (strcmp(argv[i], "-onesize") == 0) { i++; if (i < argc) opt->onesize_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -onesize.\n"); return 1; }; } // fprintf(stderr, "DEBUG [parse_options]:   -onesize set to %.2e\n", opt->onesize_val); }
+        else if (strcmp(argv[i], "-ri") == 0) { i++; if (i < argc) opt->rmin_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -ri.\n"); return 1; }; } //fprintf(stderr, "DEBUG [parseCLIOptions]:   -ri (RMIN for init) set to %.2f\n", opt->rmin_val); }
+        else if (strcmp(argv[i], "-ro") == 0) { i++; if (i < argc) opt->rmax_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -ro.\n"); return 1; }; } // fprintf(stderr, "DEBUG [parseCLIOptions]:   -ro (RMAX for init) set to %.2f\n", opt->rmax_val); }
+        else if (strcmp(argv[i], "-sigma0_init") == 0) { i++; if (i < argc) opt->sigma0_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -sigma0_init.\n"); return 1; }; } // fprintf(stderr, "DEBUG [parseCLIOptions]:   -sigma0_init set to %.2e\n", opt->sigma0_val); }
+        else if (strcmp(argv[i], "-index_init") == 0) { i++; if (i < argc) opt->sigmap_exp_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -index_init.\n"); return 1; }; } // fprintf(stderr, "DEBUG [parseCLIOptions]:   -index_init set to %.2f\n", opt->sigmap_exp_val); }
+        else if (strcmp(argv[i], "-rdzei") == 0) { i++; if (i < argc) opt->r_dze_i_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -rdzei.\n"); return 1; }; } // fprintf(stderr, "DEBUG [parseCLIOptions]:   -rdzei set to %.2f\n", opt->r_dze_i_val); }
+        else if (strcmp(argv[i], "-rdzeo") == 0) { i++; if (i < argc) opt->r_dze_o_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -rdzeo.\n"); return 1; }; } // fprintf(stderr, "DEBUG [parseCLIOptions]:   -rdzeo set to %.2f\n", opt->r_dze_o_val); }
+        else if (strcmp(argv[i], "-drdzei") == 0) { i++; if (i < argc) opt->dr_dze_i_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -drdzei.\n"); return 1; }; } // fprintf(stderr, "DEBUG [parseCLIOptions]:   -drdzei set to %.2f\n", opt->dr_dze_i_val); }
+        else if (strcmp(argv[i], "-drdzeo") == 0) { i++; if (i < argc) opt->dr_dze_o_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -drdzeo.\n"); return 1; }; } // fprintf(stderr, "DEBUG [parseCLIOptions]:   -drdzeo set to %.2f\n", opt->dr_dze_o_val); }
+        else if (strcmp(argv[i], "-alpha_init") == 0) { i++; if (i < argc) opt->alpha_visc_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -alpha_init.\n"); return 1; }; } // fprintf(stderr, "DEBUG [parseCLIOptions]:   -alpha_init set to %.2e\n", opt->alpha_visc_val); }
+        else if (strcmp(argv[i], "-amod") == 0) { i++; if (i < argc) opt->a_mod_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -amod.\n"); return 1; }; } // fprintf(stderr, "DEBUG [parseCLIOptions]:   -amod set to %.2f\n", opt->a_mod_val); }
+        else if (strcmp(argv[i], "-h_init") == 0) { i++; if (i < argc) opt->hasp_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -h_init.\n"); return 1; }; } // fprintf(stderr, "DEBUG [parseCLIOptions]:   -h_init set to %.2f\n", opt->hasp_val); }
+        else if (strcmp(argv[i], "-flind_init") == 0) { i++; if (i < argc) opt->flind_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -flind_init.\n"); return 1; }; } // fprintf(stderr, "DEBUG [parseCLIOptions]:   -flind_init set to %.2f\n", opt->flind_val); }
+        else if (strcmp(argv[i], "-m0_init") == 0) { i++; if (i < argc) opt->star_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -m0_init.\n"); return 1; }; } // fprintf(stderr, "DEBUG [parseCLIOptions]:   -m0_init set to %.2f\n", opt->star_val); }
+        else if (strcmp(argv[i], "-eps") == 0) { i++; if (i < argc) opt->eps_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -eps.\n"); return 1; } ; } //fprintf(stderr, "DEBUG [parseCLIOptions]:   -eps set to %.2e\n", opt->eps_val); }
+        else if (strcmp(argv[i], "-ratio") == 0) { i++; if (i < argc) opt->ratio_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -ratio.\n"); return 1; }; } // fprintf(stderr, "DEBUG [parseCLIOptions]:   -ratio set to %.2e\n", opt->ratio_val); }
+        else if (strcmp(argv[i], "-mic") == 0) { i++; if (i < argc) opt->mic_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -mic.\n"); return 1; }; } // fprintf(stderr, "DEBUG [parseCLIOptions]:   -mic set to %.2e\n", opt->mic_val); }
+        else if (strcmp(argv[i], "-onesize") == 0) { i++; if (i < argc) opt->onesize_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -onesize.\n"); return 1; }; } // fprintf(stderr, "DEBUG [parseCLIOptions]:   -onesize set to %.2e\n", opt->onesize_val); }
         // NEW: Handle -pdensity flag
         else if (strcmp(argv[i], "-pdensity") == 0) {
             i++;
             if (i < argc) opt->pdensity_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -pdensity.\n"); return 1; }
-//            fprintf(stderr, "DEBUG [parse_options]:   -pdensity set to %.2f\n", opt->pdensity_val);
+//            fprintf(stderr, "DEBUG [parseCLIOptions]:   -pdensity set to %.2f\n", opt->pdensity_val);
         }
         else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
-//            print_usage();
+//            printUsageToTerminal();
             return 1; // Exit after printing usage
         }
         else {
-            fprintf(stderr, "ERROR [parse_options]: Invalid switch on command-line: %s!\n", argv[i]);
-  //          print_usage(); // Print usage on unknown option
+            fprintf(stderr, "ERROR [parseCLIOptions]: Invalid switch on command-line: %s!\n", argv[i]);
+  //          printUsageToTerminal(); // Print usage on unknown option
             return 1;
         }
         i++;
     }
 
-    fprintf(stderr, "DEBUG [parse_options]: Command-line parsing complete.\n");
+    fprintf(stderr, "DEBUG [parseCLIOptions]: Command-line parsing complete.\n");
     return 0;
 }

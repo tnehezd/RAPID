@@ -9,45 +9,45 @@
 // Jelenleg nem szükséges ide tenni semmit a Parabola miatt.
 
 
-/*	egy megadott, diszkret pontokban ismert fuggvenyt interpolal a reszecske aktualis helyere	*/
-void interpol(double *invec, double *rvec, double pos, double *out, double rd, int opt, const disk_t *disk_params);
+/*	egy megadott, diszkret pontokban ismert fuggvenyt linearInterpolational a reszecske aktualis helyere	*/
+void linearInterpolation(double *invec, double *rvec, double pos, double *out, double rd, int opt, const disk_t *disk_params);
 
 // megkeresi egy tomb maximumat
-double find_max(double r[][2], int n);
-double find_min(double s1, double s2, double s3);
+double findMaximumOfAnArray(double r[][2], int n);
+double findMinimumOfAnArray(double s1, double s2, double s3);
 
 //counting the number of zero points of the pressure gradient function	
-int find_num_zero(const disk_t *disk_params);
+int countZeroPoints(const disk_t *disk_params);
 
 //mivel a dp csak diszkret pontokban ismert, ezert 2 pontra illeszt egy egyenest, es megnezi, hogy annak hol lenne 0 az erteke
 //	solving a*x + b = y (here a = r, y = dp)	
-double find_r_zero(double r1, double r2, double dp1, double dp2);
+double findZeroPointRadius(double r1, double r2, double dp1, double dp2);
 
 
-// Nulla pont meghatározása lineáris interpolációval
-double find_zero(int i, const double *rvec, const double *dp);
+// Nulla pont meghatározása lineáris linearInterpolationációval
+double findZeroPoint(int i, const double *rvec, const double *dp);
 
-double calculate_index_from_radius(double r_coord, disk_t *disk_params);
+//double calculateIndexFromRadius(double r_coord, disk_t *disk_params);
 
 /* A nyomasi maximum korul 1H tavolsagban jeloli ki a korgyurut */
 // Feltehetően a disk_model.h tartalmazza a scale_height deklarációját.
-void find_r_annulus(double rin_val, double *ind_ii, double *ind_io, double rout_val, double *ind_oi, double *ind_oo, const simulation_options_t *sim_opts, disk_t *disk_params);
+void findRAnnulusAroundDZE(double rin_val, double *ind_ii, double *ind_io, double rout_val, double *ind_oi, double *ind_oo, const simulation_options_t *sim_opts, disk_t *disk_params);
 
 //fuggveny egy tomb elemeinek sorbarendezesere --> ezt jelenleg nem hasznalja sehol a program	
-void sort(double *rv,int n);
+void sortAnArray(double *rv,int n);
 
 void histogram(double r, int *hist, double dd, disk_t *disk_params);
 
 
 
 /*	fuggveny egy tomb elemeinek sorbarendezesere --> ezt jelenleg nem hasznalja sehol a program	*/
-void sortarray(double rv[][3],int n);
+void sortAnArrayarray(double rv[][3],int n);
 
-void kerekit(double in[][3], int n, const disk_t *disk_params);
+void roundParticleRadii(double in[][3], int n, const disk_t *disk_params);
 
-void contract(double in[][3], double dd, int n, const disk_t *disk_params); 
+void mergeParticlesByRadius(double in[][3], double dd, int n, const disk_t *disk_params); 
 
-void Count_Mass(double radin[][2], double partmassindin[][5], double *massvecin, double t, int n, const disk_t *disk_params);
+void updateParticleGridIndices(double radin[][2], double partmassindin[][5], double *massvecin, double t, int n, const disk_t *disk_params);
 
 
 // Ide kerülhetnek majd a jövőbeni egyéb általános segédfüggvények deklarációi is.
