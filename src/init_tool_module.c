@@ -1,5 +1,5 @@
 #include "init_tool_module.h"
-#include "config.h" // For kInitialDustProfileFileName, kDiskConfigFile, SDCONV, G_GRAV_CONST, SNOWLINE, ICEFACTOR, CMPSECTOAUPYRP2PI
+#include "config.h" 
 #include "disk_model.h" // Contains declarations for createRadialGrid, createInitialGasSurfaceDensity, createInitialGasPressure, createInitialGasPressureGradient, createInitialGasVelocity, readDiskParameters, scale_height, calculateKeplerianVelocity, kep_freq, calculateLocalSoundSpeed, press, calcualteMidplaneGasDensity
 #include "dust_physics.h" // May contain calculateParticleMass, etc.
 #include "utils.h" 
@@ -164,9 +164,9 @@ int runInitialization(init_tool_options_t *opts, disk_t *disk_params) {
     char full_disk_param_path[MAX_PATH_LEN];
     char full_init_density_path[MAX_PATH_LEN];
 
-    snprintf(full_init_dust_profile_path, sizeof(full_init_dust_profile_path), "%s/%s", opts->output_base_path, kInitialDustProfileFileName);
-    snprintf(full_disk_param_path, sizeof(full_disk_param_path), "%s/%s", opts->output_base_path, kDiskConfigFile);
-    snprintf(full_init_density_path, sizeof(full_init_density_path), "%s/%s", opts->output_base_path, kInitialGasProfileFileName);
+    snprintf(full_init_dust_profile_path, sizeof(full_init_dust_profile_path), "%s/%s%s", opts->output_base_path, kInitialDustProfileFileName,kFileNamesSuffix);
+    snprintf(full_disk_param_path, sizeof(full_disk_param_path), "%s/%s%s", opts->output_base_path, kDiskConfigFile,kFileNamesSuffix);
+    snprintf(full_init_density_path, sizeof(full_init_density_path), "%s/%s%s", opts->output_base_path, kInitialGasProfileFileName,kFileNamesSuffix);
 
     // --- Open Output Files with full paths ---
     fout_data = fopen(full_init_dust_profile_path, "w");

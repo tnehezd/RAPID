@@ -609,12 +609,12 @@ int setupInitialOutputFiles(output_files_t *output_files, const simulation_optio
     header_data_for_files->R_out = disk_params->RMAX;
 
     // Fájlnevek generálása
-    snprintf(porout, MAX_PATH_LEN, "%s/%s/%s", sim_opts->output_dir_name, kLogFilesDirectory, kDustParticleEvolutionFile);
+    snprintf(porout, MAX_PATH_LEN, "%s/%s/%s%s", sim_opts->output_dir_name, kLogFilesDirectory, kDustAccumulationFileName,kFileNamesSuffix);
 
     if (sim_opts->twopop == 1.0) {
         snprintf(poroutmicr, MAX_PATH_LEN, "%s/%s/micron_particle_evolution.dat", sim_opts->output_dir_name, kLogFilesDirectory);
     }
-    snprintf(massout, MAX_PATH_LEN, "%s/%s/%s.dat", sim_opts->output_dir_name, kLogFilesDirectory, kDustAccumulationFileName);
+    snprintf(massout, MAX_PATH_LEN, "%s/%s/%s%s", sim_opts->output_dir_name, kLogFilesDirectory, kDustAccumulationFileName,kFileNamesSuffix);
 
     fprintf(stderr, "DEBUG [setupInitialOutputFiles]: Opening output files: %s, %s (if 2pop), %s\n", porout, poroutmicr, massout);
 
@@ -676,7 +676,7 @@ void cleanupSimulationResources(ParticleData_t *p_data, output_files_t *output_f
     if (output_files->por_motion_file != NULL) {
         fclose(output_files->por_motion_file);
         output_files->por_motion_file = NULL;
-        fprintf(stderr, "DEBUG [cleanupSimulationResources]: Closed %s\n", kDustParticleEvolutionFile);
+        fprintf(stderr, "DEBUG [cleanupSimulationResources]: Closed %s%s\n", kDustParticleEvolutionFile,kFileNamesSuffix);
     }
     if (output_files->micron_motion_file != NULL) { // Ellenőrzés twopop-ra itt is
         fclose(output_files->micron_motion_file);
@@ -686,7 +686,7 @@ void cleanupSimulationResources(ParticleData_t *p_data, output_files_t *output_f
     if (output_files->mass_file != NULL) {
         fclose(output_files->mass_file);
         output_files->mass_file = NULL;
-        fprintf(stderr, "DEBUG [cleanupSimulationResources]: Closed %s\n", kDustAccumulationFileName);
+        fprintf(stderr, "DEBUG [cleanupSimulationResources]: Closed %s%s\n", kDustAccumulationFileName,kFileNamesSuffix);
     }
 }
 

@@ -14,9 +14,7 @@ extern int PARTICLE_NUMBER;
 
 
 // --- Global File Pointer Declarations (extern) ---
-extern FILE *fmo;
-extern FILE *fout;
-extern FILE *fout2;
+extern FILE *drift_timescale_file;
 extern FILE *fout3;
 extern FILE *foutmicr;
 extern FILE *massfil;
@@ -57,13 +55,11 @@ extern const char * const kInitialDustProfileFileName;  // NEW: For initial dust
 extern const char * const kGasDensityProfileFilePrefix;
 extern const char * const kDustAccumulationFileName;
 extern const char * const kDustParticleEvolutionFile;
-
+extern const char * const kDriftTimescaleFileName;
 extern const char * const kDiskConfigFile;
-
 extern const char * const kLogFilesDirectory;
 extern const char * const kConfigFilesDirectory;
-
-extern const char *inputsig; // Parameter controls
+extern const char * const kFileNamesSuffix;
 
 void initialize_derived_config_variables();
 

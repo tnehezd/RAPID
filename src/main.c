@@ -176,9 +176,9 @@ int main(int argc, const char **argv) {
         fprintf(stderr, "DEBUG [main]: Copied initial profile file '%s' to '%s/'.\n", current_inputsig_file, initial_dir_path);
 
         // Copy disk_config.dat (kDiskConfigFile) file to the 'initial' directory
-        snprintf(cmd_buffer, sizeof(cmd_buffer), "cp %s %s/", kDiskConfigFile, initial_dir_path);
+        snprintf(cmd_buffer, sizeof(cmd_buffer), "cp %s%s %s/", kDiskConfigFile,kFileNamesSuffix, initial_dir_path);
         dummy_sys_ret = system(cmd_buffer); (void)dummy_sys_ret;
-        fprintf(stderr, "DEBUG [main]: Copied %s to %s/\n", kDiskConfigFile, initial_dir_path);
+        fprintf(stderr, "DEBUG [main]: Copied %s to %s%s/\n", kDiskConfigFile,kFileNamesSuffix, initial_dir_path);
 
     } else {
         // If NO input file is specified:
@@ -217,7 +217,7 @@ int main(int argc, const char **argv) {
 
         // Now current_inputsig_file points to the generated file in initial_dir_path
         // CHANGE HERE: FILENAME_INIT_PROFILE -> kInitialGasProfileFileName
-        snprintf(current_inputsig_file, sizeof(current_inputsig_file), "%s/%s", initial_dir_path, kInitialGasProfileFileName);
+        snprintf(current_inputsig_file, sizeof(current_inputsig_file), "%s/%s%s", initial_dir_path, kInitialGasProfileFileName,kFileNamesSuffix);
         fprintf(stderr, "DEBUG [main]: Generated GAS profile will be loaded from '%s'.\n", current_inputsig_file);
 
         // --- Update NGRID from the generated file (critical for loadGasSurfaceDensityFromFile sizing) ---
@@ -246,7 +246,7 @@ int main(int argc, const char **argv) {
     // --- NEW PART: Set the dust profile filename in sim_opts.dust_input_filename ---
     // This is the dust profile filename that loadDustParticlesFromFile reads within timeIntegrationForTheSystem.
     char current_inputdust_file[MAX_PATH_LEN];
-    snprintf(current_inputdust_file, sizeof(current_inputdust_file), "%s/%s", initial_dir_path, kInitialDustProfileFileName);
+    snprintf(current_inputdust_file, sizeof(current_inputdust_file), "%s/%s%s", initial_dir_path, kInitialDustProfileFileName, kFileNamesSuffix);
     strncpy(sim_opts.dust_input_filename, current_inputdust_file, MAX_PATH_LEN - 1);
     sim_opts.dust_input_filename[MAX_PATH_LEN - 1] = '\0'; // Ensure null-termination
     fprintf(stderr, "DEBUG [main]: sim_opts.dust_input_filename set to '%s' for timeIntegrationForTheSystem (dust profile).\n", sim_opts.dust_input_filename);
@@ -276,7 +276,7 @@ int main(int argc, const char **argv) {
         fprintf(stderr, "DEBUG [main]: Evolution (sim_opts.evol=%.2f) and drift (sim_opts.drift=%.2f) are OFF.\n", sim_opts.evol, sim_opts.drift);
 
         char dens_name_initial[MAX_PATH_LEN];
-        snprintf(dens_name_initial, sizeof(dens_name_initial), "%s/%s", initial_dir_path, kInitialGasProfileFileName);
+        snprintf(dens_name_initial, sizeof(dens_name_initial), "%s/%s%s", initial_dir_path, kInitialGasProfileFileName,kFileNamesSuffix);
         fprintf(stderr, "DEBUG [main]: Printing initial surface density to %s.\n", dens_name_initial);
 
         // Special handling for printGasSurfaceDensityPressurePressureDerivateFile when only initial output is needed

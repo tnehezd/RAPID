@@ -245,8 +245,8 @@ void calculateDustDistance(const char *nev, int opt, double radius[][2], const d
     #pragma omp master
     {
         if (t == 0) {
-            sprintf(scout, "%s/timescale.dat", nev);
-            fout2 = fopen(scout, "w");
+            sprintf(scout, "%s/%s%s", nev, kDriftTimescaleFileName, kFileNamesSuffix);
+            drift_timescale_file = fopen(scout, "w");
         }
     }
     // Szinkronizálás a master szál befejezéséig.
@@ -266,16 +266,16 @@ void calculateDustDistance(const char *nev, int opt, double radius[][2], const d
             if (t == 0) {
                 if (sim_opts->twopop == 0) {
                     double current_drdt_val = (fabs(y_out - y) / (deltat));
-                    // Azért kell a critical szekció, mert az fout2 fájlba írunk.
+                    // Azért kell a critical szekció, mert az drift_timescale_file fájlba írunk.
                     // Ez a critical szekció biztosítja, hogy egyszerre csak egy szál írjon a fájlba.
 
-                    #pragma omp critical(fout2_write)
+                    #pragma omp critical(drift_timescale_file_write)
                     {
                         // Ellenőrizzük, hogy a fájlmutató nem NULL
-                        if (fout2 != NULL) {
-                            fprintf(fout2, "%lg %lg\n", radius[i][0], (radius[i][0] / current_drdt_val) / (2.0 * M_PI));
+                        if (drift_timescale_file != NULL) {
+                            fprintf(drift_timescale_file, "%lg %lg\n", radius[i][0], (radius[i][0] / current_drdt_val) / (2.0 * M_PI));
                         } else {
-                            fprintf(stderr, "ERROR: fout2 is NULL during write in calculateDustDistance (t=0 block).\n");
+                            fprintf(stderr, "ERROR: drift_timescale_file is NULL during write in calculateDustDistance (t=0 block).\n");
                         }
                     }
                 }
@@ -298,9 +298,9 @@ void calculateDustDistance(const char *nev, int opt, double radius[][2], const d
     #pragma omp master
     {
         if (t == 0) { // Csak akkor zárjuk be, ha meg is nyitottuk a t=0 blokkban
-            if (fout2 != NULL) {
-                fclose(fout2);
-                fout2 = NULL; // Fontos, hogy NULL-ra állítsuk, miután bezártuk.
+            if (drift_timescale_file != NULL) {
+                fclose(drift_timescale_file);
+                drift_timescale_file = NULL; // Fontos, hogy NULL-ra állítsuk, miután bezártuk.
             }
         }
     }
