@@ -1,5 +1,5 @@
 #include "utils.h"    // Ezt kell includolni, mert ebben lesz a parabolicExtrapolationToGhostCells deklarációja
-#include "config.h"   // Szükséges a RMIN és DD makrók miatt, amiket a parabolicExtrapolationToGhostCells használ
+#include "config.h"   // Szükséges a r_min és DD makrók miatt, amiket a parabolicExtrapolationToGhostCells használ
 #include <math.h>     // Bár a parabolicExtrapolationToGhostCells most nem használ math.h függvényt,
 #include <stdlib.h>                      // más utility függvényeknek szüksége lehet rá.
                       // Jó gyakorlat ide tenni.
@@ -41,9 +41,9 @@ void parabolicExtrapolationToGhostCells(double *vec, int i1, int i2, int i3, dou
 	double y1, y2, y3;	/*	amit illesztünk a meghatározott pontokban				*/
 	double av, bv, cv;	/*	illesztéshez szükséges együtthatók --> ezt adja vissza a függvény	*/
 
-	x1 = disk_params->RMIN + (i1-1) * dd;
-	x2 = disk_params->RMIN + (i2-1) * dd;
-	x3 = disk_params->RMIN + (i3-1) * dd;
+	x1 = disk_params->r_min + (i1-1) * dd;
+	x2 = disk_params->r_min + (i2-1) * dd;
+	x3 = disk_params->r_min + (i3-1) * dd;
  
 	y1 = vec[i1];
 	y2 = vec[i2];
@@ -67,9 +67,9 @@ void applyBoundaryConditions(double *vec, const disk_t *disk_params) {					/*	bo
 	
 
 //	parabolicExtrapolationToGhostCells(vec, 1, 2, 3, &a, &b, &c, disk_params->DD,disk_params);
-//	vec[0] =  a * (disk_params->RMIN - disk_params->DD) * (disk_params->RMIN - disk_params->DD) + b * (disk_params->RMIN - disk_params->DD) + c;
+//	vec[0] =  a * (disk_params->r_min - disk_params->DD) * (disk_params->r_min - disk_params->DD) + b * (disk_params->r_min - disk_params->DD) + c;
 	vec[0] = vec[1];
-//	parabolicExtrapolationToGhostCells(vec, disk_params->NGRID - 2, disk_params->NGRID - 1, disk_params->NGRID, &a, &b, &c, disk_params->DD,disk_params);
-//	vec[disk_params->NGRID+1] = a * (disk_params->RMAX + disk_params->DD) * (disk_params->RMAX + disk_params->DD) + b * (disk_params->RMAX + disk_params->DD) + c;
-	vec[disk_params->NGRID+1] = vec[disk_params->NGRID];
+//	parabolicExtrapolationToGhostCells(vec, disk_params->grid_number - 2, disk_params->grid_number - 1, disk_params->grid_number, &a, &b, &c, disk_params->DD,disk_params);
+//	vec[disk_params->grid_number+1] = a * (disk_params->r_max + disk_params->DD) * (disk_params->r_max + disk_params->DD) + b * (disk_params->r_max + disk_params->DD) + c;
+	vec[disk_params->grid_number+1] = vec[disk_params->grid_number];
 }

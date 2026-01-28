@@ -51,7 +51,7 @@ void printGasSurfaceDensityPressurePressureDerivateFile(const disk_t *disk_param
 // FIX: The original was missing 'const disk_t *disk_params' and 'const simulation_options_t *sim_opts'.
 void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const double *rm, const double *sigmad, const double *sigmadm,
                   const disk_t *disk_params, const simulation_options_t *sim_opts,
-                  output_files_t *output_files);
+                  output_files_t *output_files, double step);
 /* Fuggveny a pormozgas es reszecskemeret kiiratasara */
 // FIX: The original was missing 'const disk_t *disk_params' and 'const simulation_options_t *sim_opts'.
 void printDustParticleSizeFile(char *size_name, int step, double (*rad)[2], double (*radmicr)[2],

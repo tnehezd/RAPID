@@ -1,7 +1,7 @@
 // src/dust_physics.c
-#include "gas_physics.h" // A saját headerjét mindig includolni kell
-#include "config.h"       // Szükséges lehet a globális konstansokhoz (pl. PARTICLE_NUMBER, AU2CM, RMIN, RMAX, NGRID, G_GRAV_CONST, STAR, SDCONV, CMPSECTOAUPYRP2PI, uFrag, fFrag, PDENSITYDIMLESS, HASP, M_PI, DD, sim_opts->dzone, sim_opts->twopop, RMIN, RMAX, FLIND, alpha_visc, a_mod, r_dze_i, r_dze_o, Dr_dze_i, Dr_dze_o)
-#include "simulation_types.h" // Például output_files_t, disk_t struktúrákhoz
+#include "gas_physics.h" 
+#include "config.h"       
+#include "simulation_types.h" 
 #include "boundary_conditions.h"
 #include "simulation_core.h" 
 #include "utils.h"           
@@ -55,12 +55,12 @@ double calculatePressureScaleHeight(double r, const disk_t *disk_params) {
 
 /*  lokális kepleri sebesség    */
 double calculateKeplerianVelocity(double r, const disk_t *disk_params) {
-    return sqrt(G_GRAV_CONST * disk_params->STAR_MASS / r);
+    return sqrt(G_DIMENSIONLESS * disk_params->STAR_MASS / r);
 }
 
 /*  lokalis kepleri korfrekvencia   */
 double calculateKeplerianFrequency(double r, const disk_t *disk_params) {
-    return sqrt(G_GRAV_CONST * disk_params->STAR_MASS / r / r / r);
+    return sqrt(G_DIMENSIONLESS * disk_params->STAR_MASS / r / r / r);
 }
 
 /*  local sound speed       */
@@ -81,14 +81,14 @@ double calculateGasPressure(double sigma, double r, const disk_t *disk_params) {
 /*  a nyomas derivaltja */
 void calculateGasPressureGradient(disk_t *disk_params) {
     int i;
-    double ptemp, pvec[disk_params->NGRID + 2];
+    double ptemp, pvec[disk_params->grid_number + 2];
 
-    for (i = 1; i <= disk_params->NGRID; i++) {
+    for (i = 1; i <= disk_params->grid_number; i++) {
         ptemp = (disk_params->pressvec[i + 1] - disk_params->pressvec[i - 1]) / (2.0 * disk_params->DD);
         pvec[i] = ptemp;
 
     }
-    for (i = 1; i <= disk_params->NGRID; i++) {
+    for (i = 1; i <= disk_params->grid_number; i++) {
         disk_params->dpressvec[i] = pvec[i];
     }
 
@@ -104,15 +104,15 @@ double coefficientForGasRadialVelocity(double sigma, double r) {
 void calculateGasRadialVelocity(disk_t *disk_params) {
 
     double tempug;
-    // Lokális tömbök, méret NGRID-hez igazítva disk_params-ból
-    double ugvec[disk_params->NGRID + 2];
-    double ugvectemp[disk_params->NGRID + 1]; // Eredeti kód NGRID+1-et használt
+    // Lokális tömbök, méret grid_number-hez igazítva disk_params-ból
+    double ugvec[disk_params->grid_number + 2];
+    double ugvectemp[disk_params->grid_number + 1]; // Eredeti kód grid_number+1-et használt
 
     int i;
 
     // Első ciklus: feltölti a lokális ugvec tömböt
     #pragma omp parallel for private(i)
-    for (i = 0; i <= disk_params->NGRID + 1; i++) { // Használd a disk_params->NGRID-et
+    for (i = 0; i <= disk_params->grid_number + 1; i++) { // Használd a disk_params->grid_number-et
         // Hozzáférés a disk_params tagjaihoz
         ugvec[i] = disk_params->sigmavec[i] * calculateKinematicViscosity(disk_params->rvec[i], disk_params) * sqrt(disk_params->rvec[i]);
         // Megjegyzés: A sqrt() függvénynek általában csak egy double paramétere van.
@@ -122,14 +122,14 @@ void calculateGasRadialVelocity(disk_t *disk_params) {
 
     // Második ciklus: feltölti a lokális ugvectemp tömböt
     #pragma omp parallel for private(i, tempug)
-    for (i = 1; i <= disk_params->NGRID; i++) { // Használd a disk_params->NGRID-et
+    for (i = 1; i <= disk_params->grid_number; i++) { // Használd a disk_params->grid_number-et
         tempug = (ugvec[i + 1] - ugvec[i - 1]) / (2.0 * disk_params->DD); // Használd a disk_params->DD-t
         // coefficientForGasRadialVelocity hívása, ha szükséges, átadva neki a disk_params-ot
         ugvectemp[i] = coefficientForGasRadialVelocity(disk_params->sigmavec[i], disk_params->rvec[i]) * tempug;
     }
 
     // Harmadik ciklus: Az eredményt bemásolja a disk_params->ugvec-be
-    for (i = 1; i <= disk_params->NGRID; i++) { // Használd a disk_params->NGRID-et
+    for (i = 1; i <= disk_params->grid_number; i++) { // Használd a disk_params->grid_number-et
         disk_params->ugvec[i] = ugvectemp[i]; // Így éri el a struktúrán belüli ugvec-et
     }
 }
@@ -138,26 +138,26 @@ void calculateGasRadialVelocity(disk_t *disk_params) {
 void refreshGasSurfaceDensityPressurePressureGradient(const simulation_options_t *sim_opts, disk_t *disk_params) { // Added sim_opts
 
     double u, u_bi, u_fi;
-    double sigma_temp[disk_params->NGRID + 2]; // Use disk_params->NGRID
-    double uvec[disk_params->NGRID + 2];     // Use disk_params->NGRID
+    double sigma_temp[disk_params->grid_number + 2]; // Use disk_params->grid_number
+    double uvec[disk_params->grid_number + 2];     // Use disk_params->grid_number
 
     int i;
 
     // Boundary conditions - access via disk_params
     sigma_temp[0] = disk_params->sigmavec[0];
-    sigma_temp[disk_params->NGRID + 1] = disk_params->sigmavec[disk_params->NGRID + 1];
+    sigma_temp[disk_params->grid_number + 1] = disk_params->sigmavec[disk_params->grid_number + 1];
 
     // uvec temporary array initialization
     uvec[0] = disk_params->sigmavec[0] * calculateKinematicViscosity(disk_params->rvec[0], disk_params); // Use disk_params->rvec
-    uvec[disk_params->NGRID + 1] = disk_params->sigmavec[disk_params->NGRID + 1] * calculateKinematicViscosity(disk_params->rvec[disk_params->NGRID + 1], disk_params); // Use disk_params->rvec
+    uvec[disk_params->grid_number + 1] = disk_params->sigmavec[disk_params->grid_number + 1] * calculateKinematicViscosity(disk_params->rvec[disk_params->grid_number + 1], disk_params); // Use disk_params->rvec
 
     #pragma omp parallel for
-    for(i = 1; i <= disk_params->NGRID; i++) { // Use disk_params->NGRID
+    for(i = 1; i <= disk_params->grid_number; i++) { // Use disk_params->grid_number
         uvec[i] = disk_params->sigmavec[i] * calculateKinematicViscosity(disk_params->rvec[i], disk_params); // Use disk_params->sigmavec and disk_params->rvec
     }
 
     // This loop is critical due to data dependencies. Keep it sequential for correctness
-    for (i = 1; i <= disk_params->NGRID; i++) { // Use disk_params->NGRID
+    for (i = 1; i <= disk_params->grid_number; i++) { // Use disk_params->grid_number
         u = uvec[i];
         u_bi = uvec[i - 1];
         u_fi = uvec[i + 1];
@@ -172,7 +172,7 @@ void refreshGasSurfaceDensityPressurePressureGradient(const simulation_options_t
 
     // This loop is parallelizable
     #pragma omp parallel for
-    for (i = 1; i <= disk_params->NGRID; i++) { // Use disk_params->NGRID
+    for (i = 1; i <= disk_params->grid_number; i++) { // Use disk_params->grid_number
         // Update disk_params' own arrays
         disk_params->sigmavec[i] = sigma_temp[i] / calculateKinematicViscosity(disk_params->rvec[i], disk_params);
         disk_params->pressvec[i] = calculateGasPressure(disk_params->sigmavec[i], disk_params->rvec[i], disk_params); // Assuming calculateGasPressure takes disk_params

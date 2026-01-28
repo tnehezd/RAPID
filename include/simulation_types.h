@@ -34,10 +34,10 @@ typedef struct {
 // Encapsulates all global disk parameters and dynamic arrays
 typedef struct disk_t {
     // Geometriai és rács paraméterek
-    double RMIN;
-    double RMAX;
-    int NGRID;
-    double DD; // RMIN, RMAX, NGRID alapján számolva
+    double r_min;
+    double r_max;
+    int grid_number;
+    double DD; // r_min, r_max, grid_number alapján számolva
 
     // Gáz korong paraméterek
     double SIGMA0; // Kezdeti referencia gáz sűrűség
@@ -56,8 +56,8 @@ typedef struct disk_t {
     double a_mod; // Alfa modifikációs faktor
 
     // Por paraméterek (ezeket számolja a disk_param_be)
-    double PDENSITY; // Por sűrűség (fizikai egységekben, pl. g/cm^3)
-    double PDENSITYDIMLESS; // Dimenziómentes por sűrűség
+    double particle_density; // Por sűrűség (fizikai egységekben, pl. g/cm^3)
+    double particle_density_dimensionless; // Dimenziómentes por sűrűség
 
     // Dinamikusan allokált tömbök (ezek a main-ben vannak beállítva, vagy itt lesznek allokálva)
     double *rvec;          // Rádiusz vektor

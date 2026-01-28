@@ -10,7 +10,7 @@
 #include <omp.h>
 
 // Your Project Header Includes
-#include "config.h"       // For PARTICLE_NUMBER, TMAX, WO, RMIN, DT, optdr, sim_opts->twopop, sim_opts->growth, optev, r_dze_i, r_dze_o
+#include "config.h"       // For particle_number, TMAX, WO, r_min, DT, optdr, sim_opts->twopop, sim_opts->growth, optev, r_dze_i, r_dze_o
 #include "io_utils.h"     
 #include "disk_model.h"   
 #include "dust_physics.h" 
@@ -39,9 +39,9 @@ void integrateParticleRungeKutta4(double time, double prad, const double *sigmad
     linearInterpolation(disk_params->dpressvec,disk_params->rvec,y,&dpress,disk_params->DD,opt,disk_params);
     linearInterpolation(disk_params->ugvec,disk_params->rvec,y,&ugas,disk_params->DD,opt,disk_params);
 
-    double dd = (disk_params->RMAX - disk_params->RMIN) / (PARTICLE_NUMBER-1);
+    double dd = (disk_params->r_max - disk_params->r_min) / (particle_number-1);
     int dker = (int)(1./dd);//
-    dker = dker * KEREK;
+    dker = dker * ROUNDING_FACTOR;
     double ddker = (double) dker;
     int temp;
 
@@ -49,7 +49,7 @@ void integrateParticleRungeKutta4(double time, double prad, const double *sigmad
     ytemp2 = (double)temp / ddker;
     
     int i;
-    for(i=0;i<PARTICLE_NUMBER;i++) {
+    for(i=0;i<particle_number;i++) {
         if(ytemp2 == rdvec[i]) {
             sigmadd = sigmad[i];
             break;
@@ -60,7 +60,7 @@ void integrateParticleRungeKutta4(double time, double prad, const double *sigmad
         if(time != 0.) {	// ha nem t0 idopontban vagyunk
             pradtemp = prad;
             linearInterpolation(disk_params->pressvec,disk_params->rvec,y,&p,disk_params->DD,opt,disk_params);
-            pdens = disk_params->PDENSITY; 
+            pdens = disk_params->particle_density; 
             pradtemp = calculateDustParticleSize(prad,pdens,sigma,sigmadd,y,p,dpress,step,disk_params);	// itt szamolja a reszecskenovekedest
             prad = pradtemp;
         }

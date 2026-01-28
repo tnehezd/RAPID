@@ -54,7 +54,7 @@ void createDefaultOptions(options_t *opt) {
     opt->mic_val = 1e-4; // e.g., 1e-4 for 100 micron (0.01 cm)
     opt->onesize_val = 0.0; // 0.0 for size distribution, 1.0 for single size (e.g., mic_val)
 
-    // NEW: PDENSITY (dust particle density) default value
+    // NEW: particle_density (dust particle density) default value
     opt->pdensity_val = 1.6; // Por sűrűsége (g/cm^3) - ez az alapértelmezett 1.6
     fprintf(stderr, "Default options setting complete.\n");
 }
@@ -97,7 +97,7 @@ void printUsageToTerminal() {
     fprintf(stderr, "  -mic <val>     Micro-sized particle radius (cm, default: 1e-4)\n");
     fprintf(stderr, "  -onesize <val> Use one size particles (0 for distribution, 1 for mic_val, default: 0.0)\n");
     fprintf(stderr, "  -ndust <val>   The number of the particles, default: 5000)\n");
-    // NEW: PDENSITY usage message
+    // NEW: particle_density usage message
     fprintf(stderr, "Other:\n");
     fprintf(stderr, "  -pdensity <val> Dust particle density (g/cm^3, default: 1.6)\n"); // NEW usage line
     fprintf(stderr, "  -h or --help   Display this help message\n");
@@ -146,10 +146,10 @@ int parseCLIOptions(int argc, const char **argv, options_t *opt){
             if (i < argc) opt->tStep = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -tStep.\n"); return 1; }
 //            fprintf(stderr, "DEBUG [parseCLIOptions]:   -tStep set to %.2e\n", opt->tStep);
         }
-        else if (strcmp(argv[i], "-n") == 0) { // Main simulation NGRID (and also init_tool's NGRID)
+        else if (strcmp(argv[i], "-n") == 0) { // Main simulation grid_number (and also init_tool's grid_number)
             i++;
             if (i < argc) opt->ngrid_val = atoi(argv[i]); else { fprintf(stderr, "Error: Missing value for -n.\n"); return 1; }
-//            fprintf(stderr, "DEBUG [parseCLIOptions]:   -n (NGRID) set to %d\n", opt->ngrid_val);
+//            fprintf(stderr, "DEBUG [parseCLIOptions]:   -n (grid_number) set to %d\n", opt->ngrid_val);
         }
         else if (strcmp(argv[i], "-ndust") == 0) { 
             i++;
@@ -189,8 +189,8 @@ int parseCLIOptions(int argc, const char **argv, options_t *opt){
         }
         // --- Init_tool specific options processed in the main parser ---
         // Note: -n is already handled above for both sim and init
-        else if (strcmp(argv[i], "-ri") == 0) { i++; if (i < argc) opt->rmin_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -ri.\n"); return 1; }; } //fprintf(stderr, "DEBUG [parseCLIOptions]:   -ri (RMIN for init) set to %.2f\n", opt->rmin_val); }
-        else if (strcmp(argv[i], "-ro") == 0) { i++; if (i < argc) opt->rmax_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -ro.\n"); return 1; }; } // fprintf(stderr, "DEBUG [parseCLIOptions]:   -ro (RMAX for init) set to %.2f\n", opt->rmax_val); }
+        else if (strcmp(argv[i], "-ri") == 0) { i++; if (i < argc) opt->rmin_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -ri.\n"); return 1; }; } //fprintf(stderr, "DEBUG [parseCLIOptions]:   -ri (r_min for init) set to %.2f\n", opt->rmin_val); }
+        else if (strcmp(argv[i], "-ro") == 0) { i++; if (i < argc) opt->rmax_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -ro.\n"); return 1; }; } // fprintf(stderr, "DEBUG [parseCLIOptions]:   -ro (r_max for init) set to %.2f\n", opt->rmax_val); }
         else if (strcmp(argv[i], "-sigma0_init") == 0) { i++; if (i < argc) opt->sigma0_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -sigma0_init.\n"); return 1; }; } // fprintf(stderr, "DEBUG [parseCLIOptions]:   -sigma0_init set to %.2e\n", opt->sigma0_val); }
         else if (strcmp(argv[i], "-index_init") == 0) { i++; if (i < argc) opt->sigmap_exp_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -index_init.\n"); return 1; }; } // fprintf(stderr, "DEBUG [parseCLIOptions]:   -index_init set to %.2f\n", opt->sigmap_exp_val); }
         else if (strcmp(argv[i], "-rdzei") == 0) { i++; if (i < argc) opt->r_dze_i_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -rdzei.\n"); return 1; }; } // fprintf(stderr, "DEBUG [parseCLIOptions]:   -rdzei set to %.2f\n", opt->r_dze_i_val); }

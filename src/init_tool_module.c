@@ -1,7 +1,7 @@
 #include "init_tool_module.h"
-#include "config.h" // For FILENAME_INIT_DUST_PROFILE, FILENAME_DISK_PARAM, SDCONV, G_GRAV_CONST, SNOWLINE, ICEFACTOR, CMPSECTOAUPYRP2PI
-#include "disk_model.h" // Contains declarations for createRadialGrid, createInitialGasSurfaceDensity, createInitialGasPressure, createInitialGasPressureGradient, createInitialGasVelocity, readDiskParameters, scale_height, calculateKeplerianVelocity, kep_freq, calculateLocalSoundSpeed, press, calcualteMidplaneGasDensity
-#include "dust_physics.h" // May contain calculateParticleMass, etc.
+#include "config.h" 
+#include "disk_model.h" 
+#include "dust_physics.h" 
 #include "utils.h" 
 #include "io_utils.h" 
 #include "gas_physics.h"
@@ -68,7 +68,7 @@ static long double calculateSigm0FromDiskMass(init_tool_options_t *init_opts) {
     }
 
     if (fabs(denominator) < 1e-12) {
-        fprintf(stderr, "Error: Denominator is zero or too small in Sigma0 calculation! Check RMAX, RMIN, and SIGMA_EXP values.\n");
+        fprintf(stderr, "Error: Denominator is zero or too small in Sigma0 calculation! Check r_max, r_min, and SIGMA_EXP values.\n");
         return 0.0;
     }
     // Md = 2 * PI * Sigma0 * epsilon * Integral(r^(1-index) dr) from Ri to Ro
@@ -92,8 +92,8 @@ static long double calculateDustSurfaceDensityInitTool(double r_au, init_tool_op
     long double sigma_dust = calculateGasSurfaceDensityInitTool(r_au, init_opts, current_sigma0) * init_opts->dust_to_gas_ratio;
 
     // --- Snowline and Ice Factor Handling (Uncomment and adjust if needed) ---
-    // if (r_au >= SNOWLINE) {
-    //     sigma_dust *= ICEFACTOR;
+    // if (r_au >= SNOWLINE_RADIUS_AU) {
+    //     sigma_dust *= ICE_LINE_DUST_ENHANCEMENT_FACTOR;
     // }
     // ---------------------------------------------------------------------
 
@@ -164,9 +164,9 @@ int runInitialization(init_tool_options_t *opts, disk_t *disk_params) {
     char full_disk_param_path[MAX_PATH_LEN];
     char full_init_density_path[MAX_PATH_LEN];
 
-    snprintf(full_init_dust_profile_path, sizeof(full_init_dust_profile_path), "%s/%s", opts->output_base_path, FILENAME_INIT_DUST_PROFILE);
-    snprintf(full_disk_param_path, sizeof(full_disk_param_path), "%s/%s", opts->output_base_path, FILENAME_DISK_PARAM);
-    snprintf(full_init_density_path, sizeof(full_init_density_path), "%s/%s", opts->output_base_path, FILENAME_INIT_GAS_PROFILE);
+    snprintf(full_init_dust_profile_path, sizeof(full_init_dust_profile_path), "%s/%s%s", opts->output_base_path, kInitialDustProfileFileName,kFileNamesSuffix);
+    snprintf(full_disk_param_path, sizeof(full_disk_param_path), "%s/%s%s", opts->output_base_path, kDiskConfigFile,kFileNamesSuffix);
+    snprintf(full_init_density_path, sizeof(full_init_density_path), "%s/%s%s", opts->output_base_path, kInitialGasProfileFileName,kFileNamesSuffix);
 
     // --- Open Output Files with full paths ---
     fout_data = fopen(full_init_dust_profile_path, "w");
@@ -195,8 +195,8 @@ int runInitialization(init_tool_options_t *opts, disk_t *disk_params) {
     fprintf(stderr,"Inner disk edge (AU): %lg\n", opts->r_inner);
     fprintf(stderr,"Outer disk edge (AU): %lg\n", opts->r_outer);
     fprintf(stderr,"Surface density profile exponent: %lg\n", -opts->sigma_exponent);
-    fprintf(stderr,"Snowline position (AU): %lg\n", SNOWLINE);
-    fprintf(stderr,"Ice factor beyond snowline: %lg\n", ICEFACTOR);
+    fprintf(stderr,"Snowline position (AU): %lg\n", SNOWLINE_RADIUS_AU);
+    fprintf(stderr,"Ice factor beyond snowline: %lg\n", ICE_LINE_DUST_ENHANCEMENT_FACTOR);
     fprintf(stderr,"Gas surface density at 1 AU (Solar Mass/AU^2): %Lg\n", current_sigma0_gas);
     fprintf(stderr,"Dust to gas ratio: %lg\n", opts->dust_to_gas_ratio);
     fprintf(stderr,"Number of gas grid points: %d\n", opts->n_grid_points); // Clarified for gas grid
@@ -212,7 +212,7 @@ int runInitialization(init_tool_options_t *opts, disk_t *disk_params) {
     initial_header_data.R_out = opts->r_outer;
     initial_header_data.sigma_exponent = opts->sigma_exponent;
     initial_header_data.sigma0_gas_au = current_sigma0_gas;
-    initial_header_data.grav_const = G_GRAV_CONST;
+    initial_header_data.grav_const = G_DIMENSIONLESS;
     initial_header_data.dz_r_inner = opts->deadzone_r_inner;
     initial_header_data.dz_r_outer = opts->deadzone_r_outer;
     initial_header_data.dz_dr_inner_calc = drdze_inner_calculated;
@@ -238,13 +238,13 @@ int runInitialization(init_tool_options_t *opts, disk_t *disk_params) {
 
     // Physical Constants
     double u_frag_cm_s = 1000.0;
-    double u_frag_au_yr2pi = u_frag_cm_s * CMPSECTOAUPYRP2PI;
+    double u_frag_au_yr2pi = u_frag_cm_s * CM_PER_SEC_TO_AU_PER_YEAR_2PI;
     double u_frag_sq_au_yr2pi_sq = u_frag_au_yr2pi * u_frag_au_yr2pi;
 
     // Populate disk_params structure and allocate its arrays
-    disk_params->NGRID = opts->n_grid_points; // Gas grid resolution
-    disk_params->RMIN = opts->r_inner;
-    disk_params->RMAX = opts->r_outer;
+    disk_params->grid_number = opts->n_grid_points; // Gas grid resolution
+    disk_params->r_min = opts->r_inner;
+    disk_params->r_max = opts->r_outer;
     disk_params->SIGMA0 = current_sigma0_gas;
     disk_params->SIGMAP_EXP = opts->sigma_exponent;
     disk_params->r_dze_i = opts->deadzone_r_inner;
@@ -256,18 +256,18 @@ int runInitialization(init_tool_options_t *opts, disk_t *disk_params) {
     disk_params->HASP = opts->aspect_ratio;
     disk_params->FLIND = opts->flaring_index;
     disk_params->STAR_MASS = opts->star_mass;
-    disk_params->PDENSITY = opts->dust_density_g_cm3;
-    if (disk_params->NGRID > 1) {
-        disk_params->DD = (disk_params->RMAX - disk_params->RMIN) / ((double)disk_params->NGRID - 1.0);
+    disk_params->particle_density = opts->dust_density_g_cm3;
+    if (disk_params->grid_number > 1) {
+        disk_params->DD = (disk_params->r_max - disk_params->r_min) / ((double)disk_params->grid_number - 1.0);
     } else {
         disk_params->DD = 0.0;
     }
-    // Allocate arrays for the GAS grid (based on NGRID)
-    disk_params->rvec = (double *)malloc((disk_params->NGRID + 2) * sizeof(double));
-    disk_params->sigmavec = (double *)malloc((disk_params->NGRID + 2) * sizeof(double));
-    disk_params->pressvec = (double *)malloc((disk_params->NGRID + 2) * sizeof(double));
-    disk_params->dpressvec = (double *)malloc((disk_params->NGRID + 2) * sizeof(double));
-    disk_params->ugvec = (double *)malloc((disk_params->NGRID + 2) * sizeof(double));
+    // Allocate arrays for the GAS grid (based on grid_number)
+    disk_params->rvec = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
+    disk_params->sigmavec = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
+    disk_params->pressvec = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
+    disk_params->dpressvec = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
+    disk_params->ugvec = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
 
     if (!disk_params->rvec || !disk_params->sigmavec || !disk_params->pressvec || !disk_params->dpressvec || !disk_params->ugvec) {
         fprintf(stderr, "ERROR [runInitialization]: Failed to allocate disk arrays. Exiting.\n");
@@ -283,7 +283,7 @@ int runInitialization(init_tool_options_t *opts, disk_t *disk_params) {
         return 1;
     }
 
-    // Initialize gas disk properties on the NGRID grid
+    // Initialize gas disk properties on the grid_number grid
     readDiskParameters(disk_params);
     createRadialGrid(disk_params);
     createInitialGasSurfaceDensity(disk_params);
@@ -356,8 +356,8 @@ int runInitialization(init_tool_options_t *opts, disk_t *disk_params) {
             double sound_speed_sq = sound_speed_au_yr2pi * sound_speed_au_yr2pi;
 
             long double sigma_dust_local = calculateDustSurfaceDensityInitTool(r_dust_particle_au, opts, current_sigma0_gas);
-            long double sigma_dust_local_cgs = sigma_dust_local / SDCONV;
-            double sigma_gas_local_cgs = (double)sigma_gas_local / SDCONV;
+            long double sigma_dust_local_cgs = sigma_dust_local / SURFACE_DENSITY_CONVERSION_FACTOR;
+            double sigma_gas_local_cgs = (double)sigma_gas_local / SURFACE_DENSITY_CONVERSION_FACTOR;
 
 
             double dlnPdlnr_local;
@@ -399,7 +399,7 @@ int runInitialization(init_tool_options_t *opts, disk_t *disk_params) {
         long double repr_mass_pop1 = representative_mass_total_in_cell * opts->two_pop_ratio;
         long double repr_mass_pop2 = representative_mass_total_in_cell * (1.0 - opts->two_pop_ratio);
 
-        // Write data to FILENAME_INIT_DUST_PROFILE (fout_data)
+        // Write data to kInitialDustProfileFileName (fout_data)
         fprintf(fout_data, "%-5d %-15.6e %-20.12Lg %-20.12Lg %-15.6e %-15.6e\n",
                 i_loop, r_dust_particle_au, // Use r_dust_particle_au
                 repr_mass_pop1,
@@ -417,13 +417,13 @@ int runInitialization(init_tool_options_t *opts, disk_t *disk_params) {
 
     fprintf(stderr,"Particle data file created (%s). Writing disk parameters file!\n\n", full_init_dust_profile_path);
 
-    // Write parameters to FILENAME_DISK_PARAM (fout_params)
+    // Write parameters to kDiskConfigFile (fout_params)
     // CORRECTION: Negate SigmaExp value so that the actual negative exponent is written to the file.
     // Here, we are not calling printFileHeader, because data writing is a separate line, not part of the header.
     // The header was already written by the printFileHeader(fout_params, FILE_TYPE_DISK_PARAM, &initial_header_data); call above.
     fprintf(fout_params, "%-15.6e %-15.6e %-10d %-15.6e %-20.12Lg %-15.6e %-15.6e %-15.6e %-20.12e %-20.12e %-15.6e %-15.6e %-15.6e %-15.6e %-15.6e\n",
             opts->r_inner, opts->r_outer, opts->n_grid_points, -opts->sigma_exponent, current_sigma0_gas,
-            G_GRAV_CONST, opts->deadzone_r_inner, opts->deadzone_r_outer,
+            G_DIMENSIONLESS, opts->deadzone_r_inner, opts->deadzone_r_outer,
             drdze_inner_calculated, drdze_outer_calculated,
             opts->deadzone_alpha_mod, opts->dust_density_g_cm3, opts->alpha_viscosity, opts->star_mass, opts->flaring_index);
 

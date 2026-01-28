@@ -10,11 +10,11 @@
 #include <omp.h>
 
 // Your Project Header Includes
-#include "config.h"       // For PARTICLE_NUMBER, TMAX, WO, RMIN, DT, optdr, sim_opts->twopop, sim_opts->growth, optev, r_dze_i, r_dze_o
-#include "io_utils.h"     // For printTimeStampFile (though not called in timeIntegrationForTheSystem, it's io-related), calculateNumbersOfParticles, loadDustParticlesFromFile, printGasSurfaceDensityPressurePressureDerivateFile, printDustParticleSizeFile, printMassGrowthAtDZEFile, printDustSurfaceDensityPressurePressureDerivateFile. Also for globals: filenev1, filenev3, fout, foutmicr, massfil
-#include "disk_model.h"   // If any disk_model functions are called (e.g., applyBoundaryConditions indirectly if sigma/calculateGasPressure depend on it) - Though not directly visible in timeIntegrationForTheSystem, often needed for global disk parameters. Add if you hit implicit declaration for disk_model functions.
-#include "dust_physics.h" // For updateParticleGridIndices, secondaryGrowth, findMaximumOfAnArray, findMinimumOfAnArray, calculateDustSurfaceDensity, calculateDustDistance
-#include "utils.h"        // For calculateTimeStep, refreshGasSurfaceDensityPressurePressureGradient, and potentially other utility functions
+#include "config.h"       
+#include "io_utils.h"     
+#include "disk_model.h"   
+#include "dust_physics.h" 
+#include "utils.h"        
 #include "simulation_core.h"
 #include "particle_data.h" // Új include
 #include "gas_physics.h"
@@ -60,7 +60,7 @@ double calculateTimeStep(const disk_t *disk_params) { // Add const here too
 
     A_max = -10000.0;
     
-    for(i = 0; i < disk_params->NGRID; i++) {
+    for(i = 0; i < disk_params->grid_number; i++) {
         if(ftcsSecondDerivativeCoefficient(disk_params->rvec[i], disk_params) > A_max) {
             A_max = ftcsSecondDerivativeCoefficient(disk_params->rvec[i], disk_params);
         }
@@ -86,13 +86,13 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
 
     // --- Inicializálási szakasz ---
     if (sim_opts->drift == 1.) {
-        PARTICLE_NUMBER = calculateNumbersOfParticles(sim_opts->dust_input_filename);
+        particle_number = calculateNumbersOfParticles(sim_opts->dust_input_filename);
     } else {
-        fprintf(stderr, "ERROR [timeIntegrationForTheSystem]: Particle drift is OFF. PARTICLE_NUMBER set to 0.\n");
-        PARTICLE_NUMBER = 0;
+        fprintf(stderr, "ERROR [timeIntegrationForTheSystem]: Particle drift is OFF. particle_number set to 0.\n");
+        particle_number = 0;
     }
 
-    if (PARTICLE_NUMBER > 0 && allocateParticleData(&p_data, PARTICLE_NUMBER, (int)sim_opts->twopop) != 0) {
+    if (particle_number > 0 && allocateParticleData(&p_data, particle_number, (int)sim_opts->twopop) != 0) {
         fprintf(stderr, "ERROR: Failed to allocate particle data. Exiting.\n");
         exit(EXIT_FAILURE);
     }
@@ -134,8 +134,8 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
     double tavin = 0, tavout = 0; // Távolságok a printMassGrowthAtDZEFile-hoz
 
 
-    if (sim_opts->twopop == 0 && PARTICLE_NUMBER > 0) {
-        for (i = 0; i < PARTICLE_NUMBER; i++) {
+    if (sim_opts->twopop == 0 && particle_number > 0) {
+        for (i = 0; i < particle_number; i++) {
             p_data.radiusmicr[i][0] = 0;
             p_data.radiusmicr[i][1] = 0;
             p_data.partmassmicrind[i][0] = 0;
@@ -149,32 +149,32 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
         if (sim_opts->drift == 1.) {
 
             // Radius reciprok számítása a min/max kereséshez
-            for (i = 0; i < PARTICLE_NUMBER; i++) {
-                if (p_data.radius[i][0] > 0. && p_data.radius[i][0] > disk_params->RMIN) {
+            for (i = 0; i < particle_number; i++) {
+                if (p_data.radius[i][0] > 0. && p_data.radius[i][0] > disk_params->r_min) {
                     p_data.radius_rec[i][0] = 1. / p_data.radius[i][0];
                 } else {
                     p_data.radius_rec[i][0] = 0.; // Vagy valamilyen "érvénytelen" érték, ami kizárja a min/max keresésből
                 }
             }
 
-            max = findMaximumOfAnArray(p_data.radius, PARTICLE_NUMBER);
-            min = findMaximumOfAnArray(p_data.radius_rec, PARTICLE_NUMBER); // Megkeresi a távolság reciprokának maximumát
+            max = findMaximumOfAnArray(p_data.radius, particle_number);
+            min = findMaximumOfAnArray(p_data.radius_rec, particle_number); // Megkeresi a távolság reciprokának maximumát
             min = 1. / min; // Ebből lesz a távolság minimuma
 
             double mint, maxt;
 
             if (sim_opts->twopop == 1) {
                 // Micron részecskék radius reciprok számítása
-                for (i = 0; i < PARTICLE_NUMBER; i++) {
-                    if (p_data.radiusmicr[i][0] > 0. && p_data.radiusmicr[i][0] > disk_params->RMIN) {
+                for (i = 0; i < particle_number; i++) {
+                    if (p_data.radiusmicr[i][0] > 0. && p_data.radiusmicr[i][0] > disk_params->r_min) {
                         p_data.radius_rec[i][0] = 1. / p_data.radiusmicr[i][0];
                     } else {
                         p_data.radius_rec[i][0] = 0.;
                     }
                 }
 
-                max2 = findMaximumOfAnArray(p_data.radiusmicr, PARTICLE_NUMBER);
-                min2 = findMaximumOfAnArray(p_data.radius_rec, PARTICLE_NUMBER);
+                max2 = findMaximumOfAnArray(p_data.radiusmicr, particle_number);
+                min2 = findMaximumOfAnArray(p_data.radius_rec, particle_number);
                 min2 = 1. / min2;
 
                 mint = findMinimumOfAnArray(min, min2, HUGE_VAL); // Itt a te findMinimumOfAnArray(s1, s2, s3) függvényedet használjuk
@@ -195,13 +195,13 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
 
                 if (current_time_years != 0) {
                     if (sim_opts->evol == 1) {
-                        snprintf(dens_name, MAX_PATH_LEN, "%s/%s/%s_%08d.dat", sim_opts->output_dir_name, LOGS_DIR, FILE_DENS_PREFIX, (int)L);
+                        snprintf(dens_name, MAX_PATH_LEN, "%s/%s/%s_%08d%s", sim_opts->output_dir_name, kLogFilesDirectory, kGasDensityProfileFilePrefix, (int)L,kFileNamesSuffix);
                     }
                 }
 
-                snprintf(dust_name, MAX_PATH_LEN, "%s/%s/dust.%i.dat", sim_opts->output_dir_name, LOGS_DIR, (int)L);
-                snprintf(dust_name2, MAX_PATH_LEN, "%s/%s/dustmic.%i.dat", sim_opts->output_dir_name, LOGS_DIR, (int)L);
-                snprintf(size_name, MAX_PATH_LEN, "%s/%s/size.%d.dat", sim_opts->output_dir_name, LOGS_DIR, (int)L);
+                snprintf(dust_name, MAX_PATH_LEN, "%s/%s/%s_%08d%s", sim_opts->output_dir_name, kLogFilesDirectory,kDustDensityProfileFilePrefix, (int)L,kFileNamesSuffix);
+                snprintf(dust_name2, MAX_PATH_LEN, "%s/%s/%s_%08d%s", sim_opts->output_dir_name, kLogFilesDirectory,kDustDensityProfileFilePrefix,(int)L,kFileNamesSuffix);
+                snprintf(size_name, MAX_PATH_LEN, "%s/%s/%s_%08d%s", sim_opts->output_dir_name, kLogFilesDirectory,kDustParticleSizeFileName, (int)L,kFileNamesSuffix);
 
                 // Fájlok megnyitása és fejlécek írása
                 output_files->surface_file = fopen(dens_name, "w");
@@ -234,8 +234,8 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
 
                 // Eredeti t==0 logika
                 if (current_time_years == 0) {
-                    updateParticleGridIndices(p_data.radius, p_data.partmassind, p_data.massvec, t, PARTICLE_NUMBER, disk_params);
-                    if (sim_opts->twopop == 1) updateParticleGridIndices(p_data.radiusmicr, p_data.partmassmicrind, p_data.massmicrvec, t, PARTICLE_NUMBER, disk_params);
+                    updateParticleGridIndices(p_data.radius, p_data.partmassind, p_data.massvec, t, particle_number, disk_params);
+                    if (sim_opts->twopop == 1) updateParticleGridIndices(p_data.radiusmicr, p_data.partmassmicrind, p_data.massmicrvec, t, particle_number, disk_params);
 
                     if (sim_opts->growth == 1.) {
                         calculateDustSurfaceDensity(max, min, p_data.radius, p_data.radiusmicr, p_data.sigmad, p_data.sigmadm, p_data.massvec, p_data.massmicrvec, p_data.rdvec, p_data.rmicvec, sim_opts, disk_params);
@@ -260,8 +260,8 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
 
 
                 // Resetting partmassind[k][3] and [k][4]
-                if (sim_opts->dzone == 1.0 && PARTICLE_NUMBER > 0) { // Ellenőrzés PARTICLE_NUMBER-re
-                    for (int k = 0; k < PARTICLE_NUMBER; k++) {
+                if (sim_opts->dzone == 1.0 && particle_number > 0) { // Ellenőrzés particle_number-re
+                    for (int k = 0; k < particle_number; k++) {
                         p_data.partmassind[k][3] = 0.0;
                         p_data.partmassind[k][4] = 0.0;
                     }
@@ -276,7 +276,7 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
                 massmtempoin = massmtempoout;
 
                 if (sim_opts->growth == 1.) {
-                    printDustSurfaceDensityPressurePressureDerivateFile(p_data.rdvec, p_data.rmicvec, p_data.sigmad, p_data.sigmadm, disk_params, sim_opts, output_files);
+                    printDustSurfaceDensityPressurePressureDerivateFile(p_data.rdvec, p_data.rmicvec, p_data.sigmad, p_data.sigmadm, disk_params, sim_opts, output_files, (int)L);
                 }
                 fprintf(stderr,"L set to %lg\n",L);
 
@@ -291,8 +291,8 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
             }
 
             // Count masses and get sigma_d for the next step (always done)
-            updateParticleGridIndices(p_data.radius, p_data.partmassind, p_data.massvec, t, PARTICLE_NUMBER, disk_params);
-            if (sim_opts->twopop == 1) updateParticleGridIndices(p_data.radiusmicr, p_data.partmassmicrind, p_data.massmicrvec, t, PARTICLE_NUMBER, disk_params);
+            updateParticleGridIndices(p_data.radius, p_data.partmassind, p_data.massvec, t, particle_number, disk_params);
+            if (sim_opts->twopop == 1) updateParticleGridIndices(p_data.radiusmicr, p_data.partmassmicrind, p_data.massmicrvec, t, particle_number, disk_params);
 
             if (sim_opts->growth == 1.) {
                 calculateDustSurfaceDensity(max, min, p_data.radius, p_data.radiusmicr, p_data.sigmad, p_data.sigmadm, p_data.massvec, p_data.massmicrvec, p_data.rdvec, p_data.rmicvec, sim_opts, disk_params);
@@ -300,11 +300,11 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
 
             // Get radii for next step
             int optsize = 0;
-            calculateDustDistance(sim_opts->output_dir_name, optsize, p_data.radius, p_data.sigmad, p_data.rdvec, deltat, t, PARTICLE_NUMBER, sim_opts, disk_params);
+            calculateDustDistance(sim_opts->output_dir_name, optsize, p_data.radius, p_data.sigmad, p_data.rdvec, deltat, t, particle_number, sim_opts, disk_params);
 
             if (sim_opts->twopop == 1.) {
                 optsize = 1;
-                calculateDustDistance(sim_opts->output_dir_name, optsize, p_data.radiusmicr, p_data.sigmadm, p_data.rmicvec, deltat, t, PARTICLE_NUMBER, sim_opts, disk_params);
+                calculateDustDistance(sim_opts->output_dir_name, optsize, p_data.radiusmicr, p_data.sigmadm, p_data.rmicvec, deltat, t, particle_number, sim_opts, disk_params);
 
             }
 
@@ -312,8 +312,8 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
 
             // Kilépési feltétel a drift == 1 ágon
             // Fontos: maxt és mint frissül az előző szakaszban, azt használjuk itt.
-//            if (!(maxt >= disk_params->RMIN && mint != maxt)) {
-//                fprintf(stderr,"DEBUG [timeIntegrationForTheSystem]: Simulation termination condition met (maxt < RMIN or mint == maxt) at time: %lg.\n",L);
+//            if (!(maxt >= disk_params->r_min && mint != maxt)) {
+//                fprintf(stderr,"DEBUG [timeIntegrationForTheSystem]: Simulation termination condition met (maxt < r_min or mint == maxt) at time: %lg.\n",L);
 
 //                goto cleanup; // Ugrás a tisztításra
 //            }
@@ -325,8 +325,8 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
                 fprintf(stderr,"\n--- Simulation Time: %.2e years (Internal time: %.2e, L: %.2e) ---\n", current_time_years, t, L);
 
                 fprintf(stderr,"DEBUG [timeIntegrationForTheSystem]: Outputting data for gas-only simulation at time %.2e. L=%.2e\n", current_time_years, L);
-                snprintf(dens_name, MAX_PATH_LEN, "%s/%s/%s_%08d.dat", sim_opts->output_dir_name, LOGS_DIR, FILE_DENS_PREFIX, (int)L);
-                fprintf(stderr, "DEBUG [timeIntegrationForTheSystem]: Outputting %s_%08d.dat to %s.\n", FILE_DENS_PREFIX, (int)L, dens_name);
+                snprintf(dens_name, MAX_PATH_LEN, "%s/%s/%s_%08d.dat", sim_opts->output_dir_name, kLogFilesDirectory, kGasDensityProfileFilePrefix, (int)L);
+                fprintf(stderr, "DEBUG [timeIntegrationForTheSystem]: Outputting %s_%08d.dat to %s.\n", kGasDensityProfileFilePrefix, (int)L, dens_name);
 
                 output_files->surface_file = fopen(dens_name, "w");
                 if (output_files->surface_file == NULL) {
