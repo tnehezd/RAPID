@@ -21,7 +21,7 @@
 #include "parser.h"           // Now includes function declarations for parsing
 
 // Function declaration for default init_tool options, assuming it's in init_tool_module.h
-extern void create_default_init_tool_options(init_tool_options_t *def);
+extern void initializeDefaultOptions(init_tool_options_t *def);
 
 // Global variable definition for PARTICLE_NUMBER (if not defined elsewhere)
 // Ensure this is only defined in ONE .c file, and declared as 'extern int PARTICLE_NUMBER;' in config.h
@@ -40,7 +40,7 @@ int main(int argc, const char **argv) {
 
     // Local structure to store init_tool parameters (these will be populated from 'def')
     init_tool_options_t init_tool_params;
-    create_default_init_tool_options(&init_tool_params);
+    initializeDefaultOptions(&init_tool_params);
 
     // Parse command-line options and populate the 'def' structure
     int retCode = parse_options(argc, argv, &def);
@@ -237,19 +237,19 @@ int main(int argc, const char **argv) {
     }
 
     // --- CRITICAL STEP: Now that current_inputsig_file is set,
-    //     copy it to sim_opts.input_filename for tIntegrate. ---
+    //     copy it to sim_opts.input_filename for timeIntegrationForTheSystem. ---
     // This is the gas profile filename that sigIn reads.
     strncpy(sim_opts.input_filename, current_inputsig_file, MAX_PATH_LEN - 1);
     sim_opts.input_filename[MAX_PATH_LEN - 1] = '\0'; // Ensure null-termination
-    fprintf(stderr, "DEBUG [main]: sim_opts.input_filename set to '%s' for tIntegrate (gas profile).\n", sim_opts.input_filename);
+    fprintf(stderr, "DEBUG [main]: sim_opts.input_filename set to '%s' for timeIntegrationForTheSystem (gas profile).\n", sim_opts.input_filename);
 
     // --- NEW PART: Set the dust profile filename in sim_opts.dust_input_filename ---
-    // This is the dust profile filename that por_be reads within tIntegrate.
+    // This is the dust profile filename that por_be reads within timeIntegrationForTheSystem.
     char current_inputdust_file[MAX_PATH_LEN];
     snprintf(current_inputdust_file, sizeof(current_inputdust_file), "%s/%s", initial_dir_path, FILENAME_INIT_DUST_PROFILE);
     strncpy(sim_opts.dust_input_filename, current_inputdust_file, MAX_PATH_LEN - 1);
     sim_opts.dust_input_filename[MAX_PATH_LEN - 1] = '\0'; // Ensure null-termination
-    fprintf(stderr, "DEBUG [main]: sim_opts.dust_input_filename set to '%s' for tIntegrate (dust profile).\n", sim_opts.dust_input_filename);
+    fprintf(stderr, "DEBUG [main]: sim_opts.dust_input_filename set to '%s' for timeIntegrationForTheSystem (dust profile).\n", sim_opts.dust_input_filename);
 
     // --- CRITICAL STEP: Set the global PARTICLE_NUMBER based on the actual dust particle file. ---
     // This ensures PARTICLE_NUMBER reflects the *dust* particle count, not the gas grid count.
@@ -302,11 +302,11 @@ int main(int argc, const char **argv) {
         fprintf(stderr, "DEBUG [main]: Print_Sigma completed. Program exiting.\n");
     } else {
         fprintf(stderr, "DEBUG [main]: Evolution (sim_opts.evol=%.2f) or drift (sim_opts.drift=%.2f) is ON. Starting main simulation loop.\n", sim_opts.evol, sim_opts.drift);
-        fprintf(stderr, "DEBUG [main]: Calling tIntegrate...\n");
-        // Pass sim_opts to tIntegrate.
-        // tIntegrate must ensure to use the correct (numbered) output_dir_name.
-        tIntegrate(&disk_params, &sim_opts, &output_files);
-        fprintf(stderr, "DEBUG [main]: tIntegrate completed. Program finished normally.\n");
+        fprintf(stderr, "DEBUG [main]: Calling timeIntegrationForTheSystem...\n");
+        // Pass sim_opts to timeIntegrationForTheSystem.
+        // timeIntegrationForTheSystem must ensure to use the correct (numbered) output_dir_name.
+        timeIntegrationForTheSystem(&disk_params, &sim_opts, &output_files);
+        fprintf(stderr, "DEBUG [main]: timeIntegrationForTheSystem completed. Program finished normally.\n");
     }
 
     // --- Free dynamically allocated memory ---

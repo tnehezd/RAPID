@@ -11,10 +11,10 @@
 
 // Your Project Header Includes
 #include "config.h"       // For PARTICLE_NUMBER, TMAX, WO, RMIN, DT, optdr, sim_opts->twopop, sim_opts->growth, optev, r_dze_i, r_dze_o
-#include "io_utils.h"     // For timePar (though not called in tIntegrate, it's io-related), reszecskek_szama, por_be, Print_Sigma, Print_Pormozg_Size, Print_Mass, Print_Sigmad. Also for globals: filenev1, filenev3, fout, foutmicr, massfil
-#include "disk_model.h"   // If any disk_model functions are called (e.g., applyBoundaryConditions indirectly if sigma/calculateGasPressure depend on it) - Though not directly visible in tIntegrate, often needed for global disk parameters. Add if you hit implicit declaration for disk_model functions.
+#include "io_utils.h"     // For timePar (though not called in timeIntegrationForTheSystem, it's io-related), reszecskek_szama, por_be, Print_Sigma, Print_Pormozg_Size, Print_Mass, Print_Sigmad. Also for globals: filenev1, filenev3, fout, foutmicr, massfil
+#include "disk_model.h"   // If any disk_model functions are called (e.g., applyBoundaryConditions indirectly if sigma/calculateGasPressure depend on it) - Though not directly visible in timeIntegrationForTheSystem, often needed for global disk parameters. Add if you hit implicit declaration for disk_model functions.
 #include "dust_physics.h" // For Count_Mass, secondaryGrowth, find_max, find_min, calculateDustSurfaceDensity, calculateDustDistance
-#include "utils.h"        // For time_step, refreshGasSurfaceDensityPressurePressureGradient, and potentially other utility functions
+#include "utils.h"        // For calculateTimeStep, refreshGasSurfaceDensityPressurePressureGradient, and potentially other utility functions
 #include "simulation_core.h"
 #include "particle_data.h" // Új include
 #include "gas_physics.h"
@@ -24,7 +24,7 @@
 
 /*	Kiszamolja az 1D-s driftet	*/
 /*  	dr/dt = St/(1+St*St)*H(r)/r*dlnP/dlnr*cs = St/(1+St*St) * (H/r) * (r/P) * (dP/dr) * cs		*/
-void eqrhs(double pradius, double dp, double sigma, double ug, double r, double *drdt, const disk_t *disk_params) {
+void calculate1DDustDrift(double pradius, double dp, double sigma, double ug, double r, double *drdt, const disk_t *disk_params) {
 
     double P, H, dPdr, St, csound;
       
@@ -38,39 +38,41 @@ void eqrhs(double pradius, double dp, double sigma, double ug, double r, double 
 }
 
 
-/* for solving d(sigma*nu)/dt = 3*nu*d2(sigma*nu)/dr2 + 9*hu/(2*r)*dsigma/dr	--> 3*nu = Coeff_1 	*/
-double Coeff_1(double r, const disk_t *disk_params){					
+/* for solving d(sigma*nu)/dt = 3*nu*d2(sigma*nu)/dr2 + 9*hu/(2*r)*dsigma/dr	--> 3*nu  	*/
+double ftcsSecondDerivativeCoefficient(double r, const disk_t *disk_params){					
     double A;
     A = 3.0 * calculateKinematicViscosity(r, disk_params);
     return A;
 }
 
-/* for solving d(sigma*nu)/dt = 3*nu*d2(sigma*nu)/dr2 + 9*hu/(2*r)*dsigma/dr	--> 9*nu /(2*r) = Coeff_2 	*/
-double Coeff_2(double r, const disk_t *disk_params){							
+/* for solving d(sigma*nu)/dt = 3*nu*d2(sigma*nu)/dr2 + 9*hu/(2*r)*dsigma/dr	--> 9*nu /(2*r)	*/
+double ftcsFirstDerivativeCoefficient(double r, const disk_t *disk_params){							
     double B;
     B = 9.0 * calculateKinematicViscosity(r,disk_params) / (2.0 * r);
     return B;
 }
 
-double time_step(const disk_t *disk_params) { // Add const here too
+double calculateTimeStep(const disk_t *disk_params) { // Add const here too
     double A_max, stepping;
     int i;
+
+// IT WOULD BE BETTER TO CALCULATE FOR BOTH PARTS OF THE FUNCTION!!!!
 
     A_max = -10000.0;
     
     for(i = 0; i < disk_params->NGRID; i++) {
-        if(Coeff_1(disk_params->rvec[i], disk_params) > A_max) {
-            A_max = Coeff_1(disk_params->rvec[i], disk_params);
+        if(ftcsSecondDerivativeCoefficient(disk_params->rvec[i], disk_params) > A_max) {
+            A_max = ftcsSecondDerivativeCoefficient(disk_params->rvec[i], disk_params);
         }
     }
     stepping = disk_params->DD * disk_params->DD / (2.0 * A_max);
-    fprintf(stderr," Actual time_step: DD = %.2e, stepping = %.2e\n", disk_params->DD, stepping);
+    fprintf(stderr," Actual calculateTimeStep: DD = %.2e, stepping = %.2e\n", disk_params->DD, stepping);
 
     return stepping;
 }
 
 
-void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, output_files_t *output_files) {
+void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t *sim_opts, output_files_t *output_files) {
     ParticleData_t p_data;
     HeaderData_t header_data_for_files; // Később inicializáljuk a setup_initial_output_files-ban
 
@@ -78,7 +80,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
     double L = 0.; // Években mért "pillanatfelvétel" időzítő
 
     if (disk_params == NULL) {
-        fprintf(stderr, "ERROR [tIntegrate]: disk_params_ptr is NULL!\n");
+        fprintf(stderr, "ERROR [timeIntegrationForTheSystem]: disk_params_ptr is NULL!\n");
         exit(1); // Program leállítása, ha kritikus hiba van
     }
 
@@ -86,7 +88,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
     if (sim_opts->drift == 1.) {
         PARTICLE_NUMBER = reszecskek_szama(sim_opts->dust_input_filename);
     } else {
-        fprintf(stderr, "ERROR [tIntegrate]: Particle drift is OFF. PARTICLE_NUMBER set to 0.\n");
+        fprintf(stderr, "ERROR [timeIntegrationForTheSystem]: Particle drift is OFF. PARTICLE_NUMBER set to 0.\n");
         PARTICLE_NUMBER = 0;
     }
 
@@ -117,7 +119,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
 
     double t = 0.0;
     double t_integration_in_internal_units = sim_opts->TMAX * 2.0 * M_PI;
-    double deltat = time_step(disk_params) / 5.0;
+    double deltat = calculateTimeStep(disk_params) / 5.0;
 
     // DT felülbírálása, ha a felhasználó megadott kisebb értéket
     if (sim_opts->DT > 0.0 && sim_opts->DT < deltat) {
@@ -311,7 +313,7 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
             // Kilépési feltétel a drift == 1 ágon
             // Fontos: maxt és mint frissül az előző szakaszban, azt használjuk itt.
 //            if (!(maxt >= disk_params->RMIN && mint != maxt)) {
-//                fprintf(stderr,"DEBUG [tIntegrate]: Simulation termination condition met (maxt < RMIN or mint == maxt) at time: %lg.\n",L);
+//                fprintf(stderr,"DEBUG [timeIntegrationForTheSystem]: Simulation termination condition met (maxt < RMIN or mint == maxt) at time: %lg.\n",L);
 
 //                goto cleanup; // Ugrás a tisztításra
 //            }
@@ -322,15 +324,15 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
             if ((fmod(current_time_years, (sim_opts->TMAX / sim_opts->WO)) < deltat || current_time_years == 0) && L - current_time_years < deltat) {
                 fprintf(stderr,"\n--- Simulation Time: %.2e years (Internal time: %.2e, L: %.2e) ---\n", current_time_years, t, L);
 
-                fprintf(stderr,"DEBUG [tIntegrate]: Outputting data for gas-only simulation at time %.2e. L=%.2e\n", current_time_years, L);
+                fprintf(stderr,"DEBUG [timeIntegrationForTheSystem]: Outputting data for gas-only simulation at time %.2e. L=%.2e\n", current_time_years, L);
                 snprintf(dens_name, MAX_PATH_LEN, "%s/%s/%s_%08d.dat", sim_opts->output_dir_name, LOGS_DIR, FILE_DENS_PREFIX, (int)L);
-                fprintf(stderr, "DEBUG [tIntegrate]: Outputting %s_%08d.dat to %s.\n", FILE_DENS_PREFIX, (int)L, dens_name);
+                fprintf(stderr, "DEBUG [timeIntegrationForTheSystem]: Outputting %s_%08d.dat to %s.\n", FILE_DENS_PREFIX, (int)L, dens_name);
 
                 output_files->surface_file = fopen(dens_name, "w");
                 if (output_files->surface_file == NULL) {
                     fprintf(stderr, "ERROR: Could not open %s for writing in gas-only branch.\n", dens_name);
                 } else {
-                    fprintf(stderr, "DEBUG [tIntegrate]: Opened %s for writing in gas-only branch.\n", dens_name);
+                    fprintf(stderr, "DEBUG [timeIntegrationForTheSystem]: Opened %s for writing in gas-only branch.\n", dens_name);
                     HeaderData_t gas_header_data = {.current_time = current_time_years, .is_initial_data = (current_time_years == 0.0)};
                     print_file_header(output_files->surface_file, FILE_TYPE_GAS_DENSITY, &gas_header_data);
                 }
@@ -341,14 +343,14 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
                 if (output_files->surface_file != NULL) {
                     fclose(output_files->surface_file);
                     output_files->surface_file = NULL;
-                    fprintf(stderr, "DEBUG [tIntegrate]: Closed %s in gas-only branch.\n", dens_name);
+                    fprintf(stderr, "DEBUG [timeIntegrationForTheSystem]: Closed %s in gas-only branch.\n", dens_name);
                 }
 
                 L = L + (double)(sim_opts->TMAX / sim_opts->WO);
-                fprintf(stderr,"DEBUG [tIntegrate]: Updated L to %.2e.\n", L);
+                fprintf(stderr,"DEBUG [timeIntegrationForTheSystem]: Updated L to %.2e.\n", L);
             }
 
-            fprintf(stderr,"DEBUG [tIntegrate]: Calling refreshGasSurfaceDensityPressurePressureGradient for gas-only evolution.\n");
+            fprintf(stderr,"DEBUG [timeIntegrationForTheSystem]: Calling refreshGasSurfaceDensityPressurePressureGradient for gas-only evolution.\n");
             refreshGasSurfaceDensityPressurePressureGradient(sim_opts, disk_params);
             
             t = t + deltat;
@@ -356,11 +358,11 @@ void tIntegrate(disk_t *disk_params, const simulation_options_t *sim_opts, outpu
 
     } while (t <= t_integration_in_internal_units);
 
-    fprintf(stderr,"\n\nDEBUG [tIntegrate]: Main simulation loop finished (t > t_integration_in_internal_units).\n");
+    fprintf(stderr,"\n\nDEBUG [timeIntegrationForTheSystem]: Main simulation loop finished (t > t_integration_in_internal_units).\n");
 
 cleanup:
     // --- Tisztítási szakasz ---
     cleanup_simulation_resources(&p_data, output_files, sim_opts);
-    fprintf(stderr,"DEBUG [tIntegrate]: Cleanup completed.\n");
+    fprintf(stderr,"DEBUG [timeIntegrationForTheSystem]: Cleanup completed.\n");
 }
 

@@ -11,8 +11,8 @@
 
 
 
-/*	egy megadott, diszkret pontokban ismert fuggvenyt interpolal a reszecske aktualis helyere	*/
-void interpol(double *invec, double *rvec, double pos, double *out, double rd, int opt, const disk_t *disk_params) {
+/*	egy megadott, diszkret pontokban ismert fuggvenyt linearInterpolational a reszecske aktualis helyere	*/
+void linearInterpolation(double *invec, double *rvec, double pos, double *out, double rd, int opt, const disk_t *disk_params) {
 
 	double rmid, rindex, coef1, temp;
 	int index; 
@@ -22,7 +22,7 @@ void interpol(double *invec, double *rvec, double pos, double *out, double rd, i
 	index = (int) floor(rmid);					/* 	ez az rmid egesz resze	(kerekites 0.5-tol)			*/
 	rindex = rvec[index];       					/* 	the corresponding r, e.g rd[ind] < r < rd[ind+1]		*/
 
- 	coef1 = (invec[index + 1] - invec[index]) / rd; 		/*	ez az alabbi ket sor a linearis interpolacio - remelem, jo!!!	*/
+ 	coef1 = (invec[index + 1] - invec[index]) / rd; 		/*	ez az alabbi ket sor a linearis linearInterpolationacio - remelem, jo!!!	*/
 	temp = invec[index] + coef1 * (pos - rindex);          		/*	a beerkezo dimenzionak megfelelo mertekegysegben		*/
 
 	if(opt == 1) if(temp < 0) temp = -1.*temp;

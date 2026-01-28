@@ -163,9 +163,9 @@ void refreshGasSurfaceDensityPressurePressureGradient(const simulation_options_t
         u_fi = uvec[i + 1];
 
         // Access DD and deltat through the appropriate structs
-        // Assuming Coeff_1 and Coeff_2 also take disk_params (and sim_opts if they need it)
-        double temp = Coeff_1(disk_params->rvec[i], disk_params) * (u_fi - 2.0 * u + u_bi) / (disk_params->DD * disk_params->DD) +
-                      Coeff_2(disk_params->rvec[i], disk_params) * (u_fi - u_bi) / (2.0 * disk_params->DD);
+        // Assuming ftcsSecondDerivativeCoefficient and ftcsFirstDerivativeCoefficient also take disk_params (and sim_opts if they need it)
+        double temp = ftcsSecondDerivativeCoefficient(disk_params->rvec[i], disk_params) * (u_fi - 2.0 * u + u_bi) / (disk_params->DD * disk_params->DD) +
+                      ftcsFirstDerivativeCoefficient(disk_params->rvec[i], disk_params) * (u_fi - u_bi) / (2.0 * disk_params->DD);
         
         sigma_temp[i] = uvec[i] + sim_opts->DT * temp; // Use sim_opts->DT for deltat
     }

@@ -9,8 +9,8 @@
 // Jelenleg nem szükséges ide tenni semmit a Parabola miatt.
 
 
-/*	egy megadott, diszkret pontokban ismert fuggvenyt interpolal a reszecske aktualis helyere	*/
-void interpol(double *invec, double *rvec, double pos, double *out, double rd, int opt, const disk_t *disk_params);
+/*	egy megadott, diszkret pontokban ismert fuggvenyt linearInterpolational a reszecske aktualis helyere	*/
+void linearInterpolation(double *invec, double *rvec, double pos, double *out, double rd, int opt, const disk_t *disk_params);
 
 // megkeresi egy tomb maximumat
 double find_max(double r[][2], int n);
@@ -24,7 +24,7 @@ int find_num_zero(const disk_t *disk_params);
 double find_r_zero(double r1, double r2, double dp1, double dp2);
 
 
-// Nulla pont meghatározása lineáris interpolációval
+// Nulla pont meghatározása lineáris linearInterpolationációval
 double find_zero(int i, const double *rvec, const double *dp);
 
 double calculate_index_from_radius(double r_coord, disk_t *disk_params);

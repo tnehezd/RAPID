@@ -11,8 +11,8 @@
 
 // Your Project Header Includes
 #include "config.h"       // For PARTICLE_NUMBER, TMAX, WO, RMIN, DT, optdr, sim_opts->twopop, sim_opts->growth, optev, r_dze_i, r_dze_o
-#include "io_utils.h"     // For timePar (though not called in tIntegrate, it's io-related), reszecskek_szama, por_be, Print_Sigma, Print_Pormozg_Size, Print_Mass, Print_Sigmad. Also for globals: filenev1, filenev3, fout, foutmicr, massfil
-#include "disk_model.h"   // If any disk_model functions are called (e.g., applyBoundaryConditions indirectly if sigma/press depend on it) - Though not directly visible in tIntegrate, often needed for global disk parameters. Add if you hit implicit declaration for disk_model functions.
+#include "io_utils.h"     
+#include "disk_model.h"   
 #include "dust_physics.h" // For Count_Mass, secondaryGrowth, find_max, find_min, calculateDustSurfaceDensity, calculateDustDistance
 #include "utils.h"        
 #include "simulation_core.h"
@@ -34,10 +34,10 @@ void integrateParticleRungeKutta4(double time, double prad, const double *sigmad
     int opt = 0;
     double sigmadd = 0.0;
     
-/*	Mivel a kulongozo parametereket csak a megadott gridcella pontokban ismerjuk, de ez nem feltetlen egyezik meg a reszecskek pozicijaval, ezert minden fontos parametert interpolalunk a reszecskek tavolsagara	*/
-    interpol(disk_params->sigmavec,disk_params->rvec,y,&sigma,disk_params->DD,opt,disk_params);
-    interpol(disk_params->dpressvec,disk_params->rvec,y,&dpress,disk_params->DD,opt,disk_params);
-    interpol(disk_params->ugvec,disk_params->rvec,y,&ugas,disk_params->DD,opt,disk_params);
+/*	Mivel a kulongozo parametereket csak a megadott gridcella pontokban ismerjuk, de ez nem feltetlen egyezik meg a reszecskek pozicijaval, ezert minden fontos parametert linearInterpolationalunk a reszecskek tavolsagara	*/
+    linearInterpolation(disk_params->sigmavec,disk_params->rvec,y,&sigma,disk_params->DD,opt,disk_params);
+    linearInterpolation(disk_params->dpressvec,disk_params->rvec,y,&dpress,disk_params->DD,opt,disk_params);
+    linearInterpolation(disk_params->ugvec,disk_params->rvec,y,&ugas,disk_params->DD,opt,disk_params);
 
     double dd = (disk_params->RMAX - disk_params->RMIN) / (PARTICLE_NUMBER-1);
     int dker = (int)(1./dd);//
@@ -59,7 +59,7 @@ void integrateParticleRungeKutta4(double time, double prad, const double *sigmad
     if(sim_opts->growth == 1.) {		// ha van reszecskenovekedes
         if(time != 0.) {	// ha nem t0 idopontban vagyunk
             pradtemp = prad;
-            interpol(disk_params->pressvec,disk_params->rvec,y,&p,disk_params->DD,opt,disk_params);
+            linearInterpolation(disk_params->pressvec,disk_params->rvec,y,&p,disk_params->DD,opt,disk_params);
             pdens = disk_params->PDENSITY; 
             pradtemp = calculateDustParticleSize(prad,pdens,sigma,sigmadd,y,p,dpress,step,disk_params);	// itt szamolja a reszecskenovekedest
             prad = pradtemp;
@@ -69,16 +69,16 @@ void integrateParticleRungeKutta4(double time, double prad, const double *sigmad
     *pradnew = prad;
 
 /*	Itt szamolja a reszecske poziciojat	*/
-    eqrhs(prad, dpress, sigma, ugas, y, &dy1,disk_params);
+    calculate1DDustDrift(prad, dpress, sigma, ugas, y, &dy1,disk_params);
 
     ytemp = y + 0.5 * step * dy1;
-    eqrhs(prad, dpress, sigma, ugas, ytemp, &dy2,disk_params);
+    calculate1DDustDrift(prad, dpress, sigma, ugas, ytemp, &dy2,disk_params);
         
     ytemp = y + 0.5 * step * dy2;
-    eqrhs(prad, dpress, sigma, ugas, ytemp, &dy3,disk_params);
+    calculate1DDustDrift(prad, dpress, sigma, ugas, ytemp, &dy3,disk_params);
     
     ytemp = y + step * dy3;
-    eqrhs(prad, dpress, sigma, ugas, ytemp, &dy4,disk_params);
+    calculate1DDustDrift(prad, dpress, sigma, ugas, ytemp, &dy4,disk_params);
 
     *ynew = y + step * (dy1 + 2.0 * dy2 + 2.0 * dy3 + dy4) / 6.0;
 
