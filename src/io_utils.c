@@ -244,8 +244,8 @@ void printCurrentInformationAboutRun(const char *nev, const disk_t *disk_params,
     }
 
     fprintf(current_info_file,"The current run is in the %s directory!\n",nev);
-    fprintf(current_info_file,"\n\nThe parameters of the disk:\nr_min: %lg, RMAX: %lg\nSIGMA0: %lg, SIGMA_EXP: %lg, flaring index: %lg\nALPHA_VISC: %lg, ALPHA_MOD: %lg\nR_DZE_I: %lg, R_DZE_O: %lg, DR_DZEI: %lg, DR_DZE_O: %lg   (*** R_DZE_I/O = 0, akkor azt a DZE-t nem szimulálja a futás! ***)\n\n\n",
-              disk_params->r_min, disk_params->RMAX,
+    fprintf(current_info_file,"\n\nThe parameters of the disk:\nr_min: %lg, r_max: %lg\nSIGMA0: %lg, SIGMA_EXP: %lg, flaring index: %lg\nALPHA_VISC: %lg, ALPHA_MOD: %lg\nR_DZE_I: %lg, R_DZE_O: %lg, DR_DZEI: %lg, DR_DZE_O: %lg   (*** R_DZE_I/O = 0, akkor azt a DZE-t nem szimulálja a futás! ***)\n\n\n",
+              disk_params->r_min, disk_params->r_max,
               disk_params->SIGMA0, disk_params->SIGMAP_EXP, disk_params->FLIND,
               disk_params->alpha_visc, disk_params->a_mod,
               disk_params->r_dze_i, disk_params->r_dze_o, disk_params->Dr_dze_i, disk_params->Dr_dze_o);
@@ -410,7 +410,7 @@ void printGasSurfaceDensityPressurePressureDerivateFile(const disk_t *disk_param
 }
 
 /* Függvény a por felületisűrűségének kiíratására */
-void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const double *rm, const double *sigmad, const double *sigmadm, const disk_t *disk_params, const simulation_options_t *sim_opts, output_files_t *output_files) {
+void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const double *rm, const double *sigmad, const double *sigmadm, const disk_t *disk_params, const simulation_options_t *sim_opts, output_files_t *output_files, double step) {
 
     int i;
 
@@ -421,12 +421,12 @@ void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const 
 
     for(i=0;i<particle_number;i++){ // particle_number from config.h
         if (r[i] >= disk_params->r_min) { // Using disk_params->r_min
-            fprintf(output_files->dust_file,"%.11lg  %lg \n",r[i],sigmad[i]);
+            fprintf(output_files->dust_file,"%lg %.11lg  %lg \n",(double)step,r[i],sigmad[i]);
         }
 
         if(sim_opts->twopop == 1.0 && output_files->micron_dust_file != NULL) {
             if (rm[i] >= disk_params->r_min) { // Using disk_params->r_min
-                fprintf(output_files->micron_dust_file,"%lg  %lg \n",rm[i],sigmadm[i]);
+                fprintf(output_files->micron_dust_file,"%lg %lg  %lg \n",(double)step,rm[i],sigmadm[i]);
             }
         }
     }
@@ -606,7 +606,7 @@ int setupInitialOutputFiles(output_files_t *output_files, const simulation_optio
     header_data_for_files->current_time = 0.0;
     header_data_for_files->is_initial_data = 1;
     header_data_for_files->R_in = disk_params->r_min;
-    header_data_for_files->R_out = disk_params->RMAX;
+    header_data_for_files->R_out = disk_params->r_max;
 
     // Fájlnevek generálása
     snprintf(porout, MAX_PATH_LEN, "%s/%s/%s%s", sim_opts->output_dir_name, kLogFilesDirectory, kDustAccumulationFileName,kFileNamesSuffix);

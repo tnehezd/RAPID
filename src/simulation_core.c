@@ -195,13 +195,13 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
 
                 if (current_time_years != 0) {
                     if (sim_opts->evol == 1) {
-                        snprintf(dens_name, MAX_PATH_LEN, "%s/%s/%s_%08d.dat", sim_opts->output_dir_name, kLogFilesDirectory, kGasDensityProfileFilePrefix, (int)L);
+                        snprintf(dens_name, MAX_PATH_LEN, "%s/%s/%s_%08d%s", sim_opts->output_dir_name, kLogFilesDirectory, kGasDensityProfileFilePrefix, (int)L,kFileNamesSuffix);
                     }
                 }
 
-                snprintf(dust_name, MAX_PATH_LEN, "%s/%s/dust.%i.dat", sim_opts->output_dir_name, kLogFilesDirectory, (int)L);
-                snprintf(dust_name2, MAX_PATH_LEN, "%s/%s/dustmic.%i.dat", sim_opts->output_dir_name, kLogFilesDirectory, (int)L);
-                snprintf(size_name, MAX_PATH_LEN, "%s/%s/size.%d.dat", sim_opts->output_dir_name, kLogFilesDirectory, (int)L);
+                snprintf(dust_name, MAX_PATH_LEN, "%s/%s/%s_%08d%s", sim_opts->output_dir_name, kLogFilesDirectory,kDustDensityProfileFilePrefix, (int)L,kFileNamesSuffix);
+                snprintf(dust_name2, MAX_PATH_LEN, "%s/%s/%s_%08d%s", sim_opts->output_dir_name, kLogFilesDirectory,kDustDensityProfileFilePrefix,(int)L,kFileNamesSuffix);
+                snprintf(size_name, MAX_PATH_LEN, "%s/%s/%s_%08d%s", sim_opts->output_dir_name, kLogFilesDirectory,kDustParticleSizeFileName, (int)L,kFileNamesSuffix);
 
                 // Fájlok megnyitása és fejlécek írása
                 output_files->surface_file = fopen(dens_name, "w");
@@ -276,7 +276,7 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
                 massmtempoin = massmtempoout;
 
                 if (sim_opts->growth == 1.) {
-                    printDustSurfaceDensityPressurePressureDerivateFile(p_data.rdvec, p_data.rmicvec, p_data.sigmad, p_data.sigmadm, disk_params, sim_opts, output_files);
+                    printDustSurfaceDensityPressurePressureDerivateFile(p_data.rdvec, p_data.rmicvec, p_data.sigmad, p_data.sigmadm, disk_params, sim_opts, output_files, (int)L);
                 }
                 fprintf(stderr,"L set to %lg\n",L);
 

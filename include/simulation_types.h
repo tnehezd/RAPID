@@ -35,9 +35,9 @@ typedef struct {
 typedef struct disk_t {
     // Geometriai és rács paraméterek
     double r_min;
-    double RMAX;
+    double r_max;
     int grid_number;
-    double DD; // r_min, RMAX, grid_number alapján számolva
+    double DD; // r_min, r_max, grid_number alapján számolva
 
     // Gáz korong paraméterek
     double SIGMA0; // Kezdeti referencia gáz sűrűség

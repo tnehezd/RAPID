@@ -39,7 +39,7 @@ void integrateParticleRungeKutta4(double time, double prad, const double *sigmad
     linearInterpolation(disk_params->dpressvec,disk_params->rvec,y,&dpress,disk_params->DD,opt,disk_params);
     linearInterpolation(disk_params->ugvec,disk_params->rvec,y,&ugas,disk_params->DD,opt,disk_params);
 
-    double dd = (disk_params->RMAX - disk_params->r_min) / (particle_number-1);
+    double dd = (disk_params->r_max - disk_params->r_min) / (particle_number-1);
     int dker = (int)(1./dd);//
     dker = dker * ROUNDING_FACTOR;
     double ddker = (double) dker;

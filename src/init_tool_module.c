@@ -68,7 +68,7 @@ static long double calculateSigm0FromDiskMass(init_tool_options_t *init_opts) {
     }
 
     if (fabs(denominator) < 1e-12) {
-        fprintf(stderr, "Error: Denominator is zero or too small in Sigma0 calculation! Check RMAX, r_min, and SIGMA_EXP values.\n");
+        fprintf(stderr, "Error: Denominator is zero or too small in Sigma0 calculation! Check r_max, r_min, and SIGMA_EXP values.\n");
         return 0.0;
     }
     // Md = 2 * PI * Sigma0 * epsilon * Integral(r^(1-index) dr) from Ri to Ro
@@ -244,7 +244,7 @@ int runInitialization(init_tool_options_t *opts, disk_t *disk_params) {
     // Populate disk_params structure and allocate its arrays
     disk_params->grid_number = opts->n_grid_points; // Gas grid resolution
     disk_params->r_min = opts->r_inner;
-    disk_params->RMAX = opts->r_outer;
+    disk_params->r_max = opts->r_outer;
     disk_params->SIGMA0 = current_sigma0_gas;
     disk_params->SIGMAP_EXP = opts->sigma_exponent;
     disk_params->r_dze_i = opts->deadzone_r_inner;
@@ -258,7 +258,7 @@ int runInitialization(init_tool_options_t *opts, disk_t *disk_params) {
     disk_params->STAR_MASS = opts->star_mass;
     disk_params->particle_density = opts->dust_density_g_cm3;
     if (disk_params->grid_number > 1) {
-        disk_params->DD = (disk_params->RMAX - disk_params->r_min) / ((double)disk_params->grid_number - 1.0);
+        disk_params->DD = (disk_params->r_max - disk_params->r_min) / ((double)disk_params->grid_number - 1.0);
     } else {
         disk_params->DD = 0.0;
     }

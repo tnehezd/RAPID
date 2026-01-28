@@ -251,12 +251,12 @@ void histogram(double r, int *hist, double dd, disk_t *disk_params) {
     int index;
     double rmid; // hist_i is no longer needed as a separate variable
 
-    // 1. Clamp 'r' to ensure it's within the valid range [r_min, RMAX]
+    // 1. Clamp 'r' to ensure it's within the valid range [r_min, r_max]
     // This prevents negative indices or indices that are too large.
     if (r < disk_params->r_min) {
         r = disk_params->r_min;
-    } else if (r > disk_params->RMAX) {
-        r = disk_params->RMAX;
+    } else if (r > disk_params->r_max) {
+        r = disk_params->r_max;
     }
 
     // Calculate the potential index
@@ -276,7 +276,7 @@ void histogram(double r, int *hist, double dd, disk_t *disk_params) {
     if (index >= disk_params->grid_number) { // grid_number should be defined and accessible here
         index = disk_params->grid_number - 1; // Ensure index does not exceed the array's upper bound
         // Optionally print a debug message:
-        // fprintf(stderr, "DEBUG WARNING: histogram index exceeded grid_number. Clamped to grid_number-1. r=%.10f, RMAX=%.10f, dd=%.10e, rmid=%.10f\n", r, RMAX, dd, rmid);
+        // fprintf(stderr, "DEBUG WARNING: histogram index exceeded grid_number. Clamped to grid_number-1. r=%.10f, r_max=%.10f, dd=%.10e, rmid=%.10f\n", r, r_max, dd, rmid);
     }
 
     // 3. Increment the counter directly (since hist is an int array)
@@ -314,7 +314,7 @@ void sortAnArrayarray(double rv[][3],int n) {
 
 void roundParticleRadii(double in[][3], int n, const disk_t *disk_params) {
 
-	double dd = (disk_params->RMAX - disk_params->r_min) / (particle_number-1);
+	double dd = (disk_params->r_max - disk_params->r_min) / (particle_number-1);
 	int dker = (int)(1./dd);//
 	dker = dker * ROUNDING_FACTOR;
 	double ddker = (double) dker;

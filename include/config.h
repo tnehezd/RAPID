@@ -43,12 +43,15 @@ extern const char * const kGasDensityProfileFilePrefix;
 extern const char * const kDustAccumulationFileName;
 extern const char * const kDustParticleEvolutionFile;
 extern const char * const kDriftTimescaleFileName;
+extern const char * const kDustDensityProfileFilePrefix;
+extern const char * const kMicronDustDensityProfileFilePrefix;
 extern const char * const kDustMicronParticleEvolutionFile;
 extern const char * const kDiskConfigFile;
 extern const char * const kLogFilesDirectory;
 extern const char * const kConfigFilesDirectory;
 extern const char * const kFileNamesSuffix;
 extern const char * const kCurrentInfoFile;
+extern const char * const kDustParticleSizeFileName;
 
 
 #endif // CONFIG_H
