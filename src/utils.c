@@ -19,7 +19,7 @@ void linearInterpolation(double *invec, double *rvec, double pos, double *out, d
 
     rmid = pos - disk_params->RMIN;
 	rmid = rmid / rd;     						/* 	the integer part of this gives at which index is the body	*/
-	index = (int) floor(rmid);					/* 	ez az rmid egesz resze	(kerekites 0.5-tol)			*/
+	index = (int) floor(rmid);					/* 	ez az rmid egesz resze	(roundParticleRadiies 0.5-tol)			*/
 	rindex = rvec[index];       					/* 	the corresponding r, e.g rd[ind] < r < rd[ind+1]		*/
 
  	coef1 = (invec[index + 1] - invec[index]) / rd; 		/*	ez az alabbi ket sor a linearis linearInterpolationacio - remelem, jo!!!	*/
@@ -33,7 +33,7 @@ void linearInterpolation(double *invec, double *rvec, double pos, double *out, d
 
 
 /*	megkeresi egy tomb maximumat	*/
-double find_max(double r[][2], int n) {
+double findMaximumOfAnArray(double r[][2], int n) {
 
 	int i;
 	double maxim = -1.;
@@ -50,7 +50,7 @@ double find_max(double r[][2], int n) {
 }
 
 /*	minimum megkeresese harom elem kozul	*/
-double find_min(double s1, double s2, double s3) {
+double findMinimumOfAnArray(double s1, double s2, double s3) {
 
 	double min;
 	
@@ -75,7 +75,7 @@ double find_min(double s1, double s2, double s3) {
 
 
 /*	counting the number of zero points of the pressure gradient function	*/
-int find_num_zero(const disk_t *disk_params) {
+int countZeroPoints(const disk_t *disk_params) {
 
 	int i,count;
 	count = 0;
@@ -93,7 +93,7 @@ int find_num_zero(const disk_t *disk_params) {
 
 /*	mivel a dp csak diszkret pontokban ismert, ezert 2 pontra illeszt egy egyenest, es megnezi, hogy annak hol lenne 0 az erteke	*/
 /*	solving a*x + b = y (here a = r, y = dp)	*/
-double find_r_zero(double r1, double r2, double dp1, double dp2) {
+double findZeroPointRadius(double r1, double r2, double dp1, double dp2) {
 
 	double a, b, r_zero;
 	a = (dp2 - dp1) / (r2 - r1);
@@ -107,12 +107,12 @@ double find_r_zero(double r1, double r2, double dp1, double dp2) {
 
 
 /*	this function counts where (which r) the pressure maximum is	*/
-double find_zero(int i, const double *rvec, const double *dp) {
+double findZeroPoint(int i, const double *rvec, const double *dp) {
 
 	double r;
 	
 	if(((dp[i] * dp[i+1]) <= 0.) && (dp[i] > dp[i+1])) {		/*	Ha a ket pont szorzata negativ --> elojel valtas a dp-ben, nyomasi min/max. Maximum hely ott van, ahol pozitivbol negativba valt az ertek	*/
-		r = find_r_zero(rvec[i],rvec[i+1],dp[i],dp[i+1]);	/*	Ha elojel valtas tortenik es nyomasi maximum van, akkor kiszamolja a ket pont kozott, hogy hol lenne a zerus hely pontosan	*/
+		r = findZeroPointRadius(rvec[i],rvec[i+1],dp[i],dp[i+1]);	/*	Ha elojel valtas tortenik es nyomasi maximum van, akkor kiszamolja a ket pont kozott, hogy hol lenne a zerus hely pontosan	*/
 
 	} else {
 		r = 0.0;
@@ -124,24 +124,24 @@ double find_zero(int i, const double *rvec, const double *dp) {
 
 }
 
-// calculate_index_from_radius függvény (melyet korábban megbeszéltünk, valahol globálisan)
-double calculate_index_from_radius(double r_coord, disk_t *disk_params) {
+// calculateIndexFromRadius függvény (melyet korábban megbeszéltünk, valahol globálisan)
+/*double calculateIndexFromRadius(double r_coord, disk_t *disk_params) {
     if (r_coord < disk_params->RMIN) return 0.0;
     return fmax(0.0, fmin((double)(disk_params->NGRID - 1), floor((r_coord - disk_params->RMIN) / disk_params->DD + 0.5)));
 }
-
-// Az átalakított find_r_annulus függvény
+*/
+// Az átalakított findRAnnulusAroundDZE függvény
 // Paraméterek módosítva a struktúrák átadására és a konstansok használatára
 /*	A nyomasi maximum korul 1H tavolsagban jeloli ki a korgyurut	*/
-void find_r_annulus(double rin, double *ind_ii, double *ind_io,
+void findRAnnulusAroundDZE(double rin, double *ind_ii, double *ind_io,
                             double rout, double *ind_oi, double *ind_oo,
                             const simulation_options_t *sim_opts, disk_t *disk_params) {
 
-	    volatile int debug_marker = 0; // Adj hozzá ezt a sort
+	    volatile int debug_marker = 0; // Adj hozzá ezt a sortAnArray
 
 
     if (disk_params == NULL) {
-        fprintf(stderr, "ERROR [find_r_annulus]: disk_params is NULL!\n");
+        fprintf(stderr, "ERROR [findRAnnulusAroundDZE]: disk_params is NULL!\n");
         exit(1); // Program leállítása
     }
 
@@ -226,7 +226,7 @@ void find_r_annulus(double rin, double *ind_ii, double *ind_io,
 }
 
 /*	fuggveny egy tomb elemeinek sorbarendezesere --> ezt jelenleg nem hasznalja sehol a program	*/
-void sort(double *rv,int n) {
+void sortAnArray(double *rv,int n) {
 
 	double temp;
 	int i, step;
@@ -284,7 +284,7 @@ void histogram(double r, int *hist, double dd, disk_t *disk_params) {
 }
 
 /*	fuggveny egy tomb elemeinek sorbarendezesere --> ezt jelenleg nem hasznalja sehol a program	*/
-void sortarray(double rv[][3],int n) {
+void sortAnArrayarray(double rv[][3],int n) {
 
 	double temp, temp2, temp3;
 	int i, step;
@@ -312,7 +312,7 @@ void sortarray(double rv[][3],int n) {
 }
 
 
-void kerekit(double in[][3], int n, const disk_t *disk_params) {
+void roundParticleRadii(double in[][3], int n, const disk_t *disk_params) {
 
 	double dd = (disk_params->RMAX - disk_params->RMIN) / (PARTICLE_NUMBER-1);
 	int dker = (int)(1./dd);//
@@ -333,7 +333,7 @@ void kerekit(double in[][3], int n, const disk_t *disk_params) {
 
 
 
-void contract(double in[][3], double dd, int n, const disk_t *disk_params) {
+void mergeParticlesByRadius(double in[][3], double dd, int n, const disk_t *disk_params) {
 
 	int i;
 	int j;
@@ -350,8 +350,8 @@ void contract(double in[][3], double dd, int n, const disk_t *disk_params) {
 	j = 0;
 	k = 0;
 
-	kerekit(in,n,disk_params);
-	sortarray(in,n);
+	roundParticleRadii(in,n,disk_params);
+	sortAnArrayarray(in,n);
 
 
 	do {
@@ -385,13 +385,13 @@ void contract(double in[][3], double dd, int n, const disk_t *disk_params) {
 		in[i][0] = sigout[i];
 		in[i][1] = radout[i];
   		double rmid = (in[i][1] - disk_params->RMIN) / dd;     						/* 	The integer part of this gives at which index is the body			*/
-		int rindex = (int) floor(rmid);							/* 	Ez az rmid egesz resze --> floor egeszreszre kerekit lefele, a +0.5-el elerheto, hogy .5 felett felfele, .5 alatt lefele kerekitsen						*/
+		int rindex = (int) floor(rmid);							/* 	Ez az rmid egesz resze --> floor egeszreszre roundParticleRadii lefele, a +0.5-el elerheto, hogy .5 felett felfele, .5 alatt lefele roundParticleRadiisen						*/
 		in[i][2] = (double)rindex;
 	}
 
 }
 
-void Count_Mass(double radin[][2], double partmassindin[][5], double *massvecin, double t, int n, const disk_t *disk_params) {
+void updateParticleGridIndices(double radin[][2], double partmassindin[][5], double *massvecin, double t, int n, const disk_t *disk_params) {
 
     int i, rindex;
     double rmid;  

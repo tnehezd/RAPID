@@ -4,9 +4,9 @@
 #include <stdio.h>
 #include <stdlib.h> // malloc, free, exit
 
-int allocate_particle_data(ParticleData_t *p_data, size_t particle_count, int is_twopop_enabled) {
+int allocateParticleData(ParticleData_t *p_data, size_t particle_count, int is_twopop_enabled) {
     if (p_data == NULL) {
-        fprintf(stderr, "ERROR [allocate_particle_data]: ParticleData_t pointer is NULL.\n");
+        fprintf(stderr, "ERROR [allocateParticleData]: ParticleData_t pointer is NULL.\n");
         return 1; // Hiba
     }
 
@@ -25,7 +25,7 @@ int allocate_particle_data(ParticleData_t *p_data, size_t particle_count, int is
     p_data->allocated_particle_number = 0;
 
     if (particle_count == 0) {
-        fprintf(stderr, "DEBUG [allocate_particle_data]: Particle count is 0. No particle arrays allocated.\n");
+        fprintf(stderr, "DEBUG [allocateParticleData]: Particle count is 0. No particle arrays allocated.\n");
         return 0; // Sikeres, de nincs allokáció
     }
 
@@ -46,8 +46,8 @@ int allocate_particle_data(ParticleData_t *p_data, size_t particle_count, int is
     if (!p_data->radius || !p_data->radiusmicr || !p_data->radius_rec || !p_data->massvec || !p_data->massmicrvec ||
         !p_data->partmassind || !p_data->partmassmicrind || !p_data->sigmad || !p_data->sigmadm ||
         !p_data->rdvec || !p_data->rmicvec) {
-        fprintf(stderr, "ERROR [allocate_particle_data]: Primary particle array allocation failed!\n");
-        free_particle_data(p_data); // Felszabadítás, ha valami elszállt
+        fprintf(stderr, "ERROR [allocateParticleData]: Primary particle array allocation failed!\n");
+        freeParticleData(p_data); // Felszabadítás, ha valami elszállt
         return 1; // Hiba
     }
 
@@ -56,15 +56,15 @@ int allocate_particle_data(ParticleData_t *p_data, size_t particle_count, int is
     if (is_twopop_enabled) {
 
     } else {
-        fprintf(stderr, "DEBUG [allocate_particle_data]: Two-population model is OFF. Secondary particle arrays not allocated.\n");
+        fprintf(stderr, "DEBUG [allocateParticleData]: Two-population model is OFF. Secondary particle arrays not allocated.\n");
     }
 
     p_data->allocated_particle_number = particle_count;
-    fprintf(stderr, "DEBUG [allocate_particle_data]: Particle arrays allocated for %zu particles.\n", particle_count);
+    fprintf(stderr, "DEBUG [allocateParticleData]: Particle arrays allocated for %zu particles.\n", particle_count);
     return 0; // Sikeres allokáció
 }
 
-void free_particle_data(ParticleData_t *p_data) {
+void freeParticleData(ParticleData_t *p_data) {
     if (p_data == NULL) {
         return; // Nincs mit felszabadítani
     }
@@ -95,5 +95,5 @@ void free_particle_data(ParticleData_t *p_data) {
     p_data->rmicvec = NULL;
     p_data->allocated_particle_number = 0;
 
-    fprintf(stderr, "DEBUG [free_particle_data]: Particle arrays freed.\n");
+    fprintf(stderr, "DEBUG [freeParticleData]: Particle arrays freed.\n");
 }

@@ -22,9 +22,9 @@ typedef struct {
 } ParticleData_t;
 
 // Függvény a memóriafoglalásra
-int allocate_particle_data(ParticleData_t *p_data, size_t particle_count, int is_twopop_enabled);
+int allocateParticleData(ParticleData_t *p_data, size_t particle_count, int is_twopop_enabled);
 
 // Függvény a memória felszabadítására
-void free_particle_data(ParticleData_t *p_data);
+void freeParticleData(ParticleData_t *p_data);
 
 #endif // PARTICLE_DATA_H

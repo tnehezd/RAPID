@@ -4,7 +4,7 @@
 #include "simulation_types.h" // Például output_files_t, disk_t struktúrákhoz
 #include "boundary_conditions.h"
 #include "simulation_core.h" 
-#include "utils.h"           // find_min függvényhez
+#include "utils.h"           
 #include <stdio.h>
 #include <stdlib.h>
 

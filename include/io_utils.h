@@ -45,22 +45,22 @@ void printMassGrowthAtDZEFile(double step,
 
 /* Fuggveny a sigma, p, dp kiiratasara */
 // FIX: The original was missing 'const disk_t *disk_params'.
-void Print_Sigma(const disk_t *disk_params, output_files_t *output_files);
+void printGasSurfaceDensityPressurePressureDerivateFile(const disk_t *disk_params, output_files_t *output_files);
 
 /* Fuggveny a por feluletisurusegenek kiiratasara */
 // FIX: The original was missing 'const disk_t *disk_params' and 'const simulation_options_t *sim_opts'.
-void Print_Sigmad(const double *r, const double *rm, const double *sigmad, const double *sigmadm,
+void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const double *rm, const double *sigmad, const double *sigmadm,
                   const disk_t *disk_params, const simulation_options_t *sim_opts,
                   output_files_t *output_files);
 /* Fuggveny a pormozgas es reszecskemeret kiiratasara */
 // FIX: The original was missing 'const disk_t *disk_params' and 'const simulation_options_t *sim_opts'.
-void Print_Pormozg_Size(char *size_name, int step, double (*rad)[2], double (*radmicr)[2],
+void printDustParticleSizeFile(char *size_name, int step, double (*rad)[2], double (*radmicr)[2],
                         const disk_t *disk_params, const simulation_options_t *sim_opts,
                         output_files_t *output_files);
 
 /* Az idot tartalmazo file parametereinek beolvasasa (vagy beallitasa) */
 // FIX: The original was missing 'simulation_options_t *sim_opts'.
-void timePar(double tMax_val, double stepping_val, double current_val, simulation_options_t *sim_opts);
+void printTimeStampFile(double tMax_val, double stepping_val, double current_val, simulation_options_t *sim_opts);
 
 
 
@@ -108,13 +108,13 @@ void printFileHeader(FILE *file, FileType_e file_type, const HeaderData_t *heade
 
 
 // Függvény a kezdeti kimeneti fájlok beállítására és fejlécek írására
-int setup_initial_output_files(output_files_t *output_files, const simulation_options_t *sim_opts,
+int setupInitialOutputFiles(output_files_t *output_files, const simulation_options_t *sim_opts,
                                const disk_t *disk_params, HeaderData_t *header_data_for_files);
 
 
-void cleanup_simulation_resources(ParticleData_t *p_data, output_files_t *output_files, const simulation_options_t *sim_opts);
+void cleanupSimulationResources(ParticleData_t *p_data, output_files_t *output_files, const simulation_options_t *sim_opts);
 
-void close_snapshot_files(output_files_t *output_files, const char *dens_name, const char *dust_name, const char *dust_name2, const simulation_options_t *sim_opts);
+void closeSnapshotFiles(output_files_t *output_files, const char *dens_name, const char *dust_name, const char *dust_name2, const simulation_options_t *sim_opts);
 
 
 #endif // IO_UTILS_H

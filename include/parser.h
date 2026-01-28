@@ -66,7 +66,7 @@ typedef struct {
  * @brief Initializes the options_t structure with default values.
  * @param opt Pointer to the options_t structure to be initialized.
  */
-void create_default_options(options_t *opt);
+void createDefaultOptions(options_t *opt);
 
 /*
  * @brief Parses command-line arguments and populates the options_t structure.
@@ -75,11 +75,11 @@ void create_default_options(options_t *opt);
  * @param opt Pointer to the options_t structure where parsed values will be stored.
  * @return 0 on successful parsing, 1 on error (e.g., missing value, unknown option).
  */
-int parse_options(int argc, const char **argv, options_t *opt);
+int parseCLIOptions(int argc, const char **argv, options_t *opt);
 
 /*
  * @brief Prints the command-line usage information to stderr.
  */
-void print_usage();
+void printUsageToTerminal();
 
 #endif // PARSER_H

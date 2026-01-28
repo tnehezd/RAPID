@@ -5,7 +5,7 @@
 #include "gas_physics.h"
 #include "simulation_core.h" 
 #include "boundary_conditions.h"
-#include "utils.h"           // find_min függvényhez
+#include "utils.h"           // findMinimumOfAnArray függvényhez
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -157,7 +157,7 @@ double calculateDustParticleSize(double prad, double pdens, double sigma, double
     double sturb = calculateTurbulentFragmentationBarrier(sigma, y, pdens, disk_params);           // cm-ben
     double sdf = calculateDriftInducedFragmentationBarrier(sigma, y, p, dpress_val, pdens,disk_params); // cm-ben
     double srdf = calculateRadialDriftBarrier(sigmad, y, p, dpress_val, pdens, disk_params); // cm-ben
-    double smin = find_min(sturb, sdf, srdf);         // cm-ben -- megadja, hogy a fenti ket reszecske korlatbol melyik ad kisebb meretet (az a reszecskenovekedes felso korlatja
+    double smin = findMinimumOfAnArray(sturb, sdf, srdf);         // cm-ben -- megadja, hogy a fenti ket reszecske korlatbol melyik ad kisebb meretet (az a reszecskenovekedes felso korlatja
     //	double eps = sigma / 100.;
     double eps = sigmad / sigma; // A korábbi kódban fordítva volt, feltételezem, hogy eps = (por sűrűség) / (gáz sűrűség)
     double tau_gr = calculateGrowthTimescale(y, eps, disk_params);
@@ -167,7 +167,7 @@ double calculateDustParticleSize(double prad, double pdens, double sigma, double
 
     /*	kiszamolja, hogy a fenti smin, vagy a novekedesi idoskalabol szarmazo meret korlatozza a reszecske meretet	*/
     if (prad < smin) {
-        rt = find_min(prad * exp(dt / tau_gr), smin, HUGE_VAL);
+        rt = findMinimumOfAnArray(prad * exp(dt / tau_gr), smin, HUGE_VAL);
     } else { // prad >= smin
         rt = smin;
     }
@@ -202,7 +202,7 @@ void calculateDustSurfaceDensity(double max_param, double min_param, double rad[
     }
 
 
-    // calculateDustSurfaceDensity és contract függvények hívásai:
+    // calculateDustSurfaceDensity és mergeParticlesByRadius függvények hívásai:
     // Ezek valószínűleg szekvenciálisak, hacsak a függvények belsejében nincs OpenMP.
     // Ha ezek a függvények valamilyen globális állapotot módosítanak, akkor kritikusak.
     // Feltételezve, hogy a 'sigdtemp' és 'sigdmicrtemp' kizárólagosan a hívásaikban vannak feldolgozva,
@@ -212,9 +212,9 @@ void calculateDustSurfaceDensity(double max_param, double min_param, double rad[
         calculateInitialDustSurfaceDensity(radmicr, massmicrvec, sigdmicrtemp, PARTICLE_NUMBER,disk_params);
     }
 
-    contract(sigdtemp, dd, PARTICLE_NUMBER,disk_params);
+    mergeParticlesByRadius(sigdtemp, dd, PARTICLE_NUMBER,disk_params);
     if (sim_opts->twopop == 1.0) { // Használjunk double összehasonlítást
-        contract(sigdmicrtemp, dd, PARTICLE_NUMBER,disk_params);
+        mergeParticlesByRadius(sigdmicrtemp, dd, PARTICLE_NUMBER,disk_params);
     }
 
     // Utolsó másoló ciklus: Ez is jól párhuzamosítható.

@@ -18,7 +18,7 @@
 #include "io_utils.h"
 #include "config.h"         // Defines PARTICLE_NUMBER, AU2CM, FILENAME_INIT_PROFILE, and declares extern FILE *fin1, extern FILE *jelfut
 #include "dust_physics.h"   // If needed for any specific function interactions
-#include "utils.h"          // For find_num_zero, find_zero, find_r_annulus
+#include "utils.h"          // For countZeroPoints, findZeroPoint, findRAnnulusAroundDZE
 #include "simulation_types.h" // For disk_t, simulation_options_t, output_files_t
 #include "boundary_conditions.h"
 
@@ -264,7 +264,7 @@ void printMassGrowthAtDZEFile(double step, double (*partmassind)[5], double (*pa
     tav = disk_params->r_dze_o;
     tav2 = disk_params->r_dze_i;
 
-    int dim = find_num_zero(disk_params); 
+    int dim = countZeroPoints(disk_params); 
     double *r_count = (double *)malloc(sizeof(double) * dim); 
 
     if (dim > 0 && r_count == NULL) {
@@ -286,8 +286,8 @@ void printMassGrowthAtDZEFile(double step, double (*partmassind)[5], double (*pa
 
     if(dim != 0) {
         for(i = 0; i < disk_params->NGRID; i++) {
-            // Itt a find_zero valószínűleg disk_params->rvec és disk_params->dpressvec-et használ
-            temp_new = find_zero(i,disk_params->rvec,disk_params->dpressvec); 
+            // Itt a findZeroPoint valószínűleg disk_params->rvec és disk_params->dpressvec-et használ
+            temp_new = findZeroPoint(i,disk_params->rvec,disk_params->dpressvec); 
             if(temp != temp_new && i > 3 && temp_new != 0.0) {
                 if (j < dim) { 
                     r_count[j] = temp_new;
@@ -332,10 +332,10 @@ void printMassGrowthAtDZEFile(double step, double (*partmassind)[5], double (*pa
     tav2 = rin;
     tav = rout;
 
-    // find_r_annulus hívása: EZ KISZÁMOLJA AZ INDEX-HATÁROKAT AZ AKTUÁLIS SUGARAK ALAPJÁN
+    // findRAnnulusAroundDZE hívása: EZ KISZÁMOLJA AZ INDEX-HATÁROKAT AZ AKTUÁLIS SUGARAK ALAPJÁN
     // Ezt már a disk_params->rvec és disk_params->dpressvec alapján kellene, nem pedig külön paraméterekből.
-    // Ha a find_r_annulus is disk_params-ot kapott, akkor rendben van.
-    find_r_annulus(tav2, &ind_ii, &ind_io, tav, &ind_oi, &ind_oo, sim_opts, disk_params);
+    // Ha a findRAnnulusAroundDZE is disk_params-ot kapott, akkor rendben van.
+    findRAnnulusAroundDZE(tav2, &ind_ii, &ind_io, tav, &ind_oi, &ind_oo, sim_opts, disk_params);
 
     double massii = 0, massoi = 0;
     double massiim = 0, massoim = 0;
@@ -392,12 +392,12 @@ void printMassGrowthAtDZEFile(double step, double (*partmassind)[5], double (*pa
 
 
 /* Függvény a sigma, p, dp kiíratására */
-void Print_Sigma(const disk_t *disk_params, output_files_t *output_files) {
+void printGasSurfaceDensityPressurePressureDerivateFile(const disk_t *disk_params, output_files_t *output_files) {
 
     int i;
 
     if (output_files->surface_file == NULL) {
-        fprintf(stderr, "ERROR: output_files->surface_file is NULL in Print_Sigma! Cannot write sigma data.\n");
+        fprintf(stderr, "ERROR: output_files->surface_file is NULL in printGasSurfaceDensityPressurePressureDerivateFile! Cannot write sigma data.\n");
         return;
     }
 
@@ -410,12 +410,12 @@ void Print_Sigma(const disk_t *disk_params, output_files_t *output_files) {
 }
 
 /* Függvény a por felületisűrűségének kiíratására */
-void Print_Sigmad(const double *r, const double *rm, const double *sigmad, const double *sigmadm, const disk_t *disk_params, const simulation_options_t *sim_opts, output_files_t *output_files) {
+void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const double *rm, const double *sigmad, const double *sigmadm, const disk_t *disk_params, const simulation_options_t *sim_opts, output_files_t *output_files) {
 
     int i;
 
     if (output_files->dust_file == NULL) {
-        fprintf(stderr, "ERROR: output_files->dust_file is NULL in Print_Sigmad! Cannot write main dust surface density.\n");
+        fprintf(stderr, "ERROR: output_files->dust_file is NULL in printDustSurfaceDensityPressurePressureDerivateFile! Cannot write main dust surface density.\n");
         return;
     }
 
@@ -438,7 +438,7 @@ void Print_Sigmad(const double *r, const double *rm, const double *sigmad, const
 }
 
 /* Függvény a pormozgás és részecskeméret kiíratására */
-void Print_Pormozg_Size(char *size_name, int step, double (*rad)[2], double (*radmicr)[2], const disk_t *disk_params, const simulation_options_t *sim_opts, output_files_t *output_files) {
+void printDustParticleSizeFile(char *size_name, int step, double (*rad)[2], double (*radmicr)[2], const disk_t *disk_params, const simulation_options_t *sim_opts, output_files_t *output_files) {
 
     FILE *fout_size = NULL;
 
@@ -447,7 +447,7 @@ void Print_Pormozg_Size(char *size_name, int step, double (*rad)[2], double (*ra
     if (sim_opts->growth == 1.0) {
         fout_size = fopen(size_name, "w");
         if (fout_size == NULL) {
-            fprintf(stderr, "ERROR: Could not open size file '%s' in Print_Pormozg_Size!\n", size_name);
+            fprintf(stderr, "ERROR: Could not open size file '%s' in printDustParticleSizeFile!\n", size_name);
             return;
         }
     }
@@ -491,7 +491,7 @@ void Print_Pormozg_Size(char *size_name, int step, double (*rad)[2], double (*ra
 }
 
 /* Az időt tartalmazó fájl paramétereinek beolvasása (vagy beállítása) */
-void timePar(double tMax_val, double stepping_val, double current_val, simulation_options_t *sim_opts) {
+void printTimeStampFile(double tMax_val, double stepping_val, double current_val, simulation_options_t *sim_opts) {
 
 
     sim_opts->TMAX = tMax_val;
@@ -596,7 +596,7 @@ void printFileHeader(FILE *file, FileType_e file_type, const HeaderData_t *heade
 
 
 
-int setup_initial_output_files(output_files_t *output_files, const simulation_options_t *sim_opts,
+int setupInitialOutputFiles(output_files_t *output_files, const simulation_options_t *sim_opts,
                                const disk_t *disk_params, HeaderData_t *header_data_for_files) {
     char porout[MAX_PATH_LEN] = "";
     char poroutmicr[MAX_PATH_LEN] = "";
@@ -616,7 +616,7 @@ int setup_initial_output_files(output_files_t *output_files, const simulation_op
     }
     snprintf(massout, MAX_PATH_LEN, "%s/%s/%s.dat", sim_opts->output_dir_name, LOGS_DIR, FILE_MASS_ACCUMULATE);
 
-    fprintf(stderr, "DEBUG [setup_initial_output_files]: Opening output files: %s, %s (if 2pop), %s\n", porout, poroutmicr, massout);
+    fprintf(stderr, "DEBUG [setupInitialOutputFiles]: Opening output files: %s, %s (if 2pop), %s\n", porout, poroutmicr, massout);
 
     // Fájlok megnyitása és fejlécek írása
     output_files->por_motion_file = fopen(porout, "w");
@@ -656,7 +656,7 @@ int setup_initial_output_files(output_files_t *output_files, const simulation_op
 }
 
 
-void cleanup_simulation_resources(ParticleData_t *p_data, output_files_t *output_files, const simulation_options_t *sim_opts) {
+void cleanupSimulationResources(ParticleData_t *p_data, output_files_t *output_files, const simulation_options_t *sim_opts) {
     if (PARTICLE_NUMBER > 0) {
         free(p_data->radius); p_data->radius = NULL;
         free(p_data->radiusmicr); p_data->radiusmicr = NULL;
@@ -670,28 +670,28 @@ void cleanup_simulation_resources(ParticleData_t *p_data, output_files_t *output
         free(p_data->rdvec); p_data->rdvec = NULL;
         free(p_data->rmicvec); p_data->rmicvec = NULL;
 
-        fprintf(stderr, "DEBUG [cleanup_simulation_resources]: All dynamically allocated particle arrays freed.\n");
+        fprintf(stderr, "DEBUG [cleanupSimulationResources]: All dynamically allocated particle arrays freed.\n");
     }
 
     if (output_files->por_motion_file != NULL) {
         fclose(output_files->por_motion_file);
         output_files->por_motion_file = NULL;
-        fprintf(stderr, "DEBUG [cleanup_simulation_resources]: Closed %s\n", FILE_DUST_EVOLUTION);
+        fprintf(stderr, "DEBUG [cleanupSimulationResources]: Closed %s\n", FILE_DUST_EVOLUTION);
     }
     if (output_files->micron_motion_file != NULL) { // Ellenőrzés twopop-ra itt is
         fclose(output_files->micron_motion_file);
         output_files->micron_motion_file = NULL;
-        fprintf(stderr, "DEBUG [cleanup_simulation_resources]: Closed micron_particle_evolution.dat\n");
+        fprintf(stderr, "DEBUG [cleanupSimulationResources]: Closed micron_particle_evolution.dat\n");
     }
     if (output_files->mass_file != NULL) {
         fclose(output_files->mass_file);
         output_files->mass_file = NULL;
-        fprintf(stderr, "DEBUG [cleanup_simulation_resources]: Closed %s\n", FILE_MASS_ACCUMULATE);
+        fprintf(stderr, "DEBUG [cleanupSimulationResources]: Closed %s\n", FILE_MASS_ACCUMULATE);
     }
 }
 
 // Segédfüggvény a pillanatfelvételek fájljainak bezárására
-void close_snapshot_files(output_files_t *output_files, const char *dens_name, const char *dust_name, const char *dust_name2, const simulation_options_t *sim_opts) {
+void closeSnapshotFiles(output_files_t *output_files, const char *dens_name, const char *dust_name, const char *dust_name2, const simulation_options_t *sim_opts) {
     if (output_files->surface_file != NULL) {
         fclose(output_files->surface_file);
         output_files->surface_file = NULL;

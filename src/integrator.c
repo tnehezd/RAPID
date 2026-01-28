@@ -13,7 +13,7 @@
 #include "config.h"       // For PARTICLE_NUMBER, TMAX, WO, RMIN, DT, optdr, sim_opts->twopop, sim_opts->growth, optev, r_dze_i, r_dze_o
 #include "io_utils.h"     
 #include "disk_model.h"   
-#include "dust_physics.h" // For Count_Mass, secondaryGrowth, find_max, find_min, calculateDustSurfaceDensity, calculateDustDistance
+#include "dust_physics.h" 
 #include "utils.h"        
 #include "simulation_core.h"
 #include "particle_data.h" // Új include
