@@ -8,7 +8,6 @@ int particle_number;
 FILE *drift_timescale_file = NULL;
 FILE *current_info_file = NULL;
 FILE *load_dust_particles_file = NULL;
-const char *inputsig = NULL;
 
 // --- Global Filename Definitions (Constant Pointers) ---
 // Using const char * const for truly constant string literals.
