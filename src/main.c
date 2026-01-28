@@ -83,7 +83,7 @@ int main(int argc, const char **argv) {
     disk_params.r_min = def.rmin_val;
     disk_params.r_max = def.rmax_val;
     disk_params.grid_number = def.ngrid_val; // grid_number (gas grid points) is from parsed options
-    disk_params.SIGMA0 = def.sigma0_val;
+    disk_params.sigma_0 = def.sigma0_val;
     disk_params.SIGMAP_EXP = def.sigmap_exp_val;
     disk_params.alpha_visc = def.alpha_visc_val;
     disk_params.STAR_MASS = def.star_val;
@@ -143,13 +143,13 @@ int main(int argc, const char **argv) {
         // disk_params.grid_number update from file *before* allocation.
         disk_params.grid_number = calculateNumbersOfParticles(current_inputsig_file); // Update grid_number from file (for GAS grid)
 
-        // Recalculate DD based on the updated grid_number
+        // Recalculate delta_r based on the updated grid_number
         if (disk_params.grid_number > 1) {
-            disk_params.DD = (disk_params.r_max - disk_params.r_min) / (disk_params.grid_number - 1.0);
+            disk_params.delta_r = (disk_params.r_max - disk_params.r_min) / (disk_params.grid_number - 1.0);
         } else {
-            disk_params.DD = 0.0;
+            disk_params.delta_r = 0.0;
         }
-        fprintf(stderr, "DEBUG [main]: grid_number set from input file: %d. DD calculated as %.4e.\n", disk_params.grid_number, disk_params.DD);
+        fprintf(stderr, "DEBUG [main]: grid_number set from input file: %d. delta_r calculated as %.4e.\n", disk_params.grid_number, disk_params.delta_r);
 
         // --- Dynamic Memory Allocation for Disk Arrays ---
         // This happens ONLY HERE, because runInitialization is not called!
@@ -188,7 +188,7 @@ int main(int argc, const char **argv) {
         init_tool_params.n_grid_points = disk_params.grid_number; // This is the gas grid resolution
         init_tool_params.r_inner= disk_params.r_min;
         init_tool_params.r_outer = disk_params.r_max;
-        init_tool_params.sigma0_gas_au = disk_params.SIGMA0;
+        init_tool_params.sigma0_gas_au = disk_params.sigma_0;
         init_tool_params.sigma_exponent = disk_params.SIGMAP_EXP;
         init_tool_params.deadzone_r_inner = disk_params.r_dze_i;
         init_tool_params.deadzone_r_outer = disk_params.r_dze_o;
@@ -226,11 +226,11 @@ int main(int argc, const char **argv) {
         disk_params.grid_number = calculateNumbersOfParticles(current_inputsig_file);
 
         if (disk_params.grid_number > 1) {
-            disk_params.DD = (disk_params.r_max - disk_params.r_min) / (disk_params.grid_number - 1.0);
+            disk_params.delta_r = (disk_params.r_max - disk_params.r_min) / (disk_params.grid_number - 1.0);
         } else {
-            disk_params.DD = 0.0;
+            disk_params.delta_r = 0.0;
         }
-        fprintf(stderr, "DEBUG [main]: grid_number updated from generated file: %d. DD calculated as %.4e.\n", disk_params.grid_number, disk_params.DD);
+        fprintf(stderr, "DEBUG [main]: grid_number updated from generated file: %d. delta_r calculated as %.4e.\n", disk_params.grid_number, disk_params.delta_r);
 
         // No need for 'cp' here for kDiskConfigFile or FILENAME_INIT_PROFILE,
         // since runInitialization created them directly in initial_dir_path.

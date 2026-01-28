@@ -39,7 +39,7 @@ void createRadialGrid(disk_t *disk_params) {
 	
 	int i;
  	for(i = 0; i <= disk_params->grid_number+1; i++) {						/*	load an array of radii	*/
- 		disk_params->rvec[i] = disk_params->r_min + (i-1) * disk_params->DD;
+ 		disk_params->rvec[i] = disk_params->r_min + (i-1) * disk_params->delta_r;
 //        fprintf(stderr, "DEBUG [createRadialGrid]: r: %lg\n", disk_params->rvec[i]);
 	}
 }
@@ -50,7 +50,7 @@ void createInitialGasSurfaceDensity(disk_t *disk_params){		/*	initial profile of
   	int i;
   
   	for(i = 1; i <= disk_params->grid_number; i++) {
-    		disk_params->sigmavec[i] = disk_params->SIGMA0 * pow(disk_params->rvec[i],disk_params->SIGMAP_EXP);		/*	sigma0*r^x (x could be eg. -1/2)	*/
+    		disk_params->sigmavec[i] = disk_params->sigma_0 * pow(disk_params->rvec[i],disk_params->SIGMAP_EXP);		/*	sigma0*r^x (x could be eg. -1/2)	*/
     }
   
 
@@ -97,10 +97,10 @@ void calculateInitialDustSurfaceDensity(double radin[][2], double *massin, doubl
 /*	If the dust grain is within the simulated regine (above r_min)
  	the surface density is calculated from the representative mass of the dust grain	*/
 		if((radin[i][0] >= disk_params->r_min)) {
-			out[i][0] = massin[i] / (2. * (radin[i][0]-disk_params->DD/2.) * M_PI * disk_params->DD);	// sigma = m /(2 * r * pi * dr) --> dr is the original grid step
+			out[i][0] = massin[i] / (2. * (radin[i][0]-disk_params->delta_r/2.) * M_PI * disk_params->delta_r);	// sigma = m /(2 * r * pi * dr) --> dr is the original grid step
 			out[i][1] = radin[i][0];																	// Saves the radial distance of the dust grain
 
-  			double rmid = (radin[i][0] - disk_params->r_min) / disk_params->DD;     						// 	The integer part of this gives at which index is the body		
+  			double rmid = (radin[i][0] - disk_params->r_min) / disk_params->delta_r;     						// 	The integer part of this gives at which index is the body		
 			int rindex = (int) floor(rmid);																// 	The "whole part of rmin" --> floor rounds down, +0.5 allows us to solve the rounding correctly
 			out[i][2] = (double) rindex;
 

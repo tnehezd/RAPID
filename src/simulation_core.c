@@ -65,8 +65,8 @@ double calculateTimeStep(const disk_t *disk_params) { // Add const here too
             A_max = ftcsSecondDerivativeCoefficient(disk_params->rvec[i], disk_params);
         }
     }
-    stepping = disk_params->DD * disk_params->DD / (2.0 * A_max);
-    fprintf(stderr," Actual calculateTimeStep: DD = %.2e, stepping = %.2e\n", disk_params->DD, stepping);
+    stepping = disk_params->delta_r * disk_params->delta_r / (2.0 * A_max);
+    fprintf(stderr," Actual calculateTimeStep: delta_r = %.2e, stepping = %.2e\n", disk_params->delta_r, stepping);
 
     return stepping;
 }

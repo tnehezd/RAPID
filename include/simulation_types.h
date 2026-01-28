@@ -37,10 +37,10 @@ typedef struct disk_t {
     double r_min;
     double r_max;
     int grid_number;
-    double DD; // r_min, r_max, grid_number alapján számolva
+    double delta_r; // r_min, r_max, grid_number alapján számolva
 
     // Gáz korong paraméterek
-    double SIGMA0; // Kezdeti referencia gáz sűrűség
+    double sigma_0; // Kezdeti referencia gáz sűrűség
     double SIGMAP_EXP; // Sűrűség profil kitevő
     double alpha_visc; // Alfa viszkozitás
     double STAR_MASS; // Központi csillag tömege

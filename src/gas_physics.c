@@ -84,7 +84,7 @@ void calculateGasPressureGradient(disk_t *disk_params) {
     double ptemp, pvec[disk_params->grid_number + 2];
 
     for (i = 1; i <= disk_params->grid_number; i++) {
-        ptemp = (disk_params->pressvec[i + 1] - disk_params->pressvec[i - 1]) / (2.0 * disk_params->DD);
+        ptemp = (disk_params->pressvec[i + 1] - disk_params->pressvec[i - 1]) / (2.0 * disk_params->delta_r);
         pvec[i] = ptemp;
 
     }
@@ -123,7 +123,7 @@ void calculateGasRadialVelocity(disk_t *disk_params) {
     // Második ciklus: feltölti a lokális ugvectemp tömböt
     #pragma omp parallel for private(i, tempug)
     for (i = 1; i <= disk_params->grid_number; i++) { // Használd a disk_params->grid_number-et
-        tempug = (ugvec[i + 1] - ugvec[i - 1]) / (2.0 * disk_params->DD); // Használd a disk_params->DD-t
+        tempug = (ugvec[i + 1] - ugvec[i - 1]) / (2.0 * disk_params->delta_r); // Használd a disk_params->delta_r-t
         // coefficientForGasRadialVelocity hívása, ha szükséges, átadva neki a disk_params-ot
         ugvectemp[i] = coefficientForGasRadialVelocity(disk_params->sigmavec[i], disk_params->rvec[i]) * tempug;
     }
@@ -162,10 +162,10 @@ void refreshGasSurfaceDensityPressurePressureGradient(const simulation_options_t
         u_bi = uvec[i - 1];
         u_fi = uvec[i + 1];
 
-        // Access DD and deltat through the appropriate structs
+        // Access delta_r and deltat through the appropriate structs
         // Assuming ftcsSecondDerivativeCoefficient and ftcsFirstDerivativeCoefficient also take disk_params (and sim_opts if they need it)
-        double temp = ftcsSecondDerivativeCoefficient(disk_params->rvec[i], disk_params) * (u_fi - 2.0 * u + u_bi) / (disk_params->DD * disk_params->DD) +
-                      ftcsFirstDerivativeCoefficient(disk_params->rvec[i], disk_params) * (u_fi - u_bi) / (2.0 * disk_params->DD);
+        double temp = ftcsSecondDerivativeCoefficient(disk_params->rvec[i], disk_params) * (u_fi - 2.0 * u + u_bi) / (disk_params->delta_r * disk_params->delta_r) +
+                      ftcsFirstDerivativeCoefficient(disk_params->rvec[i], disk_params) * (u_fi - u_bi) / (2.0 * disk_params->delta_r);
         
         sigma_temp[i] = uvec[i] + sim_opts->DT * temp; // Use sim_opts->DT for deltat
     }

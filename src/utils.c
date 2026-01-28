@@ -1,5 +1,5 @@
 #include "utils.h"    // Ezt kell includolni, mert ebben lesz a parabolicExtrapolationToGhostCells deklarációja
-#include "config.h"   // Szükséges a r_min és DD makrók miatt, amiket a parabolicExtrapolationToGhostCells használ
+#include "config.h"   // Szükséges a r_min és delta_r makrók miatt, amiket a parabolicExtrapolationToGhostCells használ
 #include <math.h>     // Bár a parabolicExtrapolationToGhostCells most nem használ math.h függvényt,
 #include <stdlib.h>                      // más utility függvényeknek szüksége lehet rá.
                       // Jó gyakorlat ide tenni.
@@ -127,7 +127,7 @@ double findZeroPoint(int i, const double *rvec, const double *dp) {
 // calculateIndexFromRadius függvény (melyet korábban megbeszéltünk, valahol globálisan)
 /*double calculateIndexFromRadius(double r_coord, disk_t *disk_params) {
     if (r_coord < disk_params->r_min) return 0.0;
-    return fmax(0.0, fmin((double)(disk_params->grid_number - 1), floor((r_coord - disk_params->r_min) / disk_params->DD + 0.5)));
+    return fmax(0.0, fmin((double)(disk_params->grid_number - 1), floor((r_coord - disk_params->r_min) / disk_params->delta_r + 0.5)));
 }
 */
 // Az átalakított findRAnnulusAroundDZE függvény
@@ -173,15 +173,15 @@ void findRAnnulusAroundDZE(double rin, double *ind_ii, double *ind_io,
 
     // Határok kiszámítása: HASZNÁLJUK A MENTETT h_rin ÉS h_rout VÁLTOZÓKAT!
     // Ez kritikus, az eredeti elírásokat javítja.
-    riimH = rin_minus_h_rin - disk_params->DD / 2.0;
-    riipH = rin_minus_h_rin + disk_params->DD / 2.0;
-    riomH = rin_plus_h_rin - disk_params->DD / 2.0;
-    riopH = rin_plus_h_rin + disk_params->DD / 2.0;
+    riimH = rin_minus_h_rin - disk_params->delta_r / 2.0;
+    riipH = rin_minus_h_rin + disk_params->delta_r / 2.0;
+    riomH = rin_plus_h_rin - disk_params->delta_r / 2.0;
+    riopH = rin_plus_h_rin + disk_params->delta_r / 2.0;
 
-    roimH = rout_minus_h_rout - disk_params->DD / 2.0;
-    roipH = rout_minus_h_rout + disk_params->DD / 2.0;
-    roomH = rout_plus_h_rout - disk_params->DD / 2.0;
-    roopH = rout_plus_h_rout + disk_params->DD / 2.0;
+    roimH = rout_minus_h_rout - disk_params->delta_r / 2.0;
+    roipH = rout_minus_h_rout + disk_params->delta_r / 2.0;
+    roomH = rout_plus_h_rout - disk_params->delta_r / 2.0;
+    roopH = rout_plus_h_rout + disk_params->delta_r / 2.0;
 
 
     // Iteráció az rvec tömbön
@@ -193,13 +193,13 @@ void findRAnnulusAroundDZE(double rin, double *ind_ii, double *ind_io,
         if (sim_opts->dzone == 1) {
             // INNER (RIN) határok
             if (disk_params->rvec[i] > riimH && disk_params->rvec[i] < riipH) {
-                rmid = (disk_params->rvec[i] - disk_params->r_min) / disk_params->DD;
+                rmid = (disk_params->rvec[i] - disk_params->r_min) / disk_params->delta_r;
                 rtemp = floor(rmid + 0.5);
                 *ind_ii = rtemp;
             }
 
             if (disk_params->rvec[i] > riomH && disk_params->rvec[i] < riopH) {
-                rmid = (disk_params->rvec[i] - disk_params->r_min) / disk_params->DD;
+                rmid = (disk_params->rvec[i] - disk_params->r_min) / disk_params->delta_r;
                 rtemp = floor(rmid + 0.5);
                 *ind_io = rtemp;
             }
@@ -207,13 +207,13 @@ void findRAnnulusAroundDZE(double rin, double *ind_ii, double *ind_io,
 
         // OUTER (ROUT) határok
         if (disk_params->rvec[i] > roimH && disk_params->rvec[i] < roipH) {
-            rmid = (disk_params->rvec[i] - disk_params->r_min) / disk_params->DD;
+            rmid = (disk_params->rvec[i] - disk_params->r_min) / disk_params->delta_r;
             rtemp = floor(rmid + 0.5);
             *ind_oi = rtemp;
         }
 
         if (disk_params->rvec[i] > roomH && disk_params->rvec[i] < roopH) {
-            rmid = (disk_params->rvec[i] - disk_params->r_min) / disk_params->DD;
+            rmid = (disk_params->rvec[i] - disk_params->r_min) / disk_params->delta_r;
             rtemp = floor(rmid + 0.5);
             *ind_oo = rtemp;
         }
@@ -399,7 +399,7 @@ void updateParticleGridIndices(double radin[][2], double partmassindin[][5], dou
 
     for (i = 0; i < n; i++) {   
         // A részecske aktuális sugara radin[i][0]-ban van
-        rmid = (radin[i][0] - disk_params->r_min) / disk_params->DD; 
+        rmid = (radin[i][0] - disk_params->r_min) / disk_params->delta_r; 
         rindex = (int) floor(rmid+0.5);
         if(rmid < 0) rindex = 0;
         if(isnan(rmid)) rindex = 0;

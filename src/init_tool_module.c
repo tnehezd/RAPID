@@ -245,7 +245,7 @@ int runInitialization(init_tool_options_t *opts, disk_t *disk_params) {
     disk_params->grid_number = opts->n_grid_points; // Gas grid resolution
     disk_params->r_min = opts->r_inner;
     disk_params->r_max = opts->r_outer;
-    disk_params->SIGMA0 = current_sigma0_gas;
+    disk_params->sigma_0 = current_sigma0_gas;
     disk_params->SIGMAP_EXP = opts->sigma_exponent;
     disk_params->r_dze_i = opts->deadzone_r_inner;
     disk_params->r_dze_o = opts->deadzone_r_outer;
@@ -258,9 +258,9 @@ int runInitialization(init_tool_options_t *opts, disk_t *disk_params) {
     disk_params->STAR_MASS = opts->star_mass;
     disk_params->particle_density = opts->dust_density_g_cm3;
     if (disk_params->grid_number > 1) {
-        disk_params->DD = (disk_params->r_max - disk_params->r_min) / ((double)disk_params->grid_number - 1.0);
+        disk_params->delta_r = (disk_params->r_max - disk_params->r_min) / ((double)disk_params->grid_number - 1.0);
     } else {
-        disk_params->DD = 0.0;
+        disk_params->delta_r = 0.0;
     }
     // Allocate arrays for the GAS grid (based on grid_number)
     disk_params->rvec = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
@@ -333,13 +333,13 @@ int runInitialization(init_tool_options_t *opts, disk_t *disk_params) {
         // --- Interpolate gas disk properties at the dust particle's radial position using the existing 'linearInterpolation' function ---
         double temp_sigma, temp_pressure, temp_dPdr;
 
-        linearInterpolation(disk_params->sigmavec, disk_params->rvec, r_dust_particle_au, &temp_sigma, disk_params->DD, 0, disk_params);
+        linearInterpolation(disk_params->sigmavec, disk_params->rvec, r_dust_particle_au, &temp_sigma, disk_params->delta_r, 0, disk_params);
         long double sigma_gas_local = temp_sigma;
 
-        linearInterpolation(disk_params->pressvec, disk_params->rvec, r_dust_particle_au, &temp_pressure, disk_params->DD, 0, disk_params);
+        linearInterpolation(disk_params->pressvec, disk_params->rvec, r_dust_particle_au, &temp_pressure, disk_params->delta_r, 0, disk_params);
         double pressure_local = temp_pressure;
 
-        linearInterpolation(disk_params->dpressvec, disk_params->rvec, r_dust_particle_au, &temp_dPdr, disk_params->DD, 0, disk_params);
+        linearInterpolation(disk_params->dpressvec, disk_params->rvec, r_dust_particle_au, &temp_dPdr, disk_params->delta_r, 0, disk_params);
         double dPdr_local = temp_dPdr;
 
 
