@@ -34,10 +34,10 @@ void calculateGasPressureGradient(DiskParameters *disk_params);
 double coefficientForGasRadialVelocity(double sigma, double r); // Feltételezve, hogy coefficientForGasRadialVelocity a dust_physics.c-ben van
 
 /*	calculateGasRadialVelocity = -3/(Sigma*R^0.5)*(d/dR)(nu*Sigma*R^0.5) kiszamolasa	*/
-void calculateGasRadialVelocity(DiskParameters *disk_params); // disk_params nem const, mert módosítva van az ugvec tagja
+void calculateGasRadialVelocity(DiskParameters *disk_params); // disk_params nem const, mert módosítva van az gas_velocity_vector tagja
 
 /*	Fuggveny a sigma, p, dp kiszamolasara	*/
-// disk_params nem const, mert módosítva van a sigmavec, pressvec, dpressvec tagjai
+// disk_params nem const, mert módosítva van a gas_surface_density_vector, gas_pressure_vector, gas_pressure_gradient_vector tagjai
 void refreshGasSurfaceDensityPressurePressureGradient(const SimulationOptions *sim_opts, DiskParameters *disk_params);
 
 #endif // GAS_PHYSICS_H

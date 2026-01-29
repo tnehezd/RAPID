@@ -9,13 +9,13 @@
  * @brief Egyetlen Runge-Kutta 4 lépést hajt végre a részecske mozgására.
  * @param time Aktuális szimulációs idő.
  * @param prad Aktuális részecskesugár.
- * @param pressvec Nyomás vektor a diszk rácspontjain.
- * @param dpressvec Nyomásgradiens vektor a diszk rácspontjain.
- * @param sigmavec Gáz felszíni sűrűség vektor a diszk rácspontjain.
+ * @param gas_pressure_vector Nyomás vektor a diszk rácspontjain.
+ * @param gas_pressure_gradient_vector Nyomásgradiens vektor a diszk rácspontjain.
+ * @param gas_surface_density_vector Gáz felszíni sűrűség vektor a diszk rácspontjain.
  * @param sigmad Por felszíni sűrűség (adott részecske rácspontján).
  * @param rdvec A por részecskék radiális koordinátái.
  * @param radial_grid A diszk rácspontjainak radiális koordinátái.
- * @param ugvec Gáz sebesség vektor a diszk rácspontjain.
+ * @param gas_velocity_vector Gáz sebesség vektor a diszk rácspontjain.
  * @param step Az időlépés mérete.
  * @param y A részecske aktuális radiális pozíciója.
  * @param ynew A részecske új radiális pozíciója (kimenet).

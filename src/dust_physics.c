@@ -107,7 +107,7 @@ double calculateRadialDriftBarrier(double sigmad, double r, double p, double dp,
     double c_s = calculateLocalSoundSpeed(r,disk_params);
     double c_s2 = c_s * c_s;
     double dlnPdlnr = r / p * dp;
-    double s_drift =  disk_params->fDrift * 2.0 / M_PI * Sigmad_cgs / rho_p * vkep2 / c_s2 * fabs(1.0 / dlnPdlnr);
+    double s_drift =  disk_params->f_drift * 2.0 / M_PI * Sigmad_cgs / rho_p * vkep2 / c_s2 * fabs(1.0 / dlnPdlnr);
     return s_drift;
 }
 
@@ -116,13 +116,13 @@ double calculateTurbulentFragmentationBarrier(double sigma, double r, double rho
 
     double s_frag, u_frag, u_frag2, Sigma_cgs, c_s, c_s2;
 
-    u_frag = disk_params->uFrag * CM_PER_SEC_TO_AU_PER_YEAR_2PI; /*	cm/sec --> AU / (yr/2pi)	*/
+    u_frag = disk_params->fragmentation_velocity * CM_PER_SEC_TO_AU_PER_YEAR_2PI; /*	cm/sec --> AU / (yr/2pi)	*/
     u_frag2 = u_frag * u_frag;
     Sigma_cgs = sigma / SURFACE_DENSITY_CONVERSION_FACTOR;
     c_s = calculateLocalSoundSpeed(r,disk_params); // / CM_PER_SEC_TO_AU_PER_YEAR_2PI; // Komment ki, ha a calculateLocalSoundSpeed már megfelelő mértékegységben van
     c_s2 = c_s * c_s;
 
-    s_frag = disk_params->fFrag * 2.0 / (3.0 * M_PI) * Sigma_cgs / (rho_p * calculateTurbulentAlpha(r,disk_params)) * u_frag2 / c_s2;
+    s_frag = disk_params->f_frag * 2.0 / (3.0 * M_PI) * Sigma_cgs / (rho_p * calculateTurbulentAlpha(r,disk_params)) * u_frag2 / c_s2;
 
     return s_frag;
 }
@@ -132,7 +132,7 @@ double calculateDriftInducedFragmentationBarrier(double sigma, double r, double 
 
     double u_frag, vkep, dlnPdlnr, c_s, c_s2, s_df, Sigma_cgs;
 
-    u_frag = disk_params->uFrag * CM_PER_SEC_TO_AU_PER_YEAR_2PI; /*	cm/sec --> AU / (yr/2pi)	*/
+    u_frag = disk_params->fragmentation_velocity * CM_PER_SEC_TO_AU_PER_YEAR_2PI; /*	cm/sec --> AU / (yr/2pi)	*/
     Sigma_cgs = sigma / SURFACE_DENSITY_CONVERSION_FACTOR;
     c_s = calculateLocalSoundSpeed(r,disk_params);
     c_s2 = c_s * c_s;

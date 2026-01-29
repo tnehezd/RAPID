@@ -264,22 +264,22 @@ int runInitialization(init_tool_options_t *opts, DiskParameters *disk_params) {
     }
     // Allocate arrays for the GAS grid (based on grid_number)
     disk_params->radial_grid = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
-    disk_params->sigmavec = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
-    disk_params->pressvec = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
-    disk_params->dpressvec = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
-    disk_params->ugvec = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
+    disk_params->gas_surface_density_vector = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
+    disk_params->gas_pressure_vector = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
+    disk_params->gas_pressure_gradient_vector = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
+    disk_params->gas_velocity_vector = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
 
-    if (!disk_params->radial_grid || !disk_params->sigmavec || !disk_params->pressvec || !disk_params->dpressvec || !disk_params->ugvec) {
+    if (!disk_params->radial_grid || !disk_params->gas_surface_density_vector || !disk_params->gas_pressure_vector || !disk_params->gas_pressure_gradient_vector || !disk_params->gas_velocity_vector) {
         fprintf(stderr, "ERROR [runInitialization]: Failed to allocate disk arrays. Exiting.\n");
         if (fout_data) fclose(fout_data);
         if (fout_params) fclose(fout_params);
         if (fout_dens) fclose(fout_dens);
         // Free already allocated memory before exiting
         if (disk_params->radial_grid) free(disk_params->radial_grid);
-        if (disk_params->sigmavec) free(disk_params->sigmavec);
-        if (disk_params->pressvec) free(disk_params->pressvec);
-        if (disk_params->dpressvec) free(disk_params->dpressvec);
-        if (disk_params->ugvec) free(disk_params->ugvec);
+        if (disk_params->gas_surface_density_vector) free(disk_params->gas_surface_density_vector);
+        if (disk_params->gas_pressure_vector) free(disk_params->gas_pressure_vector);
+        if (disk_params->gas_pressure_gradient_vector) free(disk_params->gas_pressure_gradient_vector);
+        if (disk_params->gas_velocity_vector) free(disk_params->gas_velocity_vector);
         return 1;
     }
 
@@ -302,9 +302,9 @@ int runInitialization(init_tool_options_t *opts, DiskParameters *disk_params) {
         }
 
         // Get gas properties directly from the disk_params arrays for the gas grid
-        long double sigma_gas_local_val = disk_params->sigmavec[i_loop + 1];
-        double pressure_local_val = disk_params->pressvec[i_loop + 1];
-        double dPdr_local_val = disk_params->dpressvec[i_loop + 1];
+        long double sigma_gas_local_val = disk_params->gas_surface_density_vector[i_loop + 1];
+        double pressure_local_val = disk_params->gas_pressure_vector[i_loop + 1];
+        double dPdr_local_val = disk_params->gas_pressure_gradient_vector[i_loop + 1];
 
         fprintf(fout_dens, "%-15.6e %-15.6Lg %-15.6e %-15.6e\n",
             r_gas_grid_au,
@@ -333,13 +333,13 @@ int runInitialization(init_tool_options_t *opts, DiskParameters *disk_params) {
         // --- Interpolate gas disk properties at the dust particle's radial position using the existing 'linearInterpolation' function ---
         double temp_sigma, temp_pressure, temp_dPdr;
 
-        linearInterpolation(disk_params->sigmavec, disk_params->radial_grid, r_dust_particle_au, &temp_sigma, disk_params->delta_r, 0, disk_params);
+        linearInterpolation(disk_params->gas_surface_density_vector, disk_params->radial_grid, r_dust_particle_au, &temp_sigma, disk_params->delta_r, 0, disk_params);
         long double sigma_gas_local = temp_sigma;
 
-        linearInterpolation(disk_params->pressvec, disk_params->radial_grid, r_dust_particle_au, &temp_pressure, disk_params->delta_r, 0, disk_params);
+        linearInterpolation(disk_params->gas_pressure_vector, disk_params->radial_grid, r_dust_particle_au, &temp_pressure, disk_params->delta_r, 0, disk_params);
         double pressure_local = temp_pressure;
 
-        linearInterpolation(disk_params->dpressvec, disk_params->radial_grid, r_dust_particle_au, &temp_dPdr, disk_params->delta_r, 0, disk_params);
+        linearInterpolation(disk_params->gas_pressure_gradient_vector, disk_params->radial_grid, r_dust_particle_au, &temp_dPdr, disk_params->delta_r, 0, disk_params);
         double dPdr_local = temp_dPdr;
 
 

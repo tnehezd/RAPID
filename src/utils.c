@@ -81,7 +81,7 @@ int countZeroPoints(const DiskParameters *disk_params) {
 	count = 0;
 
 	for(i = 0; i < disk_params->grid_number-1; i++) {
-		if(((disk_params->dpressvec[i] * disk_params->dpressvec[i+1]) <= 0.)  && (disk_params->dpressvec[i] > disk_params->dpressvec[i+1])) {	/*	Osszeszorozza a ket ponton a nyomas derivaltjanak erteket, ahol a szorzat negativ, ott elojelvaltas tortenik --> negativbol pozitivba, vagy pozitivbol negativba valt --> nyomasi maximum. Maximum pedig ott talalhato, ahol a fuggveny pozitivbol negativba valt at (ezt keresi a masodik feltetel).	*/
+		if(((disk_params->gas_pressure_gradient_vector[i] * disk_params->gas_pressure_gradient_vector[i+1]) <= 0.)  && (disk_params->gas_pressure_gradient_vector[i] > disk_params->gas_pressure_gradient_vector[i+1])) {	/*	Osszeszorozza a ket ponton a nyomas derivaltjanak erteket, ahol a szorzat negativ, ott elojelvaltas tortenik --> negativbol pozitivba, vagy pozitivbol negativba valt --> nyomasi maximum. Maximum pedig ott talalhato, ahol a fuggveny pozitivbol negativba valt at (ezt keresi a masodik feltetel).	*/
 			count++;
 		} 
 

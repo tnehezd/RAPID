@@ -51,23 +51,22 @@ typedef struct {
 
     // Dinamikusan allokált tömbök (ezek a main-ben vannak beállítva, vagy itt lesznek allokálva)
     double *radial_grid;          // Rádiusz vektor
-    double *sigmavec;      // Gáz felületi sűrűség
-    double *pressvec;      // Gáz nyomás
-    double *dpressvec;     // Gáz nyomás gradiens (rádiusz szerinti derivált)
-    double *ugvec;         // Gáz belső energia vagy hőmérséklet
-    double *sigmadustvec;  // Por felületi sűrűség (Új: sigmad)
-    double *rhopvec;       // Por sűrűsége a részecskében (Új: rho_p)
+    double *gas_surface_density_vector;      // Gáz felületi sűrűség
+    double *gas_pressure_vector;      // Gáz nyomás
+    double *gas_pressure_gradient_vector;     // Gáz nyomás gradiens (rádiusz szerinti derivált)
+    double *gas_velocity_vector;         // Gáz belső energia vagy hőmérséklet
+//    double *dust_surface_density_vector;  // Por felületi sűrűség (Új: sigmad)
 
     // Por koagulációs/fragmentációs paraméterek
-    double fFrag;          // Fragmentációs hatékonysági faktor
-    double uFrag;          // Fragmentációs sebesség küszöb
-    double fDrift;         // fd in Birnstiel 2012, set to 0.55
+    double f_frag;          // Fragmentációs hatékonysági faktor
+    double fragmentation_velocity;          // Fragmentációs sebesség küszöb
+    double f_drift;         // fd in Birnstiel 2012, set to 0.55
 
     // További általános paraméterek vagy tömbök
     // Ha a 'dp' és 'rho_p' nem tömbök, hanem skalárok, akkor azok is ide jöhetnek,
     // de a kontextusból valószínűbb, hogy rácspontonként változnak.
-    // Mivel az 'dp' már dpressvec néven létezik, csak a 'rho_p'-t kell hozzáadni.
-    // Látom, a korábbi hibáknál 'dp' néven hivatkoztál rá, az most 'dpressvec'.
+    // Mivel az 'dp' már gas_pressure_gradient_vector néven létezik, csak a 'rho_p'-t kell hozzáadni.
+    // Látom, a korábbi hibáknál 'dp' néven hivatkoztál rá, az most 'gas_pressure_gradient_vector'.
     // A 'rho_p' viszont egy új bejegyzés.
 
 } DiskParameters;

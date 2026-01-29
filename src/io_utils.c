@@ -174,9 +174,9 @@ void loadGasSurfaceDensityFromFile(DiskParameters *disk_params, const char *file
         // A "valós" adatok 1-től grid_number-ig kerülnek, a 0 és grid_number+1 pedig a applyBoundaryConditions-hez.
         if ((i + 1) >= 0 && (i + 1) <= disk_params->grid_number + 1) { 
             disk_params->radial_grid[i + 1] = r_val;
-            disk_params->sigmavec[i + 1] = sigma_gas_val;
-            disk_params->pressvec[i + 1] = pressure_gas_val;
-            disk_params->dpressvec[i + 1] = dpressure_dr_val;
+            disk_params->gas_surface_density_vector[i + 1] = sigma_gas_val;
+            disk_params->gas_pressure_vector[i + 1] = pressure_gas_val;
+            disk_params->gas_pressure_gradient_vector[i + 1] = dpressure_dr_val;
         } else {
             fprintf(stderr, "WARNING [loadGasSurfaceDensityFromFile]: Attempted to write to out-of-bounds index %d. Max allowed index: %d (grid_number+1).\n", i + 1, disk_params->grid_number + 1);
         }
@@ -286,8 +286,8 @@ void printMassGrowthAtDZEFile(double step, double (*partmassind)[5], double (*pa
 
     if(dim != 0) {
         for(i = 0; i < disk_params->grid_number; i++) {
-            // Itt a findZeroPoint valószínűleg disk_params->radial_grid és disk_params->dpressvec-et használ
-            temp_new = findZeroPoint(i,disk_params->radial_grid,disk_params->dpressvec); 
+            // Itt a findZeroPoint valószínűleg disk_params->radial_grid és disk_params->gas_pressure_gradient_vector-et használ
+            temp_new = findZeroPoint(i,disk_params->radial_grid,disk_params->gas_pressure_gradient_vector); 
             if(temp != temp_new && i > 3 && temp_new != 0.0) {
                 if (j < dim) { 
                     r_count[j] = temp_new;
@@ -333,7 +333,7 @@ void printMassGrowthAtDZEFile(double step, double (*partmassind)[5], double (*pa
     tav = rout;
 
     // findRAnnulusAroundDZE hívása: EZ KISZÁMOLJA AZ INDEX-HATÁROKAT AZ AKTUÁLIS SUGARAK ALAPJÁN
-    // Ezt már a disk_params->radial_grid és disk_params->dpressvec alapján kellene, nem pedig külön paraméterekből.
+    // Ezt már a disk_params->radial_grid és disk_params->gas_pressure_gradient_vector alapján kellene, nem pedig külön paraméterekből.
     // Ha a findRAnnulusAroundDZE is disk_params-ot kapott, akkor rendben van.
     findRAnnulusAroundDZE(tav2, &ind_ii, &ind_io, tav, &ind_oi, &ind_oo, sim_opts, disk_params);
 
@@ -403,7 +403,7 @@ void printGasSurfaceDensityPressurePressureDerivateFile(const DiskParameters *di
 
 //%-15.6e %-15.6Lg %-15.6e %-15.6e\n",
     for(i = 1; i <= disk_params->grid_number; i++) { // Using disk_params->grid_number
-        fprintf(output_files->surface_file, "%-15.6e %-15.6lg %-15.6e %15.6e\n", disk_params->radial_grid[i], disk_params->sigmavec[i], disk_params->pressvec[i], disk_params->dpressvec[i]);
+        fprintf(output_files->surface_file, "%-15.6e %-15.6lg %-15.6e %15.6e\n", disk_params->radial_grid[i], disk_params->gas_surface_density_vector[i], disk_params->gas_pressure_vector[i], disk_params->gas_pressure_gradient_vector[i]);
     }
 
     fflush(output_files->surface_file);
