@@ -26,15 +26,15 @@
 /*  	dr/dt = St/(1+St*St)*H(r)/r*dlnP/dlnr*cs = St/(1+St*St) * (H/r) * (r/P) * (dP/dr) * cs		*/
 void calculate1DDustDrift(double pradius, double dp, double sigma, double ug, double r, double *drdt, const DiskParameters *disk_params) {
 
-    double P, H, dPdr, St, csound;
+    double pressure, local_pressure_scaleheight, pressure_gradient, stokes_number, local_soundspeed;
       
-    St = calculateStokesNumber(pradius,sigma,disk_params);
-    H = calculatePressureScaleHeight(r,disk_params);   
-    P = calculateGasPressure(sigma,r,disk_params);
-    dPdr = dp;
-    csound = calculateLocalSoundSpeed(r,disk_params); 
+    stokes_number = calculateStokesNumber(pradius,sigma,disk_params);
+    local_pressure_scaleheight = calculatePressureScaleHeight(r,disk_params);   
+    pressure = calculateGasPressure(sigma,r,disk_params);
+    pressure_gradient = dp;
+    local_soundspeed = calculateLocalSoundSpeed(r,disk_params); 
 
-    *drdt = ug / (1. + St * St) + St / (1. + St * St) * H / P * dPdr * csound;	/* bearamlas sebessege: Birnstiel PHD	*/
+    *drdt = ug / (1. + stokes_number * stokes_number) + stokes_number / (1. + stokes_number * stokes_number) * local_pressure_scaleheight / pressure * pressure_gradient * local_soundspeed;	/* bearamlas sebessege: Birnstiel PHD	*/
 }
 
 
