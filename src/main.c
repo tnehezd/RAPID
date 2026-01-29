@@ -65,19 +65,18 @@ int main(int argc, const char **argv) {
 
     /* Populate the SimulationOptions struct from 'def' (parsed options) */
     sim_opts.option_for_evolution = def.option_for_evolution;
-    sim_opts.drift = def.drift;
-    sim_opts.growth = def.growth;
-    sim_opts.twopop = def.twopop;
-    sim_opts.DT = def.tStep;
-    sim_opts.TMAX = def.totalTime;
-    sim_opts.WO = def.outputFrequency;
-    sim_opts.TCURR = def.startTime; // Initial current time
+    sim_opts.option_for_dust_drift = def.option_for_dust_drift;
+    sim_opts.option_for_dust_growth = def.option_for_dust_growth;
+    sim_opts.option_for_dust_secondary_population = def.option_for_dust_secondary_population;
+    sim_opts.user_defined_time_step = def.user_defined_time_step;
+    sim_opts.maximum_simulation_time = def.maximum_simulation_time;
+    sim_opts.output_frequency = def.output_frequency;
     sim_opts.num_dust_particles = def.ndust_val; // NEW: Populate num_dust_particles from parsed options
 
     // DEBUG: Show def.output_dir_name BEFORE it's used to populate sim_opts.output_dir_name
     fprintf(stderr, "DEBUG [main]: def.output_dir_name BEFORE sim_opts population: '%s'\n", def.output_dir_name);
 
-    fprintf(stderr, "DEBUG [main]: Evolution (sim_opts.option_for_evolution=%.2f) or drift (sim_opts.drift=%.2f) is ON. Starting main simulation loop.\n", sim_opts.option_for_evolution, sim_opts.drift);
+    fprintf(stderr, "DEBUG [main]: Evolution (sim_opts.option_for_evolution=%.2f) or drift (sim_opts.option_for_dust_drift=%.2f) is ON. Starting main simulation loop.\n", sim_opts.option_for_evolution, sim_opts.option_for_dust_drift);
 
     // --- Populate DiskParameters with parameters from 'def' ---
     disk_params.r_min = def.rmin_val;
@@ -99,8 +98,8 @@ int main(int argc, const char **argv) {
     disk_params.f_drift = 0.55; // set by Birnstiel 2012
     disk_params.particle_density = def.pdensity_val;
 
-    // Set sim_opts->dzone based on dead zone radii from disk_params
-    sim_opts.dzone = (disk_params.r_dze_i > 0.0 || disk_params.r_dze_o > 0.0) ? 1.0 : 0.0;
+    // Set sim_opts->flag_for_deadzone based on dead zone radii from disk_params
+    sim_opts.flag_for_deadzone = (disk_params.r_dze_i > 0.0 || disk_params.r_dze_o > 0.0) ? 1.0 : 0.0;
 
     // --- Output directory handling ---
     // createRunDirectory contains the numbering logic if the directory already exists.
@@ -272,8 +271,8 @@ int main(int argc, const char **argv) {
     printCurrentInformationAboutRun(def.output_dir_name, &disk_params, &sim_opts);
 
     // Run simulation or exit based on options
-    if(sim_opts.option_for_evolution == 0. && sim_opts.drift == 0.) {
-        fprintf(stderr, "DEBUG [main]: Evolution (sim_opts.option_for_evolution=%.2f) and drift (sim_opts.drift=%.2f) are OFF.\n", sim_opts.option_for_evolution, sim_opts.drift);
+    if(sim_opts.option_for_evolution == 0. && sim_opts.option_for_dust_drift == 0.) {
+        fprintf(stderr, "DEBUG [main]: Evolution (sim_opts.option_for_evolution=%.2f) and drift (sim_opts.option_for_dust_drift=%.2f) are OFF.\n", sim_opts.option_for_evolution, sim_opts.option_for_dust_drift);
 
         char dens_name_initial[MAX_PATH_LEN];
         snprintf(dens_name_initial, sizeof(dens_name_initial), "%s/%s%s", initial_dir_path, kInitialGasProfileFileName,kFileNamesSuffix);
@@ -301,7 +300,7 @@ int main(int argc, const char **argv) {
 
         fprintf(stderr, "DEBUG [main]: printGasSurfaceDensityPressurePressureDerivateFile completed. Program exiting.\n");
     } else {
-        fprintf(stderr, "DEBUG [main]: Evolution (sim_opts.option_for_evolution=%.2f) or drift (sim_opts.drift=%.2f) is ON. Starting main simulation loop.\n", sim_opts.option_for_evolution, sim_opts.drift);
+        fprintf(stderr, "DEBUG [main]: Evolution (sim_opts.option_for_evolution=%.2f) or drift (sim_opts.option_for_dust_drift=%.2f) is ON. Starting main simulation loop.\n", sim_opts.option_for_evolution, sim_opts.option_for_dust_drift);
         fprintf(stderr, "DEBUG [main]: Calling timeIntegrationForTheSystem...\n");
         // Pass sim_opts to timeIntegrationForTheSystem.
         // timeIntegrationForTheSystem must ensure to use the correct (numbered) output_dir_name.

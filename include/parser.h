@@ -15,10 +15,10 @@
  */
 typedef struct {
     // Simulation control options
-    double drift;
-    double growth;
+    double option_for_dust_drift;
+    double option_for_dust_growth;
     double option_for_evolution;
-    double twopop;
+    double option_for_dust_secondary_population;
     double ufrag;
     double ffrag;
 
@@ -44,10 +44,9 @@ typedef struct {
     char output_dir_name[MAX_OUTPUT_DIR_LEN]; // Name of the output directory
 
     // Time parameters
-    double tStep;           // Fixed time step
-    double totalTime;       // Total simulation time
-    double outputFrequency; // Output frequency
-    double startTime;       // Current start time (for resuming or initial time)
+    double user_defined_time_step;           // Fixed time step
+    double maximum_simulation_time;       // Total simulation time
+    double output_frequency; // Output frequency
 
     // Init tool specific parameters (if initial profile is generated)
     // These could also be merged into the general disk parameters if they always overlap

@@ -55,7 +55,7 @@ void integrateParticleRungeKutta4(double time, double prad, const double *sigmad
         }
     }
 
-    if(sim_opts->growth == 1.) {		// ha van reszecskenovekedes
+    if(sim_opts->option_for_dust_growth == 1.) {		// ha van reszecskenovekedes
         if(time != 0.) {	// ha nem t0 idopontban vagyunk
             pradtemp = prad;
             linearInterpolation(disk_params->gas_pressure_vector,disk_params->radial_grid,y,&p,disk_params->delta_r,opt,disk_params);

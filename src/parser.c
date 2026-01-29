@@ -11,10 +11,10 @@
 void createDefaultOptions(ParserOptions *opt) {
     fprintf(stderr, "DEBUG [createDefaultOptions]: Setting default values for ParserOptions.\n");
     // Simulation control options
-    opt->drift           = 1.;
-    opt->growth          = 1.;
+    opt->option_for_dust_drift           = 1.;
+    opt->option_for_dust_growth          = 1.;
     opt->option_for_evolution            = 1.;
-    opt->twopop          = 1.;
+    opt->option_for_dust_secondary_population          = 1.;
     opt->ufrag           = 1000.0;
     opt->ffrag           = 0.37;
 
@@ -42,10 +42,9 @@ void createDefaultOptions(ParserOptions *opt) {
     opt->output_dir_name[sizeof(opt->output_dir_name) - 1] = '\0'; // Ensure null termination
 
     // Time parameters
-    opt->tStep           = 0.;
-    opt->totalTime       = 1.0e6;
-    opt->outputFrequency = 1000.0;
-    opt->startTime       = 0.0;
+    opt->user_defined_time_step           = 0.;
+    opt->maximum_simulation_time       = 1.0e6;
+    opt->output_frequency = 1000.0;
 
     // Init tool specific parameters' defaults
     // ADJUST THESE DEFAULTS FOR REALISTIC VALUES, AS DISCUSSED PREVIOUSLY!
@@ -73,7 +72,6 @@ void printUsageToTerminal() {
     fprintf(stderr, "  -tStep <val>   Fixed time step (default: 0.0)\n");
     fprintf(stderr, "  -tmax <val>    Total simulation time (default: 1.0e6)\n");
     fprintf(stderr, "  -outfreq <val> Output frequency (default: 1000.0)\n");
-    fprintf(stderr, "  -curr <val>    Current start time (default: 0.0)\n");
     fprintf(stderr, "File I/O:\n");
     fprintf(stderr, "  -i <file>      Input profile file (e.g., init_data.dat)\n");
     fprintf(stderr, "  -o <dir>       Output directory name (default: 'output')\n");
@@ -113,23 +111,23 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
 //        fprintf(stderr, "DEBUG [parseCLIOptions]: Processing argument %d: %s\n", i, argv[i]);
         if(strcmp(argv[i], "-drift") == 0) {
             i++;
-            if (i < argc) opt->drift = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -drift.\n"); return 1; }
-//            fprintf(stderr, "DEBUG [parseCLIOptions]:   -drift set to %.2f\n", opt->drift);
+            if (i < argc) opt->option_for_dust_drift = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -drift.\n"); return 1; }
+//            fprintf(stderr, "DEBUG [parseCLIOptions]:   -drift set to %.2f\n", opt->option_for_dust_drift);
         }
         else if (strcmp(argv[i], "-growth") == 0) {
             i++;
-            if (i < argc) opt->growth = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -growth.\n"); return 1; }
-//            fprintf(stderr, "DEBUG [parseCLIOptions]:   -growth set to %.2f\n", opt->growth);
+            if (i < argc) opt->option_for_dust_growth = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -growth.\n"); return 1; }
+//            fprintf(stderr, "DEBUG [parseCLIOptions]:   -growth set to %.2f\n", opt->option_for_dust_growth);
         }
         else if (strcmp(argv[i], "-evol") == 0) {
             i++;
             if (i < argc) opt->option_for_evolution = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -evol.\n"); return 1; }
-//            fprintf(stderr, "DEBUG [parseCLIOptions]:   -evol set to %.2f\n", opt->evol);
+//            fprintf(stderr, "DEBUG [parseCLIOptions]:   -evol set to %.2f\n", opt->option_for_evolution);
         }
         else if (strcmp(argv[i], "-twopop") == 0) {
             i++;
-            if (i < argc) opt->twopop = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -twopop.\n"); return 1; }
-//            fprintf(stderr, "DEBUG [parseCLIOptions]:   -twopop set to %.2f\n", opt->twopop);
+            if (i < argc) opt->option_for_dust_secondary_population = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -twopop.\n"); return 1; }
+//            fprintf(stderr, "DEBUG [parseCLIOptions]:   -twopop set to %.2f\n", opt->option_for_dust_secondary_population);
         }
         else if (strcmp(argv[i], "-ufrag") == 0) {
             i++;
@@ -143,8 +141,8 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
         }
         else if (strcmp(argv[i], "-tStep") == 0) {
             i++;
-            if (i < argc) opt->tStep = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -tStep.\n"); return 1; }
-//            fprintf(stderr, "DEBUG [parseCLIOptions]:   -tStep set to %.2e\n", opt->tStep);
+            if (i < argc) opt->user_defined_time_step = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -tStep.\n"); return 1; }
+//            fprintf(stderr, "DEBUG [parseCLIOptions]:   -tStep set to %.2e\n", opt->user_defined_time_step);
         }
         else if (strcmp(argv[i], "-n") == 0) { // Main simulation NGRID (and also init_tool's NGRID)
             i++;
@@ -174,18 +172,13 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
         }
         else if (strcmp(argv[i], "-tmax") == 0) {
             i++;
-            if (i < argc) opt->totalTime = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -tmax.\n"); return 1; }
-//            fprintf(stderr, "DEBUG [parseCLIOptions]:   -tmax set to %.2e\n", opt->totalTime);
+            if (i < argc) opt->maximum_simulation_time = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -tmax.\n"); return 1; }
+//            fprintf(stderr, "DEBUG [parseCLIOptions]:   -tmax set to %.2e\n", opt->maximum_simulation_time);
         }
         else if (strcmp(argv[i], "-outfreq") == 0) {
             i++;
-            if (i < argc) opt->outputFrequency = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -outfreq.\n"); return 1; }
-//            fprintf(stderr, "DEBUG [parseCLIOptions]:   -outfreq set to %.2e\n", opt->outputFrequency);
-        }
-        else if (strcmp(argv[i], "-curr") == 0) {
-            i++;
-            if (i < argc) opt->startTime = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -curr.\n"); return 1; }
-//            fprintf(stderr, "DEBUG [parseCLIOptions]:   -curr (startTime) set to %.2e\n", opt->startTime);
+            if (i < argc) opt->output_frequency = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -outfreq.\n"); return 1; }
+//            fprintf(stderr, "DEBUG [parseCLIOptions]:   -outfreq set to %.2e\n", opt->output_frequency);
         }
         // --- Init_tool specific options processed in the main parser ---
         // Note: -n is already handled above for both sim and init

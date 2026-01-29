@@ -33,8 +33,8 @@ void calculateParticleMass(int n, double (*partmassind)[5], int indii, int indio
     double massotemp = 0.0;
     int i;
 
-    // sim_opts->dzone (ez helyettesíti az optdze-t): 1.0 = dinamikus DZE (flag-elt), 0.0 = fix DZE (nem flag-elt)
-    if(sim_opts->dzone == 1.0) { // Dinamikus DZE: flag-ek használatával (partmassind[i][3] és [4])
+    // sim_opts->flag_for_deadzone (ez helyettesíti az optdze-t): 1.0 = dinamikus DZE (flag-elt), 0.0 = fix DZE (nem flag-elt)
+    if(sim_opts->flag_for_deadzone == 1.0) { // Dinamikus DZE: flag-ek használatával (partmassind[i][3] és [4])
         #pragma omp parallel for private(i) reduction(+:massitemp, massotemp)
         for (i = 0; i < n; i++) {
             // A részecske aktuális grid indexe (partmassind[i][1]-ből)
@@ -64,7 +64,7 @@ void calculateParticleMass(int n, double (*partmassind)[5], int indii, int indio
                 }
             }
         }
-    } else { // Fix DZE (sim_opts->dzone == 0.0): Nincsenek flag-ek a tömeg felhalmozáshoz
+    } else { // Fix DZE (sim_opts->flag_for_deadzone == 0.0): Nincsenek flag-ek a tömeg felhalmozáshoz
         #pragma omp parallel for private(i) reduction(+:massitemp, massotemp)
         for (i = 0; i < n; i++) {
             int current_r_index = (int)partmassind[i][1]; // A részecske grid indexe
@@ -208,12 +208,12 @@ void calculateDustSurfaceDensity(double max_param, double min_param, double rad[
     // Feltételezve, hogy a 'sigdtemp' és 'sigdmicrtemp' kizárólagosan a hívásaikban vannak feldolgozva,
     // és nem ütköznek más szálakkal globális adatokon keresztül.
     calculateInitialDustSurfaceDensity(rad, massvec, sigdtemp, particle_number,disk_params);
-    if (sim_opts->twopop == 1.0) { // Használjunk double összehasonlítást
+    if (sim_opts->option_for_dust_secondary_population == 1.0) { // Használjunk double összehasonlítást
         calculateInitialDustSurfaceDensity(radmicr, massmicradial_grid, sigdmicrtemp, particle_number,disk_params);
     }
 
     mergeParticlesByRadius(sigdtemp, dd, particle_number,disk_params);
-    if (sim_opts->twopop == 1.0) { // Használjunk double összehasonlítást
+    if (sim_opts->option_for_dust_secondary_population == 1.0) { // Használjunk double összehasonlítást
         mergeParticlesByRadius(sigdmicrtemp, dd, particle_number,disk_params);
     }
 
@@ -223,7 +223,7 @@ void calculateDustSurfaceDensity(double max_param, double min_param, double rad[
         rd[i] = sigdtemp[i][1];
         sigma_d[i] = sigdtemp[i][0];
 
-        if (sim_opts->twopop == 1.0) { // double összehasonlítás
+        if (sim_opts->option_for_dust_secondary_population == 1.0) { // double összehasonlítás
             rmic[i] = sigdmicrtemp[i][1];
             sigma_dm[i] = sigdmicrtemp[i][0];
         }
@@ -264,7 +264,7 @@ void calculateDustDistance(const char *nev, int opt, double radius[][2], const d
 
 			integrateParticleRungeKutta4(t, particle_radius, sigmad, rdvec, deltat, y, &y_out, &prad_new, disk_params, sim_opts);
             if (t == 0) {
-                if (sim_opts->twopop == 0) {
+                if (sim_opts->option_for_dust_secondary_population == 0) {
                     double current_drdt_val = (fabs(y_out - y) / (deltat));
                     // Azért kell a critical szekció, mert az drift_timescale_file fájlba írunk.
                     // Ez a critical szekció biztosítja, hogy egyszerre csak egy szál írjon a fájlba.
@@ -281,10 +281,10 @@ void calculateDustDistance(const char *nev, int opt, double radius[][2], const d
                 }
             }
 
-            if (sim_opts->twopop != 1) { // Ha növekedés engedélyezett vagy valami más mód
+            if (sim_opts->option_for_dust_secondary_population != 1) { // Ha növekedés engedélyezett vagy valami más mód
                 radius[i][1] = prad_new;
                 radius[i][0] = y_out;
-            } else { // sim_opts->twopop == 1, csak drift
+            } else { // sim_opts->option_for_dust_secondary_population == 1, csak drift
                 radius[i][0] = y_out;
             }
         } else {

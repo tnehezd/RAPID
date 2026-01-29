@@ -74,15 +74,14 @@ typedef struct {
 // --- Simulation Options/Control Structure ---
 // Groups all boolean/flag-like options
 typedef struct {
-    double option_for_evolution;    // Gas option_for_evolutionution (replaces optev)
-    double drift;   // Particle drift (replaces optdr)
-    double growth;  // Particle growth (replaces optgr)
-    double twopop;  // Two-population simulation (replaces opttwopop)
-    double dzone;   // Dead zone flag (replaces optdze)
-    double DT;      // User-defined fixed time step
-    double TMAX;    // Maximum simulation time
-    double WO;      // Write-out interval (TMAX/WO)
-    double TCURR;
+    double option_for_evolution;    // Gas evolution (replaces optev)
+    double option_for_dust_drift;   // Particle drift (replaces optdr)
+    double option_for_dust_growth;  // Particle growth (replaces optgr)
+    double option_for_dust_secondary_population;  // Two-population simulation (replaces optoption_for_dust_secondary_population)
+    double flag_for_deadzone;   // Dead zone flag (replaces optdze)
+    double user_defined_time_step;      // User-defined fixed time step
+    double maximum_simulation_time;    // Maximum simulation time
+    double output_frequency;      // Write-out interval (maximum_simulation_time/output_frequency)
 
     int num_dust_particles;
 

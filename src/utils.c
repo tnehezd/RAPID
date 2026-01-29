@@ -189,8 +189,8 @@ void findRAnnulusAroundDZE(double rin, double *ind_ii, double *ind_io,
         // Ezen a ponton érdemes ellenőrizni disk_params->radial_grid[i] értékét
         // fprintf(stderr, "DEBUG_FIRA_LOOP: i=%d, radial_grid[i]=%.10lg\n", i, disk_params->radial_grid[i]);
 
-        // Ez az if blokk csak akkor aktív, ha sim_opts->dzone == 1
-        if (sim_opts->dzone == 1) {
+        // Ez az if blokk csak akkor aktív, ha sim_opts->flag_for_deadzone == 1
+        if (sim_opts->flag_for_deadzone == 1) {
             // INNER (RIN) határok
             if (disk_params->radial_grid[i] > riimH && disk_params->radial_grid[i] < riipH) {
                 rmid = (disk_params->radial_grid[i] - disk_params->r_min) / disk_params->delta_r;

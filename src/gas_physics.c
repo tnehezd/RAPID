@@ -167,7 +167,7 @@ void refreshGasSurfaceDensityPressurePressureGradient(const SimulationOptions *s
         double temp = ftcsSecondDerivativeCoefficient(disk_params->radial_grid[i], disk_params) * (u_fi - 2.0 * u + u_bi) / (disk_params->delta_r * disk_params->delta_r) +
                       ftcsFirstDerivativeCoefficient(disk_params->radial_grid[i], disk_params) * (u_fi - u_bi) / (2.0 * disk_params->delta_r);
         
-        sigma_temp[i] = uvec[i] + sim_opts->DT * temp; // Use sim_opts->DT for deltat
+        sigma_temp[i] = uvec[i] + sim_opts->user_defined_time_step * temp; // Use sim_opts->user_defined_time_step for deltat
     }
 
     // This loop is parallelizable

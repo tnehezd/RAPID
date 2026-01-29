@@ -58,9 +58,6 @@ void printDustParticleSizeFile(char *size_name, int step, double (*rad)[2], doub
                         const DiskParameters *disk_params, const SimulationOptions *sim_opts,
                         OutputFiles *output_files);
 
-/* Az idot tartalmazo file parametereinek beolvasasa (vagy beallitasa) */
-// FIX: The original was missing 'SimulationOptions *sim_opts'.
-void printTimeStampFile(double tMax_val, double stepping_val, double current_val, SimulationOptions *sim_opts);
 
 
 

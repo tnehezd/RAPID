@@ -296,7 +296,7 @@ void printMassGrowthAtDZEFile(double step, double (*partmassind)[5], double (*pa
                     fprintf(stderr, "WARNING [printMassGrowthAtDZEFile]: r_count array overflow, skipping data. dim: %d, j: %d\n", dim, j);
                 }
             }
-            if(sim_opts->dzone == 0.0) { 
+            if(sim_opts->flag_for_deadzone == 0.0) { 
                 if(temp_new > 0.) {
                     temp = temp_new;
                     rout_new = temp;
@@ -305,7 +305,7 @@ void printMassGrowthAtDZEFile(double step, double (*partmassind)[5], double (*pa
         }
     }
 
-    if(sim_opts->dzone == 1.0) {
+    if(sim_opts->flag_for_deadzone == 1.0) {
         if(dim > 0) {
             if (dim == 1) { 
                 rin_new = r_count[0]; 
@@ -322,7 +322,7 @@ void printMassGrowthAtDZEFile(double step, double (*partmassind)[5], double (*pa
     }
 
     rin = rin_new;
-    if(sim_opts->dzone == 0.0) rin = 0;
+    if(sim_opts->flag_for_deadzone == 0.0) rin = 0;
 //    double rout_current = rout_new;
     rout = rout_new;
     
@@ -346,7 +346,7 @@ void printMassGrowthAtDZEFile(double step, double (*partmassind)[5], double (*pa
             (int)ind_oi, (int)ind_oo, 
             &massii, &massoi, sim_opts); 
 
-    if(sim_opts->twopop == 1.0) {
+    if(sim_opts->option_for_dust_secondary_population == 1.0) {
         calculateParticleMass(particle_number, partmassmicrind, 
                 (int)ind_ii, (int)ind_io, 
                 (int)ind_oi, (int)ind_oo, 
@@ -424,7 +424,7 @@ void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const 
             fprintf(output_files->dust_file,"%lg %.11lg  %lg \n",(double)step,r[i],sigmad[i]);
         }
 
-        if(sim_opts->twopop == 1.0 && output_files->micron_dust_file != NULL) {
+        if(sim_opts->option_for_dust_secondary_population == 1.0 && output_files->micron_dust_file != NULL) {
             if (rm[i] >= disk_params->r_min) { // Using disk_params->r_min
                 fprintf(output_files->micron_dust_file,"%lg %lg  %lg \n",(double)step,rm[i],sigmadm[i]);
             }
@@ -432,7 +432,7 @@ void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const 
     }
 
     fflush(output_files->dust_file);
-    if(sim_opts->twopop == 1.0 && output_files->micron_dust_file != NULL) {
+    if(sim_opts->option_for_dust_secondary_population == 1.0 && output_files->micron_dust_file != NULL) {
         fflush(output_files->micron_dust_file); // Corrected this, it was micron_motion_file before
     }
 }
@@ -444,7 +444,7 @@ void printDustParticleSizeFile(char *size_name, int step, double (*rad)[2], doub
 
     int i;
 
-    if (sim_opts->growth == 1.0) {
+    if (sim_opts->option_for_dust_growth == 1.0) {
         fout_size = fopen(size_name, "w");
         if (fout_size == NULL) {
             fprintf(stderr, "ERROR: Could not open size file '%s' in printDustParticleSizeFile!\n", size_name);
@@ -462,13 +462,13 @@ void printDustParticleSizeFile(char *size_name, int step, double (*rad)[2], doub
             fprintf(stderr, "WARNING: output_files->por_motion_file is NULL. Cannot write main particle motion.\n");
         }
 
-        if (sim_opts->twopop == 1.0 && output_files->micron_motion_file != NULL) {
+        if (sim_opts->option_for_dust_secondary_population == 1.0 && output_files->micron_motion_file != NULL) {
             if (radmicr[i][0] >= disk_params->r_min) { // Using disk_params->r_min
                 fprintf(output_files->micron_motion_file, "%lg %d %lg\n", (double)step, i, radmicr[i][0]);
             }
         }
 
-        if (sim_opts->growth == 1.0 && fout_size != NULL) {
+        if (sim_opts->option_for_dust_growth == 1.0 && fout_size != NULL) {
             if (rad[i][0] >= disk_params->r_min) { // Using disk_params->r_min
                 fprintf(fout_size, "%lg %lg %lg \n", (double)step, rad[i][0], rad[i][1] * AU_IN_CM); // AU_IN_CM from config.h
             }
@@ -481,23 +481,15 @@ void printDustParticleSizeFile(char *size_name, int step, double (*rad)[2], doub
         fprintf(stderr, "WARNING: Cannot fflush por_motion_file, as it is NULL.\n");
     }
 
-    if (sim_opts->twopop == 1.0 && output_files->micron_motion_file != NULL) {
+    if (sim_opts->option_for_dust_secondary_population == 1.0 && output_files->micron_motion_file != NULL) {
         fflush(output_files->micron_motion_file);
     }
 
-    if (sim_opts->growth == 1.0 && fout_size != NULL) {
+    if (sim_opts->option_for_dust_growth == 1.0 && fout_size != NULL) {
         fclose(fout_size);
     }
 }
 
-/* Az időt tartalmazó fájl paramétereinek beolvasása (vagy beállítása) */
-void printTimeStampFile(double tMax_val, double stepping_val, double current_val, SimulationOptions *sim_opts) {
-
-
-    sim_opts->TMAX = tMax_val;
-    sim_opts->WO = tMax_val / stepping_val;
-    sim_opts->TCURR = current_val;
-}
 
 
 // Függvény a fájl fejlécek kiírására
@@ -611,7 +603,7 @@ int setupInitialOutputFiles(OutputFiles *output_files, const SimulationOptions *
     // Fájlnevek generálása
     snprintf(porout, MAX_PATH_LEN, "%s/%s/%s%s", sim_opts->output_dir_name, kLogFilesDirectory, kDustAccumulationFileName,kFileNamesSuffix);
 
-    if (sim_opts->twopop == 1.0) {
+    if (sim_opts->option_for_dust_secondary_population == 1.0) {
         snprintf(poroutmicr, MAX_PATH_LEN, "%s/%s/%s%st", sim_opts->output_dir_name, kLogFilesDirectory,kDustMicronParticleEvolutionFile,kFileNamesSuffix);
     }
     snprintf(massout, MAX_PATH_LEN, "%s/%s/%s%s", sim_opts->output_dir_name, kLogFilesDirectory, kDustAccumulationFileName,kFileNamesSuffix);
@@ -626,7 +618,7 @@ int setupInitialOutputFiles(OutputFiles *output_files, const SimulationOptions *
     }
     printFileHeader(output_files->por_motion_file, FILE_TYPE_DUST_MOTION, header_data_for_files);
 
-    if (sim_opts->twopop == 1.0) {
+    if (sim_opts->option_for_dust_secondary_population == 1.0) {
         output_files->micron_motion_file = fopen(poroutmicr, "w");
         if (output_files->micron_motion_file == NULL) {
             fprintf(stderr, "ERROR: Could not open %s\n", poroutmicr);
@@ -644,7 +636,7 @@ int setupInitialOutputFiles(OutputFiles *output_files, const SimulationOptions *
         // Itt is felszabadítjuk a már megnyitott fájlokat
         fclose(output_files->por_motion_file);
         output_files->por_motion_file = NULL;
-        if (sim_opts->twopop == 1.0 && output_files->micron_motion_file != NULL) {
+        if (sim_opts->option_for_dust_secondary_population == 1.0 && output_files->micron_motion_file != NULL) {
             fclose(output_files->micron_motion_file);
             output_files->micron_motion_file = NULL;
         }
@@ -678,7 +670,7 @@ void cleanupSimulationResources(ParticleData_t *p_data, OutputFiles *output_file
         output_files->por_motion_file = NULL;
         fprintf(stderr, "DEBUG [cleanupSimulationResources]: Closed %s%s\n", kDustParticleEvolutionFile,kFileNamesSuffix);
     }
-    if (output_files->micron_motion_file != NULL) { // Ellenőrzés twopop-ra itt is
+    if (output_files->micron_motion_file != NULL) { // Ellenőrzés option_for_dust_secondary_population-ra itt is
         fclose(output_files->micron_motion_file);
         output_files->micron_motion_file = NULL;
         fprintf(stderr, "DEBUG [cleanupSimulationResources]: Closed %s%s\n",kDustMicronParticleEvolutionFile,kFileNamesSuffix);
@@ -700,7 +692,7 @@ void closeSnapshotFiles(OutputFiles *output_files, const char *dens_name, const 
         fclose(output_files->dust_file);
         output_files->dust_file = NULL;
     }
-    if (sim_opts->twopop == 1 && output_files->micron_dust_file != NULL) {
+    if (sim_opts->option_for_dust_secondary_population == 1 && output_files->micron_dust_file != NULL) {
         fclose(output_files->micron_dust_file);
         output_files->micron_dust_file = NULL;
     }
