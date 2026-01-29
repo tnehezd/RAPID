@@ -19,7 +19,7 @@
 #include "config.h"         
 #include "dust_physics.h"   // If needed for any specific function interactions
 #include "utils.h"          // For countZeroPoints, findZeroPoint, findRAnnulusAroundDZE
-#include "simulation_types.h" // For DiskParameters, SimulationOptions, output_files_t
+#include "simulation_types.h" // For DiskParameters, SimulationOptions, OutputFiles
 #include "boundary_conditions.h"
 
 
@@ -256,7 +256,7 @@ void printCurrentInformationAboutRun(const char *nev, const DiskParameters *disk
 
 void printMassGrowthAtDZEFile(double step, double (*partmassind)[5], double (*partmassmicrind)[5], double t, double massbtempii, double massbtempoi, double massmtempii, double massmtempoi, 
                 double *massbtempio, double *massbtempoo, double *massmtempio, double *massmtempoo, double *tavin, double *tavout, 
-                const DiskParameters *disk_params, const SimulationOptions *sim_opts,output_files_t *output_files) {
+                const DiskParameters *disk_params, const SimulationOptions *sim_opts,OutputFiles *output_files) {
 
 
     double ind_ii, ind_io, ind_oi, ind_oo, tav, tav2;
@@ -392,7 +392,7 @@ void printMassGrowthAtDZEFile(double step, double (*partmassind)[5], double (*pa
 
 
 /* Függvény a sigma, p, dp kiíratására */
-void printGasSurfaceDensityPressurePressureDerivateFile(const DiskParameters *disk_params, output_files_t *output_files) {
+void printGasSurfaceDensityPressurePressureDerivateFile(const DiskParameters *disk_params, OutputFiles *output_files) {
 
     int i;
 
@@ -410,7 +410,7 @@ void printGasSurfaceDensityPressurePressureDerivateFile(const DiskParameters *di
 }
 
 /* Függvény a por felületisűrűségének kiíratására */
-void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const double *rm, const double *sigmad, const double *sigmadm, const DiskParameters *disk_params, const SimulationOptions *sim_opts, output_files_t *output_files, double step) {
+void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const double *rm, const double *sigmad, const double *sigmadm, const DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files, double step) {
 
     int i;
 
@@ -438,7 +438,7 @@ void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const 
 }
 
 /* Függvény a pormozgás és részecskeméret kiíratására */
-void printDustParticleSizeFile(char *size_name, int step, double (*rad)[2], double (*radmicr)[2], const DiskParameters *disk_params, const SimulationOptions *sim_opts, output_files_t *output_files) {
+void printDustParticleSizeFile(char *size_name, int step, double (*rad)[2], double (*radmicr)[2], const DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files) {
 
     FILE *fout_size = NULL;
 
@@ -596,7 +596,7 @@ void printFileHeader(FILE *file, FileType_e file_type, const HeaderData_t *heade
 
 
 
-int setupInitialOutputFiles(output_files_t *output_files, const SimulationOptions *sim_opts,
+int setupInitialOutputFiles(OutputFiles *output_files, const SimulationOptions *sim_opts,
                                const DiskParameters *disk_params, HeaderData_t *header_data_for_files) {
     char porout[MAX_PATH_LEN] = "";
     char poroutmicr[MAX_PATH_LEN] = "";
@@ -656,7 +656,7 @@ int setupInitialOutputFiles(output_files_t *output_files, const SimulationOption
 }
 
 
-void cleanupSimulationResources(ParticleData_t *p_data, output_files_t *output_files, const SimulationOptions *sim_opts) {
+void cleanupSimulationResources(ParticleData_t *p_data, OutputFiles *output_files, const SimulationOptions *sim_opts) {
     if (particle_number > 0) {
         free(p_data->radius); p_data->radius = NULL;
         free(p_data->radiusmicr); p_data->radiusmicr = NULL;
@@ -691,7 +691,7 @@ void cleanupSimulationResources(ParticleData_t *p_data, output_files_t *output_f
 }
 
 // Segédfüggvény a pillanatfelvételek fájljainak bezárására
-void closeSnapshotFiles(output_files_t *output_files, const char *dens_name, const char *dust_name, const char *dust_name2, const SimulationOptions *sim_opts) {
+void closeSnapshotFiles(OutputFiles *output_files, const char *dens_name, const char *dust_name, const char *dust_name2, const SimulationOptions *sim_opts) {
     if (output_files->surface_file != NULL) {
         fclose(output_files->surface_file);
         output_files->surface_file = NULL;

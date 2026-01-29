@@ -52,7 +52,7 @@ int main(int argc, const char **argv) {
     // --- Declare instances of the new simulation structs ---
     DiskParameters disk_params; // Main disk parameters struct
     SimulationOptions sim_opts;
-    output_files_t output_files;
+    OutputFiles output_files;
 
     // Initialize output_files pointers to NULL
     output_files.por_motion_file = NULL;
@@ -280,7 +280,7 @@ int main(int argc, const char **argv) {
         fprintf(stderr, "DEBUG [main]: Printing initial surface density to %s.\n", dens_name_initial);
 
         // Special handling for printGasSurfaceDensityPressurePressureDerivateFile when only initial output is needed
-        output_files_t temp_output_for_initial_print;
+        OutputFiles temp_output_for_initial_print;
         temp_output_for_initial_print.surface_file = fopen(dens_name_initial, "w");
         if (temp_output_for_initial_print.surface_file != NULL) {
             // Add header to initial surface density file

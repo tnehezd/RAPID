@@ -41,22 +41,22 @@ void printMassGrowthAtDZEFile(double step,
                 double *massbtempio, double *massbtempoo, double *massmtempio, double *massmtempoo, 
                 double *tavin, double *tavout, 
                 const DiskParameters *disk_params, const SimulationOptions *sim_opts,
-                output_files_t *output_files);
+                OutputFiles *output_files);
 
 /* Fuggveny a sigma, p, dp kiiratasara */
 // FIX: The original was missing 'const DiskParameters *disk_params'.
-void printGasSurfaceDensityPressurePressureDerivateFile(const DiskParameters *disk_params, output_files_t *output_files);
+void printGasSurfaceDensityPressurePressureDerivateFile(const DiskParameters *disk_params, OutputFiles *output_files);
 
 /* Fuggveny a por feluletisurusegenek kiiratasara */
 // FIX: The original was missing 'const DiskParameters *disk_params' and 'const SimulationOptions *sim_opts'.
 void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const double *rm, const double *sigmad, const double *sigmadm,
                   const DiskParameters *disk_params, const SimulationOptions *sim_opts,
-                  output_files_t *output_files, double step);
+                  OutputFiles *output_files, double step);
 /* Fuggveny a pormozgas es reszecskemeret kiiratasara */
 // FIX: The original was missing 'const DiskParameters *disk_params' and 'const SimulationOptions *sim_opts'.
 void printDustParticleSizeFile(char *size_name, int step, double (*rad)[2], double (*radmicr)[2],
                         const DiskParameters *disk_params, const SimulationOptions *sim_opts,
-                        output_files_t *output_files);
+                        OutputFiles *output_files);
 
 /* Az idot tartalmazo file parametereinek beolvasasa (vagy beallitasa) */
 // FIX: The original was missing 'SimulationOptions *sim_opts'.
@@ -108,13 +108,13 @@ void printFileHeader(FILE *file, FileType_e file_type, const HeaderData_t *heade
 
 
 // Függvény a kezdeti kimeneti fájlok beállítására és fejlécek írására
-int setupInitialOutputFiles(output_files_t *output_files, const SimulationOptions *sim_opts,
+int setupInitialOutputFiles(OutputFiles *output_files, const SimulationOptions *sim_opts,
                                const DiskParameters *disk_params, HeaderData_t *header_data_for_files);
 
 
-void cleanupSimulationResources(ParticleData_t *p_data, output_files_t *output_files, const SimulationOptions *sim_opts);
+void cleanupSimulationResources(ParticleData_t *p_data, OutputFiles *output_files, const SimulationOptions *sim_opts);
 
-void closeSnapshotFiles(output_files_t *output_files, const char *dens_name, const char *dust_name, const char *dust_name2, const SimulationOptions *sim_opts);
+void closeSnapshotFiles(OutputFiles *output_files, const char *dens_name, const char *dust_name, const char *dust_name2, const SimulationOptions *sim_opts);
 
 
 #endif // IO_UTILS_H

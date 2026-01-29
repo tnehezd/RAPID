@@ -72,7 +72,7 @@ double calculateTimeStep(const DiskParameters *disk_params) { // Add const here 
 }
 
 
-void timeIntegrationForTheSystem(DiskParameters *disk_params, const SimulationOptions *sim_opts, output_files_t *output_files) {
+void timeIntegrationForTheSystem(DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files) {
     ParticleData_t p_data;
     HeaderData_t header_data_for_files; // Később inicializáljuk a setupInitialOutputFiles-ban
 
