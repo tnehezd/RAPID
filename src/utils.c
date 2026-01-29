@@ -34,44 +34,13 @@ void linearInterpolation(double *invec, double *radial_grid, double pos, double 
 }
 
 
-/*	megkeresi egy tomb maximumat	*/
-double findMaximumOfAnArray(double r[][2], int n) {
 
-	int i;
-	double maxim = -1.;
-
-	for(i = 0; i < n; i++) {
-
-		if (r[i][0] > maxim) {
-			maxim = r[i][0];
-		}
-	
-	}
-
-	return maxim;
-}
 
 /*	minimum megkeresese harom elem kozul	*/
 double findMinimumOfAnArray(double s1, double s2, double s3) {
 
-	double min;
-	
-	if (s1 < s2) {
-		if (s1 < s3) {
-			min = s1;
-		} else {
-			min = s3;
-		}
-	} else {
-		if (s2 < s3) {
-			min = s2;	
-		} else {
-			min = s3;
-		}
-		
-	}  
+	double minimum = (s1 < s2) ? s1 : s2; return (minimum < s3) ? minimum : s3;
 
-	return min;
 }
 
 

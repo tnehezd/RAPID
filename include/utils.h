@@ -15,7 +15,6 @@
 void linearInterpolation(double *invec, double *radial_grid, double pos, double *out, double rd, int opt, const DiskParameters *disk_params);
 
 // megkeresi egy tomb maximumat
-double findMaximumOfAnArray(double r[][2], int n);
 double findMinimumOfAnArray(double s1, double s2, double s3);
 
 //counting the number of zero points of the pressure gradient function	
