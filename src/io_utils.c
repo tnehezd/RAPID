@@ -454,12 +454,12 @@ void printDustParticleSizeFile(char *size_name, int step, double (*rad)[2], doub
 
     for (i = 0; i < particle_number; i++) { // particle_number from config.h
 
-        if (output_files->por_motion_file != NULL) {
+        if (output_files->dust_motion_file != NULL) {
             if (rad[i][0] >= disk_params->r_min) { // Using disk_params->r_min
-                fprintf(output_files->por_motion_file, "%lg %d %lg\n", (double)step, i, rad[i][0]);
+                fprintf(output_files->dust_motion_file, "%lg %d %lg\n", (double)step, i, rad[i][0]);
             }
         } else {
-            fprintf(stderr, "WARNING: output_files->por_motion_file is NULL. Cannot write main particle motion.\n");
+            fprintf(stderr, "WARNING: output_files->dust_motion_file is NULL. Cannot write main particle motion.\n");
         }
 
         if (sim_opts->option_for_dust_secondary_population == 1.0 && output_files->micron_motion_file != NULL) {
@@ -475,10 +475,10 @@ void printDustParticleSizeFile(char *size_name, int step, double (*rad)[2], doub
         }
     }
 
-    if (output_files->por_motion_file != NULL) {
-        fflush(output_files->por_motion_file);
+    if (output_files->dust_motion_file != NULL) {
+        fflush(output_files->dust_motion_file);
     } else {
-        fprintf(stderr, "WARNING: Cannot fflush por_motion_file, as it is NULL.\n");
+        fprintf(stderr, "WARNING: Cannot fflush dust_motion_file, as it is NULL.\n");
     }
 
     if (sim_opts->option_for_dust_secondary_population == 1.0 && output_files->micron_motion_file != NULL) {
@@ -611,20 +611,20 @@ int setupInitialOutputFiles(OutputFiles *output_files, const SimulationOptions *
     fprintf(stderr, "DEBUG [setupInitialOutputFiles]: Opening output files: %s, %s (if 2pop), %s\n", porout, poroutmicr, massout);
 
     // Fájlok megnyitása és fejlécek írása
-    output_files->por_motion_file = fopen(porout, "w");
-    if (output_files->por_motion_file == NULL) {
+    output_files->dust_motion_file = fopen(porout, "w");
+    if (output_files->dust_motion_file == NULL) {
         fprintf(stderr, "ERROR: Could not open %s\n", porout);
         return 1; // Hiba
     }
-    printFileHeader(output_files->por_motion_file, FILE_TYPE_DUST_MOTION, header_data_for_files);
+    printFileHeader(output_files->dust_motion_file, FILE_TYPE_DUST_MOTION, header_data_for_files);
 
     if (sim_opts->option_for_dust_secondary_population == 1.0) {
         output_files->micron_motion_file = fopen(poroutmicr, "w");
         if (output_files->micron_motion_file == NULL) {
             fprintf(stderr, "ERROR: Could not open %s\n", poroutmicr);
             // Itt fontos lehet, hogy felszabadítsuk az eddig megnyitott fájlokat
-            fclose(output_files->por_motion_file);
-            output_files->por_motion_file = NULL;
+            fclose(output_files->dust_motion_file);
+            output_files->dust_motion_file = NULL;
             return 1; // Hiba
         }
         printFileHeader(output_files->micron_motion_file, FILE_TYPE_MICRON_MOTION, header_data_for_files);
@@ -634,8 +634,8 @@ int setupInitialOutputFiles(OutputFiles *output_files, const SimulationOptions *
     if (output_files->mass_file == NULL) {
         fprintf(stderr, "ERROR: Could not open %s\n", massout);
         // Itt is felszabadítjuk a már megnyitott fájlokat
-        fclose(output_files->por_motion_file);
-        output_files->por_motion_file = NULL;
+        fclose(output_files->dust_motion_file);
+        output_files->dust_motion_file = NULL;
         if (sim_opts->option_for_dust_secondary_population == 1.0 && output_files->micron_motion_file != NULL) {
             fclose(output_files->micron_motion_file);
             output_files->micron_motion_file = NULL;
@@ -665,9 +665,9 @@ void cleanupSimulationResources(ParticleData_t *p_data, OutputFiles *output_file
         fprintf(stderr, "DEBUG [cleanupSimulationResources]: All dynamically allocated particle arrays freed.\n");
     }
 
-    if (output_files->por_motion_file != NULL) {
-        fclose(output_files->por_motion_file);
-        output_files->por_motion_file = NULL;
+    if (output_files->dust_motion_file != NULL) {
+        fclose(output_files->dust_motion_file);
+        output_files->dust_motion_file = NULL;
         fprintf(stderr, "DEBUG [cleanupSimulationResources]: Closed %s%s\n", kDustParticleEvolutionFile,kFileNamesSuffix);
     }
     if (output_files->micron_motion_file != NULL) { // Ellenőrzés option_for_dust_secondary_population-ra itt is

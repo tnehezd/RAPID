@@ -55,7 +55,7 @@ int main(int argc, const char **argv) {
     OutputFiles output_files;
 
     // Initialize output_files pointers to NULL
-    output_files.por_motion_file = NULL;
+    output_files.dust_motion_file = NULL;
     output_files.micron_motion_file = NULL;
     output_files.mass_file = NULL;
     output_files.surface_file = NULL;
@@ -71,7 +71,7 @@ int main(int argc, const char **argv) {
     sim_opts.user_defined_time_step = def.user_defined_time_step;
     sim_opts.maximum_simulation_time = def.maximum_simulation_time;
     sim_opts.output_frequency = def.output_frequency;
-    sim_opts.num_dust_particles = def.ndust_val; // NEW: Populate num_dust_particles from parsed options
+    sim_opts.number_of_dust_particles = def.number_of_dust_particles; // NEW: Populate number_of_dust_particles from parsed options
 
     // DEBUG: Show def.output_dir_name BEFORE it's used to populate sim_opts.output_dir_name
     fprintf(stderr, "DEBUG [main]: def.output_dir_name BEFORE sim_opts population: '%s'\n", def.output_dir_name);
@@ -199,7 +199,7 @@ int main(int argc, const char **argv) {
         init_tool_params.flaring_index = disk_params.flaring_index;
         init_tool_params.star_mass = disk_params.stellar_mass;
         init_tool_params.dust_to_gas_ratio = def.eps_val;
-        init_tool_params.n_dust_particles = def.ndust_val; // Uses the specific dust particle count
+        init_tool_params.n_dust_particles = def.number_of_dust_particles; // Uses the specific dust particle count
         init_tool_params.two_pop_ratio = def.ratio_val;
         init_tool_params.micro_size_cm = def.mic_val;
         init_tool_params.one_size_particle_cm = def.onesize_val;

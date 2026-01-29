@@ -24,7 +24,7 @@ typedef struct {
 
     // Core disk parameters (also serve as init_tool defaults if no input file)
     int    ngrid_val;       // Number of grid points
-    int    ndust_val;
+    int    number_of_dust_particles;
     double rmin_val;        // Inner radius (AU)
     double rmax_val;        // Outer radius (AU)
     double sigma0_val;      // Initial gas surface density at 1 AU (M_sun/AU^2)

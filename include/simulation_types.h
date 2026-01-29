@@ -83,7 +83,7 @@ typedef struct {
     double maximum_simulation_time;    // Maximum simulation time
     double output_frequency;      // Write-out interval (maximum_simulation_time/output_frequency)
 
-    int num_dust_particles;
+    int number_of_dust_particles;
 
     char input_filename[MAX_PATH_LEN];  // Input fájl neve (pl. init_data.dat)
     char output_dir_name[MAX_PATH_LEN]; // Kimeneti könyvtár neve
@@ -95,7 +95,7 @@ typedef struct {
 
 // --- Output File Pointers Structure ---
 typedef struct {
-    FILE *por_motion_file;      
+    FILE *dust_motion_file;      
     FILE *micron_motion_file;   
     FILE *mass_file;            
     FILE *surface_file;         

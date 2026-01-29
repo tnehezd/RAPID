@@ -20,7 +20,7 @@ void createDefaultOptions(ParserOptions *opt) {
 
     // Core disk parameters (also serve as init_tool defaults)
     opt->ngrid_val       = 2000;
-    opt->ndust_val       = 5000;
+    opt->number_of_dust_particles       = 5000;
     opt->rmin_val        = 1.0;
     opt->rmax_val        = 100.0;
     // ADJUST THESE DEFAULTS FOR REALISTIC VALUES, AS DISCUSSED PREVIOUSLY!
@@ -151,7 +151,7 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
         }
         else if (strcmp(argv[i], "-ndust") == 0) { 
             i++;
-            if (i < argc) opt->ndust_val = atoi(argv[i]); else { fprintf(stderr, "Error: Missing value for -ndust.\n"); return 1; }
+            if (i < argc) opt->number_of_dust_particles = atoi(argv[i]); else { fprintf(stderr, "Error: Missing value for -ndust.\n"); return 1; }
         }
         else if (strcmp(argv[i], "-i") == 0) {
             i++;
