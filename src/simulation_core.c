@@ -166,31 +166,10 @@ void timeIntegrationForTheSystem(DiskParameters *disk_params, const SimulationOp
 
 
 
-            // Radius reciprok számítása a min/max kereséshez
-            for (i = 0; i < particle_number; i++) {
-                if (particle_data.radius[i][0] > 0. && particle_data.radius[i][0] > disk_params->r_min) {
-                    particle_data.radius_rec[i][0] = 1. / particle_data.radius[i][0];
-                } else {
-                    particle_data.radius_rec[i][0] = 0.; // Vagy valamilyen "érvénytelen" érték, ami kizárja a min/max keresésből
-                }
-            }
-
-// OK, ITT EZT A RÉSZT RENDEZNI KÉNE!
 
 /*            struct timespec t01, t11; 
             clock_gettime(CLOCK_MONOTONIC, &t01);
 */
-            if (sim_opts->option_for_dust_secondary_population == 1) {
-                // Micron részecskék radius reciprok számítása
-                for (i = 0; i < particle_number; i++) {
-                    if (particle_data.radiusmicr[i][0] > 0. && particle_data.radiusmicr[i][0] > disk_params->r_min) {
-                        particle_data.radius_rec[i][0] = 1. / particle_data.radiusmicr[i][0];
-                    } else {
-                        particle_data.radius_rec[i][0] = 0.;
-                    }
-                }
-
-            } 
 
 /*            clock_gettime(CLOCK_MONOTONIC, &t11); 
             double elapsed_old = (t11.tv_sec - t01.tv_sec) + (t11.tv_nsec - t01.tv_nsec) / 1e9;

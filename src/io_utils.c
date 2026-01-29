@@ -652,7 +652,6 @@ void cleanupSimulationResources(ParticleData *particle_data, OutputFiles *output
     if (particle_number > 0) {
         free(particle_data->radius); particle_data->radius = NULL;
         free(particle_data->radiusmicr); particle_data->radiusmicr = NULL;
-        free(particle_data->radius_rec); particle_data->radius_rec = NULL;
         free(particle_data->massvec); particle_data->massvec = NULL;
         free(particle_data->massmicradial_grid); particle_data->massmicradial_grid = NULL;
         free(particle_data->partmassind); particle_data->partmassind = NULL;
