@@ -22,20 +22,20 @@ void calculate1DDustDrift(double particle_radius, double pressure_gradient, doub
 /**
  * @brief Kiszámítja a viszkozitással kapcsolatos ftcsSecondDerivativeCoefficient együtthatót.
  * A diffúziós egyenlet 3 * nu tagja.
- * @param r Aktuális sugárpozíció [AU].
+ * @param radial_distance Aktuális sugárpozíció [AU].
  * @param disk_params A diszk paramétereit tartalmazó struktúra.
  * @return Az ftcsSecondDerivativeCoefficient értéke.
  */
-double ftcsSecondDerivativeCoefficient(double r, const DiskParameters *disk_params);
+double ftcsSecondDerivativeCoefficient(double radial_distance, const DiskParameters *disk_params);
 
 /**
  * @brief Kiszámítja a viszkozitással kapcsolatos ftcsFirstDerivativeCoefficient együtthatót.
  * A diffúziós egyenlet 9 * nu / (2 * r) tagja.
- * @param r Aktuális sugárpozíció [AU].
+ * @param radial_distance Aktuális sugárpozíció [AU].
  * @param disk_params A diszk paramétereit tartalmazó struktúra.
  * @return Az ftcsFirstDerivativeCoefficient értéke.
  */
-double ftcsFirstDerivativeCoefficient(double r, const DiskParameters *disk_params);
+double ftcsFirstDerivativeCoefficient(double radial_distance, const DiskParameters *disk_params);
 
 /**
  * @brief Kiszámítja a minimális időlépést a szimulációhoz.

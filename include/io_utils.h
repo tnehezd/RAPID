@@ -96,20 +96,20 @@ typedef struct {
     double star_mass; // Kellhet a disk_param fejlécbe
     double flaring_index; // Kellhet a disk_param fejlécbe
     int n_grid_points; // Kellhet a disk_param fejlécbe
-} HeaderData_t;
+} HeaderData;
 
 
 // Függvény a fejlécek kiírására
 // Az 'header_data' opcionális lehet (NULL is átadható), ha az adott fájltípushoz nem kell
-void printFileHeader(FILE *file, FileType_e file_type, const HeaderData_t *header_data);
+void printFileHeader(FILE *file, FileType_e file_type, const HeaderData *header_data);
 
 
 // Függvény a kezdeti kimeneti fájlok beállítására és fejlécek írására
 int setupInitialOutputFiles(OutputFiles *output_files, const SimulationOptions *sim_opts,
-                               const DiskParameters *disk_params, HeaderData_t *header_data_for_files);
+                               const DiskParameters *disk_params, HeaderData *header_data_for_files);
 
 
-void cleanupSimulationResources(ParticleData_t *p_data, OutputFiles *output_files, const SimulationOptions *sim_opts);
+void cleanupSimulationResources(ParticleData *particle_data, OutputFiles *output_files, const SimulationOptions *sim_opts);
 
 void closeSnapshotFiles(OutputFiles *output_files, const char *dens_name, const char *dust_name, const char *dust_name2, const SimulationOptions *sim_opts);
 

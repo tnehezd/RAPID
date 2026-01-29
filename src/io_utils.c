@@ -493,7 +493,7 @@ void printDustParticleSizeFile(char *size_name, int step, double (*rad)[2], doub
 
 
 // Függvény a fájl fejlécek kiírására
-void printFileHeader(FILE *file, FileType_e file_type, const HeaderData_t *header_data) {
+void printFileHeader(FILE *file, FileType_e file_type, const HeaderData *header_data) {
     if (file == NULL) {
         fprintf(stderr, "ERROR [printFileHeader]: Attempted to write header to a NULL file pointer!\n");
         return;
@@ -531,7 +531,7 @@ void printFileHeader(FILE *file, FileType_e file_type, const HeaderData_t *heade
             } else {
                 fprintf(file, "# Time: %e years\n", header_data ? header_data->current_time : 0.0);
             }
-            // A fejléc az init_tool_module-ból, módosítva a HeaderData_t használatára
+            // A fejléc az init_tool_module-ból, módosítva a HeaderData használatára
             fprintf(file, "#--------------------------------------------------------------------------\n");
             fprintf(file, "# %-15s %-15s %-15s %-15s\n",
                     "Radius_AU", "GasSurfDensity", "GasPressure", "GasPressureDeriv");
@@ -552,7 +552,7 @@ void printFileHeader(FILE *file, FileType_e file_type, const HeaderData_t *heade
             break;
 
         case FILE_TYPE_PARTICLE_SIZE:
-            // A fejléc az init_tool_module-ból, módosítva a HeaderData_t használatára
+            // A fejléc az init_tool_module-ból, módosítva a HeaderData használatára
             // Kiegészítő infók, ha t=0 (is_initial_data)
             if (header_data && header_data->is_initial_data) {
                 fprintf(file, "# Initial particle distribution\n", header_data->current_time);
@@ -567,7 +567,7 @@ void printFileHeader(FILE *file, FileType_e file_type, const HeaderData_t *heade
             break;
 
         case FILE_TYPE_DISK_PARAM:
-            // A fejléc az init_tool_module-ból, módosítva a HeaderData_t használatára
+            // A fejléc az init_tool_module-ból, módosítva a HeaderData használatára
             fprintf(file, "# Disk Parameters\n");
             fprintf(file, "#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
             fprintf(file, "# %-15s %-15s %-10s %-15s %-20s %-15s %-15s %-15s %-20s %-20s %-15s %-15s %-15s %-15s %-15s\n",
@@ -589,7 +589,7 @@ void printFileHeader(FILE *file, FileType_e file_type, const HeaderData_t *heade
 
 
 int setupInitialOutputFiles(OutputFiles *output_files, const SimulationOptions *sim_opts,
-                               const DiskParameters *disk_params, HeaderData_t *header_data_for_files) {
+                               const DiskParameters *disk_params, HeaderData *header_data_for_files) {
     char porout[MAX_PATH_LEN] = "";
     char poroutmicr[MAX_PATH_LEN] = "";
     char massout[MAX_PATH_LEN] = "";
@@ -648,19 +648,19 @@ int setupInitialOutputFiles(OutputFiles *output_files, const SimulationOptions *
 }
 
 
-void cleanupSimulationResources(ParticleData_t *p_data, OutputFiles *output_files, const SimulationOptions *sim_opts) {
+void cleanupSimulationResources(ParticleData *particle_data, OutputFiles *output_files, const SimulationOptions *sim_opts) {
     if (particle_number > 0) {
-        free(p_data->radius); p_data->radius = NULL;
-        free(p_data->radiusmicr); p_data->radiusmicr = NULL;
-        free(p_data->radius_rec); p_data->radius_rec = NULL;
-        free(p_data->massvec); p_data->massvec = NULL;
-        free(p_data->massmicradial_grid); p_data->massmicradial_grid = NULL;
-        free(p_data->partmassind); p_data->partmassind = NULL;
-        free(p_data->partmassmicrind); p_data->partmassmicrind = NULL;
-        free(p_data->sigmad); p_data->sigmad = NULL;
-        free(p_data->sigmadm); p_data->sigmadm = NULL;
-        free(p_data->rdvec); p_data->rdvec = NULL;
-        free(p_data->rmicvec); p_data->rmicvec = NULL;
+        free(particle_data->radius); particle_data->radius = NULL;
+        free(particle_data->radiusmicr); particle_data->radiusmicr = NULL;
+        free(particle_data->radius_rec); particle_data->radius_rec = NULL;
+        free(particle_data->massvec); particle_data->massvec = NULL;
+        free(particle_data->massmicradial_grid); particle_data->massmicradial_grid = NULL;
+        free(particle_data->partmassind); particle_data->partmassind = NULL;
+        free(particle_data->partmassmicrind); particle_data->partmassmicrind = NULL;
+        free(particle_data->sigmad); particle_data->sigmad = NULL;
+        free(particle_data->sigmadm); particle_data->sigmadm = NULL;
+        free(particle_data->rdvec); particle_data->rdvec = NULL;
+        free(particle_data->rmicvec); particle_data->rmicvec = NULL;
 
         fprintf(stderr, "DEBUG [cleanupSimulationResources]: All dynamically allocated particle arrays freed.\n");
     }

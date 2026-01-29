@@ -19,12 +19,12 @@ typedef struct {
     double *rdvec;
     double *rmicvec;
     size_t allocated_particle_number; // Az aktuálisan allokált részecskék száma
-} ParticleData_t;
+} ParticleData;
 
 // Függvény a memóriafoglalásra
-int allocateParticleData(ParticleData_t *p_data, size_t particle_count, int is_twopop_enabled);
+int allocateParticleData(ParticleData *particle_data, size_t particle_count, int is_twopop_enabled);
 
 // Függvény a memória felszabadítására
-void freeParticleData(ParticleData_t *p_data);
+void freeParticleData(ParticleData *particle_data);
 
 #endif // PARTICLE_DATA_H
