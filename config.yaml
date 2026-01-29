@@ -31,4 +31,3 @@ simulation_parameters:
   fixed_time_step: 0.0
   total_simulation_time: 500000.0
   output_write_frequency: 1000
-  simulation_start_time: 0.0
