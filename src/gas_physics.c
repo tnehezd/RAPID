@@ -20,16 +20,16 @@
 
 
 /*	alpha turbulens paraméter kiszámolása --> alfa csökkentése alpha_r-rel	*/
-double calculateTurbulentAlpha(double r, const disk_t *disk_params) {
+double calculateTurbulentAlpha(double r, const DiskParameters *disk_params) {
     double alpha_r;
-    alpha_r = 1.0 - 0.5 * (1.0 - disk_params->a_mod) * (tanh((r - disk_params->r_dze_i) / disk_params->dr_dze_i) + tanh((disk_params->r_dze_o - r) / disk_params->dr_dze_o));
+    alpha_r = 1.0 - 0.5 * (1.0 - disk_params->alpha_parameter_modification) * (tanh((r - disk_params->r_dze_i) / disk_params->dr_dze_i) + tanh((disk_params->r_dze_o - r) / disk_params->dr_dze_o));
     return alpha_r * disk_params->alpha_parameter;
 }
 
 
 
 /*  Lokalis viszkozitas erteke  */
-double calculateKinematicViscosity(double r, const disk_t *disk_params) {
+double calculateKinematicViscosity(double r, const DiskParameters *disk_params) {
     double nu;
     double cs, H;
 
@@ -41,7 +41,7 @@ double calculateKinematicViscosity(double r, const disk_t *disk_params) {
 }
 
 /*  local scale height  */
-double calculatePressureScaleHeight(double r, const disk_t *disk_params) {
+double calculatePressureScaleHeight(double r, const DiskParameters *disk_params) {
 
     if (disk_params == NULL) {
         fprintf(stderr, "ERROR [scale_height]: disk_params is NULL!\n");
@@ -54,32 +54,32 @@ double calculatePressureScaleHeight(double r, const disk_t *disk_params) {
 }
 
 /*  lokális kepleri sebesség    */
-double calculateKeplerianVelocity(double r, const disk_t *disk_params) {
+double calculateKeplerianVelocity(double r, const DiskParameters *disk_params) {
     return sqrt(G_DIMENSIONLESS * disk_params->stellar_mass / r);
 }
 
 /*  lokalis kepleri korfrekvencia   */
-double calculateKeplerianFrequency(double r, const disk_t *disk_params) {
+double calculateKeplerianFrequency(double r, const DiskParameters *disk_params) {
     return sqrt(G_DIMENSIONLESS * disk_params->stellar_mass / r / r / r);
 }
 
 /*  local sound speed       */
-double calculateLocalSoundSpeed(double r, const disk_t *disk_params) {
+double calculateLocalSoundSpeed(double r, const DiskParameters *disk_params) {
     return calculateKeplerianFrequency(r,disk_params) * calculatePressureScaleHeight(r,disk_params);
 }
 
 /*  Suruseg a midplane-ben  */
-double calcualteMidplaneGasDensity(double sigma, double r, const disk_t *disk_params) {
+double calcualteMidplaneGasDensity(double sigma, double r, const DiskParameters *disk_params) {
     return 1. / sqrt(2.0 * M_PI) * sigma / calculatePressureScaleHeight(r,disk_params);
 }
 
 /* local pressure of the gas p = rho_gas * cs * cs kepletbol!!  */
-double calculateGasPressure(double sigma, double r, const disk_t *disk_params) {
+double calculateGasPressure(double sigma, double r, const DiskParameters *disk_params) {
     return calcualteMidplaneGasDensity(sigma, r, disk_params) * calculateLocalSoundSpeed(r,disk_params) * calculateLocalSoundSpeed(r, disk_params);
 }
 
 /*  a nyomas derivaltja */
-void calculateGasPressureGradient(disk_t *disk_params) {
+void calculateGasPressureGradient(DiskParameters *disk_params) {
     int i;
     double ptemp, pvec[disk_params->grid_number + 2];
 
@@ -101,7 +101,7 @@ double coefficientForGasRadialVelocity(double sigma, double r) {
 }
 
 /*  calculateGasRadialVelocity = -3/(Sigma*R^0.5)*(d/dR)(nu*Sigma*R^0.5) kiszamolasa */
-void calculateGasRadialVelocity(disk_t *disk_params) {
+void calculateGasRadialVelocity(DiskParameters *disk_params) {
 
     double tempug;
     // Lokális tömbök, méret grid_number-hez igazítva disk_params-ból
@@ -135,7 +135,7 @@ void calculateGasRadialVelocity(disk_t *disk_params) {
 }
 
 /*  Fuggveny a sigma, p, dp kiszamolasara   */
-void refreshGasSurfaceDensityPressurePressureGradient(const simulation_options_t *sim_opts, disk_t *disk_params) { // Added sim_opts
+void refreshGasSurfaceDensityPressurePressureGradient(const simulation_options_t *sim_opts, DiskParameters *disk_params) { // Added sim_opts
 
     double u, u_bi, u_fi;
     double sigma_temp[disk_params->grid_number + 2]; // Use disk_params->grid_number
@@ -183,11 +183,11 @@ void refreshGasSurfaceDensityPressurePressureGradient(const simulation_options_t
     // And if they are modifying the *content* of the arrays within disk_params, then disk_params should NOT be const in *their* parameter list.
     // However, since refreshGasSurfaceDensityPressurePressureGradient is modifying them, disk_params *here* cannot be const.
     // Let's remove 'const' from disk_params in refreshGasSurfaceDensityPressurePressureGradient signature if it modifies them.
-    // void refreshGasSurfaceDensityPressurePressureGradient(disk_t *disk_params, const simulation_options_t *sim_opts) { ... }
+    // void refreshGasSurfaceDensityPressurePressureGradient(DiskParameters *disk_params, const simulation_options_t *sim_opts) { ... }
     
     // Assuming these helper functions need disk_params to access *its* internal arrays
     calculateGasPressureGradient(disk_params); // Assuming dpress takes arrays and disk_params
-    applyBoundaryConditions(disk_params->sigmavec, disk_params); // First argument is the array, second is the disk_t pointer
+    applyBoundaryConditions(disk_params->sigmavec, disk_params); // First argument is the array, second is the DiskParameters pointer
     applyBoundaryConditions(disk_params->pressvec, disk_params);
     applyBoundaryConditions(disk_params->dpressvec, disk_params);
 }

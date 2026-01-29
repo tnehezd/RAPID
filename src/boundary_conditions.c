@@ -10,7 +10,7 @@
 #include "boundary_conditions.h"
 
 
-void parabolicExtrapolationToGhostCells(double *vec, int i1, int i2, int i3, double *a, double *b, double *c, double dd, const disk_t *disk_params) {
+void parabolicExtrapolationToGhostCells(double *vec, int i1, int i2, int i3, double *a, double *b, double *c, double dd, const DiskParameters *disk_params) {
 
 
 /**
@@ -60,7 +60,7 @@ void parabolicExtrapolationToGhostCells(double *vec, int i1, int i2, int i3, dou
 }
 
 
-void applyBoundaryConditions(double *vec, const disk_t *disk_params) {					/*	boundary condition for sigma, p, dp...	*/
+void applyBoundaryConditions(double *vec, const DiskParameters *disk_params) {					/*	boundary condition for sigma, p, dp...	*/
 
 
 // OPEN BOUNDARY: mind a sebességre, mind a többi fizikai mennyiségre parabola illesztést használunk

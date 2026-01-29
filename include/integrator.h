@@ -1,7 +1,7 @@
 #ifndef INTEGRATOR_H
 #define INTEGRATOR_H
 
-#include "disk_model.h"         // disk_t struktúra miatt
+#include "disk_model.h"         // DiskParameters struktúra miatt
 #include "simulation_types.h"   // simulation_options_t és output_files_t struktúrák miatt
 
 
@@ -23,7 +23,7 @@
  * @param disk_params A diszk paramétereit tartalmazó struktúra.
  * @param sim_opts A szimulációs opciókat tartalmazó struktúra.
  */
-void integrateParticleRungeKutta4(double time, double prad, const double *sigmad, const double *rdvec, double step, double y, double *ynew, double *pradnew, const disk_t *disk_params, const simulation_options_t *sim_opts);
+void integrateParticleRungeKutta4(double time, double prad, const double *sigmad, const double *rdvec, double step, double y, double *ynew, double *pradnew, const DiskParameters *disk_params, const simulation_options_t *sim_opts);
 
 
 

@@ -12,7 +12,7 @@
 
 
 /*	egy megadott, diszkret pontokban ismert fuggvenyt linearInterpolational a reszecske aktualis helyere	*/
-void linearInterpolation(double *invec, double *rvec, double pos, double *out, double rd, int opt, const disk_t *disk_params) {
+void linearInterpolation(double *invec, double *rvec, double pos, double *out, double rd, int opt, const DiskParameters *disk_params) {
 
 	double rmid, rindex, coef1, temp;
 	int index; 
@@ -75,7 +75,7 @@ double findMinimumOfAnArray(double s1, double s2, double s3) {
 
 
 /*	counting the number of zero points of the pressure gradient function	*/
-int countZeroPoints(const disk_t *disk_params) {
+int countZeroPoints(const DiskParameters *disk_params) {
 
 	int i,count;
 	count = 0;
@@ -125,7 +125,7 @@ double findZeroPoint(int i, const double *rvec, const double *dp) {
 }
 
 // calculateIndexFromRadius függvény (melyet korábban megbeszéltünk, valahol globálisan)
-/*double calculateIndexFromRadius(double r_coord, disk_t *disk_params) {
+/*double calculateIndexFromRadius(double r_coord, DiskParameters *disk_params) {
     if (r_coord < disk_params->r_min) return 0.0;
     return fmax(0.0, fmin((double)(disk_params->grid_number - 1), floor((r_coord - disk_params->r_min) / disk_params->delta_r + 0.5)));
 }
@@ -135,7 +135,7 @@ double findZeroPoint(int i, const double *rvec, const double *dp) {
 /*	A nyomasi maximum korul 1H tavolsagban jeloli ki a korgyurut	*/
 void findRAnnulusAroundDZE(double rin, double *ind_ii, double *ind_io,
                             double rout, double *ind_oi, double *ind_oo,
-                            const simulation_options_t *sim_opts, disk_t *disk_params) {
+                            const simulation_options_t *sim_opts, DiskParameters *disk_params) {
 
 	    volatile int debug_marker = 0; // Adj hozzá ezt a sortAnArray
 
@@ -247,7 +247,7 @@ void sortAnArray(double *rv,int n) {
 }
 // If grid_number is not directly available, you might need to pass the array size
 // void histogram(double r, int *hist, double dd, int hist_size) {
-void histogram(double r, int *hist, double dd, disk_t *disk_params) {
+void histogram(double r, int *hist, double dd, DiskParameters *disk_params) {
     int index;
     double rmid; // hist_i is no longer needed as a separate variable
 
@@ -312,7 +312,7 @@ void sortAnArrayarray(double rv[][3],int n) {
 }
 
 
-void roundParticleRadii(double in[][3], int n, const disk_t *disk_params) {
+void roundParticleRadii(double in[][3], int n, const DiskParameters *disk_params) {
 
 	double dd = (disk_params->r_max - disk_params->r_min) / (particle_number-1);
 	int dker = (int)(1./dd);//
@@ -333,7 +333,7 @@ void roundParticleRadii(double in[][3], int n, const disk_t *disk_params) {
 
 
 
-void mergeParticlesByRadius(double in[][3], double dd, int n, const disk_t *disk_params) {
+void mergeParticlesByRadius(double in[][3], double dd, int n, const DiskParameters *disk_params) {
 
 	int i;
 	int j;
@@ -391,7 +391,7 @@ void mergeParticlesByRadius(double in[][3], double dd, int n, const disk_t *disk
 
 }
 
-void updateParticleGridIndices(double radin[][2], double partmassindin[][5], double *massvecin, double t, int n, const disk_t *disk_params) {
+void updateParticleGridIndices(double radin[][2], double partmassindin[][5], double *massvecin, double t, int n, const DiskParameters *disk_params) {
 
     int i, rindex;
     double rmid;  

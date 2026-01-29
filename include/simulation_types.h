@@ -14,22 +14,22 @@ typedef struct {
     // Add any other per-particle properties here, e.g.:
     // double velocity_r; // Radial velocity if you track it explicitly
     // int    index_in_grid; // Or calculated on the fly
-} particle_t;
+} DustParticle;
 
 // --- Dust Population Structure ---
 // Represents a collection of particles of a certain type (e.g., cm, micron, secondary)
 typedef struct {
-    particle_t *particles; // Pointer to an array of particle_t structures
+    DustParticle *particles; // Pointer to an array of particle_t structures
     int num_particles;     // Number of particles in this specific population
 
     // If needed, specific properties for the population itself:
     // double total_mass; // Total mass represented by this population
     // double initial_mass; // Initial total mass for comparison
-} dust_population_t;
+} DustPopulation;
 
 // --- Disk Structure ---
 // Encapsulates all global disk parameters and dynamic arrays
-typedef struct disk_t {
+typedef struct {
     // Geometriai és rács paraméterek
     double r_min;
     double r_max;
@@ -50,7 +50,7 @@ typedef struct disk_t {
     double r_dze_o;
     double dr_dze_i;
     double dr_dze_o;
-    double a_mod; // Alfa modifikációs faktor
+    double alpha_parameter_modification; 
 
     // Por paraméterek (ezeket számolja a disk_param_be)
     double particle_density; // Por sűrűség (fizikai egységekben, pl. g/cm^3)
@@ -77,7 +77,7 @@ typedef struct disk_t {
     // Látom, a korábbi hibáknál 'dp' néven hivatkoztál rá, az most 'dpressvec'.
     // A 'rho_p' viszont egy új bejegyzés.
 
-} disk_t;
+} DiskParameters;
 
 // --- Simulation Options/Control Structure ---
 // Groups all boolean/flag-like options

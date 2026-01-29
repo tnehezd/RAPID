@@ -21,7 +21,7 @@
 
 /*	Calculates the Stokes number for each particle	*/
 /*	St = rho_particle * radius_particle * PI / (2 * sigma)	*/
-double calculateStokesNumber(double pradius, double sigma, disk_t *disk_params) { /*	in the Epstein drag regime	*/
+double calculateStokesNumber(double pradius, double sigma, DiskParameters *disk_params) { /*	in the Epstein drag regime	*/
     return disk_params->particle_density_dimensionless * pradius * M_PI / (2.0 * sigma);
 }
 
@@ -98,7 +98,7 @@ void calculateParticleMass(int n, double (*partmassind)[5], int indii, int indio
 
 //reprezentativ reszecske kezdeti meretenek meghatarozasa
 // 1. radialis drift altal meghatarozott maximalis meret			--> kimenet cm-ben!
-double calculateRadialDriftBarrier(double sigmad, double r, double p, double dp, double rho_p, const disk_t *disk_params) {
+double calculateRadialDriftBarrier(double sigmad, double r, double p, double dp, double rho_p, const DiskParameters *disk_params) {
 
     double Sigmad_cgs = sigmad / SURFACE_DENSITY_CONVERSION_FACTOR;
 
@@ -112,7 +112,7 @@ double calculateRadialDriftBarrier(double sigmad, double r, double p, double dp,
 }
 
 // 2. a kis skalaju turbulencia altal okozott fragmentacio szerinti maximalis meret	--> kimenet cm-ben!
-double calculateTurbulentFragmentationBarrier(double sigma, double r, double rho_p, const disk_t *disk_params) {
+double calculateTurbulentFragmentationBarrier(double sigma, double r, double rho_p, const DiskParameters *disk_params) {
 
     double s_frag, u_frag, u_frag2, Sigma_cgs, c_s, c_s2;
 
@@ -128,7 +128,7 @@ double calculateTurbulentFragmentationBarrier(double sigma, double r, double rho
 }
 
 // 3. radialis drift altal okozott fragmentacio szerinti maximalis meret		--> kimenet cm-ben!
-double calculateDriftInducedFragmentationBarrier(double sigma, double r, double p, double dp, double rho_p, const disk_t *disk_params) {
+double calculateDriftInducedFragmentationBarrier(double sigma, double r, double p, double dp, double rho_p, const DiskParameters *disk_params) {
 
     double u_frag, vkep, dlnPdlnr, c_s, c_s2, s_df, Sigma_cgs;
 
@@ -145,14 +145,14 @@ double calculateDriftInducedFragmentationBarrier(double sigma, double r, double 
 }
 
 /*	a reszecskek novekedesenek idoskalaja	*/
-double calculateGrowthTimescale(double r, double eps,const disk_t *disk_params) {
+double calculateGrowthTimescale(double r, double eps,const DiskParameters *disk_params) {
     double omega = calculateKeplerianFrequency(r,disk_params);
     double calculateGrowthTimescale = eps / omega;
     return calculateGrowthTimescale;
 }
 
 /*	kiszamolja az adott helyen a reszecske meretet --> BIRNSTIEL CIKK	*/
-double calculateDustParticleSize(double prad, double pdens, double sigma, double sigmad, double y, double p, double dpress_val, double dt, const disk_t *disk_params) {
+double calculateDustParticleSize(double prad, double pdens, double sigma, double sigmad, double y, double p, double dpress_val, double dt, const DiskParameters *disk_params) {
 
     double sturb = calculateTurbulentFragmentationBarrier(sigma, y, pdens, disk_params);           // cm-ben
     double sdf = calculateDriftInducedFragmentationBarrier(sigma, y, p, dpress_val, pdens,disk_params); // cm-ben
@@ -178,7 +178,7 @@ double calculateDustParticleSize(double prad, double pdens, double sigma, double
 
 void calculateDustSurfaceDensity(double max_param, double min_param, double rad[][2], double radmicr[][2], 
                 double *sigma_d, double *sigma_dm,  double *massvec, double *massmicrvec,  
-                double *rd, double *rmic, const simulation_options_t *sim_opts, const disk_t *disk_params) {
+                double *rd, double *rmic, const simulation_options_t *sim_opts, const DiskParameters *disk_params) {
 
     // Suppress unused parameter warnings
     (void)max_param;
@@ -233,7 +233,7 @@ void calculateDustSurfaceDensity(double max_param, double min_param, double rad[
 
 /*	Fuggveny a porszemcsek uj tavolsaganak elraktarozasara		*/
 void calculateDustDistance(const char *nev, int opt, double radius[][2], const double *sigmad, const double *rdvec,
-                double deltat, double t, int n, const simulation_options_t *sim_opts, const disk_t *disk_params){
+                double deltat, double t, int n, const simulation_options_t *sim_opts, const DiskParameters *disk_params){
 
     int i;
     double y, y_out, prad_new, particle_radius;

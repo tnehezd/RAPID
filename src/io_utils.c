@@ -19,7 +19,7 @@
 #include "config.h"         
 #include "dust_physics.h"   // If needed for any specific function interactions
 #include "utils.h"          // For countZeroPoints, findZeroPoint, findRAnnulusAroundDZE
-#include "simulation_types.h" // For disk_t, simulation_options_t, output_files_t
+#include "simulation_types.h" // For DiskParameters, simulation_options_t, output_files_t
 #include "boundary_conditions.h"
 
 
@@ -117,7 +117,7 @@ void loadDustParticlesFromFile(double radius[][2], double radiusmicr[][2], doubl
 }
 
 
-void loadGasSurfaceDensityFromFile(disk_t *disk_params, const char *filename) {
+void loadGasSurfaceDensityFromFile(DiskParameters *disk_params, const char *filename) {
     const char *input_filename = filename;
 
     FILE *fp = fopen(input_filename, "r");
@@ -168,7 +168,7 @@ void loadGasSurfaceDensityFromFile(disk_t *disk_params, const char *filename) {
         }
 
         // Hozzárendelés a disk_params tömbökhöz
-        // Az indexelés 'i + 1' a 0-ás indexű szellemcella miatt (ahogy a disk_t definíciója és a applyBoundaryConditions függvény valószínűsíti).
+        // Az indexelés 'i + 1' a 0-ás indexű szellemcella miatt (ahogy a DiskParameters definíciója és a applyBoundaryConditions függvény valószínűsíti).
         // Fontos: ellenőrizzük, hogy az 'i + 1' index a tömb határain belül van-e.
         // A tömbök mérete disk_params->grid_number + 2, tehát az érvényes indexek 0-tól grid_number+1-ig mennek.
         // A "valós" adatok 1-től grid_number-ig kerülnek, a 0 és grid_number+1 pedig a applyBoundaryConditions-hez.
@@ -222,7 +222,7 @@ void createRunDirectory(char *dir_path) {
 
 /* Elkészít egy fájlt, ami tartalmazza a jelenlegi futás paramétereit,
  * és hogy melyik mappában találhatóak a fájlok */
-void printCurrentInformationAboutRun(const char *nev, const disk_t *disk_params, const simulation_options_t *sim_opts) {
+void printCurrentInformationAboutRun(const char *nev, const DiskParameters *disk_params, const simulation_options_t *sim_opts) {
 
     char full_path[MAX_PATH_LEN]; // Használjuk a MAX_PATH_LEN-t a biztonságos puffereléshez
     char file_name[100]; 
@@ -247,7 +247,7 @@ void printCurrentInformationAboutRun(const char *nev, const disk_t *disk_params,
     fprintf(current_info_file,"\n\nThe parameters of the disk:\nr_min: %lg, r_max: %lg\nsigma_0: %lg, SIGMA_EXP: %lg, flaring index: %lg\nALPHA_VISC: %lg, ALPHA_MOD: %lg\nR_DZE_I: %lg, R_DZE_O: %lg, DR_DZEI: %lg, DR_DZE_O: %lg   (*** R_DZE_I/O = 0, akkor azt a DZE-t nem szimulálja a futás! ***)\n\n\n",
               disk_params->r_min, disk_params->r_max,
               disk_params->sigma_0, disk_params->sigma_power_law_index, disk_params->flaring_index,
-              disk_params->alpha_parameter, disk_params->a_mod,
+              disk_params->alpha_parameter, disk_params->alpha_parameter_modification,
               disk_params->r_dze_i, disk_params->r_dze_o, disk_params->dr_dze_i, disk_params->dr_dze_o);
     fprintf(current_info_file,"The mass of the central star: %lg M_Sun\n", disk_params->stellar_mass);
     fclose(current_info_file);
@@ -256,7 +256,7 @@ void printCurrentInformationAboutRun(const char *nev, const disk_t *disk_params,
 
 void printMassGrowthAtDZEFile(double step, double (*partmassind)[5], double (*partmassmicrind)[5], double t, double massbtempii, double massbtempoi, double massmtempii, double massmtempoi, 
                 double *massbtempio, double *massbtempoo, double *massmtempio, double *massmtempoo, double *tavin, double *tavout, 
-                const disk_t *disk_params, const simulation_options_t *sim_opts,output_files_t *output_files) {
+                const DiskParameters *disk_params, const simulation_options_t *sim_opts,output_files_t *output_files) {
 
 
     double ind_ii, ind_io, ind_oi, ind_oo, tav, tav2;
@@ -392,7 +392,7 @@ void printMassGrowthAtDZEFile(double step, double (*partmassind)[5], double (*pa
 
 
 /* Függvény a sigma, p, dp kiíratására */
-void printGasSurfaceDensityPressurePressureDerivateFile(const disk_t *disk_params, output_files_t *output_files) {
+void printGasSurfaceDensityPressurePressureDerivateFile(const DiskParameters *disk_params, output_files_t *output_files) {
 
     int i;
 
@@ -410,7 +410,7 @@ void printGasSurfaceDensityPressurePressureDerivateFile(const disk_t *disk_param
 }
 
 /* Függvény a por felületisűrűségének kiíratására */
-void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const double *rm, const double *sigmad, const double *sigmadm, const disk_t *disk_params, const simulation_options_t *sim_opts, output_files_t *output_files, double step) {
+void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const double *rm, const double *sigmad, const double *sigmadm, const DiskParameters *disk_params, const simulation_options_t *sim_opts, output_files_t *output_files, double step) {
 
     int i;
 
@@ -438,7 +438,7 @@ void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const 
 }
 
 /* Függvény a pormozgás és részecskeméret kiíratására */
-void printDustParticleSizeFile(char *size_name, int step, double (*rad)[2], double (*radmicr)[2], const disk_t *disk_params, const simulation_options_t *sim_opts, output_files_t *output_files) {
+void printDustParticleSizeFile(char *size_name, int step, double (*rad)[2], double (*radmicr)[2], const DiskParameters *disk_params, const simulation_options_t *sim_opts, output_files_t *output_files) {
 
     FILE *fout_size = NULL;
 
@@ -597,7 +597,7 @@ void printFileHeader(FILE *file, FileType_e file_type, const HeaderData_t *heade
 
 
 int setupInitialOutputFiles(output_files_t *output_files, const simulation_options_t *sim_opts,
-                               const disk_t *disk_params, HeaderData_t *header_data_for_files) {
+                               const DiskParameters *disk_params, HeaderData_t *header_data_for_files) {
     char porout[MAX_PATH_LEN] = "";
     char poroutmicr[MAX_PATH_LEN] = "";
     char massout[MAX_PATH_LEN] = "";

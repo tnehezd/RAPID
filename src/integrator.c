@@ -25,7 +25,7 @@
 
 /*	Runge-Kutta4 integrator	*/
 // prad bemenet: AU-ban!
-void integrateParticleRungeKutta4(double time, double prad, const double *sigmad, const double *rdvec, double step, double y, double *ynew, double *pradnew, const disk_t *disk_params, const simulation_options_t *sim_opts){
+void integrateParticleRungeKutta4(double time, double prad, const double *sigmad, const double *rdvec, double step, double y, double *ynew, double *pradnew, const DiskParameters *disk_params, const simulation_options_t *sim_opts){
     double dy1,dy2,dy3,dy4;
     double ytemp, ytemp2;
     double sigma, dpress, ugas; 

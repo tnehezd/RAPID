@@ -50,7 +50,7 @@ int main(int argc, const char **argv) {
     }
 
     // --- Declare instances of the new simulation structs ---
-    disk_t disk_params; // Main disk parameters struct
+    DiskParameters disk_params; // Main disk parameters struct
     simulation_options_t sim_opts;
     output_files_t output_files;
 
@@ -79,7 +79,7 @@ int main(int argc, const char **argv) {
 
     fprintf(stderr, "DEBUG [main]: Evolution (sim_opts.evol=%.2f) or drift (sim_opts.drift=%.2f) is ON. Starting main simulation loop.\n", sim_opts.evol, sim_opts.drift);
 
-    // --- Populate disk_t with parameters from 'def' ---
+    // --- Populate DiskParameters with parameters from 'def' ---
     disk_params.r_min = def.rmin_val;
     disk_params.r_max = def.rmax_val;
     disk_params.grid_number = def.ngrid_val; // grid_number (gas grid points) is from parsed options
@@ -93,7 +93,7 @@ int main(int argc, const char **argv) {
     disk_params.r_dze_o = def.r_dze_o_val;
     disk_params.dr_dze_i = def.dr_dze_i_val;
     disk_params.dr_dze_o = def.dr_dze_o_val;
-    disk_params.a_mod = def.a_mod_val;
+    disk_params.alpha_parameter_modification = def.a_mod_val;
     disk_params.fFrag = def.ffrag;
     disk_params.uFrag = def.ufrag;
     disk_params.fDrift = 0.55; // set by Birnstiel 2012
@@ -110,7 +110,7 @@ int main(int argc, const char **argv) {
     char initial_dir_path[MAX_PATH_LEN];
     char kLogFilesDirectory_path[MAX_PATH_LEN];
 
-    // Create the 'initial' subdirectory using kConfigFilesDirectory
+    // Create the 'intial' subdirectory using kConfigFilesDirectory
     snprintf(initial_dir_path, sizeof(initial_dir_path), "%s/%s", def.output_dir_name, kConfigFilesDirectory);
     createRunDirectory(initial_dir_path);
 
@@ -195,7 +195,7 @@ int main(int argc, const char **argv) {
         init_tool_params.deadzone_dr_inner = disk_params.dr_dze_i;
         init_tool_params.deadzone_dr_outer = disk_params.dr_dze_o;
         init_tool_params.alpha_viscosity = disk_params.alpha_parameter;
-        init_tool_params.deadzone_alpha_mod = disk_params.a_mod;
+        init_tool_params.deadzone_alpha_mod = disk_params.alpha_parameter_modification;
         init_tool_params.aspect_ratio = disk_params.h_aspect_ratio;
         init_tool_params.flaring_index = disk_params.flaring_index;
         init_tool_params.star_mass = disk_params.stellar_mass;

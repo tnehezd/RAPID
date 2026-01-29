@@ -24,7 +24,7 @@
 
 /*	Kiszamolja az 1D-s driftet	*/
 /*  	dr/dt = St/(1+St*St)*H(r)/r*dlnP/dlnr*cs = St/(1+St*St) * (H/r) * (r/P) * (dP/dr) * cs		*/
-void calculate1DDustDrift(double pradius, double dp, double sigma, double ug, double r, double *drdt, const disk_t *disk_params) {
+void calculate1DDustDrift(double pradius, double dp, double sigma, double ug, double r, double *drdt, const DiskParameters *disk_params) {
 
     double P, H, dPdr, St, csound;
       
@@ -39,20 +39,20 @@ void calculate1DDustDrift(double pradius, double dp, double sigma, double ug, do
 
 
 /* for solving d(sigma*nu)/dt = 3*nu*d2(sigma*nu)/dr2 + 9*hu/(2*r)*dsigma/dr	--> 3*nu  	*/
-double ftcsSecondDerivativeCoefficient(double r, const disk_t *disk_params){					
+double ftcsSecondDerivativeCoefficient(double r, const DiskParameters *disk_params){					
     double A;
     A = 3.0 * calculateKinematicViscosity(r, disk_params);
     return A;
 }
 
 /* for solving d(sigma*nu)/dt = 3*nu*d2(sigma*nu)/dr2 + 9*hu/(2*r)*dsigma/dr	--> 9*nu /(2*r)	*/
-double ftcsFirstDerivativeCoefficient(double r, const disk_t *disk_params){							
+double ftcsFirstDerivativeCoefficient(double r, const DiskParameters *disk_params){							
     double B;
     B = 9.0 * calculateKinematicViscosity(r,disk_params) / (2.0 * r);
     return B;
 }
 
-double calculateTimeStep(const disk_t *disk_params) { // Add const here too
+double calculateTimeStep(const DiskParameters *disk_params) { // Add const here too
     double A_max, stepping;
     int i;
 
@@ -72,7 +72,7 @@ double calculateTimeStep(const disk_t *disk_params) { // Add const here too
 }
 
 
-void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t *sim_opts, output_files_t *output_files) {
+void timeIntegrationForTheSystem(DiskParameters *disk_params, const simulation_options_t *sim_opts, output_files_t *output_files) {
     ParticleData_t p_data;
     HeaderData_t header_data_for_files; // Később inicializáljuk a setupInitialOutputFiles-ban
 

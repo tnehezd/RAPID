@@ -17,7 +17,7 @@
 // --- External declaration for the existing linearInterpolation function ---
 // This function is assumed to be implemented in utils.c (or similar)
 // and its prototype should be in utils.h.
-//extern void linearInterpolation(double *invec, double *rvec, double pos, double *out, double rd, int opt, const disk_t *disk_params);
+//extern void linearInterpolation(double *invec, double *rvec, double pos, double *out, double rd, int opt, const DiskParameters *disk_params);
 
 
 void initializeDefaultOptions(init_tool_options_t *def) {
@@ -114,7 +114,7 @@ static double findMinimumForThreeNumbersInitTool(double s1, double s2, double s3
 
 // --- Main Init Tool Function ---
 
-int runInitialization(init_tool_options_t *opts, disk_t *disk_params) {
+int runInitialization(init_tool_options_t *opts, DiskParameters *disk_params) {
     FILE *fout_data = NULL; // For dust particle profile
     FILE *fout_params = NULL; // For disk parameters
     FILE *fout_dens = NULL; // For gas density profile
@@ -252,7 +252,7 @@ int runInitialization(init_tool_options_t *opts, disk_t *disk_params) {
     disk_params->dr_dze_i = opts->deadzone_dr_inner;
     disk_params->dr_dze_o = opts->deadzone_dr_outer;
     disk_params->alpha_parameter = opts->alpha_viscosity;
-    disk_params->a_mod = opts->deadzone_alpha_mod;
+    disk_params->alpha_parameter_modification = opts->deadzone_alpha_mod;
     disk_params->h_aspect_ratio = opts->aspect_ratio;
     disk_params->flaring_index = opts->flaring_index;
     disk_params->stellar_mass = opts->star_mass;

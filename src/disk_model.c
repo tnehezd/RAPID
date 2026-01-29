@@ -16,7 +16,7 @@
 
 
 /*	Reads the parameters of the disk	*/
-void readDiskParameters(disk_t *disk_params) {
+void readDiskParameters(DiskParameters *disk_params) {
     // Check if the pointer is NULL
     if (disk_params == NULL) {
         fprintf(stderr, "ERROR [readDiskParameters]: Received NULL disk_params pointer.\n");
@@ -35,7 +35,7 @@ void readDiskParameters(disk_t *disk_params) {
 
 
 /*	Initialize radial grid	*/
-void createRadialGrid(disk_t *disk_params) {
+void createRadialGrid(DiskParameters *disk_params) {
 	
 	int i;
  	for(i = 0; i <= disk_params->grid_number+1; i++) {						/*	load an array of radii	*/
@@ -45,7 +45,7 @@ void createRadialGrid(disk_t *disk_params) {
 }
 
 /*	Create the initial gas surface density profile	*/
-void createInitialGasSurfaceDensity(disk_t *disk_params){		/*	initial profile of sigma		*/
+void createInitialGasSurfaceDensity(DiskParameters *disk_params){		/*	initial profile of sigma		*/
 
   	int i;
   
@@ -58,7 +58,7 @@ void createInitialGasSurfaceDensity(disk_t *disk_params){		/*	initial profile of
 
 }
 
-void createInitialGasPressure(disk_t *disk_params){	
+void createInitialGasPressure(DiskParameters *disk_params){	
 
   	int i;
   
@@ -70,7 +70,7 @@ void createInitialGasPressure(disk_t *disk_params){
 
 }
 
-void createInitialGasPressureGradient(disk_t *disk_params){
+void createInitialGasPressureGradient(DiskParameters *disk_params){
 
 	calculateGasPressureGradient(disk_params);
    	applyBoundaryConditions(disk_params->dpressvec,disk_params);
@@ -79,7 +79,7 @@ void createInitialGasPressureGradient(disk_t *disk_params){
 }
 
 /*	Update radial gas velovity	*/
-void createInitialGasVelocity(disk_t *disk_params){	
+void createInitialGasVelocity(DiskParameters *disk_params){	
  	
 	calculateGasRadialVelocity(disk_params);
   	applyBoundaryConditions(disk_params->ugvec,disk_params);
@@ -87,7 +87,7 @@ void createInitialGasVelocity(disk_t *disk_params){
 
 
 
-void calculateInitialDustSurfaceDensity(double radin[][2], double *massin, double out[][3], int n, const disk_t *disk_params) {
+void calculateInitialDustSurfaceDensity(double radin[][2], double *massin, double out[][3], int n, const DiskParameters *disk_params) {
 
 	int i;
 

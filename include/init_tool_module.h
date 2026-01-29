@@ -46,6 +46,6 @@ typedef struct init_tool_options {
 
 // Function prototypes
 void initializeDefaultOptions(init_tool_options_t *opt);
-int runInitialization(init_tool_options_t *opts, disk_t *output_disk_params);
+int runInitialization(init_tool_options_t *opts, DiskParameters *output_disk_params);
 
 #endif // INIT_TOOL_MODULE_H
