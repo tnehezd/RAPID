@@ -3,7 +3,7 @@
 #include <math.h>     // Bár a parabolicExtrapolationToGhostCells most nem használ math.h függvényt,
 #include <stdlib.h>                      // más utility függvényeknek szüksége lehet rá.
                       // Jó gyakorlat ide tenni.
-
+#include "particle_data.h" // Új include
 #include "simulation_types.h" 
 #include "dust_physics.h"
 #include "gas_physics.h"

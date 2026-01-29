@@ -4,9 +4,11 @@
 #include <stdlib.h>                      // más utility függvényeknek szüksége lehet rá.
                       // Jó gyakorlat ide tenni.
 
+#include "particle_data.h" // Új include
 #include "simulation_types.h" 
 #include "dust_physics.h"
 #include "gas_physics.h"
+
 #include "boundary_conditions.h"
 
 
@@ -414,4 +416,35 @@ void updateParticleGridIndices(double radin[][2], double partmassindin[][5], dou
  	
 	}
 
+}
+
+
+void computeParticleRadiusRange(const ParticleData *particle_data,int particle_number,int has_secondary_population,double *min_radius,double *max_radius) {
+
+    double min_primary = HUGE_VAL;
+    double max_primary = -HUGE_VAL;
+
+    for (int i = 0; i < particle_number; i++) {
+        double particle_radius = particle_data->radius[i][0];
+        if (particle_radius > 0.0) {
+            if (particle_radius < min_primary) min_primary = particle_radius;
+            if (particle_radius > max_primary) max_primary = particle_radius;
+        }
+    }
+
+    double min_secondary = HUGE_VAL;
+    double max_secondary = -HUGE_VAL;
+
+    if (has_secondary_population) {
+        for (int i = 0; i < particle_number; i++) {
+            double particle_radius = particle_data->radiusmicr[i][0];
+            if (particle_radius > 0.0) {
+                if (particle_radius < min_secondary) min_secondary = particle_radius;
+                if (particle_radius > max_secondary) max_secondary = particle_radius;
+            }
+        }
+    }
+
+    *min_radius = has_secondary_population ? fmin(min_primary, min_secondary) : min_primary;
+    *max_radius = has_secondary_population ? fmax(max_primary, max_secondary) : max_primary;
 }

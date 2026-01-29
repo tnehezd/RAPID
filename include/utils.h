@@ -1,6 +1,8 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include "particle_data.h"
+
 #include "simulation_types.h" 
 
 // Szükséges include-ok, ha a deklarációk más headerekben lévő típusokra vagy makrókra hivatkoznak.
@@ -50,9 +52,13 @@ void mergeParticlesByRadius(double in[][3], double dd, int n, const DiskParamete
 void updateParticleGridIndices(double radin[][2], double partmassindin[][5], double *massvecin, double t, int n, const DiskParameters *disk_params);
 
 
-// Ide kerülhetnek majd a jövőbeni egyéb általános segédfüggvények deklarációi is.
-// Például:
-// double calculate_average(double *data, int count);
-// void print_timestamp(FILE *f);
+void computeParticleRadiusRange(
+    const ParticleData *particle_data,
+    int particle_number,
+    int has_secondary_population,
+    double *min_radius,
+    double *max_radius
+);
+
 
 #endif // UTILS_H
