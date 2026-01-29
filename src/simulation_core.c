@@ -24,17 +24,17 @@
 
 /*	Kiszamolja az 1D-s driftet	*/
 /*  	dr/dt = St/(1+St*St)*H(r)/r*dlnP/dlnr*cs = St/(1+St*St) * (H/r) * (r/P) * (dP/dr) * cs		*/
-void calculate1DDustDrift(double pradius, double dp, double sigma, double ug, double r, double *drdt, const DiskParameters *disk_params) {
+void calculate1DDustDrift(double particle_radius, double pressure_gradient, double gas_surface_density, double gas_velocity, double radial_distance, double *drift_velocity, const DiskParameters *disk_params) {
 
-    double pressure, local_pressure_scaleheight, pressure_gradient, stokes_number, local_soundspeed;
+    double local_pressure, local_pressure_scaleheight, local_pressure_gradient, stokes_number, local_soundspeed;
       
-    stokes_number = calculateStokesNumber(pradius,sigma,disk_params);
-    local_pressure_scaleheight = calculatePressureScaleHeight(r,disk_params);   
-    pressure = calculateGasPressure(sigma,r,disk_params);
-    pressure_gradient = dp;
-    local_soundspeed = calculateLocalSoundSpeed(r,disk_params); 
+    stokes_number = calculateStokesNumber(particle_radius,gas_surface_density,disk_params);
+    local_pressure_scaleheight = calculatePressureScaleHeight(radial_distance,disk_params);   
+    local_pressure = calculateGasPressure(gas_surface_density,radial_distance,disk_params);
+    local_pressure_gradient = pressure_gradient;
+    local_soundspeed = calculateLocalSoundSpeed(radial_distance,disk_params); 
 
-    *drdt = ug / (1. + stokes_number * stokes_number) + stokes_number / (1. + stokes_number * stokes_number) * local_pressure_scaleheight / pressure * pressure_gradient * local_soundspeed;	/* bearamlas sebessege: Birnstiel PHD	*/
+    *drift_velocity = gas_velocity / (1. + stokes_number * stokes_number) + stokes_number / (1. + stokes_number * stokes_number) * local_pressure_scaleheight / local_pressure * local_pressure_gradient * local_soundspeed;	/* bearamlas sebessege: Birnstiel PHD	*/
 }
 
 

@@ -8,16 +8,16 @@
 
 /**
  * @brief Kiszámítja az 1D-s részecske drift sebességét (dr/dt).
- * @param pradius A részecske sugara [AU].
- * @param dp Nyomásgradiens (dP/dr) [dimenziótlan].
- * @param sigma A gáz felszíni sűrűsége [CGS].
- * @param ug A gáz sebessége (valószínűleg a viszkózus ráta) [cm/s].
- * @param r Aktuális sugárpozíció [AU].
- * @param drdt A kimeneti drift sebesség [AU/s].
+ * @param particle_radius A részecske sugara [AU].
+ * @param pressure_gradient Nyomásgradiens (dP/dr) [dimenziótlan].
+ * @param gas_surface_density A gáz felszíni sűrűsége [CGS].
+ * @param gas_velocity A gáz sebessége (valószínűleg a viszkózus ráta) [cm/s].
+ * @param radial_distance Aktuális sugárpozíció [AU].
+ * @param drift_velocity A kimeneti drift sebesség [AU/s].
  * @param disk_params A diszk paramétereit tartalmazó struktúra.
- * @return void (az eredményt a drdt pointerbe írja).
+ * @return void (az eredményt a drift_velocity pointerbe írja).
  */
-void calculate1DDustDrift(double pradius, double dp, double sigma, double ug, double r, double *drdt, const DiskParameters *disk_params);
+void calculate1DDustDrift(double particle_radius, double pressure_gradient, double gas_surface_density, double gas_velocity, double radial_distance, double *drift_velocity, const DiskParameters *disk_params);
 
 /**
  * @brief Kiszámítja a viszkozitással kapcsolatos ftcsSecondDerivativeCoefficient együtthatót.
