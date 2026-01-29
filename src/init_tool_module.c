@@ -204,8 +204,8 @@ int runInitialization(InitializeDefaultOptions *opts, DiskParameters *disk_param
     fprintf(stderr,"Dust particle density (g/cm^3): %lg\n", opts->dust_density_g_cm3);
     fprintf(stderr,"------------------------------\n\n");
 
-    // --- Prepare HeaderData_t for initial files ---
-    HeaderData_t initial_header_data;
+    // --- Prepare HeaderData for initial files ---
+    HeaderData initial_header_data;
     initial_header_data.current_time = 0.0;
     initial_header_data.is_initial_data = 1;
     initial_header_data.R_in = opts->r_inner;
