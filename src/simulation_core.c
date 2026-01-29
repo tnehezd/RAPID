@@ -40,19 +40,6 @@ void calculate1DDustDrift(double particle_radius, double pressure_gradient, doub
 }
 
 
-/* for solving d(sigma*nu)/dt = 3*nu*d2(sigma*nu)/dr2 + 9*hu/(2*r)*dsigma/dr	--> 3*nu  	*/
-double ftcsSecondDerivativeCoefficient(double radial_distance, const DiskParameters *disk_params){					
-    double second_derivate_coefficient;
-    second_derivate_coefficient = 3.0 * calculateKinematicViscosity(radial_distance, disk_params);
-    return second_derivate_coefficient;
-}
-
-/* for solving d(sigma*nu)/dt = 3*nu*d2(sigma*nu)/dr2 + 9*hu/(2*r)*dsigma/dr	--> 9*nu /(2*r)	*/
-double ftcsFirstDerivativeCoefficient(double radial_distance, const DiskParameters *disk_params){							
-    double first_derivate_coefficient;
-    first_derivate_coefficient = 9.0 * calculateKinematicViscosity(radial_distance,disk_params) / (2.0 * radial_distance);
-    return first_derivate_coefficient;
-}
 
 double calculateTimeStep(const DiskParameters *disk_params) { // Add const here too
     double max_diffusion_coefficient, time_step;
@@ -150,9 +137,6 @@ void timeIntegrationForTheSystem(DiskParameters *disk_params, const SimulationOp
     do {
         if (sim_opts->option_for_dust_drift == 1.) {
 
-
-
-
             double min_radius, max_radius;
 
 /*            struct timespec t0, t1; 
@@ -164,16 +148,6 @@ void timeIntegrationForTheSystem(DiskParameters *disk_params, const SimulationOp
             double elapsed = (t1.tv_sec - t0.tv_sec) + (t1.tv_nsec - t0.tv_nsec) / 1e9;
 */
 
-
-
-
-/*            struct timespec t01, t11; 
-            clock_gettime(CLOCK_MONOTONIC, &t01);
-*/
-
-/*            clock_gettime(CLOCK_MONOTONIC, &t11); 
-            double elapsed_old = (t11.tv_sec - t01.tv_sec) + (t11.tv_nsec - t01.tv_nsec) / 1e9;
-*/
 
             // --- Kimeneti adatok (pillanatfelvétel) kezelése ---
             double current_time_years = t / (2.0 * M_PI);
@@ -192,32 +166,11 @@ void timeIntegrationForTheSystem(DiskParameters *disk_params, const SimulationOp
                 snprintf(size_name, MAX_PATH_LEN, "%s/%s/%s_%08d%s", sim_opts->output_dir_name, kLogFilesDirectory,kDustParticleSizeFileName, (int)snapshot,kFileNamesSuffix);
 
                 // Fájlok megnyitása és fejlécek írása
-                output_files->surface_file = fopen(dens_name, "w");
-                if(snapshot != 0) {
-                    if (output_files->surface_file == NULL) {
-                        fprintf(stderr, "ERROR: Could not open %s for writing.\n", dens_name);
-                    } else {
-                        HeaderData gas_header_data = {.current_time = current_time_years, .is_initial_data = (current_time_years == 0.0)};
-                        printFileHeader(output_files->surface_file, FILE_TYPE_GAS_DENSITY, &gas_header_data);
-                    }
-                }
-
-                output_files->dust_file = fopen(dust_name, "w");
-                if (output_files->dust_file == NULL) {
-                    fprintf(stderr, "ERROR: Could not open %s for writing.\n", dust_name);
-                } else {
-                    HeaderData dust_header_data = {.current_time = current_time_years, .is_initial_data = (current_time_years == 0.0)};
-                    printFileHeader(output_files->dust_file, FILE_TYPE_DUST_MOTION, &dust_header_data);
-                }
+                output_files->surface_file = openSnapshotFile(dens_name, FILE_TYPE_GAS_DENSITY, current_time_years);
+                output_files->dust_file = openSnapshotFile(dust_name, FILE_TYPE_DUST_MOTION, current_time_years);
 
                 if (sim_opts->option_for_dust_secondary_population == 1.) {
-                    output_files->micron_dust_file = fopen(dust_name2, "w");
-                    if (output_files->micron_dust_file == NULL) {
-                        fprintf(stderr, "ERROR: Could not open %s for writing.\n", dust_name2);
-                    } else {
-                        HeaderData micron_dust_header_data = {.current_time = current_time_years, .is_initial_data = (current_time_years == 0.0)};
-                        printFileHeader(output_files->micron_dust_file, FILE_TYPE_MICRON_MOTION, &micron_dust_header_data);
-                    }
+                    output_files->micron_dust_file = openSnapshotFile(dust_name2, FILE_TYPE_MICRON_MOTION, current_time_years);
                 }
 
                 // Eredeti t==0 logika
@@ -298,8 +251,6 @@ void timeIntegrationForTheSystem(DiskParameters *disk_params, const SimulationOp
 
             t = t + deltat;
 
-//            printf("abs max %lg   abs min %lg   max %lg  min %lg  min/max calculation: old=%.6e s, new=%.6e s\n",absolute_maximum_radius, absolute_minimum_radius, max_radius, min_radius,elapsed_old, elapsed);
-
             // Kilépési feltétel a drift == 1 ágon
             // Fontos: absolute_maximum_radius és absolute_minimum_radius frissül az előző szakaszban, azt használjuk itt.
 //            if (!(absolute_maximum_radius >= disk_params->r_min && absolute_minimum_radius != absolute_maximum_radius)) {
@@ -346,8 +297,6 @@ void timeIntegrationForTheSystem(DiskParameters *disk_params, const SimulationOp
             t = t + deltat;
 
         }
-
-
 
 
     } while (t <= t_integration_in_internal_units);

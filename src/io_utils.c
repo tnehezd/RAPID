@@ -3,6 +3,7 @@
 #include <string.h>
 #include <errno.h>    // For errno
 
+
 #ifdef _WIN32
     #include <direct.h>
     #define MKDIR_CALL(path) _mkdir(path)
@@ -680,6 +681,27 @@ void cleanupSimulationResources(ParticleData *particle_data, OutputFiles *output
         fprintf(stderr, "DEBUG [cleanupSimulationResources]: Closed %s%s\n", kDustAccumulationFileName,kFileNamesSuffix);
     }
 }
+
+
+FILE *openSnapshotFile(const char *filename,FileType_e file_type,double current_time_years){
+    FILE *f = fopen(filename, "w");
+    if (f == NULL) {
+        fprintf(stderr, "ERROR: Could not open %s for writing.\n", filename);
+        return NULL;
+    }
+
+    HeaderData header = {
+        .current_time = current_time_years,
+        .is_initial_data = (current_time_years == 0.0)
+    };
+
+    printFileHeader(f, file_type, &header);
+
+    return f;
+}
+
+
+
 
 // Segédfüggvény a pillanatfelvételek fájljainak bezárására
 void closeSnapshotFiles(OutputFiles *output_files, const char *dens_name, const char *dust_name, const char *dust_name2, const SimulationOptions *sim_opts) {

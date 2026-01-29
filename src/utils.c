@@ -34,6 +34,20 @@ void linearInterpolation(double *invec, double *radial_grid, double pos, double 
 }
 
 
+/* for solving d(sigma*nu)/dt = 3*nu*d2(sigma*nu)/dr2 + 9*hu/(2*r)*dsigma/dr	--> 3*nu  	*/
+double ftcsSecondDerivativeCoefficient(double radial_distance, const DiskParameters *disk_params){					
+    double second_derivate_coefficient;
+    second_derivate_coefficient = 3.0 * calculateKinematicViscosity(radial_distance, disk_params);
+    return second_derivate_coefficient;
+}
+
+/* for solving d(sigma*nu)/dt = 3*nu*d2(sigma*nu)/dr2 + 9*hu/(2*r)*dsigma/dr	--> 9*nu /(2*r)	*/
+double ftcsFirstDerivativeCoefficient(double radial_distance, const DiskParameters *disk_params){							
+    double first_derivate_coefficient;
+    first_derivate_coefficient = 9.0 * calculateKinematicViscosity(radial_distance,disk_params) / (2.0 * radial_distance);
+    return first_derivate_coefficient;
+}
+
 
 
 /*	minimum megkeresese harom elem kozul	*/

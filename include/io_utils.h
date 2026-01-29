@@ -111,7 +111,11 @@ int setupInitialOutputFiles(OutputFiles *output_files, const SimulationOptions *
 
 void cleanupSimulationResources(ParticleData *particle_data, OutputFiles *output_files, const SimulationOptions *sim_opts);
 
+FILE *openSnapshotFile(const char *filename,FileType_e file_type,double current_time_years);
+
 void closeSnapshotFiles(OutputFiles *output_files, const char *dens_name, const char *dust_name, const char *dust_name2, const SimulationOptions *sim_opts);
+
+
 
 
 #endif // IO_UTILS_H
