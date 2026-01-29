@@ -153,13 +153,13 @@ int main(int argc, const char **argv) {
 
         // --- Dynamic Memory Allocation for Disk Arrays ---
         // This happens ONLY HERE, because runInitialization is not called!
-        disk_params.rvec = (double *)malloc((disk_params.grid_number + 2) * sizeof(double));
+        disk_params.radial_grid = (double *)malloc((disk_params.grid_number + 2) * sizeof(double));
         disk_params.sigmavec = (double *)malloc((disk_params.grid_number + 2) * sizeof(double));
         disk_params.pressvec = (double *)malloc((disk_params.grid_number + 2) * sizeof(double));
         disk_params.dpressvec = (double *)malloc((disk_params.grid_number + 2) * sizeof(double));
         disk_params.ugvec = (double *)malloc((disk_params.grid_number + 2) * sizeof(double));
 
-        if (!disk_params.rvec || !disk_params.sigmavec || !disk_params.pressvec || !disk_params.dpressvec || !disk_params.ugvec) {
+        if (!disk_params.radial_grid || !disk_params.sigmavec || !disk_params.pressvec || !disk_params.dpressvec || !disk_params.ugvec) {
             fprintf(stderr, "ERROR [main]: Failed to allocate memory for disk arrays (input file branch). Exiting.\n");
             return 1;
         }
@@ -260,9 +260,9 @@ int main(int argc, const char **argv) {
     // or was called by runInitialization (if generating).
 
     fprintf(stderr, "DEBUG [main]: Initial profile loading for loadGasSurfaceDensityFromFile...\n");
-    loadGasSurfaceDensityFromFile(&disk_params, current_inputsig_file); // This populates disk_params.sigmavec and rvec
-    fprintf(stderr, "DEBUG [main]: loadGasSurfaceDensityFromFile completed. Calling applyBoundaryConditions for disk_params.rvec and disk_params.sigmavec...\n");
-    applyBoundaryConditions(disk_params.rvec, &disk_params);
+    loadGasSurfaceDensityFromFile(&disk_params, current_inputsig_file); // This populates disk_params.sigmavec and radial_grid
+    fprintf(stderr, "DEBUG [main]: loadGasSurfaceDensityFromFile completed. Calling applyBoundaryConditions for disk_params.radial_grid and disk_params.sigmavec...\n");
+    applyBoundaryConditions(disk_params.radial_grid, &disk_params);
     applyBoundaryConditions(disk_params.sigmavec, &disk_params);
     fprintf(stderr, "DEBUG [main]: applyBoundaryConditions calls completed for initial profile.\n");
 
@@ -310,10 +310,10 @@ int main(int argc, const char **argv) {
     }
 
     // --- Free dynamically allocated memory ---
-    // Free the memory allocated for disk_params.rvec, sigmavec, etc.
+    // Free the memory allocated for disk_params.radial_grid, sigmavec, etc.
     // This allocation happened in the 'if' branch if an input file was used,
     // or within runInitialization in the 'else' branch.
-    if (disk_params.rvec) free(disk_params.rvec);
+    if (disk_params.radial_grid) free(disk_params.radial_grid);
     if (disk_params.sigmavec) free(disk_params.sigmavec);
     if (disk_params.pressvec) free(disk_params.pressvec);
     if (disk_params.dpressvec) free(disk_params.dpressvec);

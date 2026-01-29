@@ -177,7 +177,7 @@ double calculateDustParticleSize(double prad, double pdens, double sigma, double
 
 
 void calculateDustSurfaceDensity(double max_param, double min_param, double rad[][2], double radmicr[][2], 
-                double *sigma_d, double *sigma_dm,  double *massvec, double *massmicrvec,  
+                double *sigma_d, double *sigma_dm,  double *massvec, double *massmicradial_grid,  
                 double *rd, double *rmic, const SimulationOptions *sim_opts, const DiskParameters *disk_params) {
 
     // Suppress unused parameter warnings
@@ -209,7 +209,7 @@ void calculateDustSurfaceDensity(double max_param, double min_param, double rad[
     // és nem ütköznek más szálakkal globális adatokon keresztül.
     calculateInitialDustSurfaceDensity(rad, massvec, sigdtemp, particle_number,disk_params);
     if (sim_opts->twopop == 1.0) { // Használjunk double összehasonlítást
-        calculateInitialDustSurfaceDensity(radmicr, massmicrvec, sigdmicrtemp, particle_number,disk_params);
+        calculateInitialDustSurfaceDensity(radmicr, massmicradial_grid, sigdmicrtemp, particle_number,disk_params);
     }
 
     mergeParticlesByRadius(sigdtemp, dd, particle_number,disk_params);

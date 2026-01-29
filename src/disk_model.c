@@ -39,8 +39,8 @@ void createRadialGrid(DiskParameters *disk_params) {
 	
 	int i;
  	for(i = 0; i <= disk_params->grid_number+1; i++) {						/*	load an array of radii	*/
- 		disk_params->rvec[i] = disk_params->r_min + (i-1) * disk_params->delta_r;
-//        fprintf(stderr, "DEBUG [createRadialGrid]: r: %lg\n", disk_params->rvec[i]);
+ 		disk_params->radial_grid[i] = disk_params->r_min + (i-1) * disk_params->delta_r;
+//        fprintf(stderr, "DEBUG [createRadialGrid]: r: %lg\n", disk_params->radial_grid[i]);
 	}
 }
 
@@ -50,7 +50,7 @@ void createInitialGasSurfaceDensity(DiskParameters *disk_params){		/*	initial pr
   	int i;
   
   	for(i = 1; i <= disk_params->grid_number; i++) {
-    		disk_params->sigmavec[i] = disk_params->sigma_0 * pow(disk_params->rvec[i],disk_params->sigma_power_law_index);		/*	sigma0*r^x (x could be eg. -1/2)	*/
+    		disk_params->sigmavec[i] = disk_params->sigma_0 * pow(disk_params->radial_grid[i],disk_params->sigma_power_law_index);		/*	sigma0*r^x (x could be eg. -1/2)	*/
     }
   
 
@@ -63,7 +63,7 @@ void createInitialGasPressure(DiskParameters *disk_params){
   	int i;
   
   	for(i = 1; i <= disk_params->grid_number; i++) {
-    		disk_params->pressvec[i] = calculateGasPressure(disk_params->sigmavec[i],disk_params->rvec[i],disk_params);
+    		disk_params->pressvec[i] = calculateGasPressure(disk_params->sigmavec[i],disk_params->radial_grid[i],disk_params);
   	}
   	applyBoundaryConditions(disk_params->pressvec,disk_params);
 

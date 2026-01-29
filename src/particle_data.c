@@ -15,7 +15,7 @@ int allocateParticleData(ParticleData_t *p_data, size_t particle_count, int is_t
     p_data->radiusmicr = NULL;
     p_data->radius_rec = NULL;
     p_data->massvec = NULL;
-    p_data->massmicrvec = NULL;
+    p_data->massmicradial_grid = NULL;
     p_data->partmassind = NULL;
     p_data->partmassmicrind = NULL;
     p_data->sigmad = NULL;
@@ -34,7 +34,7 @@ int allocateParticleData(ParticleData_t *p_data, size_t particle_count, int is_t
     p_data->radiusmicr = malloc(particle_count * sizeof(*p_data->radiusmicr));
     p_data->radius_rec = malloc(particle_count * sizeof(*p_data->radius_rec));
     p_data->massvec = malloc(particle_count * sizeof(double));
-    p_data->massmicrvec = malloc(particle_count * sizeof(double));
+    p_data->massmicradial_grid = malloc(particle_count * sizeof(double));
     p_data->partmassind = malloc(particle_count * sizeof(*p_data->partmassind));
     p_data->partmassmicrind = malloc(particle_count * sizeof(*p_data->partmassmicrind));
     p_data->sigmad = malloc(particle_count * sizeof(double));
@@ -43,7 +43,7 @@ int allocateParticleData(ParticleData_t *p_data, size_t particle_count, int is_t
     p_data->rmicvec = malloc(particle_count * sizeof(double));
 
     // Ellenőrzés
-    if (!p_data->radius || !p_data->radiusmicr || !p_data->radius_rec || !p_data->massvec || !p_data->massmicrvec ||
+    if (!p_data->radius || !p_data->radiusmicr || !p_data->radius_rec || !p_data->massvec || !p_data->massmicradial_grid ||
         !p_data->partmassind || !p_data->partmassmicrind || !p_data->sigmad || !p_data->sigmadm ||
         !p_data->rdvec || !p_data->rmicvec) {
         fprintf(stderr, "ERROR [allocateParticleData]: Primary particle array allocation failed!\n");
@@ -73,7 +73,7 @@ void freeParticleData(ParticleData_t *p_data) {
     free(p_data->radiusmicr);
     free(p_data->radius_rec);
     free(p_data->massvec);
-    free(p_data->massmicrvec);
+    free(p_data->massmicradial_grid);
     free(p_data->partmassind);
     free(p_data->partmassmicrind);
     free(p_data->sigmad);
@@ -86,7 +86,7 @@ void freeParticleData(ParticleData_t *p_data) {
     p_data->radiusmicr = NULL;
     p_data->radius_rec = NULL;
     p_data->massvec = NULL;
-    p_data->massmicrvec = NULL;
+    p_data->massmicradial_grid = NULL;
     p_data->partmassind = NULL;
     p_data->partmassmicrind = NULL;
     p_data->sigmad = NULL;

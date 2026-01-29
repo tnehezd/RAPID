@@ -7,13 +7,10 @@
 
 // --- Particle Structure ---
 // Represents a single dust particle
-typedef struct {
+/*typedef struct {
     double r;         // Radial distance from star (AU)
     double prad;      // Particle radius (cm)
     double reppmass;  // Representative particle mass (mass of the material this particle represents)
-    // Add any other per-particle properties here, e.g.:
-    // double velocity_r; // Radial velocity if you track it explicitly
-    // int    index_in_grid; // Or calculated on the fly
 } DustParticle;
 
 // --- Dust Population Structure ---
@@ -21,12 +18,8 @@ typedef struct {
 typedef struct {
     DustParticle *particles; // Pointer to an array of particle_t structures
     int num_particles;     // Number of particles in this specific population
-
-    // If needed, specific properties for the population itself:
-    // double total_mass; // Total mass represented by this population
-    // double initial_mass; // Initial total mass for comparison
 } DustPopulation;
-
+*/
 // --- Disk Structure ---
 // Encapsulates all global disk parameters and dynamic arrays
 typedef struct {
@@ -57,7 +50,7 @@ typedef struct {
     double particle_density_dimensionless; // Dimenziómentes por sűrűség
 
     // Dinamikusan allokált tömbök (ezek a main-ben vannak beállítva, vagy itt lesznek allokálva)
-    double *rvec;          // Rádiusz vektor
+    double *radial_grid;          // Rádiusz vektor
     double *sigmavec;      // Gáz felületi sűrűség
     double *pressvec;      // Gáz nyomás
     double *dpressvec;     // Gáz nyomás gradiens (rádiusz szerinti derivált)
@@ -104,12 +97,12 @@ typedef struct {
 
 // --- Output File Pointers Structure ---
 typedef struct {
-    FILE *por_motion_file;      // pormozgas.dat (fout a régi kódokban)
-    FILE *micron_motion_file;   // pormozgasmic.dat (foutmicr a régi kódokban)
-    FILE *mass_file;            // mass.dat (massfil a régi kódokban)
-    FILE *surface_file;         // surface.dat (a Print_Sigma számára)
-    FILE *dust_file;            // dust.dat (a Print_Sigmad fő por kimenetéhez)
-    FILE *micron_dust_file;     // dustmic.dat (a Print_Sigmad mikronos por kimenetéhez)
+    FILE *por_motion_file;      
+    FILE *micron_motion_file;   
+    FILE *mass_file;            
+    FILE *surface_file;         
+    FILE *dust_file;            
+    FILE *micron_dust_file;     
     FILE *size_file; 
     // Add other file pointers here if you need more output files
 } OutputFiles;

@@ -39,7 +39,7 @@ double ftcsFirstDerivativeCoefficient(double r, const DiskParameters *disk_param
 
 /**
  * @brief Kiszámítja a minimális időlépést a szimulációhoz.
- * @param rvec A diszk sugárkoordinátáinak vektora.
+ * @param radial_grid A diszk sugárkoordinátáinak vektora.
  * @param disk_params A diszk paramétereit tartalmazó struktúra.
  * @return A számított időlépés.
  */

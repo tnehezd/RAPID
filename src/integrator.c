@@ -35,9 +35,9 @@ void integrateParticleRungeKutta4(double time, double prad, const double *sigmad
     double sigmadd = 0.0;
     
 /*	Mivel a kulongozo parametereket csak a megadott gridcella pontokban ismerjuk, de ez nem feltetlen egyezik meg a reszecskek pozicijaval, ezert minden fontos parametert linearInterpolationalunk a reszecskek tavolsagara	*/
-    linearInterpolation(disk_params->sigmavec,disk_params->rvec,y,&sigma,disk_params->delta_r,opt,disk_params);
-    linearInterpolation(disk_params->dpressvec,disk_params->rvec,y,&dpress,disk_params->delta_r,opt,disk_params);
-    linearInterpolation(disk_params->ugvec,disk_params->rvec,y,&ugas,disk_params->delta_r,opt,disk_params);
+    linearInterpolation(disk_params->sigmavec,disk_params->radial_grid,y,&sigma,disk_params->delta_r,opt,disk_params);
+    linearInterpolation(disk_params->dpressvec,disk_params->radial_grid,y,&dpress,disk_params->delta_r,opt,disk_params);
+    linearInterpolation(disk_params->ugvec,disk_params->radial_grid,y,&ugas,disk_params->delta_r,opt,disk_params);
 
     double dd = (disk_params->r_max - disk_params->r_min) / (particle_number-1);
     int dker = (int)(1./dd);//
@@ -59,7 +59,7 @@ void integrateParticleRungeKutta4(double time, double prad, const double *sigmad
     if(sim_opts->growth == 1.) {		// ha van reszecskenovekedes
         if(time != 0.) {	// ha nem t0 idopontban vagyunk
             pradtemp = prad;
-            linearInterpolation(disk_params->pressvec,disk_params->rvec,y,&p,disk_params->delta_r,opt,disk_params);
+            linearInterpolation(disk_params->pressvec,disk_params->radial_grid,y,&p,disk_params->delta_r,opt,disk_params);
             pdens = disk_params->particle_density; 
             pradtemp = calculateDustParticleSize(prad,pdens,sigma,sigmadd,y,p,dpress,step,disk_params);	// itt szamolja a reszecskenovekedest
             prad = pradtemp;

@@ -173,7 +173,7 @@ void loadGasSurfaceDensityFromFile(DiskParameters *disk_params, const char *file
         // A tömbök mérete disk_params->grid_number + 2, tehát az érvényes indexek 0-tól grid_number+1-ig mennek.
         // A "valós" adatok 1-től grid_number-ig kerülnek, a 0 és grid_number+1 pedig a applyBoundaryConditions-hez.
         if ((i + 1) >= 0 && (i + 1) <= disk_params->grid_number + 1) { 
-            disk_params->rvec[i + 1] = r_val;
+            disk_params->radial_grid[i + 1] = r_val;
             disk_params->sigmavec[i + 1] = sigma_gas_val;
             disk_params->pressvec[i + 1] = pressure_gas_val;
             disk_params->dpressvec[i + 1] = dpressure_dr_val;
@@ -286,8 +286,8 @@ void printMassGrowthAtDZEFile(double step, double (*partmassind)[5], double (*pa
 
     if(dim != 0) {
         for(i = 0; i < disk_params->grid_number; i++) {
-            // Itt a findZeroPoint valószínűleg disk_params->rvec és disk_params->dpressvec-et használ
-            temp_new = findZeroPoint(i,disk_params->rvec,disk_params->dpressvec); 
+            // Itt a findZeroPoint valószínűleg disk_params->radial_grid és disk_params->dpressvec-et használ
+            temp_new = findZeroPoint(i,disk_params->radial_grid,disk_params->dpressvec); 
             if(temp != temp_new && i > 3 && temp_new != 0.0) {
                 if (j < dim) { 
                     r_count[j] = temp_new;
@@ -333,7 +333,7 @@ void printMassGrowthAtDZEFile(double step, double (*partmassind)[5], double (*pa
     tav = rout;
 
     // findRAnnulusAroundDZE hívása: EZ KISZÁMOLJA AZ INDEX-HATÁROKAT AZ AKTUÁLIS SUGARAK ALAPJÁN
-    // Ezt már a disk_params->rvec és disk_params->dpressvec alapján kellene, nem pedig külön paraméterekből.
+    // Ezt már a disk_params->radial_grid és disk_params->dpressvec alapján kellene, nem pedig külön paraméterekből.
     // Ha a findRAnnulusAroundDZE is disk_params-ot kapott, akkor rendben van.
     findRAnnulusAroundDZE(tav2, &ind_ii, &ind_io, tav, &ind_oi, &ind_oo, sim_opts, disk_params);
 
@@ -403,7 +403,7 @@ void printGasSurfaceDensityPressurePressureDerivateFile(const DiskParameters *di
 
 //%-15.6e %-15.6Lg %-15.6e %-15.6e\n",
     for(i = 1; i <= disk_params->grid_number; i++) { // Using disk_params->grid_number
-        fprintf(output_files->surface_file, "%-15.6e %-15.6lg %-15.6e %15.6e\n", disk_params->rvec[i], disk_params->sigmavec[i], disk_params->pressvec[i], disk_params->dpressvec[i]);
+        fprintf(output_files->surface_file, "%-15.6e %-15.6lg %-15.6e %15.6e\n", disk_params->radial_grid[i], disk_params->sigmavec[i], disk_params->pressvec[i], disk_params->dpressvec[i]);
     }
 
     fflush(output_files->surface_file);
@@ -662,7 +662,7 @@ void cleanupSimulationResources(ParticleData_t *p_data, OutputFiles *output_file
         free(p_data->radiusmicr); p_data->radiusmicr = NULL;
         free(p_data->radius_rec); p_data->radius_rec = NULL;
         free(p_data->massvec); p_data->massvec = NULL;
-        free(p_data->massmicrvec); p_data->massmicrvec = NULL;
+        free(p_data->massmicradial_grid); p_data->massmicradial_grid = NULL;
         free(p_data->partmassind); p_data->partmassind = NULL;
         free(p_data->partmassmicrind); p_data->partmassmicrind = NULL;
         free(p_data->sigmad); p_data->sigmad = NULL;

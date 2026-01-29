@@ -61,8 +61,8 @@ double calculateTimeStep(const DiskParameters *disk_params) { // Add const here 
     A_max = -10000.0;
     
     for(i = 0; i < disk_params->grid_number; i++) {
-        if(ftcsSecondDerivativeCoefficient(disk_params->rvec[i], disk_params) > A_max) {
-            A_max = ftcsSecondDerivativeCoefficient(disk_params->rvec[i], disk_params);
+        if(ftcsSecondDerivativeCoefficient(disk_params->radial_grid[i], disk_params) > A_max) {
+            A_max = ftcsSecondDerivativeCoefficient(disk_params->radial_grid[i], disk_params);
         }
     }
     stepping = disk_params->delta_r * disk_params->delta_r / (2.0 * A_max);
@@ -104,7 +104,7 @@ void timeIntegrationForTheSystem(DiskParameters *disk_params, const SimulationOp
             exit(EXIT_FAILURE);
         }
         // loadDustParticlesFromFile hívása a részecskeadatok beolvasására
-        loadDustParticlesFromFile(p_data.radius, p_data.radiusmicr, p_data.massvec, p_data.massmicrvec, sim_opts->dust_input_filename);
+        loadDustParticlesFromFile(p_data.radius, p_data.radiusmicr, p_data.massvec, p_data.massmicradial_grid, sim_opts->dust_input_filename);
     }
 
     // További inicializálások
@@ -140,7 +140,7 @@ void timeIntegrationForTheSystem(DiskParameters *disk_params, const SimulationOp
             p_data.radiusmicr[i][1] = 0;
             p_data.partmassmicrind[i][0] = 0;
             p_data.partmassmicrind[i][1] = 0;
-            p_data.massmicrvec[i] = 0;
+            p_data.massmicradial_grid[i] = 0;
         }
     }
 
@@ -235,10 +235,10 @@ void timeIntegrationForTheSystem(DiskParameters *disk_params, const SimulationOp
                 // Eredeti t==0 logika
                 if (current_time_years == 0) {
                     updateParticleGridIndices(p_data.radius, p_data.partmassind, p_data.massvec, t, particle_number, disk_params);
-                    if (sim_opts->twopop == 1) updateParticleGridIndices(p_data.radiusmicr, p_data.partmassmicrind, p_data.massmicrvec, t, particle_number, disk_params);
+                    if (sim_opts->twopop == 1) updateParticleGridIndices(p_data.radiusmicr, p_data.partmassmicrind, p_data.massmicradial_grid, t, particle_number, disk_params);
 
                     if (sim_opts->growth == 1.) {
-                        calculateDustSurfaceDensity(max, min, p_data.radius, p_data.radiusmicr, p_data.sigmad, p_data.sigmadm, p_data.massvec, p_data.massmicrvec, p_data.rdvec, p_data.rmicvec, sim_opts, disk_params);
+                        calculateDustSurfaceDensity(max, min, p_data.radius, p_data.radiusmicr, p_data.sigmad, p_data.sigmadm, p_data.massvec, p_data.massmicradial_grid, p_data.rdvec, p_data.rmicvec, sim_opts, disk_params);
                     }
                 }
 
@@ -292,10 +292,10 @@ void timeIntegrationForTheSystem(DiskParameters *disk_params, const SimulationOp
 
             // Count masses and get sigma_d for the next step (always done)
             updateParticleGridIndices(p_data.radius, p_data.partmassind, p_data.massvec, t, particle_number, disk_params);
-            if (sim_opts->twopop == 1) updateParticleGridIndices(p_data.radiusmicr, p_data.partmassmicrind, p_data.massmicrvec, t, particle_number, disk_params);
+            if (sim_opts->twopop == 1) updateParticleGridIndices(p_data.radiusmicr, p_data.partmassmicrind, p_data.massmicradial_grid, t, particle_number, disk_params);
 
             if (sim_opts->growth == 1.) {
-                calculateDustSurfaceDensity(max, min, p_data.radius, p_data.radiusmicr, p_data.sigmad, p_data.sigmadm, p_data.massvec, p_data.massmicrvec, p_data.rdvec, p_data.rmicvec, sim_opts, disk_params);
+                calculateDustSurfaceDensity(max, min, p_data.radius, p_data.radiusmicr, p_data.sigmad, p_data.sigmadm, p_data.massvec, p_data.massmicradial_grid, p_data.rdvec, p_data.rmicvec, sim_opts, disk_params);
             }
 
             // Get radii for next step

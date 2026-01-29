@@ -17,7 +17,7 @@
 // --- External declaration for the existing linearInterpolation function ---
 // This function is assumed to be implemented in utils.c (or similar)
 // and its prototype should be in utils.h.
-//extern void linearInterpolation(double *invec, double *rvec, double pos, double *out, double rd, int opt, const DiskParameters *disk_params);
+//extern void linearInterpolation(double *invec, double *radial_grid, double pos, double *out, double rd, int opt, const DiskParameters *disk_params);
 
 
 void initializeDefaultOptions(init_tool_options_t *def) {
@@ -263,19 +263,19 @@ int runInitialization(init_tool_options_t *opts, DiskParameters *disk_params) {
         disk_params->delta_r = 0.0;
     }
     // Allocate arrays for the GAS grid (based on grid_number)
-    disk_params->rvec = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
+    disk_params->radial_grid = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
     disk_params->sigmavec = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
     disk_params->pressvec = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
     disk_params->dpressvec = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
     disk_params->ugvec = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
 
-    if (!disk_params->rvec || !disk_params->sigmavec || !disk_params->pressvec || !disk_params->dpressvec || !disk_params->ugvec) {
+    if (!disk_params->radial_grid || !disk_params->sigmavec || !disk_params->pressvec || !disk_params->dpressvec || !disk_params->ugvec) {
         fprintf(stderr, "ERROR [runInitialization]: Failed to allocate disk arrays. Exiting.\n");
         if (fout_data) fclose(fout_data);
         if (fout_params) fclose(fout_params);
         if (fout_dens) fclose(fout_dens);
         // Free already allocated memory before exiting
-        if (disk_params->rvec) free(disk_params->rvec);
+        if (disk_params->radial_grid) free(disk_params->radial_grid);
         if (disk_params->sigmavec) free(disk_params->sigmavec);
         if (disk_params->pressvec) free(disk_params->pressvec);
         if (disk_params->dpressvec) free(disk_params->dpressvec);
@@ -294,7 +294,7 @@ int runInitialization(init_tool_options_t *opts, DiskParameters *disk_params) {
     // --- NEW SECTION: Write Gas Density Profile (to fout_dens) ---
     // This loop iterates over the gas grid points (opts->n_grid_points)
     for (int i_loop = 0; i_loop < opts->n_grid_points; i_loop++) {
-        double r_gas_grid_au = disk_params->rvec[i_loop + 1]; // Use 1-indexed for physical grid
+        double r_gas_grid_au = disk_params->radial_grid[i_loop + 1]; // Use 1-indexed for physical grid
 
         if (r_gas_grid_au <= 0) {
             fprintf(stderr, "ERROR: Calculated gas grid radial position is non-positive at index %d (%lg AU). Skipping this point.\n", i_loop, r_gas_grid_au);
@@ -333,13 +333,13 @@ int runInitialization(init_tool_options_t *opts, DiskParameters *disk_params) {
         // --- Interpolate gas disk properties at the dust particle's radial position using the existing 'linearInterpolation' function ---
         double temp_sigma, temp_pressure, temp_dPdr;
 
-        linearInterpolation(disk_params->sigmavec, disk_params->rvec, r_dust_particle_au, &temp_sigma, disk_params->delta_r, 0, disk_params);
+        linearInterpolation(disk_params->sigmavec, disk_params->radial_grid, r_dust_particle_au, &temp_sigma, disk_params->delta_r, 0, disk_params);
         long double sigma_gas_local = temp_sigma;
 
-        linearInterpolation(disk_params->pressvec, disk_params->rvec, r_dust_particle_au, &temp_pressure, disk_params->delta_r, 0, disk_params);
+        linearInterpolation(disk_params->pressvec, disk_params->radial_grid, r_dust_particle_au, &temp_pressure, disk_params->delta_r, 0, disk_params);
         double pressure_local = temp_pressure;
 
-        linearInterpolation(disk_params->dpressvec, disk_params->rvec, r_dust_particle_au, &temp_dPdr, disk_params->delta_r, 0, disk_params);
+        linearInterpolation(disk_params->dpressvec, disk_params->radial_grid, r_dust_particle_au, &temp_dPdr, disk_params->delta_r, 0, disk_params);
         double dPdr_local = temp_dPdr;
 
 

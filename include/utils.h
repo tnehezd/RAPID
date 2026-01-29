@@ -10,7 +10,7 @@
 
 
 /*	egy megadott, diszkret pontokban ismert fuggvenyt linearInterpolational a reszecske aktualis helyere	*/
-void linearInterpolation(double *invec, double *rvec, double pos, double *out, double rd, int opt, const DiskParameters *disk_params);
+void linearInterpolation(double *invec, double *radial_grid, double pos, double *out, double rd, int opt, const DiskParameters *disk_params);
 
 // megkeresi egy tomb maximumat
 double findMaximumOfAnArray(double r[][2], int n);
@@ -25,7 +25,7 @@ double findZeroPointRadius(double r1, double r2, double dp1, double dp2);
 
 
 // Nulla pont meghatározása lineáris linearInterpolationációval
-double findZeroPoint(int i, const double *rvec, const double *dp);
+double findZeroPoint(int i, const double *radial_grid, const double *dp);
 
 //double calculateIndexFromRadius(double r_coord, DiskParameters *disk_params);
 

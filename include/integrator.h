@@ -14,7 +14,7 @@
  * @param sigmavec Gáz felszíni sűrűség vektor a diszk rácspontjain.
  * @param sigmad Por felszíni sűrűség (adott részecske rácspontján).
  * @param rdvec A por részecskék radiális koordinátái.
- * @param rvec A diszk rácspontjainak radiális koordinátái.
+ * @param radial_grid A diszk rácspontjainak radiális koordinátái.
  * @param ugvec Gáz sebesség vektor a diszk rácspontjain.
  * @param step Az időlépés mérete.
  * @param y A részecske aktuális radiális pozíciója.

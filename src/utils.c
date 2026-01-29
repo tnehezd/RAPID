@@ -12,7 +12,7 @@
 
 
 /*	egy megadott, diszkret pontokban ismert fuggvenyt linearInterpolational a reszecske aktualis helyere	*/
-void linearInterpolation(double *invec, double *rvec, double pos, double *out, double rd, int opt, const DiskParameters *disk_params) {
+void linearInterpolation(double *invec, double *radial_grid, double pos, double *out, double rd, int opt, const DiskParameters *disk_params) {
 
 	double rmid, rindex, coef1, temp;
 	int index; 
@@ -20,7 +20,7 @@ void linearInterpolation(double *invec, double *rvec, double pos, double *out, d
     rmid = pos - disk_params->r_min;
 	rmid = rmid / rd;     						/* 	the integer part of this gives at which index is the body	*/
 	index = (int) floor(rmid);					/* 	ez az rmid egesz resze	(roundParticleRadiies 0.5-tol)			*/
-	rindex = rvec[index];       					/* 	the corresponding r, e.g rd[ind] < r < rd[ind+1]		*/
+	rindex = radial_grid[index];       					/* 	the corresponding r, e.g rd[ind] < r < rd[ind+1]		*/
 
  	coef1 = (invec[index + 1] - invec[index]) / rd; 		/*	ez az alabbi ket sor a linearis linearInterpolationacio - remelem, jo!!!	*/
 	temp = invec[index] + coef1 * (pos - rindex);          		/*	a beerkezo dimenzionak megfelelo mertekegysegben		*/
@@ -107,12 +107,12 @@ double findZeroPointRadius(double r1, double r2, double dp1, double dp2) {
 
 
 /*	this function counts where (which r) the pressure maximum is	*/
-double findZeroPoint(int i, const double *rvec, const double *dp) {
+double findZeroPoint(int i, const double *radial_grid, const double *dp) {
 
 	double r;
 	
 	if(((dp[i] * dp[i+1]) <= 0.) && (dp[i] > dp[i+1])) {		/*	Ha a ket pont szorzata negativ --> elojel valtas a dp-ben, nyomasi min/max. Maximum hely ott van, ahol pozitivbol negativba valt az ertek	*/
-		r = findZeroPointRadius(rvec[i],rvec[i+1],dp[i],dp[i+1]);	/*	Ha elojel valtas tortenik es nyomasi maximum van, akkor kiszamolja a ket pont kozott, hogy hol lenne a zerus hely pontosan	*/
+		r = findZeroPointRadius(radial_grid[i],radial_grid[i+1],dp[i],dp[i+1]);	/*	Ha elojel valtas tortenik es nyomasi maximum van, akkor kiszamolja a ket pont kozott, hogy hol lenne a zerus hely pontosan	*/
 
 	} else {
 		r = 0.0;
@@ -184,42 +184,42 @@ void findRAnnulusAroundDZE(double rin, double *ind_ii, double *ind_io,
     roopH = rout_plus_h_rout + disk_params->delta_r / 2.0;
 
 
-    // Iteráció az rvec tömbön
+    // Iteráció az radial_grid tömbön
     for (i = 0; i < disk_params->grid_number; i++) {
-        // Ezen a ponton érdemes ellenőrizni disk_params->rvec[i] értékét
-        // fprintf(stderr, "DEBUG_FIRA_LOOP: i=%d, rvec[i]=%.10lg\n", i, disk_params->rvec[i]);
+        // Ezen a ponton érdemes ellenőrizni disk_params->radial_grid[i] értékét
+        // fprintf(stderr, "DEBUG_FIRA_LOOP: i=%d, radial_grid[i]=%.10lg\n", i, disk_params->radial_grid[i]);
 
         // Ez az if blokk csak akkor aktív, ha sim_opts->dzone == 1
         if (sim_opts->dzone == 1) {
             // INNER (RIN) határok
-            if (disk_params->rvec[i] > riimH && disk_params->rvec[i] < riipH) {
-                rmid = (disk_params->rvec[i] - disk_params->r_min) / disk_params->delta_r;
+            if (disk_params->radial_grid[i] > riimH && disk_params->radial_grid[i] < riipH) {
+                rmid = (disk_params->radial_grid[i] - disk_params->r_min) / disk_params->delta_r;
                 rtemp = floor(rmid + 0.5);
                 *ind_ii = rtemp;
             }
 
-            if (disk_params->rvec[i] > riomH && disk_params->rvec[i] < riopH) {
-                rmid = (disk_params->rvec[i] - disk_params->r_min) / disk_params->delta_r;
+            if (disk_params->radial_grid[i] > riomH && disk_params->radial_grid[i] < riopH) {
+                rmid = (disk_params->radial_grid[i] - disk_params->r_min) / disk_params->delta_r;
                 rtemp = floor(rmid + 0.5);
                 *ind_io = rtemp;
             }
         }
 
         // OUTER (ROUT) határok
-        if (disk_params->rvec[i] > roimH && disk_params->rvec[i] < roipH) {
-            rmid = (disk_params->rvec[i] - disk_params->r_min) / disk_params->delta_r;
+        if (disk_params->radial_grid[i] > roimH && disk_params->radial_grid[i] < roipH) {
+            rmid = (disk_params->radial_grid[i] - disk_params->r_min) / disk_params->delta_r;
             rtemp = floor(rmid + 0.5);
             *ind_oi = rtemp;
         }
 
-        if (disk_params->rvec[i] > roomH && disk_params->rvec[i] < roopH) {
-            rmid = (disk_params->rvec[i] - disk_params->r_min) / disk_params->delta_r;
+        if (disk_params->radial_grid[i] > roomH && disk_params->radial_grid[i] < roopH) {
+            rmid = (disk_params->radial_grid[i] - disk_params->r_min) / disk_params->delta_r;
             rtemp = floor(rmid + 0.5);
             *ind_oo = rtemp;
         }
 
         // KILÉPÉS feltétele
-        if (disk_params->rvec[i] > roopH) break;
+        if (disk_params->radial_grid[i] > roopH) break;
     }
 
 
