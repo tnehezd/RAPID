@@ -5,9 +5,6 @@
 
 #define MAX_PATH_LEN 8192 // Definiálj egy maximális hosszt fájlnevekhez
 
-// Define fundamental physical constants if they're not in config.h
-// #define AU2CM 1.496e13 // Example: Astronomical Unit to Centimeters
-
 // --- Particle Structure ---
 // Represents a single dust particle
 typedef struct {
@@ -41,18 +38,18 @@ typedef struct disk_t {
 
     // Gáz korong paraméterek
     double sigma_0; // Kezdeti referencia gáz sűrűség
-    double SIGMAP_EXP; // Sűrűség profil kitevő
-    double alpha_visc; // Alfa viszkozitás
-    double STAR_MASS; // Központi csillag tömege
-    double DISK_MASS;
-    double HASP; // H/R arány (diszk magasság)
-    double FLIND; // Fáklyázási index
+    double sigma_power_law_index; // Sűrűség profil kitevő
+    double alpha_parameter; // Alfa viszkozitás
+    double stellar_mass; // Központi csillag tömege
+    double disk_mass;
+    double h_aspect_ratio; // H/R arány (diszk magasság)
+    double flaring_index; // Fáklyázási index
 
     // Holt zóna paraméterek (dead zone)
     double r_dze_i;
     double r_dze_o;
-    double Dr_dze_i;
-    double Dr_dze_o;
+    double dr_dze_i;
+    double dr_dze_o;
     double a_mod; // Alfa modifikációs faktor
 
     // Por paraméterek (ezeket számolja a disk_param_be)

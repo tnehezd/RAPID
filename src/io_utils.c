@@ -246,10 +246,10 @@ void printCurrentInformationAboutRun(const char *nev, const disk_t *disk_params,
     fprintf(current_info_file,"The current run is in the %s directory!\n",nev);
     fprintf(current_info_file,"\n\nThe parameters of the disk:\nr_min: %lg, r_max: %lg\nsigma_0: %lg, SIGMA_EXP: %lg, flaring index: %lg\nALPHA_VISC: %lg, ALPHA_MOD: %lg\nR_DZE_I: %lg, R_DZE_O: %lg, DR_DZEI: %lg, DR_DZE_O: %lg   (*** R_DZE_I/O = 0, akkor azt a DZE-t nem szimulálja a futás! ***)\n\n\n",
               disk_params->r_min, disk_params->r_max,
-              disk_params->sigma_0, disk_params->SIGMAP_EXP, disk_params->FLIND,
-              disk_params->alpha_visc, disk_params->a_mod,
-              disk_params->r_dze_i, disk_params->r_dze_o, disk_params->Dr_dze_i, disk_params->Dr_dze_o);
-    fprintf(current_info_file,"The mass of the central star: %lg M_Sun\n", disk_params->STAR_MASS);
+              disk_params->sigma_0, disk_params->sigma_power_law_index, disk_params->flaring_index,
+              disk_params->alpha_parameter, disk_params->a_mod,
+              disk_params->r_dze_i, disk_params->r_dze_o, disk_params->dr_dze_i, disk_params->dr_dze_o);
+    fprintf(current_info_file,"The mass of the central star: %lg M_Sun\n", disk_params->stellar_mass);
     fclose(current_info_file);
 }
 

@@ -50,7 +50,7 @@ void createInitialGasSurfaceDensity(disk_t *disk_params){		/*	initial profile of
   	int i;
   
   	for(i = 1; i <= disk_params->grid_number; i++) {
-    		disk_params->sigmavec[i] = disk_params->sigma_0 * pow(disk_params->rvec[i],disk_params->SIGMAP_EXP);		/*	sigma0*r^x (x could be eg. -1/2)	*/
+    		disk_params->sigmavec[i] = disk_params->sigma_0 * pow(disk_params->rvec[i],disk_params->sigma_power_law_index);		/*	sigma0*r^x (x could be eg. -1/2)	*/
     }
   
 

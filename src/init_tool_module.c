@@ -146,8 +146,8 @@ int runInitialization(init_tool_options_t *opts, disk_t *disk_params) {
     double drdze_outer_calculated = pow(opts->deadzone_r_outer, 1.0 + opts->flaring_index) * opts->aspect_ratio *
                                     ((opts->deadzone_dr_outer == 0.0) ? 1e-6 : opts->deadzone_dr_outer);
 
-    const double DEFAULT_DISK_MASS_DUST = 0.01;
-    if (fabs(opts->disk_mass_dust - DEFAULT_DISK_MASS_DUST) > 1e-9) {
+    const double DEFAULT_disk_mass_DUST = 0.01;
+    if (fabs(opts->disk_mass_dust - DEFAULT_disk_mass_DUST) > 1e-9) {
         current_sigma0_gas = calculateSigm0FromDiskMass(opts);
         fprintf(stderr,"Sigma0 calculated from total dust disk mass (Md): %Lg M_Sun/AU^2\n", current_sigma0_gas);
     } else {
@@ -246,16 +246,16 @@ int runInitialization(init_tool_options_t *opts, disk_t *disk_params) {
     disk_params->r_min = opts->r_inner;
     disk_params->r_max = opts->r_outer;
     disk_params->sigma_0 = current_sigma0_gas;
-    disk_params->SIGMAP_EXP = opts->sigma_exponent;
+    disk_params->sigma_power_law_index = opts->sigma_exponent;
     disk_params->r_dze_i = opts->deadzone_r_inner;
     disk_params->r_dze_o = opts->deadzone_r_outer;
-    disk_params->Dr_dze_i = opts->deadzone_dr_inner;
-    disk_params->Dr_dze_o = opts->deadzone_dr_outer;
-    disk_params->alpha_visc = opts->alpha_viscosity;
+    disk_params->dr_dze_i = opts->deadzone_dr_inner;
+    disk_params->dr_dze_o = opts->deadzone_dr_outer;
+    disk_params->alpha_parameter = opts->alpha_viscosity;
     disk_params->a_mod = opts->deadzone_alpha_mod;
-    disk_params->HASP = opts->aspect_ratio;
-    disk_params->FLIND = opts->flaring_index;
-    disk_params->STAR_MASS = opts->star_mass;
+    disk_params->h_aspect_ratio = opts->aspect_ratio;
+    disk_params->flaring_index = opts->flaring_index;
+    disk_params->stellar_mass = opts->star_mass;
     disk_params->particle_density = opts->dust_density_g_cm3;
     if (disk_params->grid_number > 1) {
         disk_params->delta_r = (disk_params->r_max - disk_params->r_min) / ((double)disk_params->grid_number - 1.0);

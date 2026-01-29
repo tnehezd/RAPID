@@ -22,8 +22,8 @@
 /*	alpha turbulens paraméter kiszámolása --> alfa csökkentése alpha_r-rel	*/
 double calculateTurbulentAlpha(double r, const disk_t *disk_params) {
     double alpha_r;
-    alpha_r = 1.0 - 0.5 * (1.0 - disk_params->a_mod) * (tanh((r - disk_params->r_dze_i) / disk_params->Dr_dze_i) + tanh((disk_params->r_dze_o - r) / disk_params->Dr_dze_o));
-    return alpha_r * disk_params->alpha_visc;
+    alpha_r = 1.0 - 0.5 * (1.0 - disk_params->a_mod) * (tanh((r - disk_params->r_dze_i) / disk_params->dr_dze_i) + tanh((disk_params->r_dze_o - r) / disk_params->dr_dze_o));
+    return alpha_r * disk_params->alpha_parameter;
 }
 
 
@@ -49,18 +49,18 @@ double calculatePressureScaleHeight(double r, const disk_t *disk_params) {
     }
 
     // Itt van az eredeti számítás
-    double calculated_result = pow(r, 1. + disk_params->FLIND) * disk_params->HASP;
+    double calculated_result = pow(r, 1. + disk_params->flaring_index) * disk_params->h_aspect_ratio;
     return calculated_result;
 }
 
 /*  lokális kepleri sebesség    */
 double calculateKeplerianVelocity(double r, const disk_t *disk_params) {
-    return sqrt(G_DIMENSIONLESS * disk_params->STAR_MASS / r);
+    return sqrt(G_DIMENSIONLESS * disk_params->stellar_mass / r);
 }
 
 /*  lokalis kepleri korfrekvencia   */
 double calculateKeplerianFrequency(double r, const disk_t *disk_params) {
-    return sqrt(G_DIMENSIONLESS * disk_params->STAR_MASS / r / r / r);
+    return sqrt(G_DIMENSIONLESS * disk_params->stellar_mass / r / r / r);
 }
 
 /*  local sound speed       */
