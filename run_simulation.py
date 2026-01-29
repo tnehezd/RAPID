@@ -129,7 +129,6 @@ def main():
         "tStep": 0.0,
         "totalTime": 1.0e6,
         "outputFrequency": 1000.0,
-        "startTime": 0.0,
 
         # Init tool specific parameters' defaults
         "eps_val": 0.01,
@@ -189,7 +188,6 @@ def main():
             "fixed_time_step": "tStep",
             "total_simulation_time": "totalTime",
             "output_write_frequency": "outputFrequency",
-            "simulation_start_time": "startTime",
         }
 
         for yaml_key, c_key in yaml_to_c_mapping.items():
@@ -226,7 +224,7 @@ def main():
         "input_file": "-i", "output_dir_name": "-o",
 
         # Time Parameters
-        "tStep": "-tStep", "totalTime": "-tmax", "outputFrequency": "-outfreq", "startTime": "-curr",
+        "tStep": "-tStep", "totalTime": "-tmax", "outputFrequency": "-outfreq"
     }
 
     # 2. Run the main C program with all configured parameters

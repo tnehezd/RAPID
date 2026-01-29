@@ -17,11 +17,11 @@
 // --- External declaration for the existing linearInterpolation function ---
 // This function is assumed to be implemented in utils.c (or similar)
 // and its prototype should be in utils.h.
-//extern void linearInterpolation(double *invec, double *rvec, double pos, double *out, double rd, int opt, const disk_t *disk_params);
+//extern void linearInterpolation(double *invec, double *radial_grid, double pos, double *out, double rd, int opt, const DiskParameters *disk_params);
 
 
-void initializeDefaultOptions(init_tool_options_t *def) {
-    // Set default values for the init_tool_options_t struct
+void initializeDefaultOptions(InitializeDefaultOptions *def) {
+    // Set default values for the InitializeDefaultOptions struct
     def->n_grid_points = 1000; // Number of radial gas grid points
     def->n_dust_particles = 2000; // NEW: Number of initial dust particles
     def->r_inner = 0.1;
@@ -55,7 +55,7 @@ void initializeDefaultOptions(init_tool_options_t *def) {
 
 // Calculates the gas surface density normalization constant (Sigma0)
 // based on total dust disk mass (Md), in M_Sun / AU / AU.
-static long double calculateSigm0FromDiskMass(init_tool_options_t *init_opts) {
+static long double calculateSigm0FromDiskMass(InitializeDefaultOptions *init_opts) {
     // Sigma ~ r^(-index), so integral is r^(2-index)
     double exponent_for_integral = -init_opts->sigma_exponent + 2.0;
 
@@ -82,13 +82,13 @@ static long double calculateSigm0FromDiskMass(init_tool_options_t *init_opts) {
 }
 
 // Calculates gas surface density at radial position r [M_Sun / AU / AU].
-static long double calculateGasSurfaceDensityInitTool(double r_au, init_tool_options_t *init_opts, long double current_sigma0) {
+static long double calculateGasSurfaceDensityInitTool(double r_au, InitializeDefaultOptions *init_opts, long double current_sigma0) {
     return current_sigma0 * pow(r_au, init_opts->sigma_exponent);
 }
 
 // Calculates dust surface density at radial position r [M_Sun / AU / AU].
 // Includes handling for snowline/ice factor if enabled (currently commented out as in original).
-static long double calculateDustSurfaceDensityInitTool(double r_au, init_tool_options_t *init_opts, long double current_sigma0) {
+static long double calculateDustSurfaceDensityInitTool(double r_au, InitializeDefaultOptions *init_opts, long double current_sigma0) {
     long double sigma_dust = calculateGasSurfaceDensityInitTool(r_au, init_opts, current_sigma0) * init_opts->dust_to_gas_ratio;
 
     // --- Snowline and Ice Factor Handling (Uncomment and adjust if needed) ---
@@ -114,7 +114,7 @@ static double findMinimumForThreeNumbersInitTool(double s1, double s2, double s3
 
 // --- Main Init Tool Function ---
 
-int runInitialization(init_tool_options_t *opts, disk_t *disk_params) {
+int runInitialization(InitializeDefaultOptions *opts, DiskParameters *disk_params) {
     FILE *fout_data = NULL; // For dust particle profile
     FILE *fout_params = NULL; // For disk parameters
     FILE *fout_dens = NULL; // For gas density profile
@@ -146,8 +146,8 @@ int runInitialization(init_tool_options_t *opts, disk_t *disk_params) {
     double drdze_outer_calculated = pow(opts->deadzone_r_outer, 1.0 + opts->flaring_index) * opts->aspect_ratio *
                                     ((opts->deadzone_dr_outer == 0.0) ? 1e-6 : opts->deadzone_dr_outer);
 
-    const double DEFAULT_DISK_MASS_DUST = 0.01;
-    if (fabs(opts->disk_mass_dust - DEFAULT_DISK_MASS_DUST) > 1e-9) {
+    const double DEFAULT_disk_mass_DUST = 0.01;
+    if (fabs(opts->disk_mass_dust - DEFAULT_disk_mass_DUST) > 1e-9) {
         current_sigma0_gas = calculateSigm0FromDiskMass(opts);
         fprintf(stderr,"Sigma0 calculated from total dust disk mass (Md): %Lg M_Sun/AU^2\n", current_sigma0_gas);
     } else {
@@ -245,41 +245,41 @@ int runInitialization(init_tool_options_t *opts, disk_t *disk_params) {
     disk_params->grid_number = opts->n_grid_points; // Gas grid resolution
     disk_params->r_min = opts->r_inner;
     disk_params->r_max = opts->r_outer;
-    disk_params->SIGMA0 = current_sigma0_gas;
-    disk_params->SIGMAP_EXP = opts->sigma_exponent;
+    disk_params->sigma_0 = current_sigma0_gas;
+    disk_params->sigma_power_law_index = opts->sigma_exponent;
     disk_params->r_dze_i = opts->deadzone_r_inner;
     disk_params->r_dze_o = opts->deadzone_r_outer;
-    disk_params->Dr_dze_i = opts->deadzone_dr_inner;
-    disk_params->Dr_dze_o = opts->deadzone_dr_outer;
-    disk_params->alpha_visc = opts->alpha_viscosity;
-    disk_params->a_mod = opts->deadzone_alpha_mod;
-    disk_params->HASP = opts->aspect_ratio;
-    disk_params->FLIND = opts->flaring_index;
-    disk_params->STAR_MASS = opts->star_mass;
+    disk_params->dr_dze_i = opts->deadzone_dr_inner;
+    disk_params->dr_dze_o = opts->deadzone_dr_outer;
+    disk_params->alpha_parameter = opts->alpha_viscosity;
+    disk_params->alpha_parameter_modification = opts->deadzone_alpha_mod;
+    disk_params->h_aspect_ratio = opts->aspect_ratio;
+    disk_params->flaring_index = opts->flaring_index;
+    disk_params->stellar_mass = opts->star_mass;
     disk_params->particle_density = opts->dust_density_g_cm3;
     if (disk_params->grid_number > 1) {
-        disk_params->DD = (disk_params->r_max - disk_params->r_min) / ((double)disk_params->grid_number - 1.0);
+        disk_params->delta_r = (disk_params->r_max - disk_params->r_min) / ((double)disk_params->grid_number - 1.0);
     } else {
-        disk_params->DD = 0.0;
+        disk_params->delta_r = 0.0;
     }
     // Allocate arrays for the GAS grid (based on grid_number)
-    disk_params->rvec = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
-    disk_params->sigmavec = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
-    disk_params->pressvec = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
-    disk_params->dpressvec = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
-    disk_params->ugvec = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
+    disk_params->radial_grid = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
+    disk_params->gas_surface_density_vector = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
+    disk_params->gas_pressure_vector = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
+    disk_params->gas_pressure_gradient_vector = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
+    disk_params->gas_velocity_vector = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
 
-    if (!disk_params->rvec || !disk_params->sigmavec || !disk_params->pressvec || !disk_params->dpressvec || !disk_params->ugvec) {
+    if (!disk_params->radial_grid || !disk_params->gas_surface_density_vector || !disk_params->gas_pressure_vector || !disk_params->gas_pressure_gradient_vector || !disk_params->gas_velocity_vector) {
         fprintf(stderr, "ERROR [runInitialization]: Failed to allocate disk arrays. Exiting.\n");
         if (fout_data) fclose(fout_data);
         if (fout_params) fclose(fout_params);
         if (fout_dens) fclose(fout_dens);
         // Free already allocated memory before exiting
-        if (disk_params->rvec) free(disk_params->rvec);
-        if (disk_params->sigmavec) free(disk_params->sigmavec);
-        if (disk_params->pressvec) free(disk_params->pressvec);
-        if (disk_params->dpressvec) free(disk_params->dpressvec);
-        if (disk_params->ugvec) free(disk_params->ugvec);
+        if (disk_params->radial_grid) free(disk_params->radial_grid);
+        if (disk_params->gas_surface_density_vector) free(disk_params->gas_surface_density_vector);
+        if (disk_params->gas_pressure_vector) free(disk_params->gas_pressure_vector);
+        if (disk_params->gas_pressure_gradient_vector) free(disk_params->gas_pressure_gradient_vector);
+        if (disk_params->gas_velocity_vector) free(disk_params->gas_velocity_vector);
         return 1;
     }
 
@@ -294,7 +294,7 @@ int runInitialization(init_tool_options_t *opts, disk_t *disk_params) {
     // --- NEW SECTION: Write Gas Density Profile (to fout_dens) ---
     // This loop iterates over the gas grid points (opts->n_grid_points)
     for (int i_loop = 0; i_loop < opts->n_grid_points; i_loop++) {
-        double r_gas_grid_au = disk_params->rvec[i_loop + 1]; // Use 1-indexed for physical grid
+        double r_gas_grid_au = disk_params->radial_grid[i_loop + 1]; // Use 1-indexed for physical grid
 
         if (r_gas_grid_au <= 0) {
             fprintf(stderr, "ERROR: Calculated gas grid radial position is non-positive at index %d (%lg AU). Skipping this point.\n", i_loop, r_gas_grid_au);
@@ -302,9 +302,9 @@ int runInitialization(init_tool_options_t *opts, disk_t *disk_params) {
         }
 
         // Get gas properties directly from the disk_params arrays for the gas grid
-        long double sigma_gas_local_val = disk_params->sigmavec[i_loop + 1];
-        double pressure_local_val = disk_params->pressvec[i_loop + 1];
-        double dPdr_local_val = disk_params->dpressvec[i_loop + 1];
+        long double sigma_gas_local_val = disk_params->gas_surface_density_vector[i_loop + 1];
+        double pressure_local_val = disk_params->gas_pressure_vector[i_loop + 1];
+        double dPdr_local_val = disk_params->gas_pressure_gradient_vector[i_loop + 1];
 
         fprintf(fout_dens, "%-15.6e %-15.6Lg %-15.6e %-15.6e\n",
             r_gas_grid_au,
@@ -333,13 +333,13 @@ int runInitialization(init_tool_options_t *opts, disk_t *disk_params) {
         // --- Interpolate gas disk properties at the dust particle's radial position using the existing 'linearInterpolation' function ---
         double temp_sigma, temp_pressure, temp_dPdr;
 
-        linearInterpolation(disk_params->sigmavec, disk_params->rvec, r_dust_particle_au, &temp_sigma, disk_params->DD, 0, disk_params);
+        linearInterpolation(disk_params->gas_surface_density_vector, disk_params->radial_grid, r_dust_particle_au, &temp_sigma, disk_params->delta_r, 0, disk_params);
         long double sigma_gas_local = temp_sigma;
 
-        linearInterpolation(disk_params->pressvec, disk_params->rvec, r_dust_particle_au, &temp_pressure, disk_params->DD, 0, disk_params);
+        linearInterpolation(disk_params->gas_pressure_vector, disk_params->radial_grid, r_dust_particle_au, &temp_pressure, disk_params->delta_r, 0, disk_params);
         double pressure_local = temp_pressure;
 
-        linearInterpolation(disk_params->dpressvec, disk_params->rvec, r_dust_particle_au, &temp_dPdr, disk_params->DD, 0, disk_params);
+        linearInterpolation(disk_params->gas_pressure_gradient_vector, disk_params->radial_grid, r_dust_particle_au, &temp_dPdr, disk_params->delta_r, 0, disk_params);
         double dPdr_local = temp_dPdr;
 
 

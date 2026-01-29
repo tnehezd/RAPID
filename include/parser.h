@@ -15,16 +15,16 @@
  */
 typedef struct {
     // Simulation control options
-    double drift;
-    double growth;
-    double evol;
-    double twopop;
+    double option_for_dust_drift;
+    double option_for_dust_growth;
+    double option_for_evolution;
+    double option_for_dust_secondary_population;
     double ufrag;
     double ffrag;
 
     // Core disk parameters (also serve as init_tool defaults if no input file)
     int    ngrid_val;       // Number of grid points
-    int    ndust_val;
+    int    number_of_dust_particles;
     double rmin_val;        // Inner radius (AU)
     double rmax_val;        // Outer radius (AU)
     double sigma0_val;      // Initial gas surface density at 1 AU (M_sun/AU^2)
@@ -44,10 +44,9 @@ typedef struct {
     char output_dir_name[MAX_OUTPUT_DIR_LEN]; // Name of the output directory
 
     // Time parameters
-    double tStep;           // Fixed time step
-    double totalTime;       // Total simulation time
-    double outputFrequency; // Output frequency
-    double startTime;       // Current start time (for resuming or initial time)
+    double user_defined_time_step;           // Fixed time step
+    double maximum_simulation_time;       // Total simulation time
+    double output_frequency; // Output frequency
 
     // Init tool specific parameters (if initial profile is generated)
     // These could also be merged into the general disk parameters if they always overlap
@@ -60,22 +59,22 @@ typedef struct {
     // NEW: Add PDENSITY (dust particle density) parameter
     double pdensity_val;    // Dust particle density [g/cm^3]
 
-} options_t;
+} ParserOptions;
 
 /*
- * @brief Initializes the options_t structure with default values.
- * @param opt Pointer to the options_t structure to be initialized.
+ * @brief Initializes the ParserOptions structure with default values.
+ * @param opt Pointer to the ParserOptions structure to be initialized.
  */
-void createDefaultOptions(options_t *opt);
+void createDefaultOptions(ParserOptions *opt);
 
 /*
- * @brief Parses command-line arguments and populates the options_t structure.
+ * @brief Parses command-line arguments and populates the ParserOptions structure.
  * @param argc The number of command-line arguments.
  * @param argv An array of strings containing the command-line arguments.
- * @param opt Pointer to the options_t structure where parsed values will be stored.
+ * @param opt Pointer to the ParserOptions structure where parsed values will be stored.
  * @return 0 on successful parsing, 1 on error (e.g., missing value, unknown option).
  */
-int parseCLIOptions(int argc, const char **argv, options_t *opt);
+int parseCLIOptions(int argc, const char **argv, ParserOptions *opt);
 
 /*
  * @brief Prints the command-line usage information to stderr.

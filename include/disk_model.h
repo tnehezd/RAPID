@@ -8,12 +8,12 @@
 #include "config.h"
 #include "simulation_types.h" 
 
-void readDiskParameters(disk_t *disk_params);
-void createRadialGrid(disk_t *disk_params);
-void createInitialGasSurfaceDensity(disk_t *disk_params);
-void createInitialGasPressure(disk_t *disk_params);
-void createInitialGasPressureGradient(disk_t *disk_params);
-void createInitialGasVelocity(disk_t *disk_params);
-void calculateInitialDustSurfaceDensity(double radin[][2], double *massin, double out[][3], int n, const disk_t *disk_params);
+void readDiskParameters(DiskParameters *disk_params);
+void createRadialGrid(DiskParameters *disk_params);
+void createInitialGasSurfaceDensity(DiskParameters *disk_params);
+void createInitialGasPressure(DiskParameters *disk_params);
+void createInitialGasPressureGradient(DiskParameters *disk_params);
+void createInitialGasVelocity(DiskParameters *disk_params);
+void calculateInitialDustSurfaceDensity(double radin[][2], double *massin, double out[][3], int n, const DiskParameters *disk_params);
 
 #endif // DISK_MODEL_H

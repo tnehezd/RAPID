@@ -24,7 +24,7 @@
 
 /*	Kiszamolja az 1D-s driftet	*/
 /*  	dr/dt = St/(1+St*St)*H(r)/r*dlnP/dlnr*cs = St/(1+St*St) * (H/r) * (r/P) * (dP/dr) * cs		*/
-void calculate1DDustDrift(double pradius, double dp, double sigma, double ug, double r, double *drdt, const disk_t *disk_params) {
+void calculate1DDustDrift(double pradius, double dp, double sigma, double ug, double r, double *drdt, const DiskParameters *disk_params) {
 
     double P, H, dPdr, St, csound;
       
@@ -39,20 +39,20 @@ void calculate1DDustDrift(double pradius, double dp, double sigma, double ug, do
 
 
 /* for solving d(sigma*nu)/dt = 3*nu*d2(sigma*nu)/dr2 + 9*hu/(2*r)*dsigma/dr	--> 3*nu  	*/
-double ftcsSecondDerivativeCoefficient(double r, const disk_t *disk_params){					
+double ftcsSecondDerivativeCoefficient(double r, const DiskParameters *disk_params){					
     double A;
     A = 3.0 * calculateKinematicViscosity(r, disk_params);
     return A;
 }
 
 /* for solving d(sigma*nu)/dt = 3*nu*d2(sigma*nu)/dr2 + 9*hu/(2*r)*dsigma/dr	--> 9*nu /(2*r)	*/
-double ftcsFirstDerivativeCoefficient(double r, const disk_t *disk_params){							
+double ftcsFirstDerivativeCoefficient(double r, const DiskParameters *disk_params){							
     double B;
     B = 9.0 * calculateKinematicViscosity(r,disk_params) / (2.0 * r);
     return B;
 }
 
-double calculateTimeStep(const disk_t *disk_params) { // Add const here too
+double calculateTimeStep(const DiskParameters *disk_params) { // Add const here too
     double A_max, stepping;
     int i;
 
@@ -61,18 +61,18 @@ double calculateTimeStep(const disk_t *disk_params) { // Add const here too
     A_max = -10000.0;
     
     for(i = 0; i < disk_params->grid_number; i++) {
-        if(ftcsSecondDerivativeCoefficient(disk_params->rvec[i], disk_params) > A_max) {
-            A_max = ftcsSecondDerivativeCoefficient(disk_params->rvec[i], disk_params);
+        if(ftcsSecondDerivativeCoefficient(disk_params->radial_grid[i], disk_params) > A_max) {
+            A_max = ftcsSecondDerivativeCoefficient(disk_params->radial_grid[i], disk_params);
         }
     }
-    stepping = disk_params->DD * disk_params->DD / (2.0 * A_max);
-    fprintf(stderr," Actual calculateTimeStep: DD = %.2e, stepping = %.2e\n", disk_params->DD, stepping);
+    stepping = disk_params->delta_r * disk_params->delta_r / (2.0 * A_max);
+    fprintf(stderr," Actual calculateTimeStep: delta_r = %.2e, stepping = %.2e\n", disk_params->delta_r, stepping);
 
     return stepping;
 }
 
 
-void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t *sim_opts, output_files_t *output_files) {
+void timeIntegrationForTheSystem(DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files) {
     ParticleData_t p_data;
     HeaderData_t header_data_for_files; // Később inicializáljuk a setupInitialOutputFiles-ban
 
@@ -85,26 +85,26 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
     }
 
     // --- Inicializálási szakasz ---
-    if (sim_opts->drift == 1.) {
+    if (sim_opts->option_for_dust_drift == 1.) {
         particle_number = calculateNumbersOfParticles(sim_opts->dust_input_filename);
     } else {
         fprintf(stderr, "ERROR [timeIntegrationForTheSystem]: Particle drift is OFF. particle_number set to 0.\n");
         particle_number = 0;
     }
 
-    if (particle_number > 0 && allocateParticleData(&p_data, particle_number, (int)sim_opts->twopop) != 0) {
+    if (particle_number > 0 && allocateParticleData(&p_data, particle_number, (int)sim_opts->option_for_dust_secondary_population) != 0) {
         fprintf(stderr, "ERROR: Failed to allocate particle data. Exiting.\n");
         exit(EXIT_FAILURE);
     }
 
     // Fájl inicializálás a meglévő io_utils függvény hívásával
-    if (sim_opts->drift == 1.) {
+    if (sim_opts->option_for_dust_drift == 1.) {
         if (setupInitialOutputFiles(output_files, sim_opts, disk_params, &header_data_for_files) != 0) {
             fprintf(stderr, "ERROR: Failed to set up initial output files. Exiting.\n");
             exit(EXIT_FAILURE);
         }
         // loadDustParticlesFromFile hívása a részecskeadatok beolvasására
-        loadDustParticlesFromFile(p_data.radius, p_data.radiusmicr, p_data.massvec, p_data.massmicrvec, sim_opts->dust_input_filename);
+        loadDustParticlesFromFile(p_data.radius, p_data.radiusmicr, p_data.massvec, p_data.massmicradial_grid, sim_opts->dust_input_filename);
     }
 
     // További inicializálások
@@ -118,14 +118,14 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
     char size_name[MAX_PATH_LEN] = "";
 
     double t = 0.0;
-    double t_integration_in_internal_units = sim_opts->TMAX * 2.0 * M_PI;
+    double t_integration_in_internal_units = sim_opts->maximum_simulation_time * 2.0 * M_PI;
     double deltat = calculateTimeStep(disk_params) / 5.0;
 
-    // DT felülbírálása, ha a felhasználó megadott kisebb értéket
-    if (sim_opts->DT > 0.0 && sim_opts->DT < deltat) {
-        ((simulation_options_t *)sim_opts)->DT = deltat; // Az eredeti kód hibásan a deltat-t vette át, ha sim_opts->DT nagyobb volt
+    // user_defined_time_step felülbírálása, ha a felhasználó megadott kisebb értéket
+    if (sim_opts->user_defined_time_step > 0.0 && sim_opts->user_defined_time_step < deltat) {
+        ((SimulationOptions *)sim_opts)->user_defined_time_step = deltat; // Az eredeti kód hibásan a deltat-t vette át, ha sim_opts->user_defined_time_step nagyobb volt
     } else {
-        ((simulation_options_t *)sim_opts)->DT = deltat; // Az eredeti kód szerint, ha nem kisebb, akkor deltat a DT
+        ((SimulationOptions *)sim_opts)->user_defined_time_step = deltat; // Az eredeti kód szerint, ha nem kisebb, akkor deltat a user_defined_time_step
     }
 
     // Mass accumulation változók
@@ -134,19 +134,19 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
     double tavin = 0, tavout = 0; // Távolságok a printMassGrowthAtDZEFile-hoz
 
 
-    if (sim_opts->twopop == 0 && particle_number > 0) {
+    if (sim_opts->option_for_dust_secondary_population == 0 && particle_number > 0) {
         for (i = 0; i < particle_number; i++) {
             p_data.radiusmicr[i][0] = 0;
             p_data.radiusmicr[i][1] = 0;
             p_data.partmassmicrind[i][0] = 0;
             p_data.partmassmicrind[i][1] = 0;
-            p_data.massmicrvec[i] = 0;
+            p_data.massmicradial_grid[i] = 0;
         }
     }
 
     // --- Fő szimulációs ciklus ---
     do {
-        if (sim_opts->drift == 1.) {
+        if (sim_opts->option_for_dust_drift == 1.) {
 
             // Radius reciprok számítása a min/max kereséshez
             for (i = 0; i < particle_number; i++) {
@@ -163,7 +163,7 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
 
             double mint, maxt;
 
-            if (sim_opts->twopop == 1) {
+            if (sim_opts->option_for_dust_secondary_population == 1) {
                 // Micron részecskék radius reciprok számítása
                 for (i = 0; i < particle_number; i++) {
                     if (p_data.radiusmicr[i][0] > 0. && p_data.radiusmicr[i][0] > disk_params->r_min) {
@@ -189,12 +189,12 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
 
             // --- Kimeneti adatok (pillanatfelvétel) kezelése ---
             double current_time_years = t / (2.0 * M_PI);
-            if ((fmod(current_time_years, (sim_opts->TMAX / sim_opts->WO)) < deltat || current_time_years == 0) && L - current_time_years < deltat) {
+            if ((fmod(current_time_years, (sim_opts->maximum_simulation_time / sim_opts->output_frequency)) < deltat || current_time_years == 0) && L - current_time_years < deltat) {
                 fprintf(stderr,"\n--- Simulation Time: %.2e years (Internal time: %.2e, L: %.2e) ---\n", current_time_years, t, L);
 
 
                 if (current_time_years != 0) {
-                    if (sim_opts->evol == 1) {
+                    if (sim_opts->option_for_evolution == 1) {
                         snprintf(dens_name, MAX_PATH_LEN, "%s/%s/%s_%08d%s", sim_opts->output_dir_name, kLogFilesDirectory, kGasDensityProfileFilePrefix, (int)L,kFileNamesSuffix);
                     }
                 }
@@ -222,7 +222,7 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
                     printFileHeader(output_files->dust_file, FILE_TYPE_DUST_MOTION, &dust_header_data);
                 }
 
-                if (sim_opts->twopop == 1.) {
+                if (sim_opts->option_for_dust_secondary_population == 1.) {
                     output_files->micron_dust_file = fopen(dust_name2, "w");
                     if (output_files->micron_dust_file == NULL) {
                         fprintf(stderr, "ERROR: Could not open %s for writing.\n", dust_name2);
@@ -235,20 +235,20 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
                 // Eredeti t==0 logika
                 if (current_time_years == 0) {
                     updateParticleGridIndices(p_data.radius, p_data.partmassind, p_data.massvec, t, particle_number, disk_params);
-                    if (sim_opts->twopop == 1) updateParticleGridIndices(p_data.radiusmicr, p_data.partmassmicrind, p_data.massmicrvec, t, particle_number, disk_params);
+                    if (sim_opts->option_for_dust_secondary_population == 1) updateParticleGridIndices(p_data.radiusmicr, p_data.partmassmicrind, p_data.massmicradial_grid, t, particle_number, disk_params);
 
-                    if (sim_opts->growth == 1.) {
-                        calculateDustSurfaceDensity(max, min, p_data.radius, p_data.radiusmicr, p_data.sigmad, p_data.sigmadm, p_data.massvec, p_data.massmicrvec, p_data.rdvec, p_data.rmicvec, sim_opts, disk_params);
+                    if (sim_opts->option_for_dust_growth == 1.) {
+                        calculateDustSurfaceDensity(max, min, p_data.radius, p_data.radiusmicr, p_data.sigmad, p_data.sigmadm, p_data.massvec, p_data.massmicradial_grid, p_data.rdvec, p_data.rmicvec, sim_opts, disk_params);
                     }
                 }
 
                 // Gas density output
-                if (sim_opts->evol == 1 || current_time_years == 0) {
+                if (sim_opts->option_for_evolution == 1 || current_time_years == 0) {
                     if(L != 0) printGasSurfaceDensityPressurePressureDerivateFile(disk_params, output_files);
                 }
 
                 // Particle position and size output
-                if (sim_opts->drift == 1) {
+                if (sim_opts->option_for_dust_drift == 1) {
                     printDustParticleSizeFile(size_name, (int)L, p_data.radius, p_data.radiusmicr, disk_params, sim_opts, output_files);
                 }
 
@@ -260,7 +260,7 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
 
 
                 // Resetting partmassind[k][3] and [k][4]
-                if (sim_opts->dzone == 1.0 && particle_number > 0) { // Ellenőrzés particle_number-re
+                if (sim_opts->flag_for_deadzone == 1.0 && particle_number > 0) { // Ellenőrzés particle_number-re
                     for (int k = 0; k < particle_number; k++) {
                         p_data.partmassind[k][3] = 0.0;
                         p_data.partmassind[k][4] = 0.0;
@@ -275,34 +275,34 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
                 masstempoin = masstempoout;
                 massmtempoin = massmtempoout;
 
-                if (sim_opts->growth == 1.) {
+                if (sim_opts->option_for_dust_growth == 1.) {
                     printDustSurfaceDensityPressurePressureDerivateFile(p_data.rdvec, p_data.rmicvec, p_data.sigmad, p_data.sigmadm, disk_params, sim_opts, output_files, (int)L);
                 }
                 fprintf(stderr,"L set to %lg\n",L);
 
-                L = L + (double)(sim_opts->TMAX / sim_opts->WO);
+                L = L + (double)(sim_opts->maximum_simulation_time / sim_opts->output_frequency);
                 // Fájlok bezárása, amelyek csak ezen időintervallumban voltak nyitva
                 closeSnapshotFiles(output_files, dens_name, dust_name, dust_name2, sim_opts);
             }
 
-            // Gas evolution
-            if (sim_opts->evol == 1.) {
+            // Gas option_for_evolutionution
+            if (sim_opts->option_for_evolution == 1.) {
                 refreshGasSurfaceDensityPressurePressureGradient(sim_opts, disk_params);
             }
 
             // Count masses and get sigma_d for the next step (always done)
             updateParticleGridIndices(p_data.radius, p_data.partmassind, p_data.massvec, t, particle_number, disk_params);
-            if (sim_opts->twopop == 1) updateParticleGridIndices(p_data.radiusmicr, p_data.partmassmicrind, p_data.massmicrvec, t, particle_number, disk_params);
+            if (sim_opts->option_for_dust_secondary_population == 1) updateParticleGridIndices(p_data.radiusmicr, p_data.partmassmicrind, p_data.massmicradial_grid, t, particle_number, disk_params);
 
-            if (sim_opts->growth == 1.) {
-                calculateDustSurfaceDensity(max, min, p_data.radius, p_data.radiusmicr, p_data.sigmad, p_data.sigmadm, p_data.massvec, p_data.massmicrvec, p_data.rdvec, p_data.rmicvec, sim_opts, disk_params);
+            if (sim_opts->option_for_dust_growth == 1.) {
+                calculateDustSurfaceDensity(max, min, p_data.radius, p_data.radiusmicr, p_data.sigmad, p_data.sigmadm, p_data.massvec, p_data.massmicradial_grid, p_data.rdvec, p_data.rmicvec, sim_opts, disk_params);
             }
 
             // Get radii for next step
             int optsize = 0;
             calculateDustDistance(sim_opts->output_dir_name, optsize, p_data.radius, p_data.sigmad, p_data.rdvec, deltat, t, particle_number, sim_opts, disk_params);
 
-            if (sim_opts->twopop == 1.) {
+            if (sim_opts->option_for_dust_secondary_population == 1.) {
                 optsize = 1;
                 calculateDustDistance(sim_opts->output_dir_name, optsize, p_data.radiusmicr, p_data.sigmadm, p_data.rmicvec, deltat, t, particle_number, sim_opts, disk_params);
 
@@ -318,10 +318,10 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
 //                goto cleanup; // Ugrás a tisztításra
 //            }
 
-        } else { // sim_opts->drift == 0. (Gas-only simulation)
+        } else { // sim_opts->option_for_dust_drift == 0. (Gas-only simulation)
             double current_time_years = t / (2.0 * M_PI);
 
-            if ((fmod(current_time_years, (sim_opts->TMAX / sim_opts->WO)) < deltat || current_time_years == 0) && L - current_time_years < deltat) {
+            if ((fmod(current_time_years, (sim_opts->maximum_simulation_time / sim_opts->output_frequency)) < deltat || current_time_years == 0) && L - current_time_years < deltat) {
                 fprintf(stderr,"\n--- Simulation Time: %.2e years (Internal time: %.2e, L: %.2e) ---\n", current_time_years, t, L);
 
                 fprintf(stderr,"DEBUG [timeIntegrationForTheSystem]: Outputting data for gas-only simulation at time %.2e. L=%.2e\n", current_time_years, L);
@@ -346,7 +346,7 @@ void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t
                     fprintf(stderr, "DEBUG [timeIntegrationForTheSystem]: Closed %s in gas-only branch.\n", dens_name);
                 }
 
-                L = L + (double)(sim_opts->TMAX / sim_opts->WO);
+                L = L + (double)(sim_opts->maximum_simulation_time / sim_opts->output_frequency);
                 fprintf(stderr,"DEBUG [timeIntegrationForTheSystem]: Updated L to %.2e.\n", L);
             }
 

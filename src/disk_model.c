@@ -16,7 +16,7 @@
 
 
 /*	Reads the parameters of the disk	*/
-void readDiskParameters(disk_t *disk_params) {
+void readDiskParameters(DiskParameters *disk_params) {
     // Check if the pointer is NULL
     if (disk_params == NULL) {
         fprintf(stderr, "ERROR [readDiskParameters]: Received NULL disk_params pointer.\n");
@@ -35,59 +35,59 @@ void readDiskParameters(disk_t *disk_params) {
 
 
 /*	Initialize radial grid	*/
-void createRadialGrid(disk_t *disk_params) {
+void createRadialGrid(DiskParameters *disk_params) {
 	
 	int i;
  	for(i = 0; i <= disk_params->grid_number+1; i++) {						/*	load an array of radii	*/
- 		disk_params->rvec[i] = disk_params->r_min + (i-1) * disk_params->DD;
-//        fprintf(stderr, "DEBUG [createRadialGrid]: r: %lg\n", disk_params->rvec[i]);
+ 		disk_params->radial_grid[i] = disk_params->r_min + (i-1) * disk_params->delta_r;
+//        fprintf(stderr, "DEBUG [createRadialGrid]: r: %lg\n", disk_params->radial_grid[i]);
 	}
 }
 
 /*	Create the initial gas surface density profile	*/
-void createInitialGasSurfaceDensity(disk_t *disk_params){		/*	initial profile of sigma		*/
+void createInitialGasSurfaceDensity(DiskParameters *disk_params){		/*	initial profile of sigma		*/
 
   	int i;
   
   	for(i = 1; i <= disk_params->grid_number; i++) {
-    		disk_params->sigmavec[i] = disk_params->SIGMA0 * pow(disk_params->rvec[i],disk_params->SIGMAP_EXP);		/*	sigma0*r^x (x could be eg. -1/2)	*/
+    		disk_params->gas_surface_density_vector[i] = disk_params->sigma_0 * pow(disk_params->radial_grid[i],disk_params->sigma_power_law_index);		/*	sigma0*r^x (x could be eg. -1/2)	*/
     }
   
 
-  	applyBoundaryConditions(disk_params->sigmavec,disk_params);
+  	applyBoundaryConditions(disk_params->gas_surface_density_vector,disk_params);
 
 }
 
-void createInitialGasPressure(disk_t *disk_params){	
+void createInitialGasPressure(DiskParameters *disk_params){	
 
   	int i;
   
   	for(i = 1; i <= disk_params->grid_number; i++) {
-    		disk_params->pressvec[i] = calculateGasPressure(disk_params->sigmavec[i],disk_params->rvec[i],disk_params);
+    		disk_params->gas_pressure_vector[i] = calculateGasPressure(disk_params->gas_surface_density_vector[i],disk_params->radial_grid[i],disk_params);
   	}
-  	applyBoundaryConditions(disk_params->pressvec,disk_params);
+  	applyBoundaryConditions(disk_params->gas_pressure_vector,disk_params);
 
 
 }
 
-void createInitialGasPressureGradient(disk_t *disk_params){
+void createInitialGasPressureGradient(DiskParameters *disk_params){
 
 	calculateGasPressureGradient(disk_params);
-   	applyBoundaryConditions(disk_params->dpressvec,disk_params);
+   	applyBoundaryConditions(disk_params->gas_pressure_gradient_vector,disk_params);
 
 
 }
 
 /*	Update radial gas velovity	*/
-void createInitialGasVelocity(disk_t *disk_params){	
+void createInitialGasVelocity(DiskParameters *disk_params){	
  	
 	calculateGasRadialVelocity(disk_params);
-  	applyBoundaryConditions(disk_params->ugvec,disk_params);
+  	applyBoundaryConditions(disk_params->gas_velocity_vector,disk_params);
 }
 
 
 
-void calculateInitialDustSurfaceDensity(double radin[][2], double *massin, double out[][3], int n, const disk_t *disk_params) {
+void calculateInitialDustSurfaceDensity(double radin[][2], double *massin, double out[][3], int n, const DiskParameters *disk_params) {
 
 	int i;
 
@@ -97,10 +97,10 @@ void calculateInitialDustSurfaceDensity(double radin[][2], double *massin, doubl
 /*	If the dust grain is within the simulated regine (above r_min)
  	the surface density is calculated from the representative mass of the dust grain	*/
 		if((radin[i][0] >= disk_params->r_min)) {
-			out[i][0] = massin[i] / (2. * (radin[i][0]-disk_params->DD/2.) * M_PI * disk_params->DD);	// sigma = m /(2 * r * pi * dr) --> dr is the original grid step
+			out[i][0] = massin[i] / (2. * (radin[i][0]-disk_params->delta_r/2.) * M_PI * disk_params->delta_r);	// sigma = m /(2 * r * pi * dr) --> dr is the original grid step
 			out[i][1] = radin[i][0];																	// Saves the radial distance of the dust grain
 
-  			double rmid = (radin[i][0] - disk_params->r_min) / disk_params->DD;     						// 	The integer part of this gives at which index is the body		
+  			double rmid = (radin[i][0] - disk_params->r_min) / disk_params->delta_r;     						// 	The integer part of this gives at which index is the body		
 			int rindex = (int) floor(rmid);																// 	The "whole part of rmin" --> floor rounds down, +0.5 allows us to solve the rounding correctly
 			out[i][2] = (double) rindex;
 

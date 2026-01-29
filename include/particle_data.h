@@ -11,7 +11,7 @@ typedef struct {
     double (*radiusmicr)[2];
     double (*radius_rec)[2]; // Temp array for inverse radii calculations
     double *massvec;
-    double *massmicrvec;
+    double *massmicradial_grid;
     double (*partmassind)[5];
     double (*partmassmicrind)[5];
     double *sigmad;

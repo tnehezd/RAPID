@@ -21,11 +21,11 @@
 
 /*	Calculates the Stokes number for each particle	*/
 /*	St = rho_particle * radius_particle * PI / (2 * sigma)	*/
-double calculateStokesNumber(double pradius, double sigma, disk_t *disk_params) { /*	in the Epstein drag regime	*/
+double calculateStokesNumber(double pradius, double sigma, DiskParameters *disk_params) { /*	in the Epstein drag regime	*/
     return disk_params->particle_density_dimensionless * pradius * M_PI / (2.0 * sigma);
 }
 
-void calculateParticleMass(int n, double (*partmassind)[5], int indii, int indio, int indoi, int indoo, double *massiout, double *massoout, const simulation_options_t *sim_opts) {
+void calculateParticleMass(int n, double (*partmassind)[5], int indii, int indio, int indoi, int indoo, double *massiout, double *massoout, const SimulationOptions *sim_opts) {
 
     // Debug üzenet frissítve az indexekre
 
@@ -33,8 +33,8 @@ void calculateParticleMass(int n, double (*partmassind)[5], int indii, int indio
     double massotemp = 0.0;
     int i;
 
-    // sim_opts->dzone (ez helyettesíti az optdze-t): 1.0 = dinamikus DZE (flag-elt), 0.0 = fix DZE (nem flag-elt)
-    if(sim_opts->dzone == 1.0) { // Dinamikus DZE: flag-ek használatával (partmassind[i][3] és [4])
+    // sim_opts->flag_for_deadzone (ez helyettesíti az optdze-t): 1.0 = dinamikus DZE (flag-elt), 0.0 = fix DZE (nem flag-elt)
+    if(sim_opts->flag_for_deadzone == 1.0) { // Dinamikus DZE: flag-ek használatával (partmassind[i][3] és [4])
         #pragma omp parallel for private(i) reduction(+:massitemp, massotemp)
         for (i = 0; i < n; i++) {
             // A részecske aktuális grid indexe (partmassind[i][1]-ből)
@@ -64,7 +64,7 @@ void calculateParticleMass(int n, double (*partmassind)[5], int indii, int indio
                 }
             }
         }
-    } else { // Fix DZE (sim_opts->dzone == 0.0): Nincsenek flag-ek a tömeg felhalmozáshoz
+    } else { // Fix DZE (sim_opts->flag_for_deadzone == 0.0): Nincsenek flag-ek a tömeg felhalmozáshoz
         #pragma omp parallel for private(i) reduction(+:massitemp, massotemp)
         for (i = 0; i < n; i++) {
             int current_r_index = (int)partmassind[i][1]; // A részecske grid indexe
@@ -98,7 +98,7 @@ void calculateParticleMass(int n, double (*partmassind)[5], int indii, int indio
 
 //reprezentativ reszecske kezdeti meretenek meghatarozasa
 // 1. radialis drift altal meghatarozott maximalis meret			--> kimenet cm-ben!
-double calculateRadialDriftBarrier(double sigmad, double r, double p, double dp, double rho_p, const disk_t *disk_params) {
+double calculateRadialDriftBarrier(double sigmad, double r, double p, double dp, double rho_p, const DiskParameters *disk_params) {
 
     double Sigmad_cgs = sigmad / SURFACE_DENSITY_CONVERSION_FACTOR;
 
@@ -107,32 +107,32 @@ double calculateRadialDriftBarrier(double sigmad, double r, double p, double dp,
     double c_s = calculateLocalSoundSpeed(r,disk_params);
     double c_s2 = c_s * c_s;
     double dlnPdlnr = r / p * dp;
-    double s_drift =  disk_params->fDrift * 2.0 / M_PI * Sigmad_cgs / rho_p * vkep2 / c_s2 * fabs(1.0 / dlnPdlnr);
+    double s_drift =  disk_params->f_drift * 2.0 / M_PI * Sigmad_cgs / rho_p * vkep2 / c_s2 * fabs(1.0 / dlnPdlnr);
     return s_drift;
 }
 
 // 2. a kis skalaju turbulencia altal okozott fragmentacio szerinti maximalis meret	--> kimenet cm-ben!
-double calculateTurbulentFragmentationBarrier(double sigma, double r, double rho_p, const disk_t *disk_params) {
+double calculateTurbulentFragmentationBarrier(double sigma, double r, double rho_p, const DiskParameters *disk_params) {
 
     double s_frag, u_frag, u_frag2, Sigma_cgs, c_s, c_s2;
 
-    u_frag = disk_params->uFrag * CM_PER_SEC_TO_AU_PER_YEAR_2PI; /*	cm/sec --> AU / (yr/2pi)	*/
+    u_frag = disk_params->fragmentation_velocity * CM_PER_SEC_TO_AU_PER_YEAR_2PI; /*	cm/sec --> AU / (yr/2pi)	*/
     u_frag2 = u_frag * u_frag;
     Sigma_cgs = sigma / SURFACE_DENSITY_CONVERSION_FACTOR;
     c_s = calculateLocalSoundSpeed(r,disk_params); // / CM_PER_SEC_TO_AU_PER_YEAR_2PI; // Komment ki, ha a calculateLocalSoundSpeed már megfelelő mértékegységben van
     c_s2 = c_s * c_s;
 
-    s_frag = disk_params->fFrag * 2.0 / (3.0 * M_PI) * Sigma_cgs / (rho_p * calculateTurbulentAlpha(r,disk_params)) * u_frag2 / c_s2;
+    s_frag = disk_params->f_frag * 2.0 / (3.0 * M_PI) * Sigma_cgs / (rho_p * calculateTurbulentAlpha(r,disk_params)) * u_frag2 / c_s2;
 
     return s_frag;
 }
 
 // 3. radialis drift altal okozott fragmentacio szerinti maximalis meret		--> kimenet cm-ben!
-double calculateDriftInducedFragmentationBarrier(double sigma, double r, double p, double dp, double rho_p, const disk_t *disk_params) {
+double calculateDriftInducedFragmentationBarrier(double sigma, double r, double p, double dp, double rho_p, const DiskParameters *disk_params) {
 
     double u_frag, vkep, dlnPdlnr, c_s, c_s2, s_df, Sigma_cgs;
 
-    u_frag = disk_params->uFrag * CM_PER_SEC_TO_AU_PER_YEAR_2PI; /*	cm/sec --> AU / (yr/2pi)	*/
+    u_frag = disk_params->fragmentation_velocity * CM_PER_SEC_TO_AU_PER_YEAR_2PI; /*	cm/sec --> AU / (yr/2pi)	*/
     Sigma_cgs = sigma / SURFACE_DENSITY_CONVERSION_FACTOR;
     c_s = calculateLocalSoundSpeed(r,disk_params);
     c_s2 = c_s * c_s;
@@ -145,14 +145,14 @@ double calculateDriftInducedFragmentationBarrier(double sigma, double r, double 
 }
 
 /*	a reszecskek novekedesenek idoskalaja	*/
-double calculateGrowthTimescale(double r, double eps,const disk_t *disk_params) {
+double calculateGrowthTimescale(double r, double eps,const DiskParameters *disk_params) {
     double omega = calculateKeplerianFrequency(r,disk_params);
     double calculateGrowthTimescale = eps / omega;
     return calculateGrowthTimescale;
 }
 
 /*	kiszamolja az adott helyen a reszecske meretet --> BIRNSTIEL CIKK	*/
-double calculateDustParticleSize(double prad, double pdens, double sigma, double sigmad, double y, double p, double dpress_val, double dt, const disk_t *disk_params) {
+double calculateDustParticleSize(double prad, double pdens, double sigma, double sigmad, double y, double p, double dpress_val, double dt, const DiskParameters *disk_params) {
 
     double sturb = calculateTurbulentFragmentationBarrier(sigma, y, pdens, disk_params);           // cm-ben
     double sdf = calculateDriftInducedFragmentationBarrier(sigma, y, p, dpress_val, pdens,disk_params); // cm-ben
@@ -177,8 +177,8 @@ double calculateDustParticleSize(double prad, double pdens, double sigma, double
 
 
 void calculateDustSurfaceDensity(double max_param, double min_param, double rad[][2], double radmicr[][2], 
-                double *sigma_d, double *sigma_dm,  double *massvec, double *massmicrvec,  
-                double *rd, double *rmic, const simulation_options_t *sim_opts, const disk_t *disk_params) {
+                double *sigma_d, double *sigma_dm,  double *massvec, double *massmicradial_grid,  
+                double *rd, double *rmic, const SimulationOptions *sim_opts, const DiskParameters *disk_params) {
 
     // Suppress unused parameter warnings
     (void)max_param;
@@ -208,12 +208,12 @@ void calculateDustSurfaceDensity(double max_param, double min_param, double rad[
     // Feltételezve, hogy a 'sigdtemp' és 'sigdmicrtemp' kizárólagosan a hívásaikban vannak feldolgozva,
     // és nem ütköznek más szálakkal globális adatokon keresztül.
     calculateInitialDustSurfaceDensity(rad, massvec, sigdtemp, particle_number,disk_params);
-    if (sim_opts->twopop == 1.0) { // Használjunk double összehasonlítást
-        calculateInitialDustSurfaceDensity(radmicr, massmicrvec, sigdmicrtemp, particle_number,disk_params);
+    if (sim_opts->option_for_dust_secondary_population == 1.0) { // Használjunk double összehasonlítást
+        calculateInitialDustSurfaceDensity(radmicr, massmicradial_grid, sigdmicrtemp, particle_number,disk_params);
     }
 
     mergeParticlesByRadius(sigdtemp, dd, particle_number,disk_params);
-    if (sim_opts->twopop == 1.0) { // Használjunk double összehasonlítást
+    if (sim_opts->option_for_dust_secondary_population == 1.0) { // Használjunk double összehasonlítást
         mergeParticlesByRadius(sigdmicrtemp, dd, particle_number,disk_params);
     }
 
@@ -223,7 +223,7 @@ void calculateDustSurfaceDensity(double max_param, double min_param, double rad[
         rd[i] = sigdtemp[i][1];
         sigma_d[i] = sigdtemp[i][0];
 
-        if (sim_opts->twopop == 1.0) { // double összehasonlítás
+        if (sim_opts->option_for_dust_secondary_population == 1.0) { // double összehasonlítás
             rmic[i] = sigdmicrtemp[i][1];
             sigma_dm[i] = sigdmicrtemp[i][0];
         }
@@ -233,7 +233,7 @@ void calculateDustSurfaceDensity(double max_param, double min_param, double rad[
 
 /*	Fuggveny a porszemcsek uj tavolsaganak elraktarozasara		*/
 void calculateDustDistance(const char *nev, int opt, double radius[][2], const double *sigmad, const double *rdvec,
-                double deltat, double t, int n, const simulation_options_t *sim_opts, const disk_t *disk_params){
+                double deltat, double t, int n, const SimulationOptions *sim_opts, const DiskParameters *disk_params){
 
     int i;
     double y, y_out, prad_new, particle_radius;
@@ -264,7 +264,7 @@ void calculateDustDistance(const char *nev, int opt, double radius[][2], const d
 
 			integrateParticleRungeKutta4(t, particle_radius, sigmad, rdvec, deltat, y, &y_out, &prad_new, disk_params, sim_opts);
             if (t == 0) {
-                if (sim_opts->twopop == 0) {
+                if (sim_opts->option_for_dust_secondary_population == 0) {
                     double current_drdt_val = (fabs(y_out - y) / (deltat));
                     // Azért kell a critical szekció, mert az drift_timescale_file fájlba írunk.
                     // Ez a critical szekció biztosítja, hogy egyszerre csak egy szál írjon a fájlba.
@@ -281,10 +281,10 @@ void calculateDustDistance(const char *nev, int opt, double radius[][2], const d
                 }
             }
 
-            if (sim_opts->twopop != 1) { // Ha növekedés engedélyezett vagy valami más mód
+            if (sim_opts->option_for_dust_secondary_population != 1) { // Ha növekedés engedélyezett vagy valami más mód
                 radius[i][1] = prad_new;
                 radius[i][0] = y_out;
-            } else { // sim_opts->twopop == 1, csak drift
+            } else { // sim_opts->option_for_dust_secondary_population == 1, csak drift
                 radius[i][0] = y_out;
             }
         } else {

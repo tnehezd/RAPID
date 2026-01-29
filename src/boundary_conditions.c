@@ -1,5 +1,5 @@
 #include "utils.h"    // Ezt kell includolni, mert ebben lesz a parabolicExtrapolationToGhostCells deklarációja
-#include "config.h"   // Szükséges a r_min és DD makrók miatt, amiket a parabolicExtrapolationToGhostCells használ
+#include "config.h"   // Szükséges a r_min és delta_r makrók miatt, amiket a parabolicExtrapolationToGhostCells használ
 #include <math.h>     // Bár a parabolicExtrapolationToGhostCells most nem használ math.h függvényt,
 #include <stdlib.h>                      // más utility függvényeknek szüksége lehet rá.
                       // Jó gyakorlat ide tenni.
@@ -10,7 +10,7 @@
 #include "boundary_conditions.h"
 
 
-void parabolicExtrapolationToGhostCells(double *vec, int i1, int i2, int i3, double *a, double *b, double *c, double dd, const disk_t *disk_params) {
+void parabolicExtrapolationToGhostCells(double *vec, int i1, int i2, int i3, double *a, double *b, double *c, double dd, const DiskParameters *disk_params) {
 
 
 /**
@@ -60,16 +60,16 @@ void parabolicExtrapolationToGhostCells(double *vec, int i1, int i2, int i3, dou
 }
 
 
-void applyBoundaryConditions(double *vec, const disk_t *disk_params) {					/*	boundary condition for sigma, p, dp...	*/
+void applyBoundaryConditions(double *vec, const DiskParameters *disk_params) {					/*	boundary condition for sigma, p, dp...	*/
 
 
 // OPEN BOUNDARY: mind a sebességre, mind a többi fizikai mennyiségre parabola illesztést használunk
 	
 
-//	parabolicExtrapolationToGhostCells(vec, 1, 2, 3, &a, &b, &c, disk_params->DD,disk_params);
-//	vec[0] =  a * (disk_params->r_min - disk_params->DD) * (disk_params->r_min - disk_params->DD) + b * (disk_params->r_min - disk_params->DD) + c;
+//	parabolicExtrapolationToGhostCells(vec, 1, 2, 3, &a, &b, &c, disk_params->delta_r,disk_params);
+//	vec[0] =  a * (disk_params->r_min - disk_params->delta_r) * (disk_params->r_min - disk_params->delta_r) + b * (disk_params->r_min - disk_params->delta_r) + c;
 	vec[0] = vec[1];
-//	parabolicExtrapolationToGhostCells(vec, disk_params->grid_number - 2, disk_params->grid_number - 1, disk_params->grid_number, &a, &b, &c, disk_params->DD,disk_params);
-//	vec[disk_params->grid_number+1] = a * (disk_params->r_max + disk_params->DD) * (disk_params->r_max + disk_params->DD) + b * (disk_params->r_max + disk_params->DD) + c;
+//	parabolicExtrapolationToGhostCells(vec, disk_params->grid_number - 2, disk_params->grid_number - 1, disk_params->grid_number, &a, &b, &c, disk_params->delta_r,disk_params);
+//	vec[disk_params->grid_number+1] = a * (disk_params->r_max + disk_params->delta_r) * (disk_params->r_max + disk_params->delta_r) + b * (disk_params->r_max + disk_params->delta_r) + c;
 	vec[disk_params->grid_number+1] = vec[disk_params->grid_number];
 }

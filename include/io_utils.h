@@ -22,45 +22,42 @@ int calculateNumbersOfParticles(const char *filenev);
 void loadDustParticlesFromFile(double radius[][2], double radiusmicr[][2], double *mass, double *massmicr, const char *filename);
 
 /* A sigmat tartalmazo file parametereinek beolvasasa */
-void loadGasSurfaceDensityFromFile(disk_t *disk_params, const char *filename);
+void loadGasSurfaceDensityFromFile(DiskParameters *disk_params, const char *filename);
 
 /* Fuggveny az adott futashoz mappa letrehozasara */
 void createRunDirectory(char *dir_path);
 
 /* Elkeszit egy file-t, ami tartalmazza a jelenlegi futas parametereit, es hogy melyik mappaban talalhatoak a file-ok */
 // FIX: The original had 'void printCurrentInformationAboutRun(const char *nev);'
-// You are missing 'const disk_t *disk_params' and 'const simulation_options_t *sim_opts'.
-void printCurrentInformationAboutRun(const char *nev, const disk_t *disk_params, const simulation_options_t *sim_opts);
+// You are missing 'const DiskParameters *disk_params' and 'const SimulationOptions *sim_opts'.
+void printCurrentInformationAboutRun(const char *nev, const DiskParameters *disk_params, const SimulationOptions *sim_opts);
 
 /* Fuggveny a tomegfile kiiratasara */
-// FIX: The original was missing 'const disk_t *disk_params' and 'const simulation_options_t *sim_opts'.
+// FIX: The original was missing 'const DiskParameters *disk_params' and 'const SimulationOptions *sim_opts'.
 void printMassGrowthAtDZEFile(double step, 
                 double (*partmassind)[5], double (*partmassmicrind)[5], 
                 double t, // Ezt továbbra is meghagyjuk, ha az időre szükség van
                 double massbtempii, double massbtempoi, double massmtempii, double massmtempoi, 
                 double *massbtempio, double *massbtempoo, double *massmtempio, double *massmtempoo, 
                 double *tavin, double *tavout, 
-                const disk_t *disk_params, const simulation_options_t *sim_opts,
-                output_files_t *output_files);
+                const DiskParameters *disk_params, const SimulationOptions *sim_opts,
+                OutputFiles *output_files);
 
 /* Fuggveny a sigma, p, dp kiiratasara */
-// FIX: The original was missing 'const disk_t *disk_params'.
-void printGasSurfaceDensityPressurePressureDerivateFile(const disk_t *disk_params, output_files_t *output_files);
+// FIX: The original was missing 'const DiskParameters *disk_params'.
+void printGasSurfaceDensityPressurePressureDerivateFile(const DiskParameters *disk_params, OutputFiles *output_files);
 
 /* Fuggveny a por feluletisurusegenek kiiratasara */
-// FIX: The original was missing 'const disk_t *disk_params' and 'const simulation_options_t *sim_opts'.
+// FIX: The original was missing 'const DiskParameters *disk_params' and 'const SimulationOptions *sim_opts'.
 void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const double *rm, const double *sigmad, const double *sigmadm,
-                  const disk_t *disk_params, const simulation_options_t *sim_opts,
-                  output_files_t *output_files, double step);
+                  const DiskParameters *disk_params, const SimulationOptions *sim_opts,
+                  OutputFiles *output_files, double step);
 /* Fuggveny a pormozgas es reszecskemeret kiiratasara */
-// FIX: The original was missing 'const disk_t *disk_params' and 'const simulation_options_t *sim_opts'.
+// FIX: The original was missing 'const DiskParameters *disk_params' and 'const SimulationOptions *sim_opts'.
 void printDustParticleSizeFile(char *size_name, int step, double (*rad)[2], double (*radmicr)[2],
-                        const disk_t *disk_params, const simulation_options_t *sim_opts,
-                        output_files_t *output_files);
+                        const DiskParameters *disk_params, const SimulationOptions *sim_opts,
+                        OutputFiles *output_files);
 
-/* Az idot tartalmazo file parametereinek beolvasasa (vagy beallitasa) */
-// FIX: The original was missing 'simulation_options_t *sim_opts'.
-void printTimeStampFile(double tMax_val, double stepping_val, double current_val, simulation_options_t *sim_opts);
 
 
 
@@ -108,13 +105,13 @@ void printFileHeader(FILE *file, FileType_e file_type, const HeaderData_t *heade
 
 
 // Függvény a kezdeti kimeneti fájlok beállítására és fejlécek írására
-int setupInitialOutputFiles(output_files_t *output_files, const simulation_options_t *sim_opts,
-                               const disk_t *disk_params, HeaderData_t *header_data_for_files);
+int setupInitialOutputFiles(OutputFiles *output_files, const SimulationOptions *sim_opts,
+                               const DiskParameters *disk_params, HeaderData_t *header_data_for_files);
 
 
-void cleanupSimulationResources(ParticleData_t *p_data, output_files_t *output_files, const simulation_options_t *sim_opts);
+void cleanupSimulationResources(ParticleData_t *p_data, OutputFiles *output_files, const SimulationOptions *sim_opts);
 
-void closeSnapshotFiles(output_files_t *output_files, const char *dens_name, const char *dust_name, const char *dust_name2, const simulation_options_t *sim_opts);
+void closeSnapshotFiles(OutputFiles *output_files, const char *dens_name, const char *dust_name, const char *dust_name2, const SimulationOptions *sim_opts);
 
 
 #endif // IO_UTILS_H

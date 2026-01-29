@@ -1,5 +1,5 @@
 #include "utils.h"    // Ezt kell includolni, mert ebben lesz a parabolicExtrapolationToGhostCells deklarációja
-#include "config.h"   // Szükséges a r_min és DD makrók miatt, amiket a parabolicExtrapolationToGhostCells használ
+#include "config.h"   // Szükséges a r_min és delta_r makrók miatt, amiket a parabolicExtrapolationToGhostCells használ
 #include <math.h>     // Bár a parabolicExtrapolationToGhostCells most nem használ math.h függvényt,
 #include <stdlib.h>                      // más utility függvényeknek szüksége lehet rá.
                       // Jó gyakorlat ide tenni.
@@ -12,7 +12,7 @@
 
 
 /*	egy megadott, diszkret pontokban ismert fuggvenyt linearInterpolational a reszecske aktualis helyere	*/
-void linearInterpolation(double *invec, double *rvec, double pos, double *out, double rd, int opt, const disk_t *disk_params) {
+void linearInterpolation(double *invec, double *radial_grid, double pos, double *out, double rd, int opt, const DiskParameters *disk_params) {
 
 	double rmid, rindex, coef1, temp;
 	int index; 
@@ -20,7 +20,7 @@ void linearInterpolation(double *invec, double *rvec, double pos, double *out, d
     rmid = pos - disk_params->r_min;
 	rmid = rmid / rd;     						/* 	the integer part of this gives at which index is the body	*/
 	index = (int) floor(rmid);					/* 	ez az rmid egesz resze	(roundParticleRadiies 0.5-tol)			*/
-	rindex = rvec[index];       					/* 	the corresponding r, e.g rd[ind] < r < rd[ind+1]		*/
+	rindex = radial_grid[index];       					/* 	the corresponding r, e.g rd[ind] < r < rd[ind+1]		*/
 
  	coef1 = (invec[index + 1] - invec[index]) / rd; 		/*	ez az alabbi ket sor a linearis linearInterpolationacio - remelem, jo!!!	*/
 	temp = invec[index] + coef1 * (pos - rindex);          		/*	a beerkezo dimenzionak megfelelo mertekegysegben		*/
@@ -75,13 +75,13 @@ double findMinimumOfAnArray(double s1, double s2, double s3) {
 
 
 /*	counting the number of zero points of the pressure gradient function	*/
-int countZeroPoints(const disk_t *disk_params) {
+int countZeroPoints(const DiskParameters *disk_params) {
 
 	int i,count;
 	count = 0;
 
 	for(i = 0; i < disk_params->grid_number-1; i++) {
-		if(((disk_params->dpressvec[i] * disk_params->dpressvec[i+1]) <= 0.)  && (disk_params->dpressvec[i] > disk_params->dpressvec[i+1])) {	/*	Osszeszorozza a ket ponton a nyomas derivaltjanak erteket, ahol a szorzat negativ, ott elojelvaltas tortenik --> negativbol pozitivba, vagy pozitivbol negativba valt --> nyomasi maximum. Maximum pedig ott talalhato, ahol a fuggveny pozitivbol negativba valt at (ezt keresi a masodik feltetel).	*/
+		if(((disk_params->gas_pressure_gradient_vector[i] * disk_params->gas_pressure_gradient_vector[i+1]) <= 0.)  && (disk_params->gas_pressure_gradient_vector[i] > disk_params->gas_pressure_gradient_vector[i+1])) {	/*	Osszeszorozza a ket ponton a nyomas derivaltjanak erteket, ahol a szorzat negativ, ott elojelvaltas tortenik --> negativbol pozitivba, vagy pozitivbol negativba valt --> nyomasi maximum. Maximum pedig ott talalhato, ahol a fuggveny pozitivbol negativba valt at (ezt keresi a masodik feltetel).	*/
 			count++;
 		} 
 
@@ -107,12 +107,12 @@ double findZeroPointRadius(double r1, double r2, double dp1, double dp2) {
 
 
 /*	this function counts where (which r) the pressure maximum is	*/
-double findZeroPoint(int i, const double *rvec, const double *dp) {
+double findZeroPoint(int i, const double *radial_grid, const double *dp) {
 
 	double r;
 	
 	if(((dp[i] * dp[i+1]) <= 0.) && (dp[i] > dp[i+1])) {		/*	Ha a ket pont szorzata negativ --> elojel valtas a dp-ben, nyomasi min/max. Maximum hely ott van, ahol pozitivbol negativba valt az ertek	*/
-		r = findZeroPointRadius(rvec[i],rvec[i+1],dp[i],dp[i+1]);	/*	Ha elojel valtas tortenik es nyomasi maximum van, akkor kiszamolja a ket pont kozott, hogy hol lenne a zerus hely pontosan	*/
+		r = findZeroPointRadius(radial_grid[i],radial_grid[i+1],dp[i],dp[i+1]);	/*	Ha elojel valtas tortenik es nyomasi maximum van, akkor kiszamolja a ket pont kozott, hogy hol lenne a zerus hely pontosan	*/
 
 	} else {
 		r = 0.0;
@@ -125,9 +125,9 @@ double findZeroPoint(int i, const double *rvec, const double *dp) {
 }
 
 // calculateIndexFromRadius függvény (melyet korábban megbeszéltünk, valahol globálisan)
-/*double calculateIndexFromRadius(double r_coord, disk_t *disk_params) {
+/*double calculateIndexFromRadius(double r_coord, DiskParameters *disk_params) {
     if (r_coord < disk_params->r_min) return 0.0;
-    return fmax(0.0, fmin((double)(disk_params->grid_number - 1), floor((r_coord - disk_params->r_min) / disk_params->DD + 0.5)));
+    return fmax(0.0, fmin((double)(disk_params->grid_number - 1), floor((r_coord - disk_params->r_min) / disk_params->delta_r + 0.5)));
 }
 */
 // Az átalakított findRAnnulusAroundDZE függvény
@@ -135,7 +135,7 @@ double findZeroPoint(int i, const double *rvec, const double *dp) {
 /*	A nyomasi maximum korul 1H tavolsagban jeloli ki a korgyurut	*/
 void findRAnnulusAroundDZE(double rin, double *ind_ii, double *ind_io,
                             double rout, double *ind_oi, double *ind_oo,
-                            const simulation_options_t *sim_opts, disk_t *disk_params) {
+                            const SimulationOptions *sim_opts, DiskParameters *disk_params) {
 
 	    volatile int debug_marker = 0; // Adj hozzá ezt a sortAnArray
 
@@ -173,53 +173,53 @@ void findRAnnulusAroundDZE(double rin, double *ind_ii, double *ind_io,
 
     // Határok kiszámítása: HASZNÁLJUK A MENTETT h_rin ÉS h_rout VÁLTOZÓKAT!
     // Ez kritikus, az eredeti elírásokat javítja.
-    riimH = rin_minus_h_rin - disk_params->DD / 2.0;
-    riipH = rin_minus_h_rin + disk_params->DD / 2.0;
-    riomH = rin_plus_h_rin - disk_params->DD / 2.0;
-    riopH = rin_plus_h_rin + disk_params->DD / 2.0;
+    riimH = rin_minus_h_rin - disk_params->delta_r / 2.0;
+    riipH = rin_minus_h_rin + disk_params->delta_r / 2.0;
+    riomH = rin_plus_h_rin - disk_params->delta_r / 2.0;
+    riopH = rin_plus_h_rin + disk_params->delta_r / 2.0;
 
-    roimH = rout_minus_h_rout - disk_params->DD / 2.0;
-    roipH = rout_minus_h_rout + disk_params->DD / 2.0;
-    roomH = rout_plus_h_rout - disk_params->DD / 2.0;
-    roopH = rout_plus_h_rout + disk_params->DD / 2.0;
+    roimH = rout_minus_h_rout - disk_params->delta_r / 2.0;
+    roipH = rout_minus_h_rout + disk_params->delta_r / 2.0;
+    roomH = rout_plus_h_rout - disk_params->delta_r / 2.0;
+    roopH = rout_plus_h_rout + disk_params->delta_r / 2.0;
 
 
-    // Iteráció az rvec tömbön
+    // Iteráció az radial_grid tömbön
     for (i = 0; i < disk_params->grid_number; i++) {
-        // Ezen a ponton érdemes ellenőrizni disk_params->rvec[i] értékét
-        // fprintf(stderr, "DEBUG_FIRA_LOOP: i=%d, rvec[i]=%.10lg\n", i, disk_params->rvec[i]);
+        // Ezen a ponton érdemes ellenőrizni disk_params->radial_grid[i] értékét
+        // fprintf(stderr, "DEBUG_FIRA_LOOP: i=%d, radial_grid[i]=%.10lg\n", i, disk_params->radial_grid[i]);
 
-        // Ez az if blokk csak akkor aktív, ha sim_opts->dzone == 1
-        if (sim_opts->dzone == 1) {
+        // Ez az if blokk csak akkor aktív, ha sim_opts->flag_for_deadzone == 1
+        if (sim_opts->flag_for_deadzone == 1) {
             // INNER (RIN) határok
-            if (disk_params->rvec[i] > riimH && disk_params->rvec[i] < riipH) {
-                rmid = (disk_params->rvec[i] - disk_params->r_min) / disk_params->DD;
+            if (disk_params->radial_grid[i] > riimH && disk_params->radial_grid[i] < riipH) {
+                rmid = (disk_params->radial_grid[i] - disk_params->r_min) / disk_params->delta_r;
                 rtemp = floor(rmid + 0.5);
                 *ind_ii = rtemp;
             }
 
-            if (disk_params->rvec[i] > riomH && disk_params->rvec[i] < riopH) {
-                rmid = (disk_params->rvec[i] - disk_params->r_min) / disk_params->DD;
+            if (disk_params->radial_grid[i] > riomH && disk_params->radial_grid[i] < riopH) {
+                rmid = (disk_params->radial_grid[i] - disk_params->r_min) / disk_params->delta_r;
                 rtemp = floor(rmid + 0.5);
                 *ind_io = rtemp;
             }
         }
 
         // OUTER (ROUT) határok
-        if (disk_params->rvec[i] > roimH && disk_params->rvec[i] < roipH) {
-            rmid = (disk_params->rvec[i] - disk_params->r_min) / disk_params->DD;
+        if (disk_params->radial_grid[i] > roimH && disk_params->radial_grid[i] < roipH) {
+            rmid = (disk_params->radial_grid[i] - disk_params->r_min) / disk_params->delta_r;
             rtemp = floor(rmid + 0.5);
             *ind_oi = rtemp;
         }
 
-        if (disk_params->rvec[i] > roomH && disk_params->rvec[i] < roopH) {
-            rmid = (disk_params->rvec[i] - disk_params->r_min) / disk_params->DD;
+        if (disk_params->radial_grid[i] > roomH && disk_params->radial_grid[i] < roopH) {
+            rmid = (disk_params->radial_grid[i] - disk_params->r_min) / disk_params->delta_r;
             rtemp = floor(rmid + 0.5);
             *ind_oo = rtemp;
         }
 
         // KILÉPÉS feltétele
-        if (disk_params->rvec[i] > roopH) break;
+        if (disk_params->radial_grid[i] > roopH) break;
     }
 
 
@@ -247,7 +247,7 @@ void sortAnArray(double *rv,int n) {
 }
 // If grid_number is not directly available, you might need to pass the array size
 // void histogram(double r, int *hist, double dd, int hist_size) {
-void histogram(double r, int *hist, double dd, disk_t *disk_params) {
+void histogram(double r, int *hist, double dd, DiskParameters *disk_params) {
     int index;
     double rmid; // hist_i is no longer needed as a separate variable
 
@@ -312,7 +312,7 @@ void sortAnArrayarray(double rv[][3],int n) {
 }
 
 
-void roundParticleRadii(double in[][3], int n, const disk_t *disk_params) {
+void roundParticleRadii(double in[][3], int n, const DiskParameters *disk_params) {
 
 	double dd = (disk_params->r_max - disk_params->r_min) / (particle_number-1);
 	int dker = (int)(1./dd);//
@@ -333,7 +333,7 @@ void roundParticleRadii(double in[][3], int n, const disk_t *disk_params) {
 
 
 
-void mergeParticlesByRadius(double in[][3], double dd, int n, const disk_t *disk_params) {
+void mergeParticlesByRadius(double in[][3], double dd, int n, const DiskParameters *disk_params) {
 
 	int i;
 	int j;
@@ -391,7 +391,7 @@ void mergeParticlesByRadius(double in[][3], double dd, int n, const disk_t *disk
 
 }
 
-void updateParticleGridIndices(double radin[][2], double partmassindin[][5], double *massvecin, double t, int n, const disk_t *disk_params) {
+void updateParticleGridIndices(double radin[][2], double partmassindin[][5], double *massvecin, double t, int n, const DiskParameters *disk_params) {
 
     int i, rindex;
     double rmid;  
@@ -399,7 +399,7 @@ void updateParticleGridIndices(double radin[][2], double partmassindin[][5], dou
 
     for (i = 0; i < n; i++) {   
         // A részecske aktuális sugara radin[i][0]-ban van
-        rmid = (radin[i][0] - disk_params->r_min) / disk_params->DD; 
+        rmid = (radin[i][0] - disk_params->r_min) / disk_params->delta_r; 
         rindex = (int) floor(rmid+0.5);
         if(rmid < 0) rindex = 0;
         if(isnan(rmid)) rindex = 0;

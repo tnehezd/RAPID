@@ -1,8 +1,8 @@
 #ifndef SIMULATION_CORE_H
 #define SIMULATION_CORE_H
 
-#include "disk_model.h"         // disk_t struktúra miatt
-#include "simulation_types.h"   // simulation_options_t és output_files_t struktúrák miatt
+#include "disk_model.h"         // DiskParameters struktúra miatt
+#include "simulation_types.h"   // SimulationOptions és OutputFiles struktúrák miatt
 
 // FÜGGVÉNY PROTOTÍPUSOK
 
@@ -17,7 +17,7 @@
  * @param disk_params A diszk paramétereit tartalmazó struktúra.
  * @return void (az eredményt a drdt pointerbe írja).
  */
-void calculate1DDustDrift(double pradius, double dp, double sigma, double ug, double r, double *drdt, const disk_t *disk_params);
+void calculate1DDustDrift(double pradius, double dp, double sigma, double ug, double r, double *drdt, const DiskParameters *disk_params);
 
 /**
  * @brief Kiszámítja a viszkozitással kapcsolatos ftcsSecondDerivativeCoefficient együtthatót.
@@ -26,7 +26,7 @@ void calculate1DDustDrift(double pradius, double dp, double sigma, double ug, do
  * @param disk_params A diszk paramétereit tartalmazó struktúra.
  * @return Az ftcsSecondDerivativeCoefficient értéke.
  */
-double ftcsSecondDerivativeCoefficient(double r, const disk_t *disk_params);
+double ftcsSecondDerivativeCoefficient(double r, const DiskParameters *disk_params);
 
 /**
  * @brief Kiszámítja a viszkozitással kapcsolatos ftcsFirstDerivativeCoefficient együtthatót.
@@ -35,27 +35,27 @@ double ftcsSecondDerivativeCoefficient(double r, const disk_t *disk_params);
  * @param disk_params A diszk paramétereit tartalmazó struktúra.
  * @return Az ftcsFirstDerivativeCoefficient értéke.
  */
-double ftcsFirstDerivativeCoefficient(double r, const disk_t *disk_params);
+double ftcsFirstDerivativeCoefficient(double r, const DiskParameters *disk_params);
 
 /**
  * @brief Kiszámítja a minimális időlépést a szimulációhoz.
- * @param rvec A diszk sugárkoordinátáinak vektora.
+ * @param radial_grid A diszk sugárkoordinátáinak vektora.
  * @param disk_params A diszk paramétereit tartalmazó struktúra.
  * @return A számított időlépés.
  */
-double calculateTimeStep(const disk_t *disk_params);
+double calculateTimeStep(const DiskParameters *disk_params);
 
 
 /**
  * @brief A fő időintegrációs ciklus.
  * Koordinálja a részecskék mozgását, növekedését,
- * és a gázfelszíni sűrűség evolúcióját, valamint a kimeneti adatok írását.
+ * és a gázfelszíni sűrűség option_for_evolutionúcióját, valamint a kimeneti adatok írását.
  * @param output_dir_name A kimeneti könyvtár neve.
  * @param disk_params A diszk paramétereit tartalmazó struktúra.
  * @param sim_opts A szimulációs opciókat tartalmazó struktúra.
  * @param output_files A kimeneti fájl mutatókat tartalmazó struktúra.
  */
-void timeIntegrationForTheSystem(disk_t *disk_params, const simulation_options_t *sim_opts, output_files_t *output_files);
+void timeIntegrationForTheSystem(DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files);
 
 
 

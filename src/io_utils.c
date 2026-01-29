@@ -19,7 +19,7 @@
 #include "config.h"         
 #include "dust_physics.h"   // If needed for any specific function interactions
 #include "utils.h"          // For countZeroPoints, findZeroPoint, findRAnnulusAroundDZE
-#include "simulation_types.h" // For disk_t, simulation_options_t, output_files_t
+#include "simulation_types.h" // For DiskParameters, SimulationOptions, OutputFiles
 #include "boundary_conditions.h"
 
 
@@ -117,7 +117,7 @@ void loadDustParticlesFromFile(double radius[][2], double radiusmicr[][2], doubl
 }
 
 
-void loadGasSurfaceDensityFromFile(disk_t *disk_params, const char *filename) {
+void loadGasSurfaceDensityFromFile(DiskParameters *disk_params, const char *filename) {
     const char *input_filename = filename;
 
     FILE *fp = fopen(input_filename, "r");
@@ -168,15 +168,15 @@ void loadGasSurfaceDensityFromFile(disk_t *disk_params, const char *filename) {
         }
 
         // Hozzárendelés a disk_params tömbökhöz
-        // Az indexelés 'i + 1' a 0-ás indexű szellemcella miatt (ahogy a disk_t definíciója és a applyBoundaryConditions függvény valószínűsíti).
+        // Az indexelés 'i + 1' a 0-ás indexű szellemcella miatt (ahogy a DiskParameters definíciója és a applyBoundaryConditions függvény valószínűsíti).
         // Fontos: ellenőrizzük, hogy az 'i + 1' index a tömb határain belül van-e.
         // A tömbök mérete disk_params->grid_number + 2, tehát az érvényes indexek 0-tól grid_number+1-ig mennek.
         // A "valós" adatok 1-től grid_number-ig kerülnek, a 0 és grid_number+1 pedig a applyBoundaryConditions-hez.
         if ((i + 1) >= 0 && (i + 1) <= disk_params->grid_number + 1) { 
-            disk_params->rvec[i + 1] = r_val;
-            disk_params->sigmavec[i + 1] = sigma_gas_val;
-            disk_params->pressvec[i + 1] = pressure_gas_val;
-            disk_params->dpressvec[i + 1] = dpressure_dr_val;
+            disk_params->radial_grid[i + 1] = r_val;
+            disk_params->gas_surface_density_vector[i + 1] = sigma_gas_val;
+            disk_params->gas_pressure_vector[i + 1] = pressure_gas_val;
+            disk_params->gas_pressure_gradient_vector[i + 1] = dpressure_dr_val;
         } else {
             fprintf(stderr, "WARNING [loadGasSurfaceDensityFromFile]: Attempted to write to out-of-bounds index %d. Max allowed index: %d (grid_number+1).\n", i + 1, disk_params->grid_number + 1);
         }
@@ -222,7 +222,7 @@ void createRunDirectory(char *dir_path) {
 
 /* Elkészít egy fájlt, ami tartalmazza a jelenlegi futás paramétereit,
  * és hogy melyik mappában találhatóak a fájlok */
-void printCurrentInformationAboutRun(const char *nev, const disk_t *disk_params, const simulation_options_t *sim_opts) {
+void printCurrentInformationAboutRun(const char *nev, const DiskParameters *disk_params, const SimulationOptions *sim_opts) {
 
     char full_path[MAX_PATH_LEN]; // Használjuk a MAX_PATH_LEN-t a biztonságos puffereléshez
     char file_name[100]; 
@@ -244,19 +244,19 @@ void printCurrentInformationAboutRun(const char *nev, const disk_t *disk_params,
     }
 
     fprintf(current_info_file,"The current run is in the %s directory!\n",nev);
-    fprintf(current_info_file,"\n\nThe parameters of the disk:\nr_min: %lg, r_max: %lg\nSIGMA0: %lg, SIGMA_EXP: %lg, flaring index: %lg\nALPHA_VISC: %lg, ALPHA_MOD: %lg\nR_DZE_I: %lg, R_DZE_O: %lg, DR_DZEI: %lg, DR_DZE_O: %lg   (*** R_DZE_I/O = 0, akkor azt a DZE-t nem szimulálja a futás! ***)\n\n\n",
+    fprintf(current_info_file,"\n\nThe parameters of the disk:\nr_min: %lg, r_max: %lg\nsigma_0: %lg, SIGMA_EXP: %lg, flaring index: %lg\nALPHA_VISC: %lg, ALPHA_MOD: %lg\nR_DZE_I: %lg, R_DZE_O: %lg, DR_DZEI: %lg, DR_DZE_O: %lg   (*** R_DZE_I/O = 0, akkor azt a DZE-t nem szimulálja a futás! ***)\n\n\n",
               disk_params->r_min, disk_params->r_max,
-              disk_params->SIGMA0, disk_params->SIGMAP_EXP, disk_params->FLIND,
-              disk_params->alpha_visc, disk_params->a_mod,
-              disk_params->r_dze_i, disk_params->r_dze_o, disk_params->Dr_dze_i, disk_params->Dr_dze_o);
-    fprintf(current_info_file,"The mass of the central star: %lg M_Sun\n", disk_params->STAR_MASS);
+              disk_params->sigma_0, disk_params->sigma_power_law_index, disk_params->flaring_index,
+              disk_params->alpha_parameter, disk_params->alpha_parameter_modification,
+              disk_params->r_dze_i, disk_params->r_dze_o, disk_params->dr_dze_i, disk_params->dr_dze_o);
+    fprintf(current_info_file,"The mass of the central star: %lg M_Sun\n", disk_params->stellar_mass);
     fclose(current_info_file);
 }
 
 
 void printMassGrowthAtDZEFile(double step, double (*partmassind)[5], double (*partmassmicrind)[5], double t, double massbtempii, double massbtempoi, double massmtempii, double massmtempoi, 
                 double *massbtempio, double *massbtempoo, double *massmtempio, double *massmtempoo, double *tavin, double *tavout, 
-                const disk_t *disk_params, const simulation_options_t *sim_opts,output_files_t *output_files) {
+                const DiskParameters *disk_params, const SimulationOptions *sim_opts,OutputFiles *output_files) {
 
 
     double ind_ii, ind_io, ind_oi, ind_oo, tav, tav2;
@@ -286,8 +286,8 @@ void printMassGrowthAtDZEFile(double step, double (*partmassind)[5], double (*pa
 
     if(dim != 0) {
         for(i = 0; i < disk_params->grid_number; i++) {
-            // Itt a findZeroPoint valószínűleg disk_params->rvec és disk_params->dpressvec-et használ
-            temp_new = findZeroPoint(i,disk_params->rvec,disk_params->dpressvec); 
+            // Itt a findZeroPoint valószínűleg disk_params->radial_grid és disk_params->gas_pressure_gradient_vector-et használ
+            temp_new = findZeroPoint(i,disk_params->radial_grid,disk_params->gas_pressure_gradient_vector); 
             if(temp != temp_new && i > 3 && temp_new != 0.0) {
                 if (j < dim) { 
                     r_count[j] = temp_new;
@@ -296,7 +296,7 @@ void printMassGrowthAtDZEFile(double step, double (*partmassind)[5], double (*pa
                     fprintf(stderr, "WARNING [printMassGrowthAtDZEFile]: r_count array overflow, skipping data. dim: %d, j: %d\n", dim, j);
                 }
             }
-            if(sim_opts->dzone == 0.0) { 
+            if(sim_opts->flag_for_deadzone == 0.0) { 
                 if(temp_new > 0.) {
                     temp = temp_new;
                     rout_new = temp;
@@ -305,7 +305,7 @@ void printMassGrowthAtDZEFile(double step, double (*partmassind)[5], double (*pa
         }
     }
 
-    if(sim_opts->dzone == 1.0) {
+    if(sim_opts->flag_for_deadzone == 1.0) {
         if(dim > 0) {
             if (dim == 1) { 
                 rin_new = r_count[0]; 
@@ -322,7 +322,7 @@ void printMassGrowthAtDZEFile(double step, double (*partmassind)[5], double (*pa
     }
 
     rin = rin_new;
-    if(sim_opts->dzone == 0.0) rin = 0;
+    if(sim_opts->flag_for_deadzone == 0.0) rin = 0;
 //    double rout_current = rout_new;
     rout = rout_new;
     
@@ -333,7 +333,7 @@ void printMassGrowthAtDZEFile(double step, double (*partmassind)[5], double (*pa
     tav = rout;
 
     // findRAnnulusAroundDZE hívása: EZ KISZÁMOLJA AZ INDEX-HATÁROKAT AZ AKTUÁLIS SUGARAK ALAPJÁN
-    // Ezt már a disk_params->rvec és disk_params->dpressvec alapján kellene, nem pedig külön paraméterekből.
+    // Ezt már a disk_params->radial_grid és disk_params->gas_pressure_gradient_vector alapján kellene, nem pedig külön paraméterekből.
     // Ha a findRAnnulusAroundDZE is disk_params-ot kapott, akkor rendben van.
     findRAnnulusAroundDZE(tav2, &ind_ii, &ind_io, tav, &ind_oi, &ind_oo, sim_opts, disk_params);
 
@@ -346,7 +346,7 @@ void printMassGrowthAtDZEFile(double step, double (*partmassind)[5], double (*pa
             (int)ind_oi, (int)ind_oo, 
             &massii, &massoi, sim_opts); 
 
-    if(sim_opts->twopop == 1.0) {
+    if(sim_opts->option_for_dust_secondary_population == 1.0) {
         calculateParticleMass(particle_number, partmassmicrind, 
                 (int)ind_ii, (int)ind_io, 
                 (int)ind_oi, (int)ind_oo, 
@@ -392,7 +392,7 @@ void printMassGrowthAtDZEFile(double step, double (*partmassind)[5], double (*pa
 
 
 /* Függvény a sigma, p, dp kiíratására */
-void printGasSurfaceDensityPressurePressureDerivateFile(const disk_t *disk_params, output_files_t *output_files) {
+void printGasSurfaceDensityPressurePressureDerivateFile(const DiskParameters *disk_params, OutputFiles *output_files) {
 
     int i;
 
@@ -403,14 +403,14 @@ void printGasSurfaceDensityPressurePressureDerivateFile(const disk_t *disk_param
 
 //%-15.6e %-15.6Lg %-15.6e %-15.6e\n",
     for(i = 1; i <= disk_params->grid_number; i++) { // Using disk_params->grid_number
-        fprintf(output_files->surface_file, "%-15.6e %-15.6lg %-15.6e %15.6e\n", disk_params->rvec[i], disk_params->sigmavec[i], disk_params->pressvec[i], disk_params->dpressvec[i]);
+        fprintf(output_files->surface_file, "%-15.6e %-15.6lg %-15.6e %15.6e\n", disk_params->radial_grid[i], disk_params->gas_surface_density_vector[i], disk_params->gas_pressure_vector[i], disk_params->gas_pressure_gradient_vector[i]);
     }
 
     fflush(output_files->surface_file);
 }
 
 /* Függvény a por felületisűrűségének kiíratására */
-void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const double *rm, const double *sigmad, const double *sigmadm, const disk_t *disk_params, const simulation_options_t *sim_opts, output_files_t *output_files, double step) {
+void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const double *rm, const double *sigmad, const double *sigmadm, const DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files, double step) {
 
     int i;
 
@@ -424,7 +424,7 @@ void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const 
             fprintf(output_files->dust_file,"%lg %.11lg  %lg \n",(double)step,r[i],sigmad[i]);
         }
 
-        if(sim_opts->twopop == 1.0 && output_files->micron_dust_file != NULL) {
+        if(sim_opts->option_for_dust_secondary_population == 1.0 && output_files->micron_dust_file != NULL) {
             if (rm[i] >= disk_params->r_min) { // Using disk_params->r_min
                 fprintf(output_files->micron_dust_file,"%lg %lg  %lg \n",(double)step,rm[i],sigmadm[i]);
             }
@@ -432,19 +432,19 @@ void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const 
     }
 
     fflush(output_files->dust_file);
-    if(sim_opts->twopop == 1.0 && output_files->micron_dust_file != NULL) {
+    if(sim_opts->option_for_dust_secondary_population == 1.0 && output_files->micron_dust_file != NULL) {
         fflush(output_files->micron_dust_file); // Corrected this, it was micron_motion_file before
     }
 }
 
 /* Függvény a pormozgás és részecskeméret kiíratására */
-void printDustParticleSizeFile(char *size_name, int step, double (*rad)[2], double (*radmicr)[2], const disk_t *disk_params, const simulation_options_t *sim_opts, output_files_t *output_files) {
+void printDustParticleSizeFile(char *size_name, int step, double (*rad)[2], double (*radmicr)[2], const DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files) {
 
     FILE *fout_size = NULL;
 
     int i;
 
-    if (sim_opts->growth == 1.0) {
+    if (sim_opts->option_for_dust_growth == 1.0) {
         fout_size = fopen(size_name, "w");
         if (fout_size == NULL) {
             fprintf(stderr, "ERROR: Could not open size file '%s' in printDustParticleSizeFile!\n", size_name);
@@ -454,50 +454,42 @@ void printDustParticleSizeFile(char *size_name, int step, double (*rad)[2], doub
 
     for (i = 0; i < particle_number; i++) { // particle_number from config.h
 
-        if (output_files->por_motion_file != NULL) {
+        if (output_files->dust_motion_file != NULL) {
             if (rad[i][0] >= disk_params->r_min) { // Using disk_params->r_min
-                fprintf(output_files->por_motion_file, "%lg %d %lg\n", (double)step, i, rad[i][0]);
+                fprintf(output_files->dust_motion_file, "%lg %d %lg\n", (double)step, i, rad[i][0]);
             }
         } else {
-            fprintf(stderr, "WARNING: output_files->por_motion_file is NULL. Cannot write main particle motion.\n");
+            fprintf(stderr, "WARNING: output_files->dust_motion_file is NULL. Cannot write main particle motion.\n");
         }
 
-        if (sim_opts->twopop == 1.0 && output_files->micron_motion_file != NULL) {
+        if (sim_opts->option_for_dust_secondary_population == 1.0 && output_files->micron_motion_file != NULL) {
             if (radmicr[i][0] >= disk_params->r_min) { // Using disk_params->r_min
                 fprintf(output_files->micron_motion_file, "%lg %d %lg\n", (double)step, i, radmicr[i][0]);
             }
         }
 
-        if (sim_opts->growth == 1.0 && fout_size != NULL) {
+        if (sim_opts->option_for_dust_growth == 1.0 && fout_size != NULL) {
             if (rad[i][0] >= disk_params->r_min) { // Using disk_params->r_min
                 fprintf(fout_size, "%lg %lg %lg \n", (double)step, rad[i][0], rad[i][1] * AU_IN_CM); // AU_IN_CM from config.h
             }
         }
     }
 
-    if (output_files->por_motion_file != NULL) {
-        fflush(output_files->por_motion_file);
+    if (output_files->dust_motion_file != NULL) {
+        fflush(output_files->dust_motion_file);
     } else {
-        fprintf(stderr, "WARNING: Cannot fflush por_motion_file, as it is NULL.\n");
+        fprintf(stderr, "WARNING: Cannot fflush dust_motion_file, as it is NULL.\n");
     }
 
-    if (sim_opts->twopop == 1.0 && output_files->micron_motion_file != NULL) {
+    if (sim_opts->option_for_dust_secondary_population == 1.0 && output_files->micron_motion_file != NULL) {
         fflush(output_files->micron_motion_file);
     }
 
-    if (sim_opts->growth == 1.0 && fout_size != NULL) {
+    if (sim_opts->option_for_dust_growth == 1.0 && fout_size != NULL) {
         fclose(fout_size);
     }
 }
 
-/* Az időt tartalmazó fájl paramétereinek beolvasása (vagy beállítása) */
-void printTimeStampFile(double tMax_val, double stepping_val, double current_val, simulation_options_t *sim_opts) {
-
-
-    sim_opts->TMAX = tMax_val;
-    sim_opts->WO = tMax_val / stepping_val;
-    sim_opts->TCURR = current_val;
-}
 
 
 // Függvény a fájl fejlécek kiírására
@@ -596,8 +588,8 @@ void printFileHeader(FILE *file, FileType_e file_type, const HeaderData_t *heade
 
 
 
-int setupInitialOutputFiles(output_files_t *output_files, const simulation_options_t *sim_opts,
-                               const disk_t *disk_params, HeaderData_t *header_data_for_files) {
+int setupInitialOutputFiles(OutputFiles *output_files, const SimulationOptions *sim_opts,
+                               const DiskParameters *disk_params, HeaderData_t *header_data_for_files) {
     char porout[MAX_PATH_LEN] = "";
     char poroutmicr[MAX_PATH_LEN] = "";
     char massout[MAX_PATH_LEN] = "";
@@ -611,7 +603,7 @@ int setupInitialOutputFiles(output_files_t *output_files, const simulation_optio
     // Fájlnevek generálása
     snprintf(porout, MAX_PATH_LEN, "%s/%s/%s%s", sim_opts->output_dir_name, kLogFilesDirectory, kDustAccumulationFileName,kFileNamesSuffix);
 
-    if (sim_opts->twopop == 1.0) {
+    if (sim_opts->option_for_dust_secondary_population == 1.0) {
         snprintf(poroutmicr, MAX_PATH_LEN, "%s/%s/%s%st", sim_opts->output_dir_name, kLogFilesDirectory,kDustMicronParticleEvolutionFile,kFileNamesSuffix);
     }
     snprintf(massout, MAX_PATH_LEN, "%s/%s/%s%s", sim_opts->output_dir_name, kLogFilesDirectory, kDustAccumulationFileName,kFileNamesSuffix);
@@ -619,20 +611,20 @@ int setupInitialOutputFiles(output_files_t *output_files, const simulation_optio
     fprintf(stderr, "DEBUG [setupInitialOutputFiles]: Opening output files: %s, %s (if 2pop), %s\n", porout, poroutmicr, massout);
 
     // Fájlok megnyitása és fejlécek írása
-    output_files->por_motion_file = fopen(porout, "w");
-    if (output_files->por_motion_file == NULL) {
+    output_files->dust_motion_file = fopen(porout, "w");
+    if (output_files->dust_motion_file == NULL) {
         fprintf(stderr, "ERROR: Could not open %s\n", porout);
         return 1; // Hiba
     }
-    printFileHeader(output_files->por_motion_file, FILE_TYPE_DUST_MOTION, header_data_for_files);
+    printFileHeader(output_files->dust_motion_file, FILE_TYPE_DUST_MOTION, header_data_for_files);
 
-    if (sim_opts->twopop == 1.0) {
+    if (sim_opts->option_for_dust_secondary_population == 1.0) {
         output_files->micron_motion_file = fopen(poroutmicr, "w");
         if (output_files->micron_motion_file == NULL) {
             fprintf(stderr, "ERROR: Could not open %s\n", poroutmicr);
             // Itt fontos lehet, hogy felszabadítsuk az eddig megnyitott fájlokat
-            fclose(output_files->por_motion_file);
-            output_files->por_motion_file = NULL;
+            fclose(output_files->dust_motion_file);
+            output_files->dust_motion_file = NULL;
             return 1; // Hiba
         }
         printFileHeader(output_files->micron_motion_file, FILE_TYPE_MICRON_MOTION, header_data_for_files);
@@ -642,9 +634,9 @@ int setupInitialOutputFiles(output_files_t *output_files, const simulation_optio
     if (output_files->mass_file == NULL) {
         fprintf(stderr, "ERROR: Could not open %s\n", massout);
         // Itt is felszabadítjuk a már megnyitott fájlokat
-        fclose(output_files->por_motion_file);
-        output_files->por_motion_file = NULL;
-        if (sim_opts->twopop == 1.0 && output_files->micron_motion_file != NULL) {
+        fclose(output_files->dust_motion_file);
+        output_files->dust_motion_file = NULL;
+        if (sim_opts->option_for_dust_secondary_population == 1.0 && output_files->micron_motion_file != NULL) {
             fclose(output_files->micron_motion_file);
             output_files->micron_motion_file = NULL;
         }
@@ -656,13 +648,13 @@ int setupInitialOutputFiles(output_files_t *output_files, const simulation_optio
 }
 
 
-void cleanupSimulationResources(ParticleData_t *p_data, output_files_t *output_files, const simulation_options_t *sim_opts) {
+void cleanupSimulationResources(ParticleData_t *p_data, OutputFiles *output_files, const SimulationOptions *sim_opts) {
     if (particle_number > 0) {
         free(p_data->radius); p_data->radius = NULL;
         free(p_data->radiusmicr); p_data->radiusmicr = NULL;
         free(p_data->radius_rec); p_data->radius_rec = NULL;
         free(p_data->massvec); p_data->massvec = NULL;
-        free(p_data->massmicrvec); p_data->massmicrvec = NULL;
+        free(p_data->massmicradial_grid); p_data->massmicradial_grid = NULL;
         free(p_data->partmassind); p_data->partmassind = NULL;
         free(p_data->partmassmicrind); p_data->partmassmicrind = NULL;
         free(p_data->sigmad); p_data->sigmad = NULL;
@@ -673,12 +665,12 @@ void cleanupSimulationResources(ParticleData_t *p_data, output_files_t *output_f
         fprintf(stderr, "DEBUG [cleanupSimulationResources]: All dynamically allocated particle arrays freed.\n");
     }
 
-    if (output_files->por_motion_file != NULL) {
-        fclose(output_files->por_motion_file);
-        output_files->por_motion_file = NULL;
+    if (output_files->dust_motion_file != NULL) {
+        fclose(output_files->dust_motion_file);
+        output_files->dust_motion_file = NULL;
         fprintf(stderr, "DEBUG [cleanupSimulationResources]: Closed %s%s\n", kDustParticleEvolutionFile,kFileNamesSuffix);
     }
-    if (output_files->micron_motion_file != NULL) { // Ellenőrzés twopop-ra itt is
+    if (output_files->micron_motion_file != NULL) { // Ellenőrzés option_for_dust_secondary_population-ra itt is
         fclose(output_files->micron_motion_file);
         output_files->micron_motion_file = NULL;
         fprintf(stderr, "DEBUG [cleanupSimulationResources]: Closed %s%s\n",kDustMicronParticleEvolutionFile,kFileNamesSuffix);
@@ -691,7 +683,7 @@ void cleanupSimulationResources(ParticleData_t *p_data, output_files_t *output_f
 }
 
 // Segédfüggvény a pillanatfelvételek fájljainak bezárására
-void closeSnapshotFiles(output_files_t *output_files, const char *dens_name, const char *dust_name, const char *dust_name2, const simulation_options_t *sim_opts) {
+void closeSnapshotFiles(OutputFiles *output_files, const char *dens_name, const char *dust_name, const char *dust_name2, const SimulationOptions *sim_opts) {
     if (output_files->surface_file != NULL) {
         fclose(output_files->surface_file);
         output_files->surface_file = NULL;
@@ -700,7 +692,7 @@ void closeSnapshotFiles(output_files_t *output_files, const char *dens_name, con
         fclose(output_files->dust_file);
         output_files->dust_file = NULL;
     }
-    if (sim_opts->twopop == 1 && output_files->micron_dust_file != NULL) {
+    if (sim_opts->option_for_dust_secondary_population == 1 && output_files->micron_dust_file != NULL) {
         fclose(output_files->micron_dust_file);
         output_files->micron_dust_file = NULL;
     }
