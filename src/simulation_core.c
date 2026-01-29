@@ -8,6 +8,8 @@
 #include <string.h>   // For snprintf, sprintf
 
 #include <omp.h>
+#include <time.h>
+
 
 // Your Project Header Includes
 #include "config.h"       
@@ -79,6 +81,8 @@ void timeIntegrationForTheSystem(DiskParameters *disk_params, const SimulationOp
 
     double snapshot = 0.; // Években mért "pillanatfelvétel" időzítő
 
+
+
     if (disk_params == NULL) {
         fprintf(stderr, "ERROR [timeIntegrationForTheSystem]: disk_params_ptr is NULL!\n");
         exit(1); // Program leállítása, ha kritikus hiba van
@@ -107,8 +111,6 @@ void timeIntegrationForTheSystem(DiskParameters *disk_params, const SimulationOp
         loadDustParticlesFromFile(particle_data.radius, particle_data.radiusmicr, particle_data.massvec, particle_data.massmicradial_grid, sim_opts->dust_input_filename);
     }
 
-    // További inicializálások
-    double maximum_of_the_array = 0.0, minimum_of_the_array = 0.0, maximum_micron_array = 0.0, minimum_micron_array = 0.0;
     int i; // Hagyjuk meg ezt a ciklusváltozót a C89 kompatibilitás kedvéért, ha szükséges
     
     // Ideiglenes puffer a fájlneveknek a ciklusban
@@ -148,6 +150,22 @@ void timeIntegrationForTheSystem(DiskParameters *disk_params, const SimulationOp
     do {
         if (sim_opts->option_for_dust_drift == 1.) {
 
+
+
+
+            double min_radius, max_radius;
+
+/*            struct timespec t0, t1; 
+            clock_gettime(CLOCK_MONOTONIC, &t0);
+*/            
+            computeParticleRadiusRange(&particle_data,particle_number,sim_opts->option_for_dust_secondary_population,&min_radius,&max_radius);
+
+/*            clock_gettime(CLOCK_MONOTONIC, &t1); 
+            double elapsed = (t1.tv_sec - t0.tv_sec) + (t1.tv_nsec - t0.tv_nsec) / 1e9;
+*/
+
+
+
             // Radius reciprok számítása a min/max kereséshez
             for (i = 0; i < particle_number; i++) {
                 if (particle_data.radius[i][0] > 0. && particle_data.radius[i][0] > disk_params->r_min) {
@@ -159,12 +177,9 @@ void timeIntegrationForTheSystem(DiskParameters *disk_params, const SimulationOp
 
 // OK, ITT EZT A RÉSZT RENDEZNI KÉNE!
 
-            maximum_of_the_array = findMaximumOfAnArray(particle_data.radius, particle_number);
-            minimum_of_the_array = findMaximumOfAnArray(particle_data.radius_rec, particle_number); // Megkeresi a távolság reciprokának maximumát
-            minimum_of_the_array = 1. / minimum_of_the_array; // Ebből lesz a távolság minimuma
-
-            double absolute_minimum_radius, absolute_maximum_radius;
-
+/*            struct timespec t01, t11; 
+            clock_gettime(CLOCK_MONOTONIC, &t01);
+*/
             if (sim_opts->option_for_dust_secondary_population == 1) {
                 // Micron részecskék radius reciprok számítása
                 for (i = 0; i < particle_number; i++) {
@@ -175,17 +190,11 @@ void timeIntegrationForTheSystem(DiskParameters *disk_params, const SimulationOp
                     }
                 }
 
-                maximum_micron_array = findMaximumOfAnArray(particle_data.radiusmicr, particle_number);
-                minimum_micron_array = findMaximumOfAnArray(particle_data.radius_rec, particle_number);
-                minimum_micron_array = 1. / minimum_micron_array;
+            } 
 
-                absolute_minimum_radius = findMinimumOfAnArray(minimum_of_the_array, minimum_micron_array, HUGE_VAL); 
-                absolute_maximum_radius = findMinimumOfAnArray(1. / maximum_of_the_array, 1. / maximum_micron_array, HUGE_VAL);
-                absolute_maximum_radius = 1. / absolute_maximum_radius;
-            } else {
-                absolute_minimum_radius = minimum_of_the_array;
-                absolute_maximum_radius = maximum_of_the_array;
-            }
+/*            clock_gettime(CLOCK_MONOTONIC, &t11); 
+            double elapsed_old = (t11.tv_sec - t01.tv_sec) + (t11.tv_nsec - t01.tv_nsec) / 1e9;
+*/
 
             // --- Kimeneti adatok (pillanatfelvétel) kezelése ---
             double current_time_years = t / (2.0 * M_PI);
@@ -238,7 +247,7 @@ void timeIntegrationForTheSystem(DiskParameters *disk_params, const SimulationOp
                     if (sim_opts->option_for_dust_secondary_population == 1) updateParticleGridIndices(particle_data.radiusmicr, particle_data.partmassmicrind, particle_data.massmicradial_grid, t, particle_number, disk_params);
 
                     if (sim_opts->option_for_dust_growth == 1.) {
-                        calculateDustSurfaceDensity(maximum_of_the_array, minimum_of_the_array, particle_data.radius, particle_data.radiusmicr, particle_data.sigmad, particle_data.sigmadm, particle_data.massvec, particle_data.massmicradial_grid, particle_data.rdvec, particle_data.rmicvec, sim_opts, disk_params);
+                        calculateDustSurfaceDensity(max_radius, min_radius, particle_data.radius, particle_data.radiusmicr, particle_data.sigmad, particle_data.sigmadm, particle_data.massvec, particle_data.massmicradial_grid, particle_data.rdvec, particle_data.rmicvec, sim_opts, disk_params);
                     }
                 }
 
@@ -295,7 +304,7 @@ void timeIntegrationForTheSystem(DiskParameters *disk_params, const SimulationOp
             if (sim_opts->option_for_dust_secondary_population == 1) updateParticleGridIndices(particle_data.radiusmicr, particle_data.partmassmicrind, particle_data.massmicradial_grid, t, particle_number, disk_params);
 
             if (sim_opts->option_for_dust_growth == 1.) {
-                calculateDustSurfaceDensity(maximum_of_the_array, minimum_of_the_array, particle_data.radius, particle_data.radiusmicr, particle_data.sigmad, particle_data.sigmadm, particle_data.massvec, particle_data.massmicradial_grid, particle_data.rdvec, particle_data.rmicvec, sim_opts, disk_params);
+                calculateDustSurfaceDensity(max_radius, min_radius, particle_data.radius, particle_data.radiusmicr, particle_data.sigmad, particle_data.sigmadm, particle_data.massvec, particle_data.massmicradial_grid, particle_data.rdvec, particle_data.rmicvec, sim_opts, disk_params);
             }
 
             // Get radii for next step
@@ -309,6 +318,8 @@ void timeIntegrationForTheSystem(DiskParameters *disk_params, const SimulationOp
             }
 
             t = t + deltat;
+
+//            printf("abs max %lg   abs min %lg   max %lg  min %lg  min/max calculation: old=%.6e s, new=%.6e s\n",absolute_maximum_radius, absolute_minimum_radius, max_radius, min_radius,elapsed_old, elapsed);
 
             // Kilépési feltétel a drift == 1 ágon
             // Fontos: absolute_maximum_radius és absolute_minimum_radius frissül az előző szakaszban, azt használjuk itt.
@@ -354,7 +365,11 @@ void timeIntegrationForTheSystem(DiskParameters *disk_params, const SimulationOp
             refreshGasSurfaceDensityPressurePressureGradient(sim_opts, disk_params);
             
             t = t + deltat;
+
         }
+
+
+
 
     } while (t <= t_integration_in_internal_units);
 
