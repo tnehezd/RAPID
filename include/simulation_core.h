@@ -49,7 +49,7 @@ double calculateTimeStep(const DiskParameters *disk_params);
 /**
  * @brief A fő időintegrációs ciklus.
  * Koordinálja a részecskék mozgását, növekedését,
- * és a gázfelszíni sűrűség evolúcióját, valamint a kimeneti adatok írását.
+ * és a gázfelszíni sűrűség option_for_evolutionúcióját, valamint a kimeneti adatok írását.
  * @param output_dir_name A kimeneti könyvtár neve.
  * @param disk_params A diszk paramétereit tartalmazó struktúra.
  * @param sim_opts A szimulációs opciókat tartalmazó struktúra.

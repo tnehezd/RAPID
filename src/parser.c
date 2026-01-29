@@ -7,13 +7,13 @@
 #include "parser.h" // Include its own header
 #include "simulation_types.h" // In case simulation_types.h defines something else needed here
 
-/* --- createDefaultOptions: Sets default values for the 'options_t' structure --- */
-void createDefaultOptions(options_t *opt) {
-    fprintf(stderr, "DEBUG [createDefaultOptions]: Setting default values for options_t.\n");
+/* --- createDefaultOptions: Sets default values for the 'ParserOptions' structure --- */
+void createDefaultOptions(ParserOptions *opt) {
+    fprintf(stderr, "DEBUG [createDefaultOptions]: Setting default values for ParserOptions.\n");
     // Simulation control options
     opt->drift           = 1.;
     opt->growth          = 1.;
-    opt->evol            = 1.;
+    opt->option_for_evolution            = 1.;
     opt->twopop          = 1.;
     opt->ufrag           = 1000.0;
     opt->ffrag           = 0.37;
@@ -104,8 +104,8 @@ void printUsageToTerminal() {
 }
 
 
-/* --- parseCLIOptions: Parses command-line arguments and fills the 'options_t' struct --- */
-int parseCLIOptions(int argc, const char **argv, options_t *opt){
+/* --- parseCLIOptions: Parses command-line arguments and fills the 'ParserOptions' struct --- */
+int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
     fprintf(stderr, "DEBUG [parseCLIOptions]: Parsing command-line arguments (%d total).\n", argc);
     int i = 1;
 
@@ -123,7 +123,7 @@ int parseCLIOptions(int argc, const char **argv, options_t *opt){
         }
         else if (strcmp(argv[i], "-evol") == 0) {
             i++;
-            if (i < argc) opt->evol = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -evol.\n"); return 1; }
+            if (i < argc) opt->option_for_evolution = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -evol.\n"); return 1; }
 //            fprintf(stderr, "DEBUG [parseCLIOptions]:   -evol set to %.2f\n", opt->evol);
         }
         else if (strcmp(argv[i], "-twopop") == 0) {

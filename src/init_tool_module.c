@@ -20,8 +20,8 @@
 //extern void linearInterpolation(double *invec, double *radial_grid, double pos, double *out, double rd, int opt, const DiskParameters *disk_params);
 
 
-void initializeDefaultOptions(init_tool_options_t *def) {
-    // Set default values for the init_tool_options_t struct
+void initializeDefaultOptions(InitializeDefaultOptions *def) {
+    // Set default values for the InitializeDefaultOptions struct
     def->n_grid_points = 1000; // Number of radial gas grid points
     def->n_dust_particles = 2000; // NEW: Number of initial dust particles
     def->r_inner = 0.1;
@@ -55,7 +55,7 @@ void initializeDefaultOptions(init_tool_options_t *def) {
 
 // Calculates the gas surface density normalization constant (Sigma0)
 // based on total dust disk mass (Md), in M_Sun / AU / AU.
-static long double calculateSigm0FromDiskMass(init_tool_options_t *init_opts) {
+static long double calculateSigm0FromDiskMass(InitializeDefaultOptions *init_opts) {
     // Sigma ~ r^(-index), so integral is r^(2-index)
     double exponent_for_integral = -init_opts->sigma_exponent + 2.0;
 
@@ -82,13 +82,13 @@ static long double calculateSigm0FromDiskMass(init_tool_options_t *init_opts) {
 }
 
 // Calculates gas surface density at radial position r [M_Sun / AU / AU].
-static long double calculateGasSurfaceDensityInitTool(double r_au, init_tool_options_t *init_opts, long double current_sigma0) {
+static long double calculateGasSurfaceDensityInitTool(double r_au, InitializeDefaultOptions *init_opts, long double current_sigma0) {
     return current_sigma0 * pow(r_au, init_opts->sigma_exponent);
 }
 
 // Calculates dust surface density at radial position r [M_Sun / AU / AU].
 // Includes handling for snowline/ice factor if enabled (currently commented out as in original).
-static long double calculateDustSurfaceDensityInitTool(double r_au, init_tool_options_t *init_opts, long double current_sigma0) {
+static long double calculateDustSurfaceDensityInitTool(double r_au, InitializeDefaultOptions *init_opts, long double current_sigma0) {
     long double sigma_dust = calculateGasSurfaceDensityInitTool(r_au, init_opts, current_sigma0) * init_opts->dust_to_gas_ratio;
 
     // --- Snowline and Ice Factor Handling (Uncomment and adjust if needed) ---
@@ -114,7 +114,7 @@ static double findMinimumForThreeNumbersInitTool(double s1, double s2, double s3
 
 // --- Main Init Tool Function ---
 
-int runInitialization(init_tool_options_t *opts, DiskParameters *disk_params) {
+int runInitialization(InitializeDefaultOptions *opts, DiskParameters *disk_params) {
     FILE *fout_data = NULL; // For dust particle profile
     FILE *fout_params = NULL; // For disk parameters
     FILE *fout_dens = NULL; // For gas density profile

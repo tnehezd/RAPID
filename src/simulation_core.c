@@ -194,7 +194,7 @@ void timeIntegrationForTheSystem(DiskParameters *disk_params, const SimulationOp
 
 
                 if (current_time_years != 0) {
-                    if (sim_opts->evol == 1) {
+                    if (sim_opts->option_for_evolution == 1) {
                         snprintf(dens_name, MAX_PATH_LEN, "%s/%s/%s_%08d%s", sim_opts->output_dir_name, kLogFilesDirectory, kGasDensityProfileFilePrefix, (int)L,kFileNamesSuffix);
                     }
                 }
@@ -243,7 +243,7 @@ void timeIntegrationForTheSystem(DiskParameters *disk_params, const SimulationOp
                 }
 
                 // Gas density output
-                if (sim_opts->evol == 1 || current_time_years == 0) {
+                if (sim_opts->option_for_evolution == 1 || current_time_years == 0) {
                     if(L != 0) printGasSurfaceDensityPressurePressureDerivateFile(disk_params, output_files);
                 }
 
@@ -285,8 +285,8 @@ void timeIntegrationForTheSystem(DiskParameters *disk_params, const SimulationOp
                 closeSnapshotFiles(output_files, dens_name, dust_name, dust_name2, sim_opts);
             }
 
-            // Gas evolution
-            if (sim_opts->evol == 1.) {
+            // Gas option_for_evolutionution
+            if (sim_opts->option_for_evolution == 1.) {
                 refreshGasSurfaceDensityPressurePressureGradient(sim_opts, disk_params);
             }
 

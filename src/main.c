@@ -5,7 +5,7 @@
 
 // Header files
 #include "config.h"           // Declarations of global variables and constants
-#include "init_tool_module.h" // runInitialization and init_tool_options_t
+#include "init_tool_module.h" // runInitialization and InitializeDefaultOptions
 #include "io_utils.h"         // Functions from io_utils.c
 #include "disk_model.h"       // Functions from disk_model.c
 #include "dust_physics.h"     // Functions from dust_physics.c
@@ -21,7 +21,7 @@
 #include "parser.h"           // Now includes function declarations for parsing
 
 // Function declaration for default init_tool options, assuming it's in init_tool_module.h
-extern void initializeDefaultOptions(init_tool_options_t *def);
+extern void initializeDefaultOptions(InitializeDefaultOptions *def);
 
 // Global variable definition for particle_number (if not defined elsewhere)
 // Ensure this is only defined in ONE .c file, and declared as 'extern int particle_number;' in config.h
@@ -35,11 +35,11 @@ int main(int argc, const char **argv) {
     current_inputsig_file[0] = '\0'; // Initialize to empty string
 
     // Local structure to store command-line options
-    options_t def;
+    ParserOptions def;
     createDefaultOptions(&def);
 
     // Local structure to store init_tool parameters (these will be populated from 'def')
-    init_tool_options_t init_tool_params;
+    InitializeDefaultOptions init_tool_params;
     initializeDefaultOptions(&init_tool_params);
 
     // Parse command-line options and populate the 'def' structure
@@ -64,7 +64,7 @@ int main(int argc, const char **argv) {
     output_files.size_file = NULL;
 
     /* Populate the SimulationOptions struct from 'def' (parsed options) */
-    sim_opts.evol = def.evol;
+    sim_opts.option_for_evolution = def.option_for_evolution;
     sim_opts.drift = def.drift;
     sim_opts.growth = def.growth;
     sim_opts.twopop = def.twopop;
@@ -77,7 +77,7 @@ int main(int argc, const char **argv) {
     // DEBUG: Show def.output_dir_name BEFORE it's used to populate sim_opts.output_dir_name
     fprintf(stderr, "DEBUG [main]: def.output_dir_name BEFORE sim_opts population: '%s'\n", def.output_dir_name);
 
-    fprintf(stderr, "DEBUG [main]: Evolution (sim_opts.evol=%.2f) or drift (sim_opts.drift=%.2f) is ON. Starting main simulation loop.\n", sim_opts.evol, sim_opts.drift);
+    fprintf(stderr, "DEBUG [main]: Evolution (sim_opts.option_for_evolution=%.2f) or drift (sim_opts.drift=%.2f) is ON. Starting main simulation loop.\n", sim_opts.option_for_evolution, sim_opts.drift);
 
     // --- Populate DiskParameters with parameters from 'def' ---
     disk_params.r_min = def.rmin_val;
@@ -184,7 +184,7 @@ int main(int argc, const char **argv) {
         // If NO input file is specified:
         fprintf(stderr, "DEBUG [main]: No input file specified (-i flag not used). Generating default grid and profile.\n");
 
-        // Populate init_tool_options_t from 'def' (command-line) values
+        // Populate InitializeDefaultOptions from 'def' (command-line) values
         init_tool_params.n_grid_points = disk_params.grid_number; // This is the gas grid resolution
         init_tool_params.r_inner= disk_params.r_min;
         init_tool_params.r_outer = disk_params.r_max;
@@ -205,7 +205,7 @@ int main(int argc, const char **argv) {
         init_tool_params.micro_size_cm = def.mic_val;
         init_tool_params.one_size_particle_cm = def.onesize_val;
         init_tool_params.dust_density_g_cm3 = def.pdensity_val;
-        fprintf(stderr, "DEBUG [main]: init_tool_options_t (init_tool_params) structure populated for profile generation.\n");
+        fprintf(stderr, "DEBUG [main]: InitializeDefaultOptions (init_tool_params) structure populated for profile generation.\n");
 
         // --- Generate profile directly into the 'initial' directory ---
         fprintf(stderr, "DEBUG [main]: Calling runInitialization(&init_tool_params, &disk_params)...\n");
@@ -272,8 +272,8 @@ int main(int argc, const char **argv) {
     printCurrentInformationAboutRun(def.output_dir_name, &disk_params, &sim_opts);
 
     // Run simulation or exit based on options
-    if(sim_opts.evol == 0. && sim_opts.drift == 0.) {
-        fprintf(stderr, "DEBUG [main]: Evolution (sim_opts.evol=%.2f) and drift (sim_opts.drift=%.2f) are OFF.\n", sim_opts.evol, sim_opts.drift);
+    if(sim_opts.option_for_evolution == 0. && sim_opts.drift == 0.) {
+        fprintf(stderr, "DEBUG [main]: Evolution (sim_opts.option_for_evolution=%.2f) and drift (sim_opts.drift=%.2f) are OFF.\n", sim_opts.option_for_evolution, sim_opts.drift);
 
         char dens_name_initial[MAX_PATH_LEN];
         snprintf(dens_name_initial, sizeof(dens_name_initial), "%s/%s%s", initial_dir_path, kInitialGasProfileFileName,kFileNamesSuffix);
@@ -301,7 +301,7 @@ int main(int argc, const char **argv) {
 
         fprintf(stderr, "DEBUG [main]: printGasSurfaceDensityPressurePressureDerivateFile completed. Program exiting.\n");
     } else {
-        fprintf(stderr, "DEBUG [main]: Evolution (sim_opts.evol=%.2f) or drift (sim_opts.drift=%.2f) is ON. Starting main simulation loop.\n", sim_opts.evol, sim_opts.drift);
+        fprintf(stderr, "DEBUG [main]: Evolution (sim_opts.option_for_evolution=%.2f) or drift (sim_opts.drift=%.2f) is ON. Starting main simulation loop.\n", sim_opts.option_for_evolution, sim_opts.drift);
         fprintf(stderr, "DEBUG [main]: Calling timeIntegrationForTheSystem...\n");
         // Pass sim_opts to timeIntegrationForTheSystem.
         // timeIntegrationForTheSystem must ensure to use the correct (numbered) output_dir_name.

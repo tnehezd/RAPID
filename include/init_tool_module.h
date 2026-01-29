@@ -8,7 +8,7 @@
 
 
 // Structure to hold initialization options
-typedef struct init_tool_options {
+typedef struct {
     // Grid and Physical Parameters
     int     n_grid_points;
     int     n_dust_particles;  // NEW: Number of initial dust particles written to file header
@@ -42,10 +42,10 @@ typedef struct init_tool_options {
     double dust_density_g_cm3; // NEW: Por szemcse sűrűsége (g/cm^3)
 
 
-} init_tool_options_t;
+} InitializeDefaultOptions;
 
 // Function prototypes
-void initializeDefaultOptions(init_tool_options_t *opt);
-int runInitialization(init_tool_options_t *opts, DiskParameters *output_disk_params);
+void initializeDefaultOptions(InitializeDefaultOptions *opt);
+int runInitialization(InitializeDefaultOptions *opts, DiskParameters *output_disk_params);
 
 #endif // INIT_TOOL_MODULE_H

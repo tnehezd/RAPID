@@ -74,7 +74,7 @@ typedef struct {
 // --- Simulation Options/Control Structure ---
 // Groups all boolean/flag-like options
 typedef struct {
-    double evol;    // Gas evolution (replaces optev)
+    double option_for_evolution;    // Gas option_for_evolutionution (replaces optev)
     double drift;   // Particle drift (replaces optdr)
     double growth;  // Particle growth (replaces optgr)
     double twopop;  // Two-population simulation (replaces opttwopop)

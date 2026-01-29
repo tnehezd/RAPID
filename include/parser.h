@@ -17,7 +17,7 @@ typedef struct {
     // Simulation control options
     double drift;
     double growth;
-    double evol;
+    double option_for_evolution;
     double twopop;
     double ufrag;
     double ffrag;
@@ -60,22 +60,22 @@ typedef struct {
     // NEW: Add PDENSITY (dust particle density) parameter
     double pdensity_val;    // Dust particle density [g/cm^3]
 
-} options_t;
+} ParserOptions;
 
 /*
- * @brief Initializes the options_t structure with default values.
- * @param opt Pointer to the options_t structure to be initialized.
+ * @brief Initializes the ParserOptions structure with default values.
+ * @param opt Pointer to the ParserOptions structure to be initialized.
  */
-void createDefaultOptions(options_t *opt);
+void createDefaultOptions(ParserOptions *opt);
 
 /*
- * @brief Parses command-line arguments and populates the options_t structure.
+ * @brief Parses command-line arguments and populates the ParserOptions structure.
  * @param argc The number of command-line arguments.
  * @param argv An array of strings containing the command-line arguments.
- * @param opt Pointer to the options_t structure where parsed values will be stored.
+ * @param opt Pointer to the ParserOptions structure where parsed values will be stored.
  * @return 0 on successful parsing, 1 on error (e.g., missing value, unknown option).
  */
-int parseCLIOptions(int argc, const char **argv, options_t *opt);
+int parseCLIOptions(int argc, const char **argv, ParserOptions *opt);
 
 /*
  * @brief Prints the command-line usage information to stderr.
