@@ -2,7 +2,7 @@
 #define SIMULATION_CORE_H
 
 #include "disk_model.h"         // DiskParameters struktúra miatt
-#include "simulation_types.h"   // simulation_options_t és output_files_t struktúrák miatt
+#include "simulation_types.h"   // SimulationOptions és output_files_t struktúrák miatt
 
 // FÜGGVÉNY PROTOTÍPUSOK
 
@@ -55,7 +55,7 @@ double calculateTimeStep(const DiskParameters *disk_params);
  * @param sim_opts A szimulációs opciókat tartalmazó struktúra.
  * @param output_files A kimeneti fájl mutatókat tartalmazó struktúra.
  */
-void timeIntegrationForTheSystem(DiskParameters *disk_params, const simulation_options_t *sim_opts, output_files_t *output_files);
+void timeIntegrationForTheSystem(DiskParameters *disk_params, const SimulationOptions *sim_opts, output_files_t *output_files);
 
 
 

@@ -135,7 +135,7 @@ void calculateGasRadialVelocity(DiskParameters *disk_params) {
 }
 
 /*  Fuggveny a sigma, p, dp kiszamolasara   */
-void refreshGasSurfaceDensityPressurePressureGradient(const simulation_options_t *sim_opts, DiskParameters *disk_params) { // Added sim_opts
+void refreshGasSurfaceDensityPressurePressureGradient(const SimulationOptions *sim_opts, DiskParameters *disk_params) { // Added sim_opts
 
     double u, u_bi, u_fi;
     double sigma_temp[disk_params->grid_number + 2]; // Use disk_params->grid_number
@@ -183,7 +183,7 @@ void refreshGasSurfaceDensityPressurePressureGradient(const simulation_options_t
     // And if they are modifying the *content* of the arrays within disk_params, then disk_params should NOT be const in *their* parameter list.
     // However, since refreshGasSurfaceDensityPressurePressureGradient is modifying them, disk_params *here* cannot be const.
     // Let's remove 'const' from disk_params in refreshGasSurfaceDensityPressurePressureGradient signature if it modifies them.
-    // void refreshGasSurfaceDensityPressurePressureGradient(DiskParameters *disk_params, const simulation_options_t *sim_opts) { ... }
+    // void refreshGasSurfaceDensityPressurePressureGradient(DiskParameters *disk_params, const SimulationOptions *sim_opts) { ... }
     
     // Assuming these helper functions need disk_params to access *its* internal arrays
     calculateGasPressureGradient(disk_params); // Assuming dpress takes arrays and disk_params

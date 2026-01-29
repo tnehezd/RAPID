@@ -99,7 +99,7 @@ typedef struct {
     char dust_input_filename[MAX_PATH_LEN]; // NEW: Input file for dust particles (e.g., initial_dust_profile.dat for por_be)
 
 
-} simulation_options_t;
+} SimulationOptions;
 
 
 // --- Output File Pointers Structure ---

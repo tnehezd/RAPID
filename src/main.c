@@ -51,7 +51,7 @@ int main(int argc, const char **argv) {
 
     // --- Declare instances of the new simulation structs ---
     DiskParameters disk_params; // Main disk parameters struct
-    simulation_options_t sim_opts;
+    SimulationOptions sim_opts;
     output_files_t output_files;
 
     // Initialize output_files pointers to NULL
@@ -63,7 +63,7 @@ int main(int argc, const char **argv) {
     output_files.micron_dust_file = NULL;
     output_files.size_file = NULL;
 
-    /* Populate the simulation_options_t struct from 'def' (parsed options) */
+    /* Populate the SimulationOptions struct from 'def' (parsed options) */
     sim_opts.evol = def.evol;
     sim_opts.drift = def.drift;
     sim_opts.growth = def.growth;

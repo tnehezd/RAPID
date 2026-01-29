@@ -2,7 +2,7 @@
 #define DUST_PHYSICS_H
 
 #include <stdio.h> // Szükséges lehet FILE, fprintf stb.
-#include "simulation_types.h" // Szükséges a simulation_options_t és DiskParameters struktúrákhoz
+#include "simulation_types.h" // Szükséges a SimulationOptions és DiskParameters struktúrákhoz
 
 // Extern globális változók deklarációi, ha ezeket a dust_physics.c fájl használja
 // Ezeknek a definíciói valószínűleg a config.h-ban vagy a main.c-ben vannak.
@@ -17,7 +17,7 @@
 double calculateStokesNumber(double pradius, double sigma, DiskParameters *disk_params);
 
 // calculateParticleMass függvény prototípusa
-void calculateParticleMass(int n, double (*partmassind)[5], int indii, int indio, int indoi, int indoo, double *massiout, double *massoout, const simulation_options_t *sim_opts);
+void calculateParticleMass(int n, double (*partmassind)[5], int indii, int indio, int indoi, int indoo, double *massiout, double *massoout, const SimulationOptions *sim_opts);
 
 double calculateRadialDriftBarrier(double sigmad, double r, double p, double dp, double rho_p, const DiskParameters *disk_params);
 double calculateTurbulentFragmentationBarrier(double sigma, double r, double rho_p, const DiskParameters *disk_params);
@@ -33,11 +33,11 @@ double calculateDustParticleSize(double prad, double pdens, double sigma, double
 void calculateDustSurfaceDensity(double max_param, double min_param, double rad[][2], double radmicr[][2],
                 double *sigma_d, double *sigma_dm, double *massvec,
                 double *massmicrvec,double *rd, double *rmic,
-                const simulation_options_t *sim_opts, const DiskParameters *disk_params);
+                const SimulationOptions *sim_opts, const DiskParameters *disk_params);
 
 /*	Fuggveny a porszemcsek uj tavolsaganak elraktarozasara		*/
 void calculateDustDistance(const char *nev, int opt, double radius[][2], const double *sigmad, const double *rdvec,
-                double deltat, double t, int n, const simulation_options_t *sim_opts, const DiskParameters *disk_params);
+                double deltat, double t, int n, const SimulationOptions *sim_opts, const DiskParameters *disk_params);
 
 
 

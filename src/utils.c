@@ -135,7 +135,7 @@ double findZeroPoint(int i, const double *rvec, const double *dp) {
 /*	A nyomasi maximum korul 1H tavolsagban jeloli ki a korgyurut	*/
 void findRAnnulusAroundDZE(double rin, double *ind_ii, double *ind_io,
                             double rout, double *ind_oi, double *ind_oo,
-                            const simulation_options_t *sim_opts, DiskParameters *disk_params) {
+                            const SimulationOptions *sim_opts, DiskParameters *disk_params) {
 
 	    volatile int debug_marker = 0; // Adj hozzá ezt a sortAnArray
 

@@ -25,7 +25,7 @@ double calculateStokesNumber(double pradius, double sigma, DiskParameters *disk_
     return disk_params->particle_density_dimensionless * pradius * M_PI / (2.0 * sigma);
 }
 
-void calculateParticleMass(int n, double (*partmassind)[5], int indii, int indio, int indoi, int indoo, double *massiout, double *massoout, const simulation_options_t *sim_opts) {
+void calculateParticleMass(int n, double (*partmassind)[5], int indii, int indio, int indoi, int indoo, double *massiout, double *massoout, const SimulationOptions *sim_opts) {
 
     // Debug üzenet frissítve az indexekre
 
@@ -178,7 +178,7 @@ double calculateDustParticleSize(double prad, double pdens, double sigma, double
 
 void calculateDustSurfaceDensity(double max_param, double min_param, double rad[][2], double radmicr[][2], 
                 double *sigma_d, double *sigma_dm,  double *massvec, double *massmicrvec,  
-                double *rd, double *rmic, const simulation_options_t *sim_opts, const DiskParameters *disk_params) {
+                double *rd, double *rmic, const SimulationOptions *sim_opts, const DiskParameters *disk_params) {
 
     // Suppress unused parameter warnings
     (void)max_param;
@@ -233,7 +233,7 @@ void calculateDustSurfaceDensity(double max_param, double min_param, double rad[
 
 /*	Fuggveny a porszemcsek uj tavolsaganak elraktarozasara		*/
 void calculateDustDistance(const char *nev, int opt, double radius[][2], const double *sigmad, const double *rdvec,
-                double deltat, double t, int n, const simulation_options_t *sim_opts, const DiskParameters *disk_params){
+                double deltat, double t, int n, const SimulationOptions *sim_opts, const DiskParameters *disk_params){
 
     int i;
     double y, y_out, prad_new, particle_radius;

@@ -72,7 +72,7 @@ double calculateTimeStep(const DiskParameters *disk_params) { // Add const here 
 }
 
 
-void timeIntegrationForTheSystem(DiskParameters *disk_params, const simulation_options_t *sim_opts, output_files_t *output_files) {
+void timeIntegrationForTheSystem(DiskParameters *disk_params, const SimulationOptions *sim_opts, output_files_t *output_files) {
     ParticleData_t p_data;
     HeaderData_t header_data_for_files; // Később inicializáljuk a setupInitialOutputFiles-ban
 
@@ -123,9 +123,9 @@ void timeIntegrationForTheSystem(DiskParameters *disk_params, const simulation_o
 
     // DT felülbírálása, ha a felhasználó megadott kisebb értéket
     if (sim_opts->DT > 0.0 && sim_opts->DT < deltat) {
-        ((simulation_options_t *)sim_opts)->DT = deltat; // Az eredeti kód hibásan a deltat-t vette át, ha sim_opts->DT nagyobb volt
+        ((SimulationOptions *)sim_opts)->DT = deltat; // Az eredeti kód hibásan a deltat-t vette át, ha sim_opts->DT nagyobb volt
     } else {
-        ((simulation_options_t *)sim_opts)->DT = deltat; // Az eredeti kód szerint, ha nem kisebb, akkor deltat a DT
+        ((SimulationOptions *)sim_opts)->DT = deltat; // Az eredeti kód szerint, ha nem kisebb, akkor deltat a DT
     }
 
     // Mass accumulation változók

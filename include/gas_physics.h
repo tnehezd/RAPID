@@ -38,6 +38,6 @@ void calculateGasRadialVelocity(DiskParameters *disk_params); // disk_params nem
 
 /*	Fuggveny a sigma, p, dp kiszamolasara	*/
 // disk_params nem const, mert módosítva van a sigmavec, pressvec, dpressvec tagjai
-void refreshGasSurfaceDensityPressurePressureGradient(const simulation_options_t *sim_opts, DiskParameters *disk_params);
+void refreshGasSurfaceDensityPressurePressureGradient(const SimulationOptions *sim_opts, DiskParameters *disk_params);
 
 #endif // GAS_PHYSICS_H

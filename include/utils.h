@@ -31,7 +31,7 @@ double findZeroPoint(int i, const double *rvec, const double *dp);
 
 /* A nyomasi maximum korul 1H tavolsagban jeloli ki a korgyurut */
 // Feltehetően a disk_model.h tartalmazza a scale_height deklarációját.
-void findRAnnulusAroundDZE(double rin_val, double *ind_ii, double *ind_io, double rout_val, double *ind_oi, double *ind_oo, const simulation_options_t *sim_opts, DiskParameters *disk_params);
+void findRAnnulusAroundDZE(double rin_val, double *ind_ii, double *ind_io, double rout_val, double *ind_oi, double *ind_oo, const SimulationOptions *sim_opts, DiskParameters *disk_params);
 
 //fuggveny egy tomb elemeinek sorbarendezesere --> ezt jelenleg nem hasznalja sehol a program	
 void sortAnArray(double *rv,int n);
