@@ -4,9 +4,9 @@ This repository contains the source code for `RAPID` (Representative Approach fo
 
 The core of the code was originally written in C during my PhD between 2012 and 2015. It has since been restructured into a more modular form to improve its functionality and maintainability.
 
-#### ⚠️ Beta Version: This code is currently under active development!
+#### ⚠️ 2.0-Beta Version: This code is currently under active development!
 
-While the fundamental physics and algorithms are robust, the codebase is still under active development. A significant number of the internal comments are currently in Hungarian, which I am in the process of translating and updating to English.
+While the fundamental physics and algorithms are robust, the codebase is still under active development! A significant number of the internal comments are currently in Hungarian, which I am in the process of translating and updating to English. Furthermore, the original code was written in the early years of my PhD with moderate programming knowledge and some of the part of the code is a bit messy. Currently, I may make some break-point frefractoring for readability and maintainability, so alwys make sure to git pull before using my code. Besides, I'm updating function names, variable names, etc to follow the a naming convention (see [Coding Standard](docs/CodingStandard.md)). After I made all the ncessary changes, I'll release the stable version.
 
 ## Model Description
 
