@@ -53,6 +53,7 @@ int main(int argc, const char **argv) {
     DiskParameters disk_params; // Main disk parameters struct
     SimulationOptions sim_opts;
     OutputFiles output_files;
+    
 
     // Initialize output_files pointers to NULL
     output_files.dust_motion_file = NULL;
