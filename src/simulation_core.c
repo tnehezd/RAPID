@@ -184,6 +184,117 @@ static int isSnapshotDue(double current_time_years, double snapshot, double delt
     return (periodic_snapshot || initial_snapshot) && snapshot_sync;
 }
 
+static void simulateDustDriftStep(double *t, double deltat, double *snapshot, ParticleData *particle_data, int particle_number, DiskParameters *disk_params, const SimulationOptions *sim_opts,
+                                  OutputFiles *output_files, double *masstempiin, double *massmtempiin, double *masstempoin, double *massmtempoin, double *masstempiout, double *massmtempiout,
+                                  double *masstempoout, double *massmtempoout, double *tavin, double *tavout, char *dens_name, char *dust_name, char *dust_name2, char *size_name) {
+    double min_radius, max_radius;
+
+    computeParticleRadiusRange(particle_data, particle_number, sim_opts->option_for_dust_secondary_population, &min_radius, &max_radius);
+
+    // --- Snapshot feltétel ---
+    double current_time_years = *t / (2.0 * M_PI);
+
+    if (isSnapshotDue(current_time_years, *snapshot, deltat, sim_opts)) {
+
+        handleSnapshot(*t, current_time_years, snapshot, deltat, particle_data, disk_params, sim_opts, output_files, masstempiin, massmtempiin, masstempoin, massmtempoin,
+                       masstempiout, massmtempiout, masstempoout, massmtempoout, tavin, tavout, min_radius, max_radius, dens_name, dust_name, dust_name2, size_name);
+
+        snapshotInitAtT0(*t, current_time_years,particle_data, disk_params, sim_opts,particle_number, min_radius, max_radius);
+
+        snapshotPrintGas(current_time_years, disk_params, output_files,sim_opts, *snapshot);
+
+        snapshotPrintDust((int)(*snapshot), particle_data, disk_params,sim_opts, output_files, size_name);
+
+        snapshotResetMasses(particle_data, particle_number, sim_opts,masstempiout, massmtempiout, masstempoout, massmtempoout);
+
+        snapshotMassGrowthAndSigma(*t, *snapshot, particle_data, disk_params, sim_opts,output_files,masstempiin, massmtempiin, masstempoin, massmtempoin,
+                                   masstempiout, massmtempiout, masstempoout, massmtempoout,tavin, tavout, min_radius, max_radius);
+
+        fprintf(stderr, "snapshot set to %lg\n", *snapshot);
+
+        snapshotAdvance(snapshot, sim_opts);
+
+        closeSnapshotFiles(output_files, dens_name, dust_name, dust_name2, sim_opts);
+    }
+
+    // --- Gas evolution ---
+    if (sim_opts->option_for_evolution == 1.) {
+        refreshGasSurfaceDensityPressurePressureGradient(sim_opts, disk_params);
+    }
+
+    // --- Grid update ---
+    updateParticleGridIndices(particle_data->radius,particle_data->partmassind,particle_data->massvec,*t, particle_number, disk_params);
+
+    if (sim_opts->option_for_dust_secondary_population == 1) {
+        updateParticleGridIndices(particle_data->radiusmicr,particle_data->partmassmicrind,particle_data->massmicradial_grid,*t, particle_number, disk_params);
+    }
+
+    if (sim_opts->option_for_dust_growth == 1.) {
+        calculateDustSurfaceDensity(max_radius, min_radius,particle_data->radius, particle_data->radiusmicr,particle_data->sigmad, particle_data->sigmadm,
+                                    particle_data->massvec, particle_data->massmicradial_grid,particle_data->rdvec, particle_data->rmicvec,sim_opts, disk_params);
+    }
+
+    // --- Drift update ---
+    int optsize = 0;
+
+    calculateDustDistance(sim_opts->output_dir_name, optsize,particle_data->radius, particle_data->sigmad,particle_data->rdvec, deltat, *t,particle_number, sim_opts, disk_params);
+
+    if (sim_opts->option_for_dust_secondary_population == 1.) {
+        optsize = 1;
+        calculateDustDistance(sim_opts->output_dir_name, optsize,particle_data->radiusmicr, particle_data->sigmadm,particle_data->rmicvec, deltat, *t,particle_number, sim_opts, disk_params);
+    }
+
+    // --- Time advance ---
+    *t += deltat;
+}
+
+
+
+static void simulateGasOnlyStep(double *t,double deltat,double *snapshot,DiskParameters *disk_params,const SimulationOptions *sim_opts,OutputFiles *output_files,char *dens_name){
+    double current_time_years = *t / (2.0 * M_PI);
+
+    if (isSnapshotDue(current_time_years, *snapshot, deltat, sim_opts)) {
+
+        // --- Fájlnév generálás ---
+        snprintf(dens_name, MAX_PATH_LEN, "%s/%s/%s_%08d%s",sim_opts->output_dir_name,kLogFilesDirectory,kGasDensityProfileFilePrefix,(int)(*snapshot),kFileNamesSuffix);
+
+        fprintf(stderr,
+                "\n--- Simulation Time: %.2e years (Internal time: %.2e, snapshot: %.2e) ---\n",
+                current_time_years, *t, *snapshot);
+
+        // --- Fájl megnyitás ---
+        output_files->surface_file = fopen(dens_name, "w");
+        if (!output_files->surface_file) {
+            fprintf(stderr, "ERROR: Could not open %s for writing.\n", dens_name);
+        } else {
+            HeaderData gas_header_data = {
+                .current_time = current_time_years,
+                .is_initial_data = (current_time_years == 0.0)
+            };
+            printFileHeader(output_files->surface_file,FILE_TYPE_GAS_DENSITY,&gas_header_data);
+        }
+
+        // --- Gáz kimenet ---
+        printGasSurfaceDensityPressurePressureDerivateFile(disk_params, output_files);
+
+        // --- Fájl bezárás ---
+        if (output_files->surface_file) {
+            fclose(output_files->surface_file);
+            output_files->surface_file = NULL;
+        }
+
+        // --- Snapshot növelés ---
+        snapshotAdvance(snapshot, sim_opts);
+
+        fprintf(stderr, "snapshot updated to %lg\n", *snapshot);
+    }
+
+    // --- Gáz evolúció ---
+    refreshGasSurfaceDensityPressurePressureGradient(sim_opts, disk_params);
+
+    // --- Időlépés ---
+    *t += deltat;
+}
 
 
 void timeIntegrationForTheSystem(DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files) {
@@ -260,99 +371,12 @@ void timeIntegrationForTheSystem(DiskParameters *disk_params, const SimulationOp
     do {
         if (sim_opts->option_for_dust_drift == 1.) {
 
-            double min_radius, max_radius;
-
-            computeParticleRadiusRange(&particle_data,particle_number,sim_opts->option_for_dust_secondary_population,&min_radius,&max_radius);
-
-            // --- Kimeneti adatok (pillanatfelvétel) kezelése ---
-            double current_time_years = t / (2.0 * M_PI);
-            if (isSnapshotDue(current_time_years, snapshot, deltat, sim_opts)) {
-
-                handleSnapshot(t, current_time_years, &snapshot, deltat, &particle_data, disk_params, sim_opts, output_files, &masstempiin, &massmtempiin, &masstempoin, &massmtempoin, &masstempiout, &massmtempiout, &masstempoout, &massmtempoout,&tavin, &tavout, min_radius, max_radius, dens_name, dust_name, dust_name2, size_name);
-                snapshotInitAtT0(t, current_time_years, &particle_data, disk_params, sim_opts, particle_number, min_radius, max_radius);
-                snapshotPrintGas(current_time_years, disk_params, output_files, sim_opts, snapshot);
-                snapshotPrintDust((int)snapshot, &particle_data, disk_params, sim_opts, output_files, size_name);
-                snapshotResetMasses(&particle_data, particle_number, sim_opts, &masstempiout, &massmtempiout, &masstempoout, &massmtempoout);
-                snapshotMassGrowthAndSigma(t, snapshot,&particle_data, disk_params, sim_opts,output_files,&masstempiin, &massmtempiin,&masstempoin, &massmtempoin,&masstempiout, &massmtempiout,&masstempoout, &massmtempoout,&tavin, &tavout,min_radius, max_radius);
-
-                fprintf(stderr,"snapshot set to %lg\n",snapshot);
-                snapshotAdvance(&snapshot, sim_opts);
-                closeSnapshotFiles(output_files, dens_name, dust_name, dust_name2, sim_opts);
-            }
-
-            // Gas option_for_evolutionution
-            if (sim_opts->option_for_evolution == 1.) {
-                refreshGasSurfaceDensityPressurePressureGradient(sim_opts, disk_params);
-            }
-
-            // Count masses and get sigma_d for the next step (always done)
-            updateParticleGridIndices(particle_data.radius, particle_data.partmassind, particle_data.massvec, t, particle_number, disk_params);
-            if (sim_opts->option_for_dust_secondary_population == 1) updateParticleGridIndices(particle_data.radiusmicr, particle_data.partmassmicrind, particle_data.massmicradial_grid, t, particle_number, disk_params);
-
-            if (sim_opts->option_for_dust_growth == 1.) {
-                calculateDustSurfaceDensity(max_radius, min_radius, particle_data.radius, particle_data.radiusmicr, particle_data.sigmad, particle_data.sigmadm, particle_data.massvec, particle_data.massmicradial_grid, particle_data.rdvec, particle_data.rmicvec, sim_opts, disk_params);
-            }
-
-            // Get radii for next step
-            int optsize = 0;
-            calculateDustDistance(sim_opts->output_dir_name, optsize, particle_data.radius, particle_data.sigmad, particle_data.rdvec, deltat, t, particle_number, sim_opts, disk_params);
-
-            if (sim_opts->option_for_dust_secondary_population == 1.) {
-                optsize = 1;
-                calculateDustDistance(sim_opts->output_dir_name, optsize, particle_data.radiusmicr, particle_data.sigmadm, particle_data.rmicvec, deltat, t, particle_number, sim_opts, disk_params);
-
-            }
-
-            t = t + deltat;
-
-            // Kilépési feltétel a drift == 1 ágon
-            // Fontos: absolute_maximum_radius és absolute_minimum_radius frissül az előző szakaszban, azt használjuk itt.
-//            if (!(absolute_maximum_radius >= disk_params->r_min && absolute_minimum_radius != absolute_maximum_radius)) {
-//                fprintf(stderr,"DEBUG [timeIntegrationForTheSystem]: Simulation termination condition met (absolute_maximum_radius < r_min or absolute_minimum_radius == absolute_maximum_radius) at time: %lg.\n",snapshot);
-
-//                goto cleanup; // Ugrás a tisztításra
-//            }
+            simulateDustDriftStep(&t, deltat, &snapshot, &particle_data, particle_number, disk_params, sim_opts, output_files, &masstempiin, &massmtempiin, &masstempoin, &massmtempoin, &masstempiout, &massmtempiout, &masstempoout, &massmtempoout, &tavin, &tavout, dens_name, dust_name, dust_name2, size_name );
 
         } else { // sim_opts->option_for_dust_drift == 0. (Gas-only simulation)
-            double current_time_years = t / (2.0 * M_PI);
+            simulateGasOnlyStep(&t, deltat, &snapshot,disk_params, sim_opts, output_files,dens_name);
 
-            if ((fmod(current_time_years, (sim_opts->maximum_simulation_time / sim_opts->output_frequency)) < deltat || current_time_years == 0) && snapshot - current_time_years < deltat) {
-                fprintf(stderr,"\n--- Simulation Time: %.2e years (Internal time: %.2e, snapshot: %.2e) ---\n", current_time_years, t, snapshot);
-
-                fprintf(stderr,"DEBUG [timeIntegrationForTheSystem]: Outputting data for gas-only simulation at time %.2e. snapshot=%.2e\n", current_time_years, snapshot);
-                snprintf(dens_name, MAX_PATH_LEN, "%s/%s/%s_%08d.dat", sim_opts->output_dir_name, kLogFilesDirectory, kGasDensityProfileFilePrefix, (int)snapshot);
-                fprintf(stderr, "DEBUG [timeIntegrationForTheSystem]: Outputting %s_%08d.dat to %s.\n", kGasDensityProfileFilePrefix, (int)snapshot, dens_name);
-
-                output_files->surface_file = fopen(dens_name, "w");
-                if (output_files->surface_file == NULL) {
-                    fprintf(stderr, "ERROR: Could not open %s for writing in gas-only branch.\n", dens_name);
-                } else {
-                    fprintf(stderr, "DEBUG [timeIntegrationForTheSystem]: Opened %s for writing in gas-only branch.\n", dens_name);
-                    HeaderData gas_header_data = {.current_time = current_time_years, .is_initial_data = (current_time_years == 0.0)};
-                    printFileHeader(output_files->surface_file, FILE_TYPE_GAS_DENSITY, &gas_header_data);
-                }
-
-                printGasSurfaceDensityPressurePressureDerivateFile(disk_params, output_files);
-
-
-                if (output_files->surface_file != NULL) {
-                    fclose(output_files->surface_file);
-                    output_files->surface_file = NULL;
-                    fprintf(stderr, "DEBUG [timeIntegrationForTheSystem]: Closed %s in gas-only branch.\n", dens_name);
-                }
-
-                snapshot = snapshot + (double)(sim_opts->maximum_simulation_time / sim_opts->output_frequency);
-                fprintf(stderr,"DEBUG [timeIntegrationForTheSystem]: Updated snapshot to %.2e.\n", snapshot);
-            }
-
-            fprintf(stderr,"DEBUG [timeIntegrationForTheSystem]: Calling refreshGasSurfaceDensityPressurePressureGradient for gas-only evolution.\n");
-            refreshGasSurfaceDensityPressurePressureGradient(sim_opts, disk_params);
-            
-            t = t + deltat;
-
-        }
-
-
+        }    
     } while (t <= t_integration_in_internal_units);
 
     fprintf(stderr,"\n\nDEBUG [timeIntegrationForTheSystem]: Main simulation loop finished (t > t_integration_in_internal_units).\n");
