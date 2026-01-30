@@ -174,6 +174,17 @@ static void snapshotAdvance(double *snapshot, const SimulationOptions *sim_opts)
     *snapshot += (double)(sim_opts->maximum_simulation_time / sim_opts->output_frequency);
 }
 
+static int isSnapshotDue(double current_time_years, double snapshot, double deltat,const SimulationOptions *sim_opts) {
+    double interval = sim_opts->maximum_simulation_time / sim_opts->output_frequency;
+
+    int periodic_snapshot = (fmod(current_time_years, interval) < deltat);
+    int initial_snapshot  = (current_time_years == 0.0);
+    int snapshot_sync = ((snapshot - current_time_years) < deltat);
+
+    return (periodic_snapshot || initial_snapshot) && snapshot_sync;
+}
+
+
 
 void timeIntegrationForTheSystem(DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files) {
     ParticleData particle_data;
@@ -255,7 +266,7 @@ void timeIntegrationForTheSystem(DiskParameters *disk_params, const SimulationOp
 
             // --- Kimeneti adatok (pillanatfelvétel) kezelése ---
             double current_time_years = t / (2.0 * M_PI);
-            if ((fmod(current_time_years, (sim_opts->maximum_simulation_time / sim_opts->output_frequency)) < deltat || current_time_years == 0) && snapshot - current_time_years < deltat) {
+            if (isSnapshotDue(current_time_years, snapshot, deltat, sim_opts)) {
 
                 handleSnapshot(t, current_time_years, &snapshot, deltat, &particle_data, disk_params, sim_opts, output_files, &masstempiin, &massmtempiin, &masstempoin, &massmtempoin, &masstempiout, &massmtempiout, &masstempoout, &massmtempoout,&tavin, &tavout, min_radius, max_radius, dens_name, dust_name, dust_name2, size_name);
                 snapshotInitAtT0(t, current_time_years, &particle_data, disk_params, sim_opts, particle_number, min_radius, max_radius);
