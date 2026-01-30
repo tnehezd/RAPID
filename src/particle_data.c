@@ -13,7 +13,6 @@ int allocateParticleData(ParticleData *particle_data, size_t particle_count, int
     // Inicializálás NULL-ra
     particle_data->radius = NULL;
     particle_data->radiusmicr = NULL;
-    particle_data->radius_rec = NULL;
     particle_data->massvec = NULL;
     particle_data->massmicradial_grid = NULL;
     particle_data->partmassind = NULL;
@@ -32,7 +31,6 @@ int allocateParticleData(ParticleData *particle_data, size_t particle_count, int
     // Fő részecske tömbök
     particle_data->radius = malloc(particle_count * sizeof(*particle_data->radius));
     particle_data->radiusmicr = malloc(particle_count * sizeof(*particle_data->radiusmicr));
-    particle_data->radius_rec = malloc(particle_count * sizeof(*particle_data->radius_rec));
     particle_data->massvec = malloc(particle_count * sizeof(double));
     particle_data->massmicradial_grid = malloc(particle_count * sizeof(double));
     particle_data->partmassind = malloc(particle_count * sizeof(*particle_data->partmassind));
@@ -43,7 +41,7 @@ int allocateParticleData(ParticleData *particle_data, size_t particle_count, int
     particle_data->rmicvec = malloc(particle_count * sizeof(double));
 
     // Ellenőrzés
-    if (!particle_data->radius || !particle_data->radiusmicr || !particle_data->radius_rec || !particle_data->massvec || !particle_data->massmicradial_grid ||
+    if (!particle_data->radius || !particle_data->radiusmicr  || !particle_data->massvec || !particle_data->massmicradial_grid ||
         !particle_data->partmassind || !particle_data->partmassmicrind || !particle_data->sigmad || !particle_data->sigmadm ||
         !particle_data->rdvec || !particle_data->rmicvec) {
         fprintf(stderr, "ERROR [allocateParticleData]: Primary particle array allocation failed!\n");
@@ -71,7 +69,6 @@ void freeParticleData(ParticleData *particle_data) {
 
     free(particle_data->radius);
     free(particle_data->radiusmicr);
-    free(particle_data->radius_rec);
     free(particle_data->massvec);
     free(particle_data->massmicradial_grid);
     free(particle_data->partmassind);
@@ -84,7 +81,6 @@ void freeParticleData(ParticleData *particle_data) {
     // Fontos: a pointereket NULL-ra állítjuk felszabadítás után, hogy elkerüljük a dangling pointereket
     particle_data->radius = NULL;
     particle_data->radiusmicr = NULL;
-    particle_data->radius_rec = NULL;
     particle_data->massvec = NULL;
     particle_data->massmicradial_grid = NULL;
     particle_data->partmassind = NULL;

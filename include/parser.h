@@ -81,4 +81,6 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt);
  */
 void printUsageToTerminal();
 
+
+
 #endif // PARSER_H

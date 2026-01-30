@@ -34,44 +34,27 @@ void linearInterpolation(double *invec, double *radial_grid, double pos, double 
 }
 
 
-/*	megkeresi egy tomb maximumat	*/
-double findMaximumOfAnArray(double r[][2], int n) {
-
-	int i;
-	double maxim = -1.;
-
-	for(i = 0; i < n; i++) {
-
-		if (r[i][0] > maxim) {
-			maxim = r[i][0];
-		}
-	
-	}
-
-	return maxim;
+/* for solving d(sigma*nu)/dt = 3*nu*d2(sigma*nu)/dr2 + 9*hu/(2*r)*dsigma/dr	--> 3*nu  	*/
+double ftcsSecondDerivativeCoefficient(double radial_distance, const DiskParameters *disk_params){					
+    double second_derivate_coefficient;
+    second_derivate_coefficient = 3.0 * calculateKinematicViscosity(radial_distance, disk_params);
+    return second_derivate_coefficient;
 }
+
+/* for solving d(sigma*nu)/dt = 3*nu*d2(sigma*nu)/dr2 + 9*hu/(2*r)*dsigma/dr	--> 9*nu /(2*r)	*/
+double ftcsFirstDerivativeCoefficient(double radial_distance, const DiskParameters *disk_params){							
+    double first_derivate_coefficient;
+    first_derivate_coefficient = 9.0 * calculateKinematicViscosity(radial_distance,disk_params) / (2.0 * radial_distance);
+    return first_derivate_coefficient;
+}
+
+
 
 /*	minimum megkeresese harom elem kozul	*/
 double findMinimumOfAnArray(double s1, double s2, double s3) {
 
-	double min;
-	
-	if (s1 < s2) {
-		if (s1 < s3) {
-			min = s1;
-		} else {
-			min = s3;
-		}
-	} else {
-		if (s2 < s3) {
-			min = s2;	
-		} else {
-			min = s3;
-		}
-		
-	}  
+	double minimum = (s1 < s2) ? s1 : s2; return (minimum < s3) ? minimum : s3;
 
-	return min;
 }
 
 

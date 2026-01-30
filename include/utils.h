@@ -15,8 +15,25 @@
 void linearInterpolation(double *invec, double *radial_grid, double pos, double *out, double rd, int opt, const DiskParameters *disk_params);
 
 // megkeresi egy tomb maximumat
-double findMaximumOfAnArray(double r[][2], int n);
 double findMinimumOfAnArray(double s1, double s2, double s3);
+
+/**
+ * @brief Kiszámítja a viszkozitással kapcsolatos ftcsSecondDerivativeCoefficient együtthatót.
+ * A diffúziós egyenlet 3 * nu tagja.
+ * @param radial_distance Aktuális sugárpozíció [AU].
+ * @param disk_params A diszk paramétereit tartalmazó struktúra.
+ * @return Az ftcsSecondDerivativeCoefficient értéke.
+ */
+double ftcsSecondDerivativeCoefficient(double radial_distance, const DiskParameters *disk_params);
+
+/**
+ * @brief Kiszámítja a viszkozitással kapcsolatos ftcsFirstDerivativeCoefficient együtthatót.
+ * A diffúziós egyenlet 9 * nu / (2 * r) tagja.
+ * @param radial_distance Aktuális sugárpozíció [AU].
+ * @param disk_params A diszk paramétereit tartalmazó struktúra.
+ * @return Az ftcsFirstDerivativeCoefficient értéke.
+ */
+double ftcsFirstDerivativeCoefficient(double radial_distance, const DiskParameters *disk_params);
 
 //counting the number of zero points of the pressure gradient function	
 int countZeroPoints(const DiskParameters *disk_params);

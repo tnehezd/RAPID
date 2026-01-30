@@ -3,6 +3,7 @@
 #include <string.h>
 #include <errno.h>    // For errno
 
+
 #ifdef _WIN32
     #include <direct.h>
     #define MKDIR_CALL(path) _mkdir(path)
@@ -652,7 +653,6 @@ void cleanupSimulationResources(ParticleData *particle_data, OutputFiles *output
     if (particle_number > 0) {
         free(particle_data->radius); particle_data->radius = NULL;
         free(particle_data->radiusmicr); particle_data->radiusmicr = NULL;
-        free(particle_data->radius_rec); particle_data->radius_rec = NULL;
         free(particle_data->massvec); particle_data->massvec = NULL;
         free(particle_data->massmicradial_grid); particle_data->massmicradial_grid = NULL;
         free(particle_data->partmassind); particle_data->partmassind = NULL;
@@ -681,6 +681,49 @@ void cleanupSimulationResources(ParticleData *particle_data, OutputFiles *output
         fprintf(stderr, "DEBUG [cleanupSimulationResources]: Closed %s%s\n", kDustAccumulationFileName,kFileNamesSuffix);
     }
 }
+
+
+FILE *openSnapshotFile(const char *file_name, FileType_e file_type, double current_time_years){
+    FILE *file = fopen(file_name, "w");
+    if (file == NULL) {
+        fprintf(stderr, "ERROR: Could not open %s for writing.\n", file_name);
+        return NULL;
+    }
+
+    HeaderData header = {
+        .current_time = current_time_years,
+        .is_initial_data = (current_time_years == 0.0)
+    };
+
+    printFileHeader(file, file_type, &header);
+
+    return file;
+}
+
+
+void buildSnapshotFilenames(char *dens_name, char *dust_name, char *dust_name2, char *size_name, const SimulationOptions *sim_opts, int snapshot_id){
+    // Gáz sűrűség fájl
+    snprintf(dens_name, MAX_PATH_LEN, "%s/%s/%s_%08d%s",
+             sim_opts->output_dir_name, kLogFilesDirectory,
+             kGasDensityProfileFilePrefix, snapshot_id, kFileNamesSuffix);
+
+    // Por sűrűség fájl
+    snprintf(dust_name, MAX_PATH_LEN, "%s/%s/%s_%08d%s",
+             sim_opts->output_dir_name, kLogFilesDirectory,
+             kDustDensityProfileFilePrefix, snapshot_id, kFileNamesSuffix);
+
+    // Mikron por fájl
+/*    snprintf(dust_name2, MAX_PATH_LEN, "%s/%s/%s_%08d%s",
+             sim_opts->output_dir_name, kLogFilesDirectory,
+             kDustDensityProfileFilePrefix, snapshot_id, kFileNamesSuffix);
+*/
+    // Részecskeméret fájl
+    snprintf(size_name, MAX_PATH_LEN, "%s/%s/%s_%08d%s",
+             sim_opts->output_dir_name, kLogFilesDirectory,
+             kDustParticleSizeFileName, snapshot_id, kFileNamesSuffix);
+}
+
+
 
 // Segédfüggvény a pillanatfelvételek fájljainak bezárására
 void closeSnapshotFiles(OutputFiles *output_files, const char *dens_name, const char *dust_name, const char *dust_name2, const SimulationOptions *sim_opts) {

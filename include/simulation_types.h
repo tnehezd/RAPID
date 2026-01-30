@@ -105,4 +105,20 @@ typedef struct {
     // Add other file pointers here if you need more output files
 } OutputFiles;
 
+
+typedef enum {
+    SnapshotNonevolving = 0,
+    SnapshotGas = 1,
+    SnapshotDrift = 2,
+    SnapshotGrowth = 3,
+    SnapshotDriftTwoPop = 4,
+    SnapshotGrowthTwoPop = 5
+} SnapshotMode;
+
+
+SnapshotMode determineSnapshotMode(const SimulationOptions *sim_opts);
+const char* snapshotModeToString(SnapshotMode mode);
+
+
+
 #endif // SIMULATION_TYPES_H

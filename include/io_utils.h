@@ -61,8 +61,6 @@ void printDustParticleSizeFile(char *size_name, int step, double (*rad)[2], doub
 
 
 
-
-
 // Enumeráció a fájltípusok azonosítására
 typedef enum {
     FILE_TYPE_DUST_MOTION,
@@ -111,7 +109,12 @@ int setupInitialOutputFiles(OutputFiles *output_files, const SimulationOptions *
 
 void cleanupSimulationResources(ParticleData *particle_data, OutputFiles *output_files, const SimulationOptions *sim_opts);
 
+FILE *openSnapshotFile(const char *filename,FileType_e file_type,double current_time_years);
+
 void closeSnapshotFiles(OutputFiles *output_files, const char *dens_name, const char *dust_name, const char *dust_name2, const SimulationOptions *sim_opts);
+
+
+void buildSnapshotFilenames(char *dens_name, char *dust_name, char *dust_name2, char *size_name, const SimulationOptions *sim_opts, int snapshot_id);
 
 
 #endif // IO_UTILS_H
