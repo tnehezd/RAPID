@@ -683,10 +683,10 @@ void cleanupSimulationResources(ParticleData *particle_data, OutputFiles *output
 }
 
 
-FILE *openSnapshotFile(const char *filename,FileType_e file_type,double current_time_years){
-    FILE *f = fopen(filename, "w");
-    if (f == NULL) {
-        fprintf(stderr, "ERROR: Could not open %s for writing.\n", filename);
+FILE *openSnapshotFile(const char *file_name, FileType_e file_type, double current_time_years){
+    FILE *file = fopen(file_name, "w");
+    if (file == NULL) {
+        fprintf(stderr, "ERROR: Could not open %s for writing.\n", file_name);
         return NULL;
     }
 
@@ -695,11 +695,33 @@ FILE *openSnapshotFile(const char *filename,FileType_e file_type,double current_
         .is_initial_data = (current_time_years == 0.0)
     };
 
-    printFileHeader(f, file_type, &header);
+    printFileHeader(file, file_type, &header);
 
-    return f;
+    return file;
 }
 
+
+void buildSnapshotFilenames(char *dens_name, char *dust_name, char *dust_name2, char *size_name, const SimulationOptions *sim_opts, int snapshot_id){
+    // Gáz sűrűség fájl
+    snprintf(dens_name, MAX_PATH_LEN, "%s/%s/%s_%08d%s",
+             sim_opts->output_dir_name, kLogFilesDirectory,
+             kGasDensityProfileFilePrefix, snapshot_id, kFileNamesSuffix);
+
+    // Por sűrűség fájl
+    snprintf(dust_name, MAX_PATH_LEN, "%s/%s/%s_%08d%s",
+             sim_opts->output_dir_name, kLogFilesDirectory,
+             kDustDensityProfileFilePrefix, snapshot_id, kFileNamesSuffix);
+
+    // Mikron por fájl
+/*    snprintf(dust_name2, MAX_PATH_LEN, "%s/%s/%s_%08d%s",
+             sim_opts->output_dir_name, kLogFilesDirectory,
+             kDustDensityProfileFilePrefix, snapshot_id, kFileNamesSuffix);
+*/
+    // Részecskeméret fájl
+    snprintf(size_name, MAX_PATH_LEN, "%s/%s/%s_%08d%s",
+             sim_opts->output_dir_name, kLogFilesDirectory,
+             kDustParticleSizeFileName, snapshot_id, kFileNamesSuffix);
+}
 
 
 
