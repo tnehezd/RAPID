@@ -312,7 +312,7 @@ int main(int argc, const char **argv) {
         fprintf(stderr, "DEBUG [main]: Calling timeIntegrationForTheSystem...\n");
         // Pass sim_opts to timeIntegrationForTheSystem.
         // timeIntegrationForTheSystem must ensure to use the correct (numbered) output_dir_name.
-        timeIntegrationForTheSystem(&disk_params, &sim_opts, &output_files);
+        timeIntegrationForTheSystem(mode,&disk_params, &sim_opts, &output_files);
         fprintf(stderr, "DEBUG [main]: timeIntegrationForTheSystem completed. Program finished normally.\n");
     }
 

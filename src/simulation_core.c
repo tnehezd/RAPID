@@ -297,7 +297,7 @@ static void simulateGasOnlyStep(double *t,double deltat,double *snapshot,DiskPar
 }
 
 
-void timeIntegrationForTheSystem(DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files) {
+void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files) {
     ParticleData particle_data;
     HeaderData header_data_for_files; // Később inicializáljuk a setupInitialOutputFiles-ban
 
@@ -309,8 +309,10 @@ void timeIntegrationForTheSystem(DiskParameters *disk_params, const SimulationOp
         exit(1); // Program leállítása, ha kritikus hiba van
     }
 
+
+
     // --- Inicializálási szakasz ---
-    if (sim_opts->option_for_dust_drift == 1.) {
+    if (mode > 2) {
         particle_number = calculateNumbersOfParticles(sim_opts->dust_input_filename);
     } else {
         fprintf(stderr, "ERROR [timeIntegrationForTheSystem]: Particle drift is OFF. particle_number set to 0.\n");
@@ -323,7 +325,7 @@ void timeIntegrationForTheSystem(DiskParameters *disk_params, const SimulationOp
     }
 
     // Fájl inicializálás a meglévő io_utils függvény hívásával
-    if (sim_opts->option_for_dust_drift == 1.) {
+    if (mode>2) {
         if (setupInitialOutputFiles(output_files, sim_opts, disk_params, &header_data_for_files) != 0) {
             fprintf(stderr, "ERROR: Failed to set up initial output files. Exiting.\n");
             exit(EXIT_FAILURE);
@@ -369,7 +371,7 @@ void timeIntegrationForTheSystem(DiskParameters *disk_params, const SimulationOp
 
     // --- Fő szimulációs ciklus ---
     do {
-        if (sim_opts->option_for_dust_drift == 1.) {
+        if (mode > 1) {
 
             simulateDustDriftStep(&t, deltat, &snapshot, &particle_data, particle_number, disk_params, sim_opts, output_files, &masstempiin, &massmtempiin, &masstempoin, &massmtempoin, &masstempiout, &massmtempiout, &masstempoout, &massmtempoout, &tavin, &tavout, dens_name, dust_name, dust_name2, size_name );
 
