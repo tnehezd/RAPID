@@ -78,6 +78,11 @@ int main(int argc, const char **argv) {
 
     fprintf(stderr, "DEBUG [main]: Evolution (sim_opts.option_for_evolution=%.2f) or drift (sim_opts.option_for_dust_drift=%.2f) is ON. Starting main simulation loop.\n", sim_opts.option_for_evolution, sim_opts.option_for_dust_drift);
 
+    SnapshotMode mode = determineSnapshotMode(&sim_opts);
+    fprintf(stderr, "DEBUG [main]: SnapshotMode = %s\n", snapshotModeToString(mode));
+
+
+
     // --- Populate DiskParameters with parameters from 'def' ---
     disk_params.r_min = def.rmin_val;
     disk_params.r_max = def.rmax_val;
@@ -271,7 +276,7 @@ int main(int argc, const char **argv) {
     printCurrentInformationAboutRun(def.output_dir_name, &disk_params, &sim_opts);
 
     // Run simulation or exit based on options
-    if(sim_opts.option_for_evolution == 0. && sim_opts.option_for_dust_drift == 0.) {
+    if(mode == SnapshotNonevolving) {
         fprintf(stderr, "DEBUG [main]: Evolution (sim_opts.option_for_evolution=%.2f) and drift (sim_opts.option_for_dust_drift=%.2f) are OFF.\n", sim_opts.option_for_evolution, sim_opts.option_for_dust_drift);
 
         char dens_name_initial[MAX_PATH_LEN];
@@ -300,7 +305,9 @@ int main(int argc, const char **argv) {
 
         fprintf(stderr, "DEBUG [main]: printGasSurfaceDensityPressurePressureDerivateFile completed. Program exiting.\n");
     } else {
-        fprintf(stderr, "DEBUG [main]: Evolution (sim_opts.option_for_evolution=%.2f) or drift (sim_opts.option_for_dust_drift=%.2f) is ON. Starting main simulation loop.\n", sim_opts.option_for_evolution, sim_opts.option_for_dust_drift);
+        fprintf(stderr, "**********************************************************",snapshotModeToString(mode));
+
+        fprintf(stderr, "\n\nDEBUG [main]: Disk evolution is ON (mode: %s). Starting main simulation loop.\n\n",snapshotModeToString(mode));
         fprintf(stderr, "DEBUG [main]: Calling timeIntegrationForTheSystem...\n");
         // Pass sim_opts to timeIntegrationForTheSystem.
         // timeIntegrationForTheSystem must ensure to use the correct (numbered) output_dir_name.
