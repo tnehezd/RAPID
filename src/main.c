@@ -49,6 +49,13 @@ int main(int argc, const char **argv) {
         return retCode;
     }
 
+    // Remove trailing slash from output directory name
+    size_t len = strlen(def.output_dir_name);
+    if (len > 0 && def.output_dir_name[len - 1] == '/') {
+        def.output_dir_name[len - 1] = '\0';
+    }
+
+
     // --- Declare instances of the new simulation structs ---
     DiskParameters disk_params; // Main disk parameters struct
     SimulationOptions sim_opts;

@@ -206,9 +206,9 @@ void calculateDustSurfaceDensity(double max_param, double min_param, const Parti
     // Ha ezek a függvények valamilyen globális állapotot módosítanak, akkor kritikusak.
     // Feltételezve, hogy a 'sigdtemp' és 'sigdmicrtemp' kizárólagosan a hívásaikban vannak feldolgozva,
     // és nem ütköznek más szálakkal globális adatokon keresztül.
-    calculateInitialDustSurfaceDensity(particle_data->particle_distance_array, particle_data->particle_mass_array, sigdtemp, particle_number,disk_params);
+    calculateDustSurfaceDensityFromRepresentativeMass(particle_data->particle_distance_array, particle_data->particle_mass_array, sigdtemp, particle_number,disk_params);
     if (sim_opts->option_for_dust_secondary_population == 1.0) { // Használjunk double összehasonlítást
-        calculateInitialDustSurfaceDensity(particle_data->micron_particle_distance_array, particle_data->massmicradial_grid, sigdmicrtemp, particle_number,disk_params);
+        calculateDustSurfaceDensityFromRepresentativeMass(particle_data->micron_particle_distance_array, particle_data->massmicradial_grid, sigdmicrtemp, particle_number,disk_params);
     }
 
     mergeParticlesByRadius(sigdtemp, dd, particle_number,disk_params);

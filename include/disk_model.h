@@ -14,6 +14,6 @@ void createInitialGasSurfaceDensity(DiskParameters *disk_params);
 void createInitialGasPressure(DiskParameters *disk_params);
 void createInitialGasPressureGradient(DiskParameters *disk_params);
 void createInitialGasVelocity(DiskParameters *disk_params);
-void calculateInitialDustSurfaceDensity(double radin[][2], double *massin, double out[][3], int n, const DiskParameters *disk_params);
+void calculateDustSurfaceDensityFromRepresentativeMass(double radin[][2], double *massin, double out[][3], int n, const DiskParameters *disk_params);
 
 #endif // DISK_MODEL_H

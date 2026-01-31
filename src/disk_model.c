@@ -87,7 +87,7 @@ void createInitialGasVelocity(DiskParameters *disk_params){
 
 
 
-void calculateInitialDustSurfaceDensity(double radin[][2], double *massin, double out[][3], int n, const DiskParameters *disk_params) {
+void calculateDustSurfaceDensityFromRepresentativeMass(double radin[][2], double *massin, double out[][3], int n, const DiskParameters *disk_params) {
 
 	int i;
 
