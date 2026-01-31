@@ -66,7 +66,7 @@ void roundParticleRadii(double in[][3], int n, const DiskParameters *disk_params
 
 void mergeParticlesByRadius(double in[][3], double dd, int n, const DiskParameters *disk_params); 
 
-void updateParticleGridIndices(double radin[][2], double partmassindin[][5], double *massvecin, double t, int n, const DiskParameters *disk_params);
+void updateParticleGridIndices(const ParticleData *particle_data, double t, int n, const DiskParameters *disk_params);
 
 
 void computeParticleRadiusRange(

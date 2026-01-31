@@ -376,7 +376,7 @@ void mergeParticlesByRadius(double in[][3], double dd, int n, const DiskParamete
 
 }
 
-void updateParticleGridIndices(double radin[][2], double partmassindin[][5], double *massvecin, double t, int n, const DiskParameters *disk_params) {
+void updateParticleGridIndices(const ParticleData *particle_data, double t, int n, const DiskParameters *disk_params) {
 
     int i, rindex;
     double rmid;  
@@ -384,17 +384,17 @@ void updateParticleGridIndices(double radin[][2], double partmassindin[][5], dou
 
     for (i = 0; i < n; i++) {   
         // A részecske aktuális sugara radin[i][0]-ban van
-        rmid = (radin[i][0] - disk_params->r_min) / disk_params->delta_r; 
+        rmid = (particle_data->particle_distance_array[i][0] - disk_params->r_min) / disk_params->delta_r; 
         rindex = (int) floor(rmid+0.5);
         if(rmid < 0) rindex = 0;
         if(isnan(rmid)) rindex = 0;
 
 
-		if(n == particle_number) partmassindin[i][0] = massvecin[i];							/*	mass of the particles				*/
-		partmassindin[i][1] = rindex;							/*	initial distance of the particles				*/
+		if(n == particle_number) particle_data->partmassind[i][0] = particle_data->particle_mass_array[i];							/*	mass of the particles				*/
+		particle_data->partmassind[i][1] = rindex;							/*	initial distance of the particles				*/
 		if(t == 0) {
-			partmassindin[i][2] = partmassindin[i][0];							/*	initial distance of the particles				*/
-			partmassindin[i][3] = 0;
+			particle_data->partmassind[i][2] = particle_data->partmassind[i][0];							/*	initial distance of the particles				*/
+			particle_data->partmassind[i][3] = 0;
 		}
  	
 	}
@@ -408,7 +408,7 @@ void computeParticleRadiusRange(const ParticleData *particle_data,int particle_n
     double max_primary = -HUGE_VAL;
 
     for (int i = 0; i < particle_number; i++) {
-        double particle_radius = particle_data->radius[i][0];
+        double particle_radius = particle_data->particle_distance_array[i][0];
         if (particle_radius > 0.0) {
             if (particle_radius < min_primary) min_primary = particle_radius;
             if (particle_radius > max_primary) max_primary = particle_radius;
@@ -420,7 +420,7 @@ void computeParticleRadiusRange(const ParticleData *particle_data,int particle_n
 
     if (has_secondary_population) {
         for (int i = 0; i < particle_number; i++) {
-            double particle_radius = particle_data->radiusmicr[i][0];
+            double particle_radius = particle_data->micron_particle_distance_array[i][0];
             if (particle_radius > 0.0) {
                 if (particle_radius < min_secondary) min_secondary = particle_radius;
                 if (particle_radius > max_secondary) max_secondary = particle_radius;

@@ -7,9 +7,9 @@
 
 // Struktúra a dinamikusan allokált részecskeadatok tárolására
 typedef struct {
-    double (*radius)[2];
-    double (*radiusmicr)[2];
-    double *massvec;
+    double (*particle_distance_array)[2];
+    double (*micron_particle_distance_array)[2];
+    double *particle_mass_array;
     double *massmicradial_grid;
     double (*partmassind)[5];
     double (*partmassmicrind)[5];

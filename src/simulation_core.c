@@ -85,11 +85,11 @@ static void handleSnapshot(double t, double current_time_years, double *snapshot
 static void snapshotInitAtT0(double t, double current_time_years, ParticleData *particle_data, DiskParameters *disk_params, const SimulationOptions *sim_opts, int particle_number, double min_radius, double max_radius) {
     // Eredeti t==0 logika
     if (current_time_years == 0) {
-        updateParticleGridIndices(particle_data->radius,  particle_data->partmassind,  particle_data->massvec, t, particle_number, disk_params);
-        if (sim_opts->option_for_dust_secondary_population == 1) updateParticleGridIndices( particle_data->radiusmicr,  particle_data->partmassmicrind,  particle_data->massmicradial_grid, t, particle_number, disk_params);
+        updateParticleGridIndices(particle_data, t, particle_number, disk_params);
+        if (sim_opts->option_for_dust_secondary_population == 1) updateParticleGridIndices(particle_data, t, particle_number, disk_params);
 
             if (sim_opts->option_for_dust_growth == 1.) {
-                calculateDustSurfaceDensity(max_radius, min_radius,  particle_data->radius,  particle_data->radiusmicr,  particle_data->sigmad,  particle_data->sigmadm,  particle_data->massvec,  particle_data->massmicradial_grid,  particle_data->rdvec,  particle_data->rmicvec, sim_opts, disk_params);
+                calculateDustSurfaceDensity(max_radius, min_radius,  particle_data->particle_distance_array,  particle_data->micron_particle_distance_array,  particle_data->sigmad,  particle_data->sigmadm,  particle_data->particle_mass_array,  particle_data->massmicradial_grid,  particle_data->rdvec,  particle_data->rmicvec, sim_opts, disk_params);
             }
         }
 }
@@ -105,7 +105,7 @@ static void snapshotPrintGas(double current_time_years, DiskParameters *disk_par
 
 static void snapshotPrintDust(int snapshot, ParticleData *particle_data, DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files, char *size_name) {
     if (sim_opts->option_for_dust_drift == 1) {
-        printDustParticleSizeFile(size_name, snapshot, particle_data->radius, particle_data->radiusmicr, disk_params, sim_opts, output_files);
+        printDustParticleSizeFile(size_name, snapshot, particle_data->particle_distance_array, particle_data->micron_particle_distance_array, disk_params, sim_opts, output_files);
     }
 }
 
@@ -189,25 +189,25 @@ static void simulateDustDriftStep(double *t, double deltat, double *snapshot, Pa
     }
 
     // --- Grid update ---
-    updateParticleGridIndices(particle_data->radius,particle_data->partmassind,particle_data->massvec,*t, particle_number, disk_params);
+    updateParticleGridIndices(particle_data,*t, particle_number, disk_params);
 
     if (sim_opts->option_for_dust_secondary_population == 1) {
-        updateParticleGridIndices(particle_data->radiusmicr,particle_data->partmassmicrind,particle_data->massmicradial_grid,*t, particle_number, disk_params);
+        updateParticleGridIndices(particle_data,*t, particle_number, disk_params);
     }
 
     if (sim_opts->option_for_dust_growth == 1.) {
-        calculateDustSurfaceDensity(max_radius, min_radius,particle_data->radius, particle_data->radiusmicr,particle_data->sigmad, particle_data->sigmadm,
-                                    particle_data->massvec, particle_data->massmicradial_grid,particle_data->rdvec, particle_data->rmicvec,sim_opts, disk_params);
+        calculateDustSurfaceDensity(max_radius, min_radius,particle_data->particle_distance_array, particle_data->micron_particle_distance_array,particle_data->sigmad, particle_data->sigmadm,
+                                    particle_data->particle_mass_array, particle_data->massmicradial_grid,particle_data->rdvec, particle_data->rmicvec,sim_opts, disk_params);
     }
 
     // --- Drift update ---
     int optsize = 0;
 
-    calculateDustDistance(sim_opts->output_dir_name, optsize,particle_data->radius, particle_data->sigmad,particle_data->rdvec, deltat, *t,particle_number, sim_opts, disk_params);
+    calculateDustDistance(sim_opts->output_dir_name, optsize,particle_data->particle_distance_array, particle_data->sigmad,particle_data->rdvec, deltat, *t,particle_number, sim_opts, disk_params);
 
     if (sim_opts->option_for_dust_secondary_population == 1.) {
         optsize = 1;
-        calculateDustDistance(sim_opts->output_dir_name, optsize,particle_data->radiusmicr, particle_data->sigmadm,particle_data->rmicvec, deltat, *t,particle_number, sim_opts, disk_params);
+        calculateDustDistance(sim_opts->output_dir_name, optsize,particle_data->micron_particle_distance_array, particle_data->sigmadm,particle_data->rmicvec, deltat, *t,particle_number, sim_opts, disk_params);
     }
 
     // --- Time advance ---
@@ -272,7 +272,7 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
         exit(1); // Program leállítása, ha kritikus hiba van
     }
 
-
+    memset(&particle_data, 0, sizeof(ParticleData));
 
     // --- Inicializálási szakasz ---
     if (mode > 2) {
@@ -294,7 +294,7 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
             exit(EXIT_FAILURE);
         }
         // loadDustParticlesFromFile hívása a részecskeadatok beolvasására
-        loadDustParticlesFromFile(particle_data.radius, particle_data.radiusmicr, particle_data.massvec, particle_data.massmicradial_grid, sim_opts->dust_input_filename);
+        loadDustParticlesFromFile(&particle_data, sim_opts->dust_input_filename);
     }
 
     int i; // Hagyjuk meg ezt a ciklusváltozót a C89 kompatibilitás kedvéért, ha szükséges
@@ -324,8 +324,8 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
 
     if (sim_opts->option_for_dust_secondary_population == 0 && particle_number > 0) {
         for (i = 0; i < particle_number; i++) {
-            particle_data.radiusmicr[i][0] = 0;
-            particle_data.radiusmicr[i][1] = 0;
+            particle_data.micron_particle_distance_array[i][0] = 0;
+            particle_data.micron_particle_distance_array[i][1] = 0;
             particle_data.partmassmicrind[i][0] = 0;
             particle_data.partmassmicrind[i][1] = 0;
             particle_data.massmicradial_grid[i] = 0;

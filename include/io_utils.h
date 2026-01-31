@@ -19,7 +19,7 @@ int calculateNumbersOfParticles(const char *filenev);
 /* A porreszecskek adatainak beolvasasa */
 // FIX: The original had 'void loadDustParticlesFromFile(double radius[][2], double radiusmicr[][2], double *mass, double *massmicr);'
 // You are missing the 'const char *filename' parameter in the .h file.
-void loadDustParticlesFromFile(double radius[][2], double radiusmicr[][2], double *mass, double *massmicr, const char *filename);
+void loadDustParticlesFromFile(ParticleData *particle_data, const char *filename);
 
 /* A sigmat tartalmazo file parametereinek beolvasasa */
 void loadGasSurfaceDensityFromFile(DiskParameters *disk_params, const char *filename);

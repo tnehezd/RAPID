@@ -31,7 +31,7 @@ double calculateDustParticleSize(double prad, double pdens, double sigma, double
 
 // Porkorong sűrűségének számítása
 void calculateDustSurfaceDensity(double max_param, double min_param, double rad[][2], double radmicr[][2],
-                double *sigma_d, double *sigma_dm, double *massvec,
+                double *sigma_d, double *sigma_dm, double *particle_mass_array,
                 double *massmicradial_grid,double *rd, double *rmic,
                 const SimulationOptions *sim_opts, const DiskParameters *disk_params);
 

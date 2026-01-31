@@ -177,7 +177,7 @@ double calculateDustParticleSize(double prad, double pdens, double sigma, double
 
 
 void calculateDustSurfaceDensity(double max_param, double min_param, double rad[][2], double radmicr[][2], 
-                double *sigma_d, double *sigma_dm,  double *massvec, double *massmicradial_grid,  
+                double *sigma_d, double *sigma_dm,  double *particle_mass_array, double *massmicradial_grid,  
                 double *rd, double *rmic, const SimulationOptions *sim_opts, const DiskParameters *disk_params) {
 
     // Suppress unused parameter warnings
@@ -207,7 +207,7 @@ void calculateDustSurfaceDensity(double max_param, double min_param, double rad[
     // Ha ezek a függvények valamilyen globális állapotot módosítanak, akkor kritikusak.
     // Feltételezve, hogy a 'sigdtemp' és 'sigdmicrtemp' kizárólagosan a hívásaikban vannak feldolgozva,
     // és nem ütköznek más szálakkal globális adatokon keresztül.
-    calculateInitialDustSurfaceDensity(rad, massvec, sigdtemp, particle_number,disk_params);
+    calculateInitialDustSurfaceDensity(rad, particle_mass_array, sigdtemp, particle_number,disk_params);
     if (sim_opts->option_for_dust_secondary_population == 1.0) { // Használjunk double összehasonlítást
         calculateInitialDustSurfaceDensity(radmicr, massmicradial_grid, sigdmicrtemp, particle_number,disk_params);
     }

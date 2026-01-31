@@ -69,7 +69,7 @@ int calculateNumbersOfParticles(const char *filenev) {
 }
 
 /* A porreszecskek adatainak beolvasasa */
-void loadDustParticlesFromFile(double radius[][2], double radiusmicr[][2], double *mass, double *massmicr, const char *filename) {
+void loadDustParticlesFromFile(ParticleData *particle_data, const char *filename) {
 
     int i, dummy;
     double distance, particle_radius, radmicr;
@@ -98,13 +98,13 @@ void loadDustParticlesFromFile(double radius[][2], double radiusmicr[][2], doubl
 
     for (i = 0; i < particle_number; i++) {
         if(fscanf(load_dust_particles_file,"%d %lg %Lg %Lg %lg %lg",&dummy,&distance,&reprmass,&reprmassmicr,&particle_radius,&radmicr) == 6) {
-            radius[i][0] = distance;
-            radius[i][1] = particle_radius / AU_IN_CM; // AU_IN_CM from config.h
-            mass[i] = reprmass;
+            particle_data->particle_distance_array[i][0] = distance;
+            particle_data->particle_distance_array[i][1] = particle_radius / AU_IN_CM; // AU_IN_CM from config.h
+            particle_data->particle_mass_array[i] = reprmass;
 
-            radiusmicr[i][0] = distance;
-            radiusmicr[i][1] = radmicr / AU_IN_CM; // AU_IN_CM from config.h
-            massmicr[i] = reprmassmicr;
+            particle_data->micron_particle_distance_array[i][0] = distance;
+            particle_data->micron_particle_distance_array[i][1] = radmicr / AU_IN_CM; // AU_IN_CM from config.h
+            particle_data->massmicradial_grid[i] = reprmassmicr;
         } else {
             fprintf(stderr, "\n\n******************* ERROR!      *********************\n\n");
             fprintf(stderr, "   Failed to read line %d from particle data file '%s'!\n", i, filename);
@@ -651,9 +651,9 @@ int setupInitialOutputFiles(OutputFiles *output_files, const SimulationOptions *
 
 void cleanupSimulationResources(ParticleData *particle_data, OutputFiles *output_files, const SimulationOptions *sim_opts) {
     if (particle_number > 0) {
-        free(particle_data->radius); particle_data->radius = NULL;
-        free(particle_data->radiusmicr); particle_data->radiusmicr = NULL;
-        free(particle_data->massvec); particle_data->massvec = NULL;
+        free(particle_data->particle_distance_array); particle_data->particle_distance_array = NULL;
+        free(particle_data->micron_particle_distance_array); particle_data->micron_particle_distance_array = NULL;
+        free(particle_data->particle_mass_array); particle_data->particle_mass_array = NULL;
         free(particle_data->massmicradial_grid); particle_data->massmicradial_grid = NULL;
         free(particle_data->partmassind); particle_data->partmassind = NULL;
         free(particle_data->partmassmicrind); particle_data->partmassmicrind = NULL;
