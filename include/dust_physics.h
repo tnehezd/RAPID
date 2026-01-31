@@ -34,8 +34,7 @@ double calculateDustParticleSize(double prad, double pdens, double sigma, double
 void calculateDustSurfaceDensity(double max_param, double min_param, const ParticleData *particle_data, const SimulationOptions *sim_opts, const DiskParameters *disk_params);
 
 /*	Fuggveny a porszemcsek uj tavolsaganak elraktarozasara		*/
-void calculateDustDistance(const char *nev, int opt, double radius[][2], const double *sigmad, const double *rdvec,
-                double deltat, double t, int n, const SimulationOptions *sim_opts, const DiskParameters *disk_params);
+void calculateDustDistance(const char *nev, int opt, ParticleData *particle_data, double deltat, double t, int n, const SimulationOptions *sim_opts, const DiskParameters *disk_params);
 
 
 

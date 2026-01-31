@@ -231,12 +231,12 @@ void calculateDustSurfaceDensity(double max_param, double min_param, const Parti
 
 
 /*	Fuggveny a porszemcsek uj tavolsaganak elraktarozasara		*/
-void calculateDustDistance(const char *nev, int opt, double radius[][2], const double *sigmad, const double *rdvec,
-                double deltat, double t, int n, const SimulationOptions *sim_opts, const DiskParameters *disk_params){
+void calculateDustDistance(const char *nev, int opt, ParticleData *particle_data, double deltat, double t, int n, const SimulationOptions *sim_opts, const DiskParameters *disk_params){
 
     int i;
     double y, y_out, prad_new, particle_radius;
     char scout[1024];
+
 
     // Fájlkezelés t==0 esetén: ez valószínűleg egyszer történik meg a szimuláció elején,
     // még mielőtt az igazi párhuzamosítás elkezdődne a fő ciklusban.
@@ -257,11 +257,11 @@ void calculateDustDistance(const char *nev, int opt, double radius[][2], const d
     for (i = 0; i < n; i++) {
         // Csak a r_min és r_max közötti részecskékkel foglalkozunk.
         // A 0.0-ra állítás kívül esik a párhuzamos részen, ha az if feltétel nem teljesül.
-        if (radius[i][0] > disk_params->r_min && radius[i][0] < disk_params->r_max) {
-            y = radius[i][0];
-            particle_radius = radius[i][1];
+        if (particle_data->particle_distance_array[i][0] > disk_params->r_min && particle_data->particle_distance_array[i][0] < disk_params->r_max) {
+            y = particle_data->particle_distance_array[i][0];
+            particle_radius = particle_data->particle_distance_array[i][1];
 
-			integrateParticleRungeKutta4(t, particle_radius, sigmad, rdvec, deltat, y, &y_out, &prad_new, disk_params, sim_opts);
+			integrateParticleRungeKutta4(t, particle_radius, particle_data->sigmad, particle_data->rdvec, deltat, y, &y_out, &prad_new, disk_params, sim_opts);
             if (t == 0) {
                 if (sim_opts->option_for_dust_secondary_population == 0) {
                     double current_drdt_val = (fabs(y_out - y) / (deltat));
@@ -272,7 +272,7 @@ void calculateDustDistance(const char *nev, int opt, double radius[][2], const d
                     {
                         // Ellenőrizzük, hogy a fájlmutató nem NULL
                         if (drift_timescale_file != NULL) {
-                            fprintf(drift_timescale_file, "%lg %lg\n", radius[i][0], (radius[i][0] / current_drdt_val) / (2.0 * M_PI));
+                            fprintf(drift_timescale_file, "%lg %lg\n", particle_data->particle_distance_array[i][0], (particle_data->particle_distance_array[i][0] / current_drdt_val) / (2.0 * M_PI));
                         } else {
                             fprintf(stderr, "ERROR: drift_timescale_file is NULL during write in calculateDustDistance (t=0 block).\n");
                         }
@@ -281,15 +281,15 @@ void calculateDustDistance(const char *nev, int opt, double radius[][2], const d
             }
 
             if (sim_opts->option_for_dust_secondary_population != 1) { // Ha növekedés engedélyezett vagy valami más mód
-                radius[i][1] = prad_new;
-                radius[i][0] = y_out;
+                particle_data->particle_distance_array[i][1] = prad_new;
+                particle_data->particle_distance_array[i][0] = y_out;
             } else { // sim_opts->option_for_dust_secondary_population == 1, csak drift
-                radius[i][0] = y_out;
+                particle_data->particle_distance_array[i][0] = y_out;
             }
         } else {
             // Ha a részecske r_min vagy r_max kívülre kerül, 0.0-ra állítjuk a pozícióját.
             // Ez a hozzárendelés iterációnként független, így párhuzamosítható.
-            radius[i][0] = 0.0;
+            particle_data->particle_distance_array[i][0] = 0.0;
         }
     }
 

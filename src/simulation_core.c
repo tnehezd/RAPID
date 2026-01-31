@@ -202,11 +202,11 @@ static void simulateDustDriftStep(double *t, double deltat, double *snapshot, Pa
     // --- Drift update ---
     int optsize = 0;
 
-    calculateDustDistance(sim_opts->output_dir_name, optsize,particle_data->particle_distance_array, particle_data->sigmad,particle_data->rdvec, deltat, *t,particle_number, sim_opts, disk_params);
+    calculateDustDistance(sim_opts->output_dir_name, optsize,particle_data, deltat, *t,particle_number, sim_opts, disk_params);
 
     if (sim_opts->option_for_dust_secondary_population == 1.) {
         optsize = 1;
-        calculateDustDistance(sim_opts->output_dir_name, optsize,particle_data->micron_particle_distance_array, particle_data->sigmadm,particle_data->rmicvec, deltat, *t,particle_number, sim_opts, disk_params);
+        calculateDustDistance(sim_opts->output_dir_name, optsize,particle_data,deltat, *t,particle_number, sim_opts, disk_params);
     }
 
     // --- Time advance ---
