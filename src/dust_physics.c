@@ -176,14 +176,13 @@ double calculateDustParticleSize(double prad, double pdens, double sigma, double
 }
 
 
-void calculateDustSurfaceDensity(double max_param, double min_param, double rad[][2], double radmicr[][2], 
-                double *sigma_d, double *sigma_dm,  double *particle_mass_array, double *massmicradial_grid,  
-                double *rd, double *rmic, const SimulationOptions *sim_opts, const DiskParameters *disk_params) {
+void calculateDustSurfaceDensity(double max_param, double min_param, const ParticleData *particle_data, const SimulationOptions *sim_opts, const DiskParameters *disk_params) {
 
     // Suppress unused parameter warnings
     (void)max_param;
     (void)min_param;
-
+    
+    
     double dd = (disk_params->r_max - disk_params->r_min) / (particle_number - 1);
     int i;
 
@@ -195,10 +194,10 @@ void calculateDustSurfaceDensity(double max_param, double min_param, double rad[
     for(i=0; i<particle_number; i++){
         sigdtemp[i][0] = 0.0; sigdtemp[i][1] = 0.0; sigdtemp[i][2] = 0.0;
         sigdmicrtemp[i][0] = 0.0; sigdmicrtemp[i][1] = 0.0; sigdmicrtemp[i][2] = 0.0;
-        rd[i] = 0.0;
-        rmic[i] = 0.0;
-        sigma_d[i] = 0.0;
-        sigma_dm[i] = 0.0;
+        particle_data->rdvec[i] = 0.0;
+        particle_data->rmicvec[i] = 0.0;
+        particle_data->sigmad[i] = 0.0;
+        particle_data->sigmadm[i] = 0.0;
     }
 
 
@@ -207,9 +206,9 @@ void calculateDustSurfaceDensity(double max_param, double min_param, double rad[
     // Ha ezek a függvények valamilyen globális állapotot módosítanak, akkor kritikusak.
     // Feltételezve, hogy a 'sigdtemp' és 'sigdmicrtemp' kizárólagosan a hívásaikban vannak feldolgozva,
     // és nem ütköznek más szálakkal globális adatokon keresztül.
-    calculateInitialDustSurfaceDensity(rad, particle_mass_array, sigdtemp, particle_number,disk_params);
+    calculateInitialDustSurfaceDensity(particle_data->particle_distance_array, particle_data->particle_mass_array, sigdtemp, particle_number,disk_params);
     if (sim_opts->option_for_dust_secondary_population == 1.0) { // Használjunk double összehasonlítást
-        calculateInitialDustSurfaceDensity(radmicr, massmicradial_grid, sigdmicrtemp, particle_number,disk_params);
+        calculateInitialDustSurfaceDensity(particle_data->micron_particle_distance_array, particle_data->massmicradial_grid, sigdmicrtemp, particle_number,disk_params);
     }
 
     mergeParticlesByRadius(sigdtemp, dd, particle_number,disk_params);
@@ -220,12 +219,12 @@ void calculateDustSurfaceDensity(double max_param, double min_param, double rad[
     // Utolsó másoló ciklus: Ez is jól párhuzamosítható.
     #pragma omp parallel for private(i)
     for (i = 0; i < particle_number; i++) {
-        rd[i] = sigdtemp[i][1];
-        sigma_d[i] = sigdtemp[i][0];
+        particle_data->rdvec[i] = sigdtemp[i][1];
+        particle_data->sigmad[i] = sigdtemp[i][0];
 
         if (sim_opts->option_for_dust_secondary_population == 1.0) { // double összehasonlítás
-            rmic[i] = sigdmicrtemp[i][1];
-            sigma_dm[i] = sigdmicrtemp[i][0];
+            particle_data->rmicvec[i] = sigdmicrtemp[i][1];
+            particle_data->sigmadm[i] = sigdmicrtemp[i][0];
         }
     }
 }

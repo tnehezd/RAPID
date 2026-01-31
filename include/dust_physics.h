@@ -3,6 +3,7 @@
 
 #include <stdio.h> // Szükséges lehet FILE, fprintf stb.
 #include "simulation_types.h" // Szükséges a SimulationOptions és DiskParameters struktúrákhoz
+#include "particle_data.h"
 
 // Extern globális változók deklarációi, ha ezeket a dust_physics.c fájl használja
 // Ezeknek a definíciói valószínűleg a config.h-ban vagy a main.c-ben vannak.
@@ -30,10 +31,7 @@ double calculateGrowthTimescale(double r, double eps, const DiskParameters *disk
 double calculateDustParticleSize(double prad, double pdens, double sigma, double sigmad, double y, double p, double dpress_val, double dt, const DiskParameters *disk_params);
 
 // Porkorong sűrűségének számítása
-void calculateDustSurfaceDensity(double max_param, double min_param, double rad[][2], double radmicr[][2],
-                double *sigma_d, double *sigma_dm, double *particle_mass_array,
-                double *massmicradial_grid,double *rd, double *rmic,
-                const SimulationOptions *sim_opts, const DiskParameters *disk_params);
+void calculateDustSurfaceDensity(double max_param, double min_param, const ParticleData *particle_data, const SimulationOptions *sim_opts, const DiskParameters *disk_params);
 
 /*	Fuggveny a porszemcsek uj tavolsaganak elraktarozasara		*/
 void calculateDustDistance(const char *nev, int opt, double radius[][2], const double *sigmad, const double *rdvec,

@@ -89,7 +89,7 @@ static void snapshotInitAtT0(double t, double current_time_years, ParticleData *
         if (sim_opts->option_for_dust_secondary_population == 1) updateParticleGridIndices(particle_data, t, particle_number, disk_params);
 
             if (sim_opts->option_for_dust_growth == 1.) {
-                calculateDustSurfaceDensity(max_radius, min_radius,  particle_data->particle_distance_array,  particle_data->micron_particle_distance_array,  particle_data->sigmad,  particle_data->sigmadm,  particle_data->particle_mass_array,  particle_data->massmicradial_grid,  particle_data->rdvec,  particle_data->rmicvec, sim_opts, disk_params);
+                calculateDustSurfaceDensity(max_radius, min_radius, particle_data, sim_opts, disk_params);
             }
         }
 }
@@ -196,8 +196,7 @@ static void simulateDustDriftStep(double *t, double deltat, double *snapshot, Pa
     }
 
     if (sim_opts->option_for_dust_growth == 1.) {
-        calculateDustSurfaceDensity(max_radius, min_radius,particle_data->particle_distance_array, particle_data->micron_particle_distance_array,particle_data->sigmad, particle_data->sigmadm,
-                                    particle_data->particle_mass_array, particle_data->massmicradial_grid,particle_data->rdvec, particle_data->rmicvec,sim_opts, disk_params);
+        calculateDustSurfaceDensity(max_radius, min_radius,particle_data,sim_opts, disk_params);
     }
 
     // --- Drift update ---
