@@ -14,15 +14,15 @@ extern FILE *fin1, *fin2, *fmo, *fout, *foutmicr, *fout3, *massfil, *jelfut;
 // --- FÜGGVÉNY DEKLARÁCIÓK ---
 
 /* calculateNumbersOfParticles függvény deklaráció */
-int calculateNumbersOfParticles(const char *filenev);
+int calculateNumbersOfParticles(const char *particle_data_file_name);
 
 /* A porreszecskek adatainak beolvasasa */
 // FIX: The original had 'void loadDustParticlesFromFile(double radius[][2], double radiusmicr[][2], double *mass, double *massmicr);'
 // You are missing the 'const char *filename' parameter in the .h file.
-void loadDustParticlesFromFile(ParticleData *particle_data, const char *filename);
+void loadDustParticlesFromFile(ParticleData *particle_data, const char *particle_data_file_name);
 
 /* A sigmat tartalmazo file parametereinek beolvasasa */
-void loadGasSurfaceDensityFromFile(DiskParameters *disk_params, const char *filename);
+void loadGasSurfaceDensityFromFile(DiskParameters *disk_params, const char *disk_file_name);
 
 /* Fuggveny az adott futashoz mappa letrehozasara */
 void createRunDirectory(char *dir_path);
@@ -30,13 +30,13 @@ void createRunDirectory(char *dir_path);
 /* Elkeszit egy file-t, ami tartalmazza a jelenlegi futas parametereit, es hogy melyik mappaban talalhatoak a file-ok */
 // FIX: The original had 'void printCurrentInformationAboutRun(const char *nev);'
 // You are missing 'const DiskParameters *disk_params' and 'const SimulationOptions *sim_opts'.
-void printCurrentInformationAboutRun(const char *nev, const DiskParameters *disk_params, const SimulationOptions *sim_opts);
+void printCurrentInformationAboutRun(const char *directory_name, const DiskParameters *disk_params, const SimulationOptions *sim_opts);
 
 /* Fuggveny a tomegfile kiiratasara */
 // FIX: The original was missing 'const DiskParameters *disk_params' and 'const SimulationOptions *sim_opts'.
 void printMassGrowthAtDZEFile(double step, 
                 double (*partmassind)[5], double (*partmassmicrind)[5], 
-                double t, // Ezt továbbra is meghagyjuk, ha az időre szükség van
+                double time, // Ezt továbbra is meghagyjuk, ha az időre szükség van
                 double massbtempii, double massbtempoi, double massmtempii, double massmtempoi, 
                 double *massbtempio, double *massbtempoo, double *massmtempio, double *massmtempoo, 
                 double *tavin, double *tavout, 
