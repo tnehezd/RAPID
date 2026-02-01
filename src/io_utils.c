@@ -34,12 +34,12 @@
 /* Visszaadja, hogy hány sora van a beolvasandó fájlnak,
  * ez jelen esetben megadja a beolvasandó részecskék számát. */
 int calculateNumbersOfParticles(const char *filenev) {
-    FILE *fp = NULL;
+    FILE *particle_file = NULL;
     char line_buffer[1024];
     int line_count = 0; // Counter for data lines
 
-    fp = fopen(filenev, "r");
-    if (fp == NULL) {
+    particle_file = fopen(filenev, "r");
+    if (particle_file == NULL) {
         fprintf(stderr, "ERROR [calculateNumbersOfParticles]: Could not open file '%s'.\n", filenev);
         perror("Reason"); // Prints system error message
         exit(EXIT_FAILURE);
@@ -47,16 +47,16 @@ int calculateNumbersOfParticles(const char *filenev) {
 
     // Skip header lines
     for (int i = 0; i < INIT_DATA_HEADER_LINES; i++) {
-        if (fgets(line_buffer, sizeof(line_buffer), fp) == NULL) {
+        if (fgets(line_buffer, sizeof(line_buffer), particle_file) == NULL) {
             // If file ends before all header lines are skipped, it's an error
             fprintf(stderr, "ERROR [calculateNumbersOfParticles]: Unexpected end of file while skipping %d header lines in '%s'.\n", INIT_DATA_HEADER_LINES, filenev);
-            fclose(fp);
+            fclose(particle_file);
             exit(EXIT_FAILURE);
         }
     }
 
     // Count remaining data lines
-    while (fgets(line_buffer, sizeof(line_buffer), fp) != NULL) {
+    while (fgets(line_buffer, sizeof(line_buffer), particle_file) != NULL) {
         // You might want to add a check here to ensure the line is not empty or a comment
         // For example, if lines starting with '#' are comments:
         if (line_buffer[0] != '#' && line_buffer[0] != '\n' && line_buffer[0] != '\r') {
@@ -64,7 +64,7 @@ int calculateNumbersOfParticles(const char *filenev) {
         }
     }
 
-    fclose(fp); // Close the file after reading
+    fclose(particle_file); // Close the file after reading
     return line_count;
 }
 
