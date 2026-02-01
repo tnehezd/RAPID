@@ -83,12 +83,14 @@ static long double calculateSigm0FromDiskMass(InitializeDefaultOptions *init_opt
 
 // Calculates gas surface density at radial position r [M_Sun / AU / AU].
 static long double calculateGasSurfaceDensityInitTool(double r_au, InitializeDefaultOptions *init_opts, long double current_sigma0) {
+
     return current_sigma0 * pow(r_au, init_opts->sigma_exponent);
 }
 
 // Calculates dust surface density at radial position r [M_Sun / AU / AU].
 // Includes handling for snowline/ice factor if enabled (currently commented out as in original).
 static long double calculateDustSurfaceDensityInitTool(double r_au, InitializeDefaultOptions *init_opts, long double current_sigma0) {
+
     long double sigma_dust = calculateGasSurfaceDensityInitTool(r_au, init_opts, current_sigma0) * init_opts->dust_to_gas_ratio;
 
     // --- Snowline and Ice Factor Handling (Uncomment and adjust if needed) ---
@@ -101,15 +103,9 @@ static long double calculateDustSurfaceDensityInitTool(double r_au, InitializeDe
 }
 
 // Finds the minimum of three double values.
-static double findMinimumForThreeNumbersInitTool(double s1, double s2, double s3) {
-    double min_val = s1;
-    if (s2 < min_val) {
-        min_val = s2;
-    }
-    if (s3 < min_val) {
-        min_val = s3;
-    }
-    return min_val;
+static double findMinimumForThreeNumbersInitTool(double value1, double value2, double value3) {
+
+        return fmin(value1, fmin(value2, value3));
 }
 
 // --- Main Init Tool Function ---

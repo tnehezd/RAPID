@@ -10,14 +10,7 @@
 #include <stdlib.h>
 
 #include <math.h>
-#include <omp.h>             // OpenMP támogatáshoz
-
-// Globális változó deklarációk, ha nem lennének meg máshol (pl. config.h)
-// Fontos: ezeknek a típusoknak egyezniük kell a config.h-ban deklaráltakkal!
-// Ha már szerepelnek a config.h-ban, akkor ezeket innen törölni kell,
-// vagy csak az extern kulcsszót meghagyni!
-
-
+#include <omp.h>             
 
 /*	Calculates the Stokes number for each particle	*/
 /*	St = rho_particle * radius_particle * PI / (2 * sigma)	*/
