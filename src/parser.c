@@ -42,9 +42,9 @@ void createDefaultOptions(ParserOptions *opt) {
     opt->output_dir_name[sizeof(opt->output_dir_name) - 1] = '\0'; // Ensure null termination
 
     // Time parameters
-    opt->user_defined_time_step           = 0.;
-    opt->maximum_simulation_time       = 1.0e6;
-    opt->output_frequency = 1000.0;
+    opt->user_defined_time_step         = 0.;
+    opt->maximum_simulation_time        = 1.0e6;
+    opt->output_frequency               = 1000.0;
 
     // Init tool specific parameters' defaults
     // ADJUST THESE DEFAULTS FOR REALISTIC VALUES, AS DISCUSSED PREVIOUSLY!
