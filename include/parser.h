@@ -19,11 +19,11 @@ typedef struct {
     double option_for_dust_growth;
     double option_for_evolution;
     double option_for_dust_secondary_population;
-    double ufrag;
-    double ffrag;
+    double fragmenatation_velocity;
+    double fragmenatation_factor;
 
     // Core disk parameters (also serve as init_tool defaults if no input file)
-    int    ngrid_val;       // Number of grid points
+    int    number_of_grid_points;       // Number of grid points
     int    number_of_dust_particles;
     double rmin_val;        // Inner radius (AU)
     double rmax_val;        // Outer radius (AU)

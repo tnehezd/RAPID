@@ -411,7 +411,7 @@ void printGasSurfaceDensityPressurePressureDerivateFile(const DiskParameters *di
 }
 
 /* Függvény a por felületisűrűségének kiíratására */
-void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const double *rm, const double *sigmad, const double *sigmadm, const DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files, double step) {
+void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const double *rm, const double *dust_surfacedensity, const double *micron_dust_surfacedensity, const DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files, double step) {
 
     int i;
 
@@ -422,12 +422,12 @@ void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const 
 
     for(i=0;i<particle_number;i++){ // particle_number from config.h
         if (r[i] >= disk_params->r_min) { // Using disk_params->r_min
-            fprintf(output_files->dust_file,"%lg %.11lg  %lg \n",(double)step,r[i],sigmad[i]);
+            fprintf(output_files->dust_file,"%lg %.11lg  %lg \n",(double)step,r[i],dust_surfacedensity[i]);
         }
 
         if(sim_opts->option_for_dust_secondary_population == 1.0 && output_files->micron_dust_file != NULL) {
             if (rm[i] >= disk_params->r_min) { // Using disk_params->r_min
-                fprintf(output_files->micron_dust_file,"%lg %lg  %lg \n",(double)step,rm[i],sigmadm[i]);
+                fprintf(output_files->micron_dust_file,"%lg %lg  %lg \n",(double)step,rm[i],micron_dust_surfacedensity[i]);
             }
         }
     }
@@ -657,8 +657,8 @@ void cleanupSimulationResources(ParticleData *particle_data, OutputFiles *output
         free(particle_data->massmicradial_grid); particle_data->massmicradial_grid = NULL;
         free(particle_data->partmassind); particle_data->partmassind = NULL;
         free(particle_data->partmassmicrind); particle_data->partmassmicrind = NULL;
-        free(particle_data->sigmad); particle_data->sigmad = NULL;
-        free(particle_data->sigmadm); particle_data->sigmadm = NULL;
+        free(particle_data->dust_surfacedensity); particle_data->dust_surfacedensity = NULL;
+        free(particle_data->micron_dust_surfacedensity); particle_data->micron_dust_surfacedensity = NULL;
         free(particle_data->rdvec); particle_data->rdvec = NULL;
         free(particle_data->rmicvec); particle_data->rmicvec = NULL;
 

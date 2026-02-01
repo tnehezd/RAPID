@@ -46,8 +46,8 @@ void initializeDefaultOptions(InitializeDefaultOptions *def) {
     def->one_size_particle_cm = 1.0; // If > 0, particles are fixed to this size
     def->two_pop_ratio = 0.85; // Ratio of mass in larger particles for two-population model
     def->micro_size_cm = 1e-4; // Size of micron-sized particles for two-population model
-    def->f_drift = 1.0;  // Factor for drift-limited size (default value, adjust as needed)
-    def->f_frag = 1.0;   // Factor for fragmentation-limited size (default value, adjust as needed)
+    def->drift_factor = 1.0;  // Factor for drift-limited size (default value, adjust as needed)
+    def->fragmentation_factor = 1.0;   // Factor for fragmentation-limited size (default value, adjust as needed)
 
     def->output_base_path[0] = '\0'; // This will be set by main.c
     def->dust_density_g_cm3 = 1.6; // NEW: Dust particle density (g/cm^3) - default value
@@ -284,9 +284,9 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
     }
 
     // Physical Constants
-    double u_frag_cm_s = 1000.0;
-    double u_frag_au_yr2pi = u_frag_cm_s * CM_PER_SEC_TO_AU_PER_YEAR_2PI;
-    double u_frag_sq_au_yr2pi_sq = u_frag_au_yr2pi * u_frag_au_yr2pi;
+    double fragmentation_velocity_cm_s = 1000.0;
+    double fragmentation_velocity_au_yr2pi = fragmentation_velocity_cm_s * CM_PER_SEC_TO_AU_PER_YEAR_2PI;
+    double fragmentation_velocity_sq_au_yr2pi_sq = fragmentation_velocity_au_yr2pi * fragmentation_velocity_au_yr2pi;
 
     // Populate disk_params structure and allocate its arrays
     disk_params->grid_number = default_options->n_grid_points; // Gas grid resolution
@@ -415,12 +415,12 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
                 dlnPdlnr_local = r_dust_particle_au / pressure_local * dPdr_local;
             }
 
-            double s_drift = default_options->f_drift * 2.0 / M_PI * sigma_dust_local_cgs / default_options->dust_density_g_cm3 *
+            double s_drift = default_options->drift_factor * 2.0 / M_PI * sigma_dust_local_cgs / default_options->dust_density_g_cm3 *
                              (calculateKeplerianVelocity_au_yr2pi * calculateKeplerianVelocity_au_yr2pi) / sound_speed_sq * fabs(1.0 / dlnPdlnr_local);
 
-            double s_frag = default_options->f_frag * 2.0 / (3.0 * M_PI) * sigma_gas_local_cgs /
+            double s_frag = default_options->fragmentation_factor * 2.0 / (3.0 * M_PI) * sigma_gas_local_cgs /
                             (default_options->dust_density_g_cm3 * calculateTurbulentAlpha(r_dust_particle_au, disk_params)) *
-                            u_frag_sq_au_yr2pi_sq / sound_speed_sq;
+                            fragmentation_velocity_sq_au_yr2pi_sq / sound_speed_sq;
 
             double dlnPdlnr_abs_cs2_half = fabs(dlnPdlnr_local * sound_speed_sq * 0.5);
             double s_df;
@@ -428,7 +428,7 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
                 fprintf(stderr, "Error: Denominator is near zero in s_df calculation at r = %lg. Check dlnPdlnr value. Setting s_df to a large value.\n", r_dust_particle_au);
                 s_df = 1e99;
             } else {
-                s_df = u_frag_au_yr2pi * calculateKeplerianVelocity_au_yr2pi / dlnPdlnr_abs_cs2_half * 2.0 * sigma_gas_local_cgs / (M_PI * default_options->dust_density_g_cm3);
+                s_df = fragmentation_velocity_au_yr2pi * calculateKeplerianVelocity_au_yr2pi / dlnPdlnr_abs_cs2_half * 2.0 * sigma_gas_local_cgs / (M_PI * default_options->dust_density_g_cm3);
             }
 
             s_max_cm = findMinimumForThreeNumbersInitTool(s_drift, s_frag, s_df);

@@ -94,7 +94,7 @@ int main(int argc, const char **argv) {
     // --- Populate DiskParameters with parameters from 'def' ---
     disk_params.r_min = def.rmin_val;
     disk_params.r_max = def.rmax_val;
-    disk_params.grid_number = def.ngrid_val; // grid_number (gas grid points) is from parsed options
+    disk_params.grid_number = def.number_of_grid_points; // grid_number (gas grid points) is from parsed options
     disk_params.sigma_0 = def.sigma0_val;
     disk_params.sigma_power_law_index = def.sigmap_exp_val;
     disk_params.alpha_parameter = def.alpha_visc_val;
@@ -106,9 +106,9 @@ int main(int argc, const char **argv) {
     disk_params.dr_dze_i = def.dr_dze_i_val;
     disk_params.dr_dze_o = def.dr_dze_o_val;
     disk_params.alpha_parameter_modification = def.a_mod_val;
-    disk_params.f_frag = def.ffrag;
-    disk_params.fragmentation_velocity = def.ufrag;
-    disk_params.f_drift = 0.55; // set by Birnstiel 2012
+    disk_params.fragmentation_factor = def.fragmenatation_factor;
+    disk_params.fragmentation_velocity = def.fragmenatation_velocity;
+    disk_params.drift_factor = 0.55; // set by Birnstiel 2012
     disk_params.particle_density = def.pdensity_val;
 
     // Set sim_opts->flag_for_deadzone based on dead zone radii from disk_params

@@ -15,20 +15,20 @@
 
 
 /*	kiszamolja az adott reszecskehez tartozo Stokes szamot	*/
-double calculateStokesNumber(double pradius, double sigma, DiskParameters *disk_params);
+double calculateStokesNumber(double particle_radius, double gas_surfacedensity, DiskParameters *disk_params);
 
 // calculateParticleMass függvény prototípusa
-void calculateParticleMass(int n, double (*partmassind)[5], int indii, int indio, int indoi, int indoo, double *massiout, double *massoout, const SimulationOptions *sim_opts);
+void calculateParticleMass(int number_of_particles, double (*partmassind)[5], int indii, int indio, int indoi, int indoo, double *massiout, double *massoout, const SimulationOptions *sim_opts);
 
-double calculateRadialDriftBarrier(double sigmad, double r, double p, double dp, double rho_p, const DiskParameters *disk_params);
-double calculateTurbulentFragmentationBarrier(double sigma, double r, double rho_p, const DiskParameters *disk_params);
-double calculateDriftInducedFragmentationBarrier(double sigma, double r, double p, double dp, double rho_p, const DiskParameters *disk_params);
+double calculateRadialDriftBarrier(double dust_surfacedensity, double r, double p, double dp, double rho_p, const DiskParameters *disk_params);
+double calculateTurbulentFragmentationBarrier(double gas_surfacedensity, double r, double rho_p, const DiskParameters *disk_params);
+double calculateDriftInducedFragmentationBarrier(double gas_surfacedensity, double r, double p, double dp, double rho_p, const DiskParameters *disk_params);
 
 /*	a reszecskek novekedesenek idoskalaja	*/
 double calculateGrowthTimescale(double r, double eps, const DiskParameters *disk_params);
 
 /*	kiszamolja az adott helyen a reszecske meretet --> BIRNSTIEL CIKK	*/
-double calculateDustParticleSize(double prad, double pdens, double sigma, double sigmad, double y, double p, double dpress_val, double dt, const DiskParameters *disk_params);
+double calculateDustParticleSize(double prad, double pdens, double gas_surfacedensity, double dust_surfacedensity, double y, double p, double dpress_val, double dt, const DiskParameters *disk_params);
 
 // Porkorong sűrűségének számítása
 void calculateDustSurfaceDensity(double max_param, double min_param, const ParticleData *particle_data, const SimulationOptions *sim_opts, const DiskParameters *disk_params);

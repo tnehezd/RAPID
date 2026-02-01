@@ -140,7 +140,7 @@ static void snapshotMassGrowthAndSigma(double t, double snapshot, ParticleData *
 
     // 3) dust surface density print
     if (sim_opts->option_for_dust_growth == 1.) {
-        printDustSurfaceDensityPressurePressureDerivateFile(particle_data->rdvec, particle_data->rmicvec, particle_data->sigmad, particle_data->sigmadm, disk_params, sim_opts, output_files, (int)snapshot);
+        printDustSurfaceDensityPressurePressureDerivateFile(particle_data->rdvec, particle_data->rmicvec, particle_data->dust_surfacedensity, particle_data->micron_dust_surfacedensity, disk_params, sim_opts, output_files, (int)snapshot);
     }
 }
 

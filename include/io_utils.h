@@ -49,7 +49,7 @@ void printGasSurfaceDensityPressurePressureDerivateFile(const DiskParameters *di
 
 /* Fuggveny a por feluletisurusegenek kiiratasara */
 // FIX: The original was missing 'const DiskParameters *disk_params' and 'const SimulationOptions *sim_opts'.
-void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const double *rm, const double *sigmad, const double *sigmadm,
+void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const double *rm, const double *dust_surfacedensity, const double *micron_dust_surfacedensity,
                   const DiskParameters *disk_params, const SimulationOptions *sim_opts,
                   OutputFiles *output_files, double step);
 /* Fuggveny a pormozgas es reszecskemeret kiiratasara */

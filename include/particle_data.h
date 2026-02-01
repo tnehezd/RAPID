@@ -14,8 +14,8 @@ typedef struct {
     double (*partmassind)[5];
     double (*partmassmicrind)[5];
 
-    double *sigmad;
-    double *sigmadm;
+    double *dust_surfacedensity;
+    double *micron_dust_surfacedensity;
     double *rdvec;
     double *rmicvec;
     size_t allocated_particle_number; // Az aktuálisan allokált részecskék száma

@@ -17,8 +17,8 @@ int allocateParticleData(ParticleData *particle_data, size_t particle_count, int
     particle_data->massmicradial_grid = NULL;
     particle_data->partmassind = NULL;
     particle_data->partmassmicrind = NULL;
-    particle_data->sigmad = NULL;
-    particle_data->sigmadm = NULL;
+    particle_data->dust_surfacedensity = NULL;
+    particle_data->micron_dust_surfacedensity = NULL;
     particle_data->rdvec = NULL;
     particle_data->rmicvec = NULL;
     particle_data->allocated_particle_number = 0;
@@ -35,14 +35,14 @@ int allocateParticleData(ParticleData *particle_data, size_t particle_count, int
     particle_data->massmicradial_grid = malloc(particle_count * sizeof(double));
     particle_data->partmassind = malloc(particle_count * sizeof(*particle_data->partmassind));
     particle_data->partmassmicrind = malloc(particle_count * sizeof(*particle_data->partmassmicrind));
-    particle_data->sigmad = malloc(particle_count * sizeof(double));
-    particle_data->sigmadm = malloc(particle_count * sizeof(double));
+    particle_data->dust_surfacedensity = malloc(particle_count * sizeof(double));
+    particle_data->micron_dust_surfacedensity = malloc(particle_count * sizeof(double));
     particle_data->rdvec = malloc(particle_count * sizeof(double));
     particle_data->rmicvec = malloc(particle_count * sizeof(double));
 
     // Ellenőrzés
     if (!particle_data->particle_distance_array || !particle_data->micron_particle_distance_array  || !particle_data->particle_mass_array || !particle_data->massmicradial_grid ||
-        !particle_data->partmassind || !particle_data->partmassmicrind || !particle_data->sigmad || !particle_data->sigmadm ||
+        !particle_data->partmassind || !particle_data->partmassmicrind || !particle_data->dust_surfacedensity || !particle_data->micron_dust_surfacedensity ||
         !particle_data->rdvec || !particle_data->rmicvec) {
         fprintf(stderr, "ERROR [allocateParticleData]: Primary particle array allocation failed!\n");
         freeParticleData(particle_data); // Felszabadítás, ha valami elszállt
@@ -73,8 +73,8 @@ void freeParticleData(ParticleData *particle_data) {
     free(particle_data->massmicradial_grid);
     free(particle_data->partmassind);
     free(particle_data->partmassmicrind);
-    free(particle_data->sigmad);
-    free(particle_data->sigmadm);
+    free(particle_data->dust_surfacedensity);
+    free(particle_data->micron_dust_surfacedensity);
     free(particle_data->rdvec);
     free(particle_data->rmicvec);
 
@@ -85,8 +85,8 @@ void freeParticleData(ParticleData *particle_data) {
     particle_data->massmicradial_grid = NULL;
     particle_data->partmassind = NULL;
     particle_data->partmassmicrind = NULL;
-    particle_data->sigmad = NULL;
-    particle_data->sigmadm = NULL;
+    particle_data->dust_surfacedensity = NULL;
+    particle_data->micron_dust_surfacedensity = NULL;
     particle_data->rdvec = NULL;
     particle_data->rmicvec = NULL;
     particle_data->allocated_particle_number = 0;

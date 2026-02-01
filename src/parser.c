@@ -15,11 +15,11 @@ void createDefaultOptions(ParserOptions *opt) {
     opt->option_for_dust_growth          = 1.;
     opt->option_for_evolution            = 1.;
     opt->option_for_dust_secondary_population          = 1.;
-    opt->ufrag           = 1000.0;
-    opt->ffrag           = 0.37;
+    opt->fragmenatation_velocity           = 1000.0;
+    opt->fragmenatation_factor           = 0.37;
 
     // Core disk parameters (also serve as init_tool defaults)
-    opt->ngrid_val       = 2000;
+    opt->number_of_grid_points       = 2000;
     opt->number_of_dust_particles       = 5000;
     opt->rmin_val        = 1.0;
     opt->rmax_val        = 100.0;
@@ -131,13 +131,13 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
         }
         else if (strcmp(argv[i], "-ufrag") == 0) {
             i++;
-            if (i < argc) opt->ufrag = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -ufrag.\n"); return 1; }
-//            fprintf(stderr, "DEBUG [parseCLIOptions]:   -ufrag set to %.2f\n", opt->ufrag);
+            if (i < argc) opt->fragmenatation_velocity = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -ufrag.\n"); return 1; }
+//            fprintf(stderr, "DEBUG [parseCLIOptions]:   -ufrag set to %.2f\n", opt->fragmenatation_velocity);
         }
         else if (strcmp(argv[i], "-ffrag") == 0) {
             i++;
-            if (i < argc) opt->ffrag = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -ffrag.\n"); return 1; }
-//            fprintf(stderr, "DEBUG [parseCLIOptions]:   -ffrag set to %.2f\n", opt->ffrag);
+            if (i < argc) opt->fragmenatation_factor = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -ffrag.\n"); return 1; }
+//            fprintf(stderr, "DEBUG [parseCLIOptions]:   -ffrag set to %.2f\n", opt->fragmenatation_factor);
         }
         else if (strcmp(argv[i], "-tStep") == 0) {
             i++;
@@ -146,8 +146,8 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
         }
         else if (strcmp(argv[i], "-n") == 0) { // Main simulation NGRID (and also init_tool's NGRID)
             i++;
-            if (i < argc) opt->ngrid_val = atoi(argv[i]); else { fprintf(stderr, "Error: Missing value for -n.\n"); return 1; }
-//            fprintf(stderr, "DEBUG [parseCLIOptions]:   -n (NGRID) set to %d\n", opt->ngrid_val);
+            if (i < argc) opt->number_of_grid_points = atoi(argv[i]); else { fprintf(stderr, "Error: Missing value for -n.\n"); return 1; }
+//            fprintf(stderr, "DEBUG [parseCLIOptions]:   -n (NGRID) set to %d\n", opt->number_of_grid_points);
         }
         else if (strcmp(argv[i], "-ndust") == 0) { 
             i++;
