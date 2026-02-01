@@ -15,7 +15,7 @@ bin/
 obj/
 
 _build/
-xml/
+docs/xml/
 
 utils/
 
