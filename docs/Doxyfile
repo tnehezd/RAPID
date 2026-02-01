@@ -19,9 +19,9 @@ XML_OUTPUT             = xml        # XML will go into 'docs/xml'
 # --- Input related tags ---
 # Specify where Doxygen should look for C source files.
 # This path is relative to the Doxyfile's location (which is in 'docs/').
-INPUT                  = ../src     
+INPUT                  = ../include     
 RECURSIVE              = YES        
-FILE_PATTERNS          = *.c *.h    
+FILE_PATTERNS          = *.h    
 
 # Exclude specific patterns or directories from processing to save time and avoid unwanted docs.
 EXCLUDE_PATTERNS       = */build/* \
