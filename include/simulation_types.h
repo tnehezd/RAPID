@@ -58,9 +58,9 @@ typedef struct {
 //    double *dust_surface_density_vector;  // Por felületi sűrűség (Új: sigmad)
 
     // Por koagulációs/fragmentációs paraméterek
-    double f_frag;          // Fragmentációs hatékonysági faktor
+    double fragmentation_factor;          // Fragmentációs hatékonysági faktor
     double fragmentation_velocity;          // Fragmentációs sebesség küszöb
-    double f_drift;         // fd in Birnstiel 2012, set to 0.55
+    double drift_factor;         // fd in Birnstiel 2012, set to 0.55
 
     // További általános paraméterek vagy tömbök
     // Ha a 'dp' és 'rho_p' nem tömbök, hanem skalárok, akkor azok is ide jöhetnek,

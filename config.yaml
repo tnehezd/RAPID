@@ -27,7 +27,7 @@ simulation_parameters:
   dust_particle_density_g_cm3: 1.6
   disk_mass_dust: 0.01
   input_file_path: ''
-  output_directory_name: run_alpha_0p0001_alphared_0p0001_sigmaexp_m0p5_dztrans_0p5_ufrag_500_flat_Ndust1000/
+  output_directory_name: output/
   fixed_time_step: 0.0
   total_simulation_time: 500000.0
   output_write_frequency: 1000

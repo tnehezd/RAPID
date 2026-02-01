@@ -9,101 +9,92 @@
 #include <stdlib.h>
 
 #include <math.h>
-#include <omp.h>             // OpenMP támogatáshoz
-
-// Globális változó deklarációk, ha nem lennének meg máshol (pl. config.h)
-// Fontos: ezeknek a típusoknak egyezniük kell a config.h-ban deklaráltakkal!
-// Ha már szerepelnek a config.h-ban, akkor ezeket innen törölni kell,
-// vagy csak az extern kulcsszót meghagyni!
-
-
-
+#include <omp.h>          
 
 /*	alpha turbulens paraméter kiszámolása --> alfa csökkentése alpha_r-rel	*/
-double calculateTurbulentAlpha(double r, const DiskParameters *disk_params) {
+double calculateTurbulentAlpha(double radial_distance, const DiskParameters *disk_params) {
+    
     double alpha_r;
-    alpha_r = 1.0 - 0.5 * (1.0 - disk_params->alpha_parameter_modification) * (tanh((r - disk_params->r_dze_i) / disk_params->dr_dze_i) + tanh((disk_params->r_dze_o - r) / disk_params->dr_dze_o));
+    alpha_r = 1.0 - 0.5 * (1.0 - disk_params->alpha_parameter_modification) * (tanh((radial_distance - disk_params->r_dze_i) / disk_params->dr_dze_i) + tanh((disk_params->r_dze_o - radial_distance) / disk_params->dr_dze_o));
     return alpha_r * disk_params->alpha_parameter;
 }
 
 
-
 /*  Lokalis viszkozitas erteke  */
-double calculateKinematicViscosity(double r, const DiskParameters *disk_params) {
-    double nu;
-    double cs, H;
-
-    H = calculatePressureScaleHeight(r,disk_params);
-    cs = calculateLocalSoundSpeed(r,disk_params);
-
-    nu = calculateTurbulentAlpha(r, disk_params) * cs * H;
-    return nu;
+double calculateKinematicViscosity(double radial_distance, const DiskParameters *disk_params) {
+    
+    double gas_viscosity, local_soundspeed, local_pressure_scaleheight;
+    local_pressure_scaleheight = calculatePressureScaleHeight(radial_distance,disk_params);
+    local_soundspeed = calculateLocalSoundSpeed(radial_distance,disk_params);
+    gas_viscosity = calculateTurbulentAlpha(radial_distance, disk_params) * local_soundspeed * local_pressure_scaleheight;
+    return gas_viscosity;
 }
 
 /*  local scale height  */
-double calculatePressureScaleHeight(double r, const DiskParameters *disk_params) {
+double calculatePressureScaleHeight(double radial_distance, const DiskParameters *disk_params) {
 
-    if (disk_params == NULL) {
-        fprintf(stderr, "ERROR [scale_height]: disk_params is NULL!\n");
-        return 0.0; // Vagy valamilyen hibakód/NaN
-    }
-
-    // Itt van az eredeti számítás
-    double calculated_result = pow(r, 1. + disk_params->flaring_index) * disk_params->h_aspect_ratio;
-    return calculated_result;
+    double local_pressure_scaleheight = pow(radial_distance, 1. + disk_params->flaring_index) * disk_params->h_aspect_ratio;
+    return local_pressure_scaleheight;
 }
 
 /*  lokális kepleri sebesség    */
-double calculateKeplerianVelocity(double r, const DiskParameters *disk_params) {
-    return sqrt(G_DIMENSIONLESS * disk_params->stellar_mass / r);
+double calculateKeplerianVelocity(double radial_distance, const DiskParameters *disk_params) {
+    
+    return sqrt(G_DIMENSIONLESS * disk_params->stellar_mass / radial_distance);
 }
 
 /*  lokalis kepleri korfrekvencia   */
-double calculateKeplerianFrequency(double r, const DiskParameters *disk_params) {
-    return sqrt(G_DIMENSIONLESS * disk_params->stellar_mass / r / r / r);
+double calculateKeplerianFrequency(double radial_distance, const DiskParameters *disk_params) {
+    
+    return sqrt(G_DIMENSIONLESS * disk_params->stellar_mass / radial_distance / radial_distance / radial_distance);
 }
 
 /*  local sound speed       */
-double calculateLocalSoundSpeed(double r, const DiskParameters *disk_params) {
-    return calculateKeplerianFrequency(r,disk_params) * calculatePressureScaleHeight(r,disk_params);
+double calculateLocalSoundSpeed(double radial_distance, const DiskParameters *disk_params) {
+    
+    return calculateKeplerianFrequency(radial_distance,disk_params) * calculatePressureScaleHeight(radial_distance,disk_params);
 }
 
 /*  Suruseg a midplane-ben  */
-double calcualteMidplaneGasDensity(double sigma, double r, const DiskParameters *disk_params) {
-    return 1. / sqrt(2.0 * M_PI) * sigma / calculatePressureScaleHeight(r,disk_params);
+double calcualteMidplaneGasDensity(double gas_surface_density, double radial_distance, const DiskParameters *disk_params) {
+   
+    return 1. / sqrt(2.0 * M_PI) * gas_surface_density / calculatePressureScaleHeight(radial_distance,disk_params);
 }
 
 /* local pressure of the gas p = rho_gas * cs * cs kepletbol!!  */
-double calculateGasPressure(double sigma, double r, const DiskParameters *disk_params) {
-    return calcualteMidplaneGasDensity(sigma, r, disk_params) * calculateLocalSoundSpeed(r,disk_params) * calculateLocalSoundSpeed(r, disk_params);
+double calculateGasPressure(double gas_surface_density, double radial_distance, const DiskParameters *disk_params) {
+  
+    return calcualteMidplaneGasDensity(gas_surface_density, radial_distance, disk_params) * calculateLocalSoundSpeed(radial_distance,disk_params) * calculateLocalSoundSpeed(radial_distance, disk_params);
 }
 
 /*  a nyomas derivaltja */
 void calculateGasPressureGradient(DiskParameters *disk_params) {
+
     int i;
-    double ptemp, pvec[disk_params->grid_number + 2];
+    double temporary_gas_pressure, calculated_pressure_gradient[disk_params->grid_number + 2];
 
     for (i = 1; i <= disk_params->grid_number; i++) {
-        ptemp = (disk_params->gas_pressure_vector[i + 1] - disk_params->gas_pressure_vector[i - 1]) / (2.0 * disk_params->delta_r);
-        pvec[i] = ptemp;
+        temporary_gas_pressure = (disk_params->gas_pressure_vector[i + 1] - disk_params->gas_pressure_vector[i - 1]) / (2.0 * disk_params->delta_r);
+        calculated_pressure_gradient[i] = temporary_gas_pressure;
 
     }
+
     for (i = 1; i <= disk_params->grid_number; i++) {
-        disk_params->gas_pressure_gradient_vector[i] = pvec[i];
+        disk_params->gas_pressure_gradient_vector[i] = calculated_pressure_gradient[i];
     }
-
 
 }
 
 /*  calculateGasRadialVelocity kiszamolasahoz eltarolt koefficiens   */
-double coefficientForGasRadialVelocity(double sigma, double r) {
-    return -1.0 * (3.0 / (sigma * sqrt(r)));
+double coefficientForGasRadialVelocity(double gas_surface_density, double radial_distance) {
+
+    return -1.0 * (3.0 / (gas_surface_density * sqrt(radial_distance)));
 }
 
 /*  calculateGasRadialVelocity = -3/(Sigma*R^0.5)*(d/dR)(nu*Sigma*R^0.5) kiszamolasa */
 void calculateGasRadialVelocity(DiskParameters *disk_params) {
 
-    double tempug;
+    double temporary_gas_velocity;
     // Lokális tömbök, méret grid_number-hez igazítva disk_params-ból
     double gas_velocity_vector[disk_params->grid_number + 2];
     double gas_velocity_vectortemp[disk_params->grid_number + 1]; // Eredeti kód grid_number+1-et használt
@@ -121,11 +112,11 @@ void calculateGasRadialVelocity(DiskParameters *disk_params) {
     }
 
     // Második ciklus: feltölti a lokális gas_velocity_vectortemp tömböt
-    #pragma omp parallel for private(i, tempug)
+    #pragma omp parallel for private(i, temporary_gas_velocity)
     for (i = 1; i <= disk_params->grid_number; i++) { // Használd a disk_params->grid_number-et
-        tempug = (gas_velocity_vector[i + 1] - gas_velocity_vector[i - 1]) / (2.0 * disk_params->delta_r); // Használd a disk_params->delta_r-t
+        temporary_gas_velocity = (gas_velocity_vector[i + 1] - gas_velocity_vector[i - 1]) / (2.0 * disk_params->delta_r); // Használd a disk_params->delta_r-t
         // coefficientForGasRadialVelocity hívása, ha szükséges, átadva neki a disk_params-ot
-        gas_velocity_vectortemp[i] = coefficientForGasRadialVelocity(disk_params->gas_surface_density_vector[i], disk_params->radial_grid[i]) * tempug;
+        gas_velocity_vectortemp[i] = coefficientForGasRadialVelocity(disk_params->gas_surface_density_vector[i], disk_params->radial_grid[i]) * temporary_gas_velocity;
     }
 
     // Harmadik ciklus: Az eredményt bemásolja a disk_params->gas_velocity_vector-be
@@ -137,55 +128,45 @@ void calculateGasRadialVelocity(DiskParameters *disk_params) {
 /*  Fuggveny a sigma, p, dp kiszamolasara   */
 void refreshGasSurfaceDensityPressurePressureGradient(const SimulationOptions *sim_opts, DiskParameters *disk_params) { // Added sim_opts
 
-    double u, u_bi, u_fi;
-    double sigma_temp[disk_params->grid_number + 2]; // Use disk_params->grid_number
-    double uvec[disk_params->grid_number + 2];     // Use disk_params->grid_number
+    double gas_sigma_dot_viscosity, gas_sigma_dot_viscosity_backwards, gas_sigma_dot_viscosity_forward;
+    double gas_surface_density_temp[disk_params->grid_number + 2]; // Use disk_params->grid_number
+    double gas_velocity_array[disk_params->grid_number + 2];     // Use disk_params->grid_number
 
     int i;
 
     // Boundary conditions - access via disk_params
-    sigma_temp[0] = disk_params->gas_surface_density_vector[0];
-    sigma_temp[disk_params->grid_number + 1] = disk_params->gas_surface_density_vector[disk_params->grid_number + 1];
+    gas_surface_density_temp[0] = disk_params->gas_surface_density_vector[0];
+    gas_surface_density_temp[disk_params->grid_number + 1] = disk_params->gas_surface_density_vector[disk_params->grid_number + 1];
 
-    // uvec temporary array initialization
-    uvec[0] = disk_params->gas_surface_density_vector[0] * calculateKinematicViscosity(disk_params->radial_grid[0], disk_params); // Use disk_params->radial_grid
-    uvec[disk_params->grid_number + 1] = disk_params->gas_surface_density_vector[disk_params->grid_number + 1] * calculateKinematicViscosity(disk_params->radial_grid[disk_params->grid_number + 1], disk_params); // Use disk_params->radial_grid
+    // gas_velocity_array temporary array initialization
+    gas_velocity_array[0] = disk_params->gas_surface_density_vector[0] * calculateKinematicViscosity(disk_params->radial_grid[0], disk_params); // Use disk_params->radial_grid
+    gas_velocity_array[disk_params->grid_number + 1] = disk_params->gas_surface_density_vector[disk_params->grid_number + 1] * calculateKinematicViscosity(disk_params->radial_grid[disk_params->grid_number + 1], disk_params); // Use disk_params->radial_grid
 
     #pragma omp parallel for
     for(i = 1; i <= disk_params->grid_number; i++) { // Use disk_params->grid_number
-        uvec[i] = disk_params->gas_surface_density_vector[i] * calculateKinematicViscosity(disk_params->radial_grid[i], disk_params); // Use disk_params->gas_surface_density_vector and disk_params->radial_grid
+        gas_velocity_array[i] = disk_params->gas_surface_density_vector[i] * calculateKinematicViscosity(disk_params->radial_grid[i], disk_params); // Use disk_params->gas_surface_density_vector and disk_params->radial_grid
     }
 
     // This loop is critical due to data dependencies. Keep it sequential for correctness
     for (i = 1; i <= disk_params->grid_number; i++) { // Use disk_params->grid_number
-        u = uvec[i];
-        u_bi = uvec[i - 1];
-        u_fi = uvec[i + 1];
+        gas_sigma_dot_viscosity = gas_velocity_array[i];
+        gas_sigma_dot_viscosity_backwards = gas_velocity_array[i - 1];
+        gas_sigma_dot_viscosity_forward = gas_velocity_array[i + 1];
 
-        // Access delta_r and deltat through the appropriate structs
-        // Assuming ftcsSecondDerivativeCoefficient and ftcsFirstDerivativeCoefficient also take disk_params (and sim_opts if they need it)
-        double temp = ftcsSecondDerivativeCoefficient(disk_params->radial_grid[i], disk_params) * (u_fi - 2.0 * u + u_bi) / (disk_params->delta_r * disk_params->delta_r) +
-                      ftcsFirstDerivativeCoefficient(disk_params->radial_grid[i], disk_params) * (u_fi - u_bi) / (2.0 * disk_params->delta_r);
+        double gas_sigma_dot_viscosity_temporary = ftcsSecondDerivativeCoefficient(disk_params->radial_grid[i], disk_params) * (gas_sigma_dot_viscosity_forward - 2.0 * gas_sigma_dot_viscosity + gas_sigma_dot_viscosity_backwards) / (disk_params->delta_r * disk_params->delta_r) +
+                      ftcsFirstDerivativeCoefficient(disk_params->radial_grid[i], disk_params) * (gas_sigma_dot_viscosity_forward - gas_sigma_dot_viscosity_backwards) / (2.0 * disk_params->delta_r);
         
-        sigma_temp[i] = uvec[i] + sim_opts->user_defined_time_step * temp; // Use sim_opts->user_defined_time_step for deltat
+        gas_surface_density_temp[i] = gas_velocity_array[i] + sim_opts->user_defined_time_step * gas_sigma_dot_viscosity_temporary; // Use sim_opts->user_defined_time_step for deltat
     }
 
     // This loop is parallelizable
     #pragma omp parallel for
     for (i = 1; i <= disk_params->grid_number; i++) { // Use disk_params->grid_number
         // Update disk_params' own arrays
-        disk_params->gas_surface_density_vector[i] = sigma_temp[i] / calculateKinematicViscosity(disk_params->radial_grid[i], disk_params);
+        disk_params->gas_surface_density_vector[i] = gas_surface_density_temp[i] / calculateKinematicViscosity(disk_params->radial_grid[i], disk_params);
         disk_params->gas_pressure_vector[i] = calculateGasPressure(disk_params->gas_surface_density_vector[i], disk_params->radial_grid[i], disk_params); // Assuming calculateGasPressure takes disk_params
     }
 
-    // These calls likely remain sequential or require their own internal OpenMP if large
-    // If applyBoundaryConditions, dpress also update members of disk_params, they should take disk_params as a parameter.
-    // And if they are modifying the *content* of the arrays within disk_params, then disk_params should NOT be const in *their* parameter list.
-    // However, since refreshGasSurfaceDensityPressurePressureGradient is modifying them, disk_params *here* cannot be const.
-    // Let's remove 'const' from disk_params in refreshGasSurfaceDensityPressurePressureGradient signature if it modifies them.
-    // void refreshGasSurfaceDensityPressurePressureGradient(DiskParameters *disk_params, const SimulationOptions *sim_opts) { ... }
-    
-    // Assuming these helper functions need disk_params to access *its* internal arrays
     calculateGasPressureGradient(disk_params); // Assuming dpress takes arrays and disk_params
     applyBoundaryConditions(disk_params->gas_surface_density_vector, disk_params); // First argument is the array, second is the DiskParameters pointer
     applyBoundaryConditions(disk_params->gas_pressure_vector, disk_params);

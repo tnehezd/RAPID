@@ -35,8 +35,8 @@ typedef struct {
     double  one_size_particle_cm;   // If > 0, particles are fixed to this size, overrides two_pop_ratio
     double  two_pop_ratio;          // Ratio of mass in larger particles for two-population model (0.0 - 1.0)
     double  micro_size_cm;          // Size of micron-sized particles for two-population model
-    double  f_drift;                // Factor for drift-limited size (default value, adjust as needed)
-    double  f_frag;                 // Factor for fragmentation-limited size (default value, adjust as needed)
+    double  drift_factor;                // Factor for drift-limited size (default value, adjust as needed)
+    double  fragmentation_factor;                 // Factor for fragmentation-limited size (default value, adjust as needed)
 
     char output_base_path[MAX_PATH_LEN]; // NEW: Base path where init_tool should create its output files
     double dust_density_g_cm3; // NEW: Por szemcse sűrűsége (g/cm^3)

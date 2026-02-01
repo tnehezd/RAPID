@@ -38,7 +38,7 @@ double calculateTimeStep(const DiskParameters *disk_params);
  * @param sim_opts A szimulációs opciókat tartalmazó struktúra.
  * @param output_files A kimeneti fájl mutatókat tartalmazó struktúra.
  */
-void timeIntegrationForTheSystem(DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files);
+void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files);
 
 
 
