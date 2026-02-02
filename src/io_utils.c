@@ -1,10 +1,17 @@
 #include <stdio.h>
+#include <time.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>    // For errno
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <unistd.h> // A gethostname-hez (Linux/Mac)
+#include <pwd.h>    // A felhasználónévhez
 
+
+#ifdef _OPENMP
+    #include <omp.h>
+#endif
 
 #ifdef _WIN32
     #include <direct.h>
@@ -219,39 +226,91 @@ char *createRunDirectory(const char *dir_path) {
 }
 
 
-
-
-/* Elkészít egy fájlt, ami tartalmazza a jelenlegi futás paramétereit,
- * és hogy melyik mappában találhatóak a fájlok */
+/* Elkészít egy részletes információs fájlt a futás paramétereivel és a környezettel */
 void printCurrentInformationAboutRun(const char *directory_name, const DiskParameters *disk_params) {
-
-    char *full_path=NULL; // Használjuk a MAX_PATH_LEN-t a biztonságos puffereléshez
-    char file_name[100]; 
-
-    sprintf(file_name, "%s%s", kCurrentInfoFile,kFileNamesSuffix);
+    char *full_path = NULL;
+    char file_name[100];
     
-    // Építsük fel a teljes elérési utat: <directory_name>/<file_name>
+    // 1. Időbélyeg generálása
+    time_t rawtime;
+    struct tm *timeinfo;
+    char time_buffer[80];
+    time(&rawtime);
+    timeinfo = localtime(&rawtime);
+    strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%d %H:%M:%S", timeinfo);
+
+    // 2. Gépnév és Felhasználó lekérése
+    char hostname[1024];
+    gethostname(hostname, 1024);
+    struct passwd *pw = getpwuid(getuid());
+    const char *user = pw ? pw->pw_name : "unknown";
+
+    // 3. Fájlútvonal összeállítása
+    sprintf(file_name, "%s%s", kCurrentInfoFile, kFileNamesSuffix);
     asprintf(&full_path, "%s/%s", directory_name, file_name);
 
-    fprintf(stderr, "DEBUG [printCurrentInformationAboutRun]: Attempting to open file: '%s'\n", full_path);
+    fprintf(stderr, "DEBUG [printCurrentInformationAboutRun]: Writing run info to: '%s'\n", full_path);
 
-    current_info_file = fopen(full_path, "w"); // Most már a teljes elérési utat használja
-
-    if (current_info_file == NULL) {
-        fprintf(stderr, "ERROR [printCurrentInformationAboutRun]: Could not open file '%s'.\n", full_path);
-        perror("Reason");
-        // Don't exit here, it's not critical, just warn and return
+    FILE *info_f = fopen(full_path, "w");
+    if (info_f == NULL) {
+        fprintf(stderr, "ERROR: Could not open info file '%s'.\n", full_path);
+        if (full_path) free(full_path);
         return;
     }
 
-    fprintf(current_info_file,"The current run is in the %s directory!\n",directory_name);
-    fprintf(current_info_file,"\n\nThe parameters of the disk:\nr_min: %lg, r_max: %lg\nsigma_0: %lg, SIGMA_EXP: %lg, flaring index: %lg\nALPHA_VISC: %lg, ALPHA_MOD: %lg\nR_DZE_I: %lg, R_DZE_O: %lg, DR_DZEI: %lg, DR_DZE_O: %lg   (*** R_DZE_I/O = 0, akkor azt a DZE-t nem szimulálja a futás! ***)\n\n\n",
-              disk_params->r_min, disk_params->r_max,
-              disk_params->sigma_0, disk_params->sigma_power_law_index, disk_params->flaring_index,
-              disk_params->alpha_parameter, disk_params->alpha_parameter_modification,
-              disk_params->r_dze_i, disk_params->r_dze_o, disk_params->dr_dze_i, disk_params->dr_dze_o);
-    fprintf(current_info_file,"The mass of the central star: %lg M_Sun\n", disk_params->stellar_mass);
-    fclose(current_info_file);
+    // --- FEJLÉC ÉS RENDSZERINFÓ ---
+    fprintf(info_f, "==========================================================\n");
+    fprintf(info_f, "        DUST DRIFT SIMULATION - RUN SNAPSHOT\n");
+    fprintf(info_f, "==========================================================\n");
+    fprintf(info_f, "  Run Started:       %s\n", time_buffer);
+    fprintf(info_f, "  Host Machine:      %s\n", hostname);
+    fprintf(info_f, "  User:              %s\n", user);
+    
+#ifdef _OPENMP
+    fprintf(info_f, "  Parallel Threads:  %d\n", omp_get_max_threads());
+#else
+    fprintf(info_f, "  Parallel Threads:  1 (Serial mode)\n");
+#endif
+    fprintf(info_f, "  Binary Compiled:   %s %s\n", __DATE__, __TIME__);
+    fprintf(info_f, "  Output Directory:  %s\n", directory_name);
+    fprintf(info_f, "==========================================================\n\n");
+
+    // --- FIZIKAI PARAMÉTEREK ---
+    fprintf(info_f, "--- [ Central Star ] ---\n");
+    fprintf(info_f, "  Stellar Mass:      %.4f M_Sun\n\n", disk_params->stellar_mass);
+
+    fprintf(info_f, "--- [ Disk Geometry & Gas ] ---\n");
+    fprintf(info_f, "  Radial Range:      %.2f - %.2f AU\n", disk_params->r_min, disk_params->r_max);
+    fprintf(info_f, "  Gas Grid Points:   %d\n", disk_params->grid_number);
+    fprintf(info_f, "  Sigma_0 (1 AU):    %.4e M_Sun/AU^2\n", disk_params->sigma_0);
+    fprintf(info_f, "  Sigma Exponent:    %.4f\n", disk_params->sigma_power_law_index);
+    fprintf(info_f, "  Aspect Ratio (H/R): %.4f\n", disk_params->h_aspect_ratio);
+    fprintf(info_f, "  Flaring Index:     %.4f\n", disk_params->flaring_index);
+    fprintf(info_f, "  Alpha Viscosity:   %.4e\n\n", disk_params->alpha_parameter);
+
+    // --- DEAD ZONE ---
+    fprintf(info_f, "--- [ Dead Zone Configuration ] ---\n");
+    if (disk_params->r_dze_i > 0.0 || disk_params->r_dze_o > 0.0) {
+        fprintf(info_f, "  Status:            ENABLED\n");
+        fprintf(info_f, "  Inner DZE Radius:  %.2f AU (Trans. width: %.2f)\n", disk_params->r_dze_i, disk_params->dr_dze_i);
+        fprintf(info_f, "  Outer DZE Radius:  %.2f AU (Trans. width: %.2f)\n", disk_params->r_dze_o, disk_params->dr_dze_o);
+        fprintf(info_f, "  Alpha Mod Factor:  %.4e\n", disk_params->alpha_parameter_modification);
+    } else {
+        fprintf(info_f, "  Status:            DISABLED (Uniform alpha)\n");
+    }
+
+    // --- POR PARAMÉTEREK ---
+    fprintf(info_f, "\n--- [ Dust Properties ] ---\n");
+    fprintf(info_f, "  Particle Density:  %.2f g/cm^3\n", disk_params->particle_density);
+    fprintf(info_f, "  Fragmentation Vel: %.2f cm/s\n", disk_params->fragmentation_velocity);
+    fprintf(info_f, "  Global Dust Count: %d\n", particle_number);
+
+    fprintf(info_f, "\n==========================================================\n");
+    fprintf(info_f, "         End of Configuration Summary\n");
+    fprintf(info_f, "==========================================================\n");
+
+    fclose(info_f);
+    if (full_path) free(full_path);
 }
 
 
@@ -588,6 +647,39 @@ void printFileHeader(FILE *file, FileType_e file_type, const HeaderData *header_
 
 
 
+void printFinalSimulationSummary(const char *directory_name, double elapsed_seconds, const SimulationOptions *sim_opts) {
+    char *full_path = NULL;
+    asprintf(&full_path, "%s/%s%s", directory_name, kCurrentRuntimeInfoFile,kFileNamesSuffix);
+
+    FILE *f = fopen(full_path, "w");
+    if (f == NULL) {
+        if (full_path) free(full_path);
+        return;
+    }
+
+    // Idő átváltása olvasható formátumba
+    int h = (int)elapsed_seconds / 3600;
+    int m = ((int)elapsed_seconds % 3600) / 60;
+    int s = (int)elapsed_seconds % 60;
+
+    // Szimulációs sebesség (szimulált év / valódi másodperc)
+    double speed = sim_opts->maximum_simulation_time / elapsed_seconds;
+
+    fprintf(f, "==========================================================\n");
+    fprintf(f, "             SIMULATION PERFORMANCE SUMMARY\n");
+    fprintf(f, "==========================================================\n");
+    fprintf(f, "  Total Wall-Clock Time:  %02d:%02d:%02d (H:M:S)\n", h, m, s);
+    fprintf(f, "  Total Simulation Time:  %.2e years\n", sim_opts->maximum_simulation_time);
+    fprintf(f, "  Execution Speed:        %.2f simulated years / wall-sec\n", speed);
+    fprintf(f, "==========================================================\n");
+    fprintf(f, "Status: Finished Normally\n");
+
+    fclose(f);
+    if (full_path) free(full_path);
+    
+    printf("\n>> Simulation finished in %02d:%02d:%02d. Summary written to logs.\n", h, m, s);
+}
+
 
 int setupInitialOutputFiles(OutputFiles *output_files, const SimulationOptions *sim_opts,
                                const DiskParameters *disk_params, HeaderData *header_data_for_files) {
@@ -605,7 +697,7 @@ int setupInitialOutputFiles(OutputFiles *output_files, const SimulationOptions *
     asprintf(&dust_ouput, "%s/%s/%s%s", sim_opts->output_dir_name, kLogFilesDirectory, kDustAccumulationFileName,kFileNamesSuffix);
 
     if (sim_opts->option_for_dust_secondary_population == 1.0) {
-        asprintf(&micron_dust_ouput, "%s/%s/%s%st", sim_opts->output_dir_name, kLogFilesDirectory,kDustMicronParticleEvolutionFile,kFileNamesSuffix);
+        asprintf(&micron_dust_ouput, "%s/%s/%s%s", sim_opts->output_dir_name, kLogFilesDirectory,kDustMicronParticleEvolutionFile,kFileNamesSuffix);
     }
     asprintf(&mass_output, "%s/%s/%s%s", sim_opts->output_dir_name, kLogFilesDirectory, kDustAccumulationFileName,kFileNamesSuffix);
 
@@ -702,24 +794,22 @@ FILE *openSnapshotFile(const char *file_name, FileType_e file_type, double curre
 
 
 void buildSnapshotFilenames(char *dens_name, char *dust_name, char *dust_name2, char *size_name, const SimulationOptions *sim_opts, int snapshot_id){
-    // Gáz sűrűség fájl
-    asprintf(&dens_name, "%s/%s/%s_%08d%s",
+    // sprintf-et használunk asprintf helyett, mert a memóriát a hívó fél foglalta le!
+    sprintf(dens_name, "%s/%s/%s_%08d%s",
              sim_opts->output_dir_name, kLogFilesDirectory,
              kGasDensityProfileFilePrefix, snapshot_id, kFileNamesSuffix);
 
-    // Por sűrűség fájl
-    asprintf(&dust_name, "%s/%s/%s_%08d%s",
+    sprintf(dust_name, "%s/%s/%s_%08d%s",
              sim_opts->output_dir_name, kLogFilesDirectory,
              kDustDensityProfileFilePrefix, snapshot_id, kFileNamesSuffix);
 
     if (sim_opts->option_for_dust_secondary_population == 1) {
-        asprintf(&dust_name2, "%s/%s/%s_%08d%s",
+        sprintf(dust_name2, "%s/%s/%s_%08d%s",
                  sim_opts->output_dir_name, kLogFilesDirectory,
-                 kDustDensityProfileFilePrefix, snapshot_id, kFileNamesSuffix);
+                 kMicronDustDensityProfileFilePrefix, snapshot_id, kFileNamesSuffix); // Javított prefix
     }
 
-    // Részecskeméret fájl
-    asprintf(&size_name, "%s/%s/%s_%08d%s",
+    sprintf(size_name, "%s/%s/%s_%08d%s",
              sim_opts->output_dir_name, kLogFilesDirectory,
              kDustParticleSizeFileName, snapshot_id, kFileNamesSuffix);
 }

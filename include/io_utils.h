@@ -112,7 +112,7 @@ FILE *openSnapshotFile(const char *filename,FileType_e file_type,double current_
 
 void closeSnapshotFiles(OutputFiles *output_files, const SimulationOptions *sim_opts);
 
-
+void printFinalSimulationSummary(const char *directory_name, double elapsed_seconds, const SimulationOptions *sim_opts);
 void buildSnapshotFilenames(char *dens_name, char *dust_name, char *dust_name2, char *size_name, const SimulationOptions *sim_opts, int snapshot_id);
 
 

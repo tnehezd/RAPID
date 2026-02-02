@@ -30,16 +30,18 @@ int main(int argc, const char **argv) {
     // DEBUG: Program start
     // fprintf(stderr, "DEBUG [main]: Program started.\n");
 
+    time_t wall_start, wall_end;
+    time(&wall_start); // Kezdési időpont
+
     char *initial_dir_path = NULL;
     char *kLogFilesDirectory_path = NULL;
     char *cmd_buffer = NULL;
     char *current_inputsig_file = NULL;
     char *current_inputdust_file = NULL;
     char *dens_name_initial = NULL;
+    char *actual_run_dir = NULL;
 
 
-    // --- Declare current_inputsig_file here, at the beginning of main ---
-    current_inputsig_file[0] = '\0'; // Initialize to empty string
 
     // Local structure to store command-line options
     ParserOptions def;
@@ -126,18 +128,20 @@ int main(int argc, const char **argv) {
     createRunDirectory(def.output_dir_name); // Creates the main output folder, potentially with a number.
     fprintf(stderr, "DEBUG [main]: After createRunDirectory (base dir), def.output_dir_name is now: '%s'\n", def.output_dir_name);
 
+    actual_run_dir = createRunDirectory(def.output_dir_name);
+
     // Create the 'intial' subdirectory using kConfigFilesDirectory
-    asprintf(&initial_dir_path, "%s/%s", def.output_dir_name, kConfigFilesDirectory);
+    asprintf(&initial_dir_path, "%s/%s", actual_run_dir, kConfigFilesDirectory);
     createRunDirectory(initial_dir_path);
 
     // Create the 'LOGS' subdirectory using kLogFilesDirectory
-    asprintf(&kLogFilesDirectory_path, "%s/%s", def.output_dir_name, kLogFilesDirectory);
+    asprintf(&kLogFilesDirectory_path, "%s/%s", actual_run_dir, kLogFilesDirectory);
     fprintf(stderr, "DEBUG [main]: kLogFilesDirectory_path assembled as: '%s'\n", kLogFilesDirectory_path);
 
     createRunDirectory(kLogFilesDirectory_path);
 
     // CRITICAL: Populate sim_opts.output_dir_name from def.output_dir_name
-    strncpy(sim_opts.output_dir_name, def.output_dir_name, MAX_PATH_LEN - 1);
+    strncpy(sim_opts.output_dir_name, actual_run_dir, MAX_PATH_LEN - 1);
     sim_opts.output_dir_name[MAX_PATH_LEN - 1] = '\0'; // Ensure null-termination
     // DEBUG: Show sim_opts.output_dir_name immediately after population
     fprintf(stderr, "DEBUG [main]: sim_opts.output_dir_name AFTER population: '%s'\n", sim_opts.output_dir_name);
@@ -283,7 +287,7 @@ int main(int argc, const char **argv) {
     // Print current information
     fprintf(stderr, "DEBUG [main]: Calling printCurrentInformationAboutRun...\n");
     // Here, def.output_dir_name is passed, which already contains the numbered folder name
-    printCurrentInformationAboutRun(def.output_dir_name, &disk_params);
+    printCurrentInformationAboutRun(actual_run_dir, &disk_params);
 
     // Run simulation or exit based on options
     if(mode == SnapshotNonevolving) {
@@ -335,6 +339,21 @@ int main(int argc, const char **argv) {
     if (disk_params.gas_velocity_vector) free(disk_params.gas_velocity_vector);
     fprintf(stderr, "DEBUG [main]: Dynamically allocated disk arrays freed.\n");
 
+
+    free(current_inputsig_file);
+    free(current_inputdust_file);
+    free(initial_dir_path);
+    free(kLogFilesDirectory_path);
+
     fprintf(stderr, "DEBUG [main]: Program exiting normally.\n");
+
+
+    time(&wall_end); // Befejezési időpont
+    double elapsed_wall_time = difftime(wall_end, wall_start);
+
+    // Meghívjuk a lezáró statisztikát
+    printFinalSimulationSummary(actual_run_dir, elapsed_wall_time, &sim_opts);
+
     return 0;
+
 }

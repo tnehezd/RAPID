@@ -45,6 +45,7 @@ extern const char * const kConfigFilesDirectory;
 extern const char * const kFileNamesSuffix;
 extern const char * const kCurrentInfoFile;
 extern const char * const kDustParticleSizeFileName;
+extern const char * const kCurrentRuntimeInfoFile;
 
 
 #endif // CONFIG_H

@@ -27,3 +27,4 @@ const char * const kFileNamesSuffix = ".dat";
 const char * const kLogFilesDirectory = "LOGS";
 const char * const kConfigFilesDirectory = "config";
 const char * const kCurrentInfoFile = "current_run_info";
+const char * const kCurrentRuntimeInfoFile = "current_runtime_performance_info";
