@@ -125,9 +125,6 @@ int main(int argc, const char **argv) {
 
     // --- Output directory handling ---
     // createRunDirectory contains the numbering logic if the directory already exists.
-    createRunDirectory(def.output_dir_name); // Creates the main output folder, potentially with a number.
-    fprintf(stderr, "DEBUG [main]: After createRunDirectory (base dir), def.output_dir_name is now: '%s'\n", def.output_dir_name);
-
     actual_run_dir = createRunDirectory(def.output_dir_name);
 
     // Create the 'intial' subdirectory using kConfigFilesDirectory
