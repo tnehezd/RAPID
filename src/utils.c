@@ -120,10 +120,7 @@ double findZeroPoint(int i, const double *radial_grid, const double *dp) {
 /*	A nyomasi maximum korul 1H tavolsagban jeloli ki a korgyurut	*/
 void findRAnnulusAroundDZE(double rin, double *ind_ii, double *ind_io,
                             double rout, double *ind_oi, double *ind_oo,
-                            const SimulationOptions *sim_opts, DiskParameters *disk_params) {
-
-	    volatile int debug_marker = 0; // Adj hozzá ezt a sortAnArray
-
+                            const SimulationOptions *sim_opts, const DiskParameters *disk_params) {
 
     if (disk_params == NULL) {
         fprintf(stderr, "ERROR [findRAnnulusAroundDZE]: disk_params is NULL!\n");
@@ -390,11 +387,11 @@ void updateParticleGridIndices(const ParticleData *particle_data, double t, int 
         if(isnan(rmid)) rindex = 0;
 
 
-		if(n == particle_number) particle_data->partmassind[i][0] = particle_data->particle_mass_array[i];							/*	mass of the particles				*/
-		particle_data->partmassind[i][1] = rindex;							/*	initial distance of the particles				*/
+		if(n == particle_number) particle_data->dust_particle_mass_array[i][0] = particle_data->dust_particle_mass_grid[i];							/*	mass of the particles				*/
+		particle_data->dust_particle_mass_array[i][1] = rindex;							/*	initial distance of the particles				*/
 		if(t == 0) {
-			particle_data->partmassind[i][2] = particle_data->partmassind[i][0];							/*	initial distance of the particles				*/
-			particle_data->partmassind[i][3] = 0;
+			particle_data->dust_particle_mass_array[i][2] = particle_data->dust_particle_mass_array[i][0];							/*	initial distance of the particles				*/
+			particle_data->dust_particle_mass_array[i][3] = 0;
 		}
  	
 	}

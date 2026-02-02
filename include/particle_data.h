@@ -9,10 +9,10 @@
 typedef struct {
     double (*particle_distance_array)[2];
     double (*micron_particle_distance_array)[2];
-    double *particle_mass_array;
+    double *dust_particle_mass_grid;
     double *massmicradial_grid;
-    double (*partmassind)[5];
-    double (*partmassmicrind)[5];
+    double (*dust_particle_mass_array)[5];
+    double (*micron_dust_particle_mass_array)[5];
 
     double *dust_surfacedensity;
     double *micron_dust_surfacedensity;

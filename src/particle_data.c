@@ -13,10 +13,10 @@ int allocateParticleData(ParticleData *particle_data, size_t particle_count, int
     // Inicializálás NULL-ra
     particle_data->particle_distance_array = NULL;
     particle_data->micron_particle_distance_array = NULL;
-    particle_data->particle_mass_array = NULL;
+    particle_data->dust_particle_mass_grid = NULL;
     particle_data->massmicradial_grid = NULL;
-    particle_data->partmassind = NULL;
-    particle_data->partmassmicrind = NULL;
+    particle_data->dust_particle_mass_array = NULL;
+    particle_data->micron_dust_particle_mass_array = NULL;
     particle_data->dust_surfacedensity = NULL;
     particle_data->micron_dust_surfacedensity = NULL;
     particle_data->particle_distance_grid = NULL;
@@ -31,18 +31,18 @@ int allocateParticleData(ParticleData *particle_data, size_t particle_count, int
     // Fő részecske tömbök
     particle_data->particle_distance_array = malloc(particle_count * sizeof(*particle_data->particle_distance_array));
     particle_data->micron_particle_distance_array = malloc(particle_count * sizeof(*particle_data->micron_particle_distance_array));
-    particle_data->particle_mass_array = malloc(particle_count * sizeof(double));
+    particle_data->dust_particle_mass_grid = malloc(particle_count * sizeof(double));
     particle_data->massmicradial_grid = malloc(particle_count * sizeof(double));
-    particle_data->partmassind = malloc(particle_count * sizeof(*particle_data->partmassind));
-    particle_data->partmassmicrind = malloc(particle_count * sizeof(*particle_data->partmassmicrind));
+    particle_data->dust_particle_mass_array = malloc(particle_count * sizeof(*particle_data->dust_particle_mass_array));
+    particle_data->micron_dust_particle_mass_array = malloc(particle_count * sizeof(*particle_data->micron_dust_particle_mass_array));
     particle_data->dust_surfacedensity = malloc(particle_count * sizeof(double));
     particle_data->micron_dust_surfacedensity = malloc(particle_count * sizeof(double));
     particle_data->particle_distance_grid = malloc(particle_count * sizeof(double));
     particle_data->micron_particle_distance_grid = malloc(particle_count * sizeof(double));
 
     // Ellenőrzés
-    if (!particle_data->particle_distance_array || !particle_data->micron_particle_distance_array  || !particle_data->particle_mass_array || !particle_data->massmicradial_grid ||
-        !particle_data->partmassind || !particle_data->partmassmicrind || !particle_data->dust_surfacedensity || !particle_data->micron_dust_surfacedensity ||
+    if (!particle_data->particle_distance_array || !particle_data->micron_particle_distance_array  || !particle_data->dust_particle_mass_grid || !particle_data->massmicradial_grid ||
+        !particle_data->dust_particle_mass_array || !particle_data->micron_dust_particle_mass_array || !particle_data->dust_surfacedensity || !particle_data->micron_dust_surfacedensity ||
         !particle_data->particle_distance_grid || !particle_data->micron_particle_distance_grid) {
         fprintf(stderr, "ERROR [allocateParticleData]: Primary particle array allocation failed!\n");
         freeParticleData(particle_data); // Felszabadítás, ha valami elszállt
@@ -71,10 +71,10 @@ void freeParticleData(ParticleData *particle_data) {
 
     free(particle_data->particle_distance_array);
     free(particle_data->micron_particle_distance_array);
-    free(particle_data->particle_mass_array);
+    free(particle_data->dust_particle_mass_grid);
     free(particle_data->massmicradial_grid);
-    free(particle_data->partmassind);
-    free(particle_data->partmassmicrind);
+    free(particle_data->dust_particle_mass_array);
+    free(particle_data->micron_dust_particle_mass_array);
     free(particle_data->dust_surfacedensity);
     free(particle_data->micron_dust_surfacedensity);
     free(particle_data->particle_distance_grid);
@@ -83,10 +83,10 @@ void freeParticleData(ParticleData *particle_data) {
     // Fontos: a pointereket NULL-ra állítjuk felszabadítás után, hogy elkerüljük a dangling pointereket
     particle_data->particle_distance_array = NULL;
     particle_data->micron_particle_distance_array = NULL;
-    particle_data->particle_mass_array = NULL;
+    particle_data->dust_particle_mass_grid = NULL;
     particle_data->massmicradial_grid = NULL;
-    particle_data->partmassind = NULL;
-    particle_data->partmassmicrind = NULL;
+    particle_data->dust_particle_mass_array = NULL;
+    particle_data->micron_dust_particle_mass_array = NULL;
     particle_data->dust_surfacedensity = NULL;
     particle_data->micron_dust_surfacedensity = NULL;
     particle_data->particle_distance_grid = NULL;

@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-#define MAX_PATH_LEN 8192 // Definiálj egy maximális hosszt fájlnevekhez
+#define MAX_PATH_LEN 16384 // Definiálj egy maximális hosszt fájlnevekhez
 
 // --- Particle Structure ---
 // Represents a single dust particle

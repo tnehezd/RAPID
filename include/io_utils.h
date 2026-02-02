@@ -25,18 +25,17 @@ void loadDustParticlesFromFile(ParticleData *particle_data, const char *particle
 void loadGasSurfaceDensityFromFile(DiskParameters *disk_params, const char *disk_file_name);
 
 /* Fuggveny az adott futashoz mappa letrehozasara */
-void createRunDirectory(char *dir_path);
+char *createRunDirectory(const char *base_path);
 
 /* Elkeszit egy file-t, ami tartalmazza a jelenlegi futas parametereit, es hogy melyik mappaban talalhatoak a file-ok */
 // FIX: The original had 'void printCurrentInformationAboutRun(const char *nev);'
 // You are missing 'const DiskParameters *disk_params' and 'const SimulationOptions *sim_opts'.
-void printCurrentInformationAboutRun(const char *directory_name, const DiskParameters *disk_params, const SimulationOptions *sim_opts);
+void printCurrentInformationAboutRun(const char *directory_name, const DiskParameters *disk_params);
 
 /* Fuggveny a tomegfile kiiratasara */
 // FIX: The original was missing 'const DiskParameters *disk_params' and 'const SimulationOptions *sim_opts'.
 void printMassGrowthAtDZEFile(double step, 
-                double (*partmassind)[5], double (*partmassmicrind)[5], 
-                double time, // Ezt továbbra is meghagyjuk, ha az időre szükség van
+                double (*dust_particle_mass_array)[5], double (*micron_dust_particle_mass_array)[5], 
                 double massbtempii, double massbtempoi, double massmtempii, double massmtempoi, 
                 double *massbtempio, double *massbtempoo, double *massmtempio, double *massmtempoo, 
                 double *tavin, double *tavout, 
@@ -107,11 +106,11 @@ int setupInitialOutputFiles(OutputFiles *output_files, const SimulationOptions *
                                const DiskParameters *disk_params, HeaderData *header_data_for_files);
 
 
-void cleanupSimulationResources(ParticleData *particle_data, OutputFiles *output_files, const SimulationOptions *sim_opts);
+void cleanupSimulationResources(ParticleData *particle_data, OutputFiles *output_files);
 
 FILE *openSnapshotFile(const char *filename,FileType_e file_type,double current_time_years);
 
-void closeSnapshotFiles(OutputFiles *output_files, const char *dens_name, const char *dust_name, const char *dust_name2, const SimulationOptions *sim_opts);
+void closeSnapshotFiles(OutputFiles *output_files, const SimulationOptions *sim_opts);
 
 
 void buildSnapshotFilenames(char *dens_name, char *dust_name, char *dust_name2, char *size_name, const SimulationOptions *sim_opts, int snapshot_id);
