@@ -2,13 +2,12 @@
 // src/integrator.h
 
 // Standard C Library Includes
-#include <stdio.h>    // For printf, fopen, fclose, fscanf, snprintf, sprintf
-#include <stdlib.h>   // For exit, EXIT_FAILURE, EXIT_SUCCESS, system
-#include <math.h>     // For M_PI, fmod, HUGE_VAL (and pow if used by other functions)
-#include <string.h>   // For snprintf, sprintf
+#include <stdio.h>    
+#include <stdlib.h>   
+#include <math.h>     
+#include <string.h>   
 #include <omp.h>
 
-// Your Project Header Includes
 #include "config.h"      
 #include "io_utils.h"     
 #include "disk_model.h"   

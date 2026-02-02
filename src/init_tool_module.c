@@ -11,8 +11,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h> // For strcpy, snprintf
-#include <math.h>   // For M_PI, pow, fabs, sqrt, tanh, log
+#include <string.h> 
+#include <math.h>   
 
 // --- External declaration for the existing linearInterpolation function ---
 // This function is assumed to be implemented in utils.c (or similar)
@@ -207,13 +207,15 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
         default_options->two_pop_ratio = 1.0;
     }
 
-    char full_init_dust_profile_path[MAX_PATH_LEN];
-    char full_disk_param_path[MAX_PATH_LEN];
-    char full_init_density_path[MAX_PATH_LEN];
 
-    snprintf(full_init_dust_profile_path, sizeof(full_init_dust_profile_path), "%s/%s%s", default_options->output_base_path, kInitialDustProfileFileName,kFileNamesSuffix);
-    snprintf(full_disk_param_path, sizeof(full_disk_param_path), "%s/%s%s", default_options->output_base_path, kDiskConfigFile,kFileNamesSuffix);
-    snprintf(full_init_density_path, sizeof(full_init_density_path), "%s/%s%s", default_options->output_base_path, kInitialGasProfileFileName,kFileNamesSuffix);
+    char *full_init_dust_profile_path = NULL;
+    char *full_disk_param_path = NULL;
+    char *full_init_density_path = NULL;
+
+    asprintf(&full_init_dust_profile_path, "%s/%s%s",default_options->output_base_path,kInitialDustProfileFileName,kFileNamesSuffix);
+    asprintf(&full_disk_param_path, "%s/%s%s",default_options->output_base_path,kDiskConfigFile,kFileNamesSuffix);
+    asprintf(&full_init_density_path, "%s/%s%s",default_options->output_base_path,kInitialGasProfileFileName,kFileNamesSuffix);
+
 
     // --- Open Output Files with full paths ---
     dust_ouputput_file = fopen(full_init_dust_profile_path, "w");

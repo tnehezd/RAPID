@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>    // For errno
+#include <sys/stat.h>
+#include <sys/types.h>
 
 
 #ifdef _WIN32
@@ -18,9 +20,9 @@
 // Local includes
 #include "io_utils.h"
 #include "config.h"         
-#include "dust_physics.h"   // If needed for any specific function interactions
-#include "utils.h"          // For countZeroPoints, findZeroPoint, findRAnnulusAroundDZE
-#include "simulation_types.h" // For DiskParameters, SimulationOptions, OutputFiles
+#include "dust_physics.h"  
+#include "utils.h"         
+#include "simulation_types.h" 
 #include "boundary_conditions.h"
 
 
@@ -100,7 +102,7 @@ void loadDustParticlesFromFile(ParticleData *particle_data, const char *particle
         if(fscanf(load_dust_particles_file,"%d %lg %Lg %Lg %lg %lg",&dummy,&distance,&representative_mass,&micron_representative_mass,&particle_radius,&micron_particle_radius) == 6) {
             particle_data->particle_distance_array[i][0] = distance;
             particle_data->particle_distance_array[i][1] = particle_radius / AU_IN_CM; // AU_IN_CM from config.h
-            particle_data->particle_mass_array[i] = representative_mass;
+            particle_data->dust_particle_mass_grid[i] = representative_mass;
 
             particle_data->micron_particle_distance_array[i][0] = distance;
             particle_data->micron_particle_distance_array[i][1] = micron_particle_radius / AU_IN_CM; // AU_IN_CM from config.h
@@ -189,49 +191,47 @@ void loadGasSurfaceDensityFromFile(DiskParameters *disk_params, const char *disk
 }
 
 
-void createRunDirectory(char *dir_path) {
-    char temporary_path[MAX_PATH_LEN];
+char *createRunDirectory(const char *dir_path) {
+    char *temporary_path = NULL;
     int counter = 0;
 
-    // Másolat az eredeti névről
-    strncpy(temporary_path, dir_path, MAX_PATH_LEN - 1);
-    temporary_path[MAX_PATH_LEN - 1] = '\0';
+    // első próbálkozás
+    asprintf(&temporary_path, "%s", dir_path);
 
-    while (access(temporary_path, F_OK) == 0) {  // Fájl vagy mappa létezik
-        snprintf(temporary_path, MAX_PATH_LEN, "%s_%04d", dir_path, ++counter);
+    // ha létezik, generáljunk új neveket
+    while (access(temporary_path, F_OK) == 0) {
+        free(temporary_path);
+        asprintf(&temporary_path, "%s_%04d", dir_path, ++counter);
+
         if (counter > 99) {
-            fprintf(stderr, "ERROR [createRunDirectory]: Too many existing directories with similar names.\n");
+            fprintf(stderr, "ERROR: Too many directories.\n");
             exit(1);
         }
     }
 
-    int result = MKDIR_CALL(temporary_path);
-    if (result != 0) {
-        perror("ERROR [createRunDirectory]: mkdir failed");
-        fprintf(stderr, "ERROR [createRunDirectory]: Could not create directory: '%s'\n", temporary_path);
+    // létrehozás
+    if (MKDIR_CALL(temporary_path) != 0) {
+        perror("mkdir failed");
         exit(1);
     }
 
-    fprintf(stderr, "DEBUG [createRunDirectory]: Directory '%s' created successfully.\n", temporary_path);
-
-    // Másold vissza a létrehozott mappa nevét a bemenetbe
-    strncpy(dir_path, temporary_path, MAX_PATH_LEN - 1);
-    dir_path[MAX_PATH_LEN - 1] = '\0';
-
-    fflush(stderr);
+    return temporary_path;  // <-- VISSZAADJUK AZ ÚJ STRINGET
 }
+
+
+
 
 /* Elkészít egy fájlt, ami tartalmazza a jelenlegi futás paramétereit,
  * és hogy melyik mappában találhatóak a fájlok */
-void printCurrentInformationAboutRun(const char *directory_name, const DiskParameters *disk_params, const SimulationOptions *sim_opts) {
+void printCurrentInformationAboutRun(const char *directory_name, const DiskParameters *disk_params) {
 
-    char full_path[MAX_PATH_LEN]; // Használjuk a MAX_PATH_LEN-t a biztonságos puffereléshez
+    char *full_path=NULL; // Használjuk a MAX_PATH_LEN-t a biztonságos puffereléshez
     char file_name[100]; 
 
     sprintf(file_name, "%s%s", kCurrentInfoFile,kFileNamesSuffix);
     
     // Építsük fel a teljes elérési utat: <directory_name>/<file_name>
-    snprintf(full_path, sizeof(full_path), "%s/%s", directory_name, file_name);
+    asprintf(&full_path, "%s/%s", directory_name, file_name);
 
     fprintf(stderr, "DEBUG [printCurrentInformationAboutRun]: Attempting to open file: '%s'\n", full_path);
 
@@ -255,7 +255,7 @@ void printCurrentInformationAboutRun(const char *directory_name, const DiskParam
 }
 
 
-void printMassGrowthAtDZEFile(double step, double (*partmassind)[5], double (*partmassmicrind)[5], double time, double massbtempii, double massbtempoi, double massmtempii, double massmtempoi, 
+void printMassGrowthAtDZEFile(double step, double (*dust_particle_mass_array)[5], double (*micron_dust_particle_mass_array)[5], double massbtempii, double massbtempoi, double massmtempii, double massmtempoi, 
                 double *massbtempio, double *massbtempoo, double *massmtempio, double *massmtempoo, double *tavin, double *tavout, 
                 const DiskParameters *disk_params, const SimulationOptions *sim_opts,OutputFiles *output_files) {
 
@@ -342,13 +342,13 @@ void printMassGrowthAtDZEFile(double step, double (*partmassind)[5], double (*pa
     double massiim = 0, massoim = 0;
     double massis = 0, massos = 0;
 
-    calculateParticleMass(particle_number, partmassind, 
+    calculateParticleMass(particle_number, dust_particle_mass_array, 
             (int)ind_ii, (int)ind_io, 
             (int)ind_oi, (int)ind_oo, 
             &massii, &massoi, sim_opts); 
 
     if(sim_opts->option_for_dust_secondary_population == 1.0) {
-        calculateParticleMass(particle_number, partmassmicrind, 
+        calculateParticleMass(particle_number, micron_dust_particle_mass_array, 
                 (int)ind_ii, (int)ind_io, 
                 (int)ind_oi, (int)ind_oo, 
                 &massiim, &massoim, sim_opts);
@@ -528,7 +528,7 @@ void printFileHeader(FILE *file, FileType_e file_type, const HeaderData *header_
         case FILE_TYPE_GAS_DENSITY:
             // Kiegészítő infók, ha t=0 (is_initial_data)
             if (header_data && header_data->is_initial_data) {
-                fprintf(file, "# Initial gas profile\n", header_data->current_time);
+                fprintf(file, "# Initial gas profile\n");
             } else {
                 fprintf(file, "# Time: %e years\n", header_data ? header_data->current_time : 0.0);
             }
@@ -556,7 +556,7 @@ void printFileHeader(FILE *file, FileType_e file_type, const HeaderData *header_
             // A fejléc az init_tool_module-ból, módosítva a HeaderData használatára
             // Kiegészítő infók, ha t=0 (is_initial_data)
             if (header_data && header_data->is_initial_data) {
-                fprintf(file, "# Initial particle distribution\n", header_data->current_time);
+                fprintf(file, "# Initial particle distribution\n");
             } else {
                 fprintf(file, "# Particle distribution, Time: %e years\n", header_data ? header_data->current_time : 0.0);
             }
@@ -591,9 +591,9 @@ void printFileHeader(FILE *file, FileType_e file_type, const HeaderData *header_
 
 int setupInitialOutputFiles(OutputFiles *output_files, const SimulationOptions *sim_opts,
                                const DiskParameters *disk_params, HeaderData *header_data_for_files) {
-    char dust_ouput[MAX_PATH_LEN] = "";
-    char micron_dust_ouput[MAX_PATH_LEN] = "";
-    char mass_output[MAX_PATH_LEN] = "";
+    char *dust_ouput = NULL;
+    char *micron_dust_ouput = NULL;
+    char *mass_output = NULL;
 
     // Készítsük elő a header_data_for_files struktúrát a specifikus adatokkal
     header_data_for_files->current_time = 0.0;
@@ -602,12 +602,12 @@ int setupInitialOutputFiles(OutputFiles *output_files, const SimulationOptions *
     header_data_for_files->R_out = disk_params->r_max;
 
     // Fájlnevek generálása
-    snprintf(dust_ouput, MAX_PATH_LEN, "%s/%s/%s%s", sim_opts->output_dir_name, kLogFilesDirectory, kDustAccumulationFileName,kFileNamesSuffix);
+    asprintf(&dust_ouput, "%s/%s/%s%s", sim_opts->output_dir_name, kLogFilesDirectory, kDustAccumulationFileName,kFileNamesSuffix);
 
     if (sim_opts->option_for_dust_secondary_population == 1.0) {
-        snprintf(micron_dust_ouput, MAX_PATH_LEN, "%s/%s/%s%st", sim_opts->output_dir_name, kLogFilesDirectory,kDustMicronParticleEvolutionFile,kFileNamesSuffix);
+        asprintf(&micron_dust_ouput, "%s/%s/%s%st", sim_opts->output_dir_name, kLogFilesDirectory,kDustMicronParticleEvolutionFile,kFileNamesSuffix);
     }
-    snprintf(mass_output, MAX_PATH_LEN, "%s/%s/%s%s", sim_opts->output_dir_name, kLogFilesDirectory, kDustAccumulationFileName,kFileNamesSuffix);
+    asprintf(&mass_output, "%s/%s/%s%s", sim_opts->output_dir_name, kLogFilesDirectory, kDustAccumulationFileName,kFileNamesSuffix);
 
     fprintf(stderr, "DEBUG [setupInitialOutputFiles]: Opening output files: %s, %s (if 2pop), %s\n", dust_ouput, micron_dust_ouput, mass_output);
 
@@ -649,14 +649,14 @@ int setupInitialOutputFiles(OutputFiles *output_files, const SimulationOptions *
 }
 
 
-void cleanupSimulationResources(ParticleData *particle_data, OutputFiles *output_files, const SimulationOptions *sim_opts) {
+void cleanupSimulationResources(ParticleData *particle_data, OutputFiles *output_files) {
     if (particle_number > 0) {
         free(particle_data->particle_distance_array); particle_data->particle_distance_array = NULL;
         free(particle_data->micron_particle_distance_array); particle_data->micron_particle_distance_array = NULL;
-        free(particle_data->particle_mass_array); particle_data->particle_mass_array = NULL;
+        free(particle_data->dust_particle_mass_grid); particle_data->dust_particle_mass_grid = NULL;
         free(particle_data->massmicradial_grid); particle_data->massmicradial_grid = NULL;
-        free(particle_data->partmassind); particle_data->partmassind = NULL;
-        free(particle_data->partmassmicrind); particle_data->partmassmicrind = NULL;
+        free(particle_data->dust_particle_mass_array); particle_data->dust_particle_mass_array = NULL;
+        free(particle_data->micron_dust_particle_mass_array); particle_data->micron_dust_particle_mass_array = NULL;
         free(particle_data->dust_surfacedensity); particle_data->dust_surfacedensity = NULL;
         free(particle_data->micron_dust_surfacedensity); particle_data->micron_dust_surfacedensity = NULL;
         free(particle_data->particle_distance_grid); particle_data->particle_distance_grid = NULL;
@@ -703,22 +703,23 @@ FILE *openSnapshotFile(const char *file_name, FileType_e file_type, double curre
 
 void buildSnapshotFilenames(char *dens_name, char *dust_name, char *dust_name2, char *size_name, const SimulationOptions *sim_opts, int snapshot_id){
     // Gáz sűrűség fájl
-    snprintf(dens_name, MAX_PATH_LEN, "%s/%s/%s_%08d%s",
+    asprintf(&dens_name, "%s/%s/%s_%08d%s",
              sim_opts->output_dir_name, kLogFilesDirectory,
              kGasDensityProfileFilePrefix, snapshot_id, kFileNamesSuffix);
 
     // Por sűrűség fájl
-    snprintf(dust_name, MAX_PATH_LEN, "%s/%s/%s_%08d%s",
+    asprintf(&dust_name, "%s/%s/%s_%08d%s",
              sim_opts->output_dir_name, kLogFilesDirectory,
              kDustDensityProfileFilePrefix, snapshot_id, kFileNamesSuffix);
 
-    // Mikron por fájl
-/*    snprintf(dust_name2, MAX_PATH_LEN, "%s/%s/%s_%08d%s",
-             sim_opts->output_dir_name, kLogFilesDirectory,
-             kDustDensityProfileFilePrefix, snapshot_id, kFileNamesSuffix);
-*/
+    if (sim_opts->option_for_dust_secondary_population == 1) {
+        asprintf(&dust_name2, "%s/%s/%s_%08d%s",
+                 sim_opts->output_dir_name, kLogFilesDirectory,
+                 kDustDensityProfileFilePrefix, snapshot_id, kFileNamesSuffix);
+    }
+
     // Részecskeméret fájl
-    snprintf(size_name, MAX_PATH_LEN, "%s/%s/%s_%08d%s",
+    asprintf(&size_name, "%s/%s/%s_%08d%s",
              sim_opts->output_dir_name, kLogFilesDirectory,
              kDustParticleSizeFileName, snapshot_id, kFileNamesSuffix);
 }
@@ -726,7 +727,7 @@ void buildSnapshotFilenames(char *dens_name, char *dust_name, char *dust_name2, 
 
 
 // Segédfüggvény a pillanatfelvételek fájljainak bezárására
-void closeSnapshotFiles(OutputFiles *output_files, const char *dens_name, const char *dust_name, const char *dust_name2, const SimulationOptions *sim_opts) {
+void closeSnapshotFiles(OutputFiles *output_files, const SimulationOptions *sim_opts) {
     if (output_files->surface_file != NULL) {
         fclose(output_files->surface_file);
         output_files->surface_file = NULL;
