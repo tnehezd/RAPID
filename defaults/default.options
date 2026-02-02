@@ -1,0 +1,230 @@
+===============================================================================
+DEFAULT.OPTIONS — Quick Reference for External Parameters
+This file is documentation only. The C program does NOT read this file.
+It lists all parameters that can be modified externally (CLI or pywrap),
+their flags, YAML keys, default values, and short descriptions.
+===============================================================================
+
+
+------------------------------------------------------------------------------
+SIMULATION CONTROL OPTIONS
+------------------------------------------------------------------------------
+
+Dust drift
+  CLI:       -drift
+  YAML:      enable_dust_drift
+  Default:   1.0
+  Info:      Enable (1) or disable (0) dust radial drift.
+
+Dust growth
+  CLI:       -growth
+  YAML:      enable_dust_growth
+  Default:   1.0
+  Info:      Enable (1) or disable (0) dust growth.
+
+Gas evolution
+  CLI:       -evol
+  YAML:      enable_gas_evolution
+  Default:   1.0
+  Info:      Enable (1) or disable (0) gas surface density evolution.
+
+Two-population dust model
+  CLI:       -twopop
+  YAML:      enable_two_dust_populations
+  Default:   1.0
+  Info:      Enable (1) or disable (0) the two-population dust model.
+
+Fragmentation velocity
+  CLI:       -ufrag
+  YAML:      fragmentation_velocity
+  Default:   1000.0
+  Info:      Fragmentation threshold velocity (cm/s).
+
+Fragmentation factor
+  CLI:       -ffrag
+  YAML:      fragmentation_factor
+  Default:   0.37
+  Info:      Scaling factor for fragmentation efficiency.
+
+
+------------------------------------------------------------------------------
+DISK PARAMETERS
+------------------------------------------------------------------------------
+
+Number of grid points
+  CLI:       -n
+  YAML:      number_of_grid_points
+  Default:   2000
+  Info:      Number of radial grid cells.
+
+Inner radius (AU)
+  CLI:       -ri
+  YAML:      inner_radius_au
+  Default:   1.0
+  Info:      Inner boundary of the disk.
+
+Outer radius (AU)
+  CLI:       -ro
+  YAML:      outer_radius_au
+  Default:   100.0
+  Info:      Outer boundary of the disk.
+
+Gas surfce density at the fiducial radius (in M_sun/AU^2)
+  CLI:       -sigma0_init
+  YAML:      initial_gas_sigma0_msun_per_au2
+  Default:   1.0
+  Info:      Gas surface density at 1 AU.
+
+Gas surface density exponent
+  CLI:       -index_init
+  YAML:      sigma_profile_exponent
+  Default:   0.5
+  Info:      Exponent p in Σ(r) ∝ r^-p.
+
+Alpha viscosity parameter
+  CLI:       -alpha_init
+  YAML:      alpha_viscosity
+  Default:   0.01
+  Info:      Shakura–Sunyaev α parameter.
+
+Stellar mass (M_sun)
+  CLI:       -m0_init
+  YAML:      star_mass_msun
+  Default:   1.0
+  Info:      Mass of the central star.
+
+Aspect ratio at 1 AU
+  CLI:       -h_init
+  YAML:      aspect_ratio_at_1au
+  Default:   0.05
+  Info:      Disk scale height ratio H/R at 1 AU.
+
+Flaring index
+  CLI:       -flind_init
+  YAML:      flaring_index
+  Default:   0.5
+  Info:      Exponent describing disk flaring.
+
+
+------------------------------------------------------------------------------
+DEAD ZONE PARAMETERS
+------------------------------------------------------------------------------
+
+Inner dead-zone radius
+  CLI:       -rdzei
+  YAML:      deadzone_inner_radius_au
+  Default:   0.0
+  Info:      The inner edge of the dead zone in AU
+
+Outer dead-zone radius
+  CLI:       -rdzeo
+  YAML:      deadzone_outer_radius_au
+  Default:   0.0
+  Info:      The outer edge of the dead zone in AU
+
+Inner transition width multiplier
+  CLI:       -drdzei
+  YAML:      deadzone_inner_transition_width_mult
+  Default:   0.0
+  Info:      The width of the inner dead zone edge transition in local pressure scale-height units (H)
+
+Outer transition width multiplier
+  CLI:       -drdzeo
+  YAML:      deadzone_outer_transition_width_mult
+  Default:   0.0
+  Info:      The width of the outer dead zone edge transition in local pressure scale-height units (H)
+
+Alpha reduction inside dead zone
+  CLI:       -amod
+  YAML:      deadzone_alpha_reduction
+  Default:   0.0
+  Info:      Alpha reduction parameter in the dead zone
+
+
+------------------------------------------------------------------------------
+DUST PARAMETERS
+------------------------------------------------------------------------------
+
+Number of dust particles
+  CLI:       -ndust
+  YAML:      number_of_dust_particles
+  Default:   5000
+  Info:      Number of dust particles used to represent the dust surface density. Does NOT need to match 
+             the number of gas grid cells, but it is recommended to use at least as many particles as gas cells. 
+             Using fewer particles than grid cells reduces spatial resolution and can lead to noisy or poorly sampled 
+             dust profiles. Using more particles is allowed and improves sampling quality.
+
+Dust-to-gas ratio
+  CLI:       -eps
+  YAML:      initial_dust_to_gas_ratio
+  Default:   0.01
+  Info:      The initial dust-to-gas ratio in the disk.
+
+Population 1-to-population 2 mass ratio
+  CLI:       -ratio
+  YAML:      population_one_mass_ratio
+  Default:   0.85
+  Info:      This option controlls the mass ratio of the first and the secondary (micron-sized) dust component.
+
+Cm-sized dust component size (cm)
+  CLI:       -onesize
+  YAML:      one_size_particle_value_cm
+  Default:   0.0
+  Info:      Initial uniform size for the first dust component in cm-s.
+
+Micro-grain size (cm)
+  CLI:       -mic
+  YAML:      micro_particle_size_cm
+  Default:   1e-4
+  Info:      The initial uniform size of the secondary (micron-sized) dust component in cm-s.
+
+Dust material density (g/cm^3)
+  CLI:       -pdensity
+  YAML:      dust_particle_density_g_cm3
+  Default:   1.6
+  Info:      Internal density of the dust grains in g/cm^3.
+
+------------------------------------------------------------------------------
+TIME PARAMETERS
+------------------------------------------------------------------------------
+
+Fixed timestep
+  CLI:       -tStep
+  YAML:      fixed_time_step
+  Default:   0.0
+  Info:      The timestep used for time integration (in years). If set to 0, the program automatically computes a stable 
+             timestep each iteration based on the CFL condition. If the user-defined timestep is larger than the CFL-limited 
+             value, the code overrides it and uses the internally computed safe timestep. If the user-defined timestep is 
+             smaller than the CFL value (and non-zero), the user-defined value is used.
+
+Total simulation time
+  CLI:       -tmax
+  YAML:      total_simulation_time
+  Default:   1e6
+  Info:      End of simulation times in years.
+
+Output frequency
+  CLI:       -outfreq
+  YAML:      output_write_frequency
+  Default:   1000.0
+  Info:      Determines how many snapshots are written during the entire simulation. The program divides the total simulation time 
+             by this value to obtain the snapshot interval. For example, if tmax = 1e6 years and outfreq = 1000, snapshots are written 
+             every 1000 years. Higher values produce more frequent outputs; lower values produce fewer, more widely spaced snapshots.
+
+
+
+------------------------------------------------------------------------------
+FILE I/O
+------------------------------------------------------------------------------
+
+Input file
+  CLI:       -i
+  YAML:      input_file_path
+  Default:   (empty)
+  Info:      Optional initial profile file.
+
+Output directory
+  CLI:       -o
+  YAML:      output_directory_name
+  Default:   output
+  Info:      Directory where simulation results are written.
