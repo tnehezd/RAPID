@@ -4,6 +4,7 @@
 #include <stdio.h> // Required for FILE* type
 #include <math.h>  // Required for M_PI (for TWOPI macro)
 
+
 // --- Global Variable Declarations (extern) ---
 // Dust parameters
 extern int particle_number;
@@ -26,6 +27,7 @@ extern FILE *load_dust_particles_file;
 #define SOLAR_MASS_IN_GRAMS 					1.989e33            // Solar Mass in grams (M_solar -> g) - PLEASE VERIFY THIS VALUE!
 #define AU_IN_CM 								1.496e13            // Astronomical Unit in centimeters (AU -> cm) - PLEASE VERIFY THIS VALUE!
 #define ROUNDING_FACTOR 						1.0                 // Make sure this value is correct for your physics model!
+#define SIM_VERSION 							"2.1-beta"
 
 
 // --- Global Filename Declarations (extern) ---
