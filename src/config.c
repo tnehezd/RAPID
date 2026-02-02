@@ -10,7 +10,6 @@ FILE *current_info_file = NULL;
 FILE *load_dust_particles_file = NULL;
 
 // --- Global Filename Definitions (Constant Pointers) ---
-// Using const char * const for truly constant string literals.
 // These cannot be modified at runtime.
 
 const char * const kInitialGasProfileFileName = "initial_gas_profile";   

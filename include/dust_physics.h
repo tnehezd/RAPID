@@ -1,3 +1,25 @@
+/**
+ * @file dust_physics.h
+ * @brief Physical models for dust particle dynamics and growth in the protoplanetary disk.
+ *
+ * This module provides the core routines that describe the physical evolution
+ * of dust grains embedded in the gas disk. It includes models for aerodynamic
+ * coupling (Stokes number), radial drift, turbulent and drift–induced
+ * fragmentation barriers, and particle growth timescales. These functions
+ * implement the two–population dust evolution framework and the grain–growth
+ * prescriptions commonly used in protoplanetary disk studies.
+ *
+ * In addition to growth and drift physics, the module contains routines for
+ * reconstructing the dust surface density on the gas grid and for updating
+ * particle positions during the simulation. All functions operate on the
+ * ParticleData, SimulationOptions, and DiskParameters structures, ensuring
+ * consistent coupling between dust and gas components.
+ *
+ * The routines declared here are used by the main simulation loop to evolve
+ * the dust population in time, compute representative particle sizes, and
+ * determine the dust–to–gas distribution throughout the disk.
+ */
+
 #ifndef DUST_PHYSICS_H
 #define DUST_PHYSICS_H
 
@@ -99,18 +121,18 @@ double calculateGrowthTimescale(double radial_distance, double dust_to_gas_ratio
  * This function evaluates the maximum allowed particle size based on
  * fragmentation, drift, and growth limits.
  *
- * @param particle_radius       Current particle radius.
- * @param particle_density      Intrinsic particle density.
- * @param gas_surfacedensity    Local gas surface density.
- * @param dust_surfacedensity   Local dust surface density.
- * @param particle_distance     Radial position of the particle.
- * @param gas_pressure          Gas pressure.
- * @param dpress_val            Pressure gradient.
- * @param actual_timestep       Time step.
- * @param disk_params           Pointer to disk parameter structure.
+ * @param particle_radius       	Current particle radius.
+ * @param particle_density      	Intrinsic particle density.
+ * @param gas_surfacedensity    	Local gas surface density.
+ * @param dust_surfacedensity   	Local dust surface density.
+ * @param particle_distance     	Radial position of the particle.
+ * @param gas_pressure          	Gas pressure.
+ * @param gas_pressure_gradient     Pressure gradient.
+ * @param actual_timestep       	Time step.
+ * @param disk_params           	Pointer to disk parameter structure.
  * @return Updated particle radius after growth.
  */
-double calculateDustParticleSize(double particle_radius, double pdens, double gas_surfacedensity, double dust_surfacedensity, double particle_distance, double gas_pressure, double dpress_val, double actual_timestep, const DiskParameters *disk_params);
+double calculateDustParticleSize(double particle_radius, double pdens, double gas_surfacedensity, double dust_surfacedensity, double particle_distance, double gas_pressure, double gas_pressure_gradient, double actual_timestep, const DiskParameters *disk_params);
 
 /**
  * @brief Computes the dust surface density profile from particle data.
@@ -118,13 +140,13 @@ double calculateDustParticleSize(double particle_radius, double pdens, double ga
  * This function reconstructs the dust surface density on the gas grid
  * based on the positions and masses of dust particles.
  *
- * @param max_param               Upper radial bound.
- * @param min_param               Lower radial bound.
+ * @param outer_distance          Upper radial bound.
+ * @param inner_distance          Lower radial bound.
  * @param particle_data           Pointer to particle data structure.
  * @param simulation_options      Pointer to simulation options.
  * @param disk_params             Pointer to disk parameter structure.
  */
-void calculateDustSurfaceDensity(double max_param, double min_param, const ParticleData *particle_data, const SimulationOptions *simulation_options, const DiskParameters *disk_params);
+void calculateDustSurfaceDensity(double outer_distance, double inner_distance, const ParticleData *particle_data, const SimulationOptions *simulation_options, const DiskParameters *disk_params);
 
 /**
  * @brief Updates and stores the new radial positions of dust particles.
