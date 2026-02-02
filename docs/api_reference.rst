@@ -10,7 +10,7 @@ This section provides a comprehensive, automatically generated API reference for
 Configuration Module
 --------------------
 
-This section details the API for the `config.h` and `globals.h` header files. Together, these files include declarations for global simulation parameters, file pointers, and constant definitions for the setup and management of the simulation environment.
+This section details the API for the `config.h` header file. Together, these files include declarations for global simulation parameters, file pointers, and constant definitions for the setup and management of the simulation environment.
 
 config.h
 ^^^^^^^^
@@ -22,16 +22,6 @@ This section presents the detailed API for the `config.h` header file, including
 
 ----
 
-globals.h
-^^^^^^^^^
-
-This section presents the detailed API for the `globals.h` header file that contains global variables for conversions related to simulation setup and configuration.
-
-.. doxygenfile:: globals.h
-   :project: rapid
-
-
-----
 
 Initialize Disk
 ---------------
@@ -49,7 +39,8 @@ init_tool_module.h
 Disk Physics Module
 -------------------
 
-This section details the API for the `disk_model.h` header file. It includes declarations for functions that initialize, and evolve the physical properties of the gas disk within the simulation, such as surface density, pressure, velocity, and pressure gradient.
+This section details the API for the ``disk_model.h`` header file. It provides functions for constructing the initial physical state of the protoplanetary gas disk.
+These routines generate the radial grid, surface density profile, pressure, pressure gradient, and gas velocity fields used throughout the simulation.
 
 disk_model.h
 ^^^^^^^^^^^^
@@ -58,12 +49,27 @@ disk_model.h
    :project: rapid
 
 
-This section details the API for the `dust_physics.h` header file. It includes declarations for functions that initialize, and evolve the physical properties of the dust particles within the simulation, such as radial distance, friction due to the headwind, size and the size constraining barriers.
+----
+
+This section details the API for the ``dust_physics.h`` header file. It contains routines that compute the physical evolution of dust particles in the disk, including radial drift, aerodynamic coupling to the gas, particle growth barriers.
+
 
 dust_physics.h
 ^^^^^^^^^^^^^^
 
 .. doxygenfile:: dust_physics.h
+   :project: rapid
+
+----
+
+This section details the API for the ``gas_physics.h`` header file. It provides functions that compute the physical evolution of the gas disk, including viscosity, pressure scale height, gas velocity, and the time‑dependent update of the gas surface density.
+
+
+
+gas_physics.h
+^^^^^^^^^^^^^
+
+.. doxygenfile:: gas_physics.h
    :project: rapid
 
 
