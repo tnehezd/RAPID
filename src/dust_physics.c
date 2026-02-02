@@ -12,15 +12,13 @@
 #include <math.h>
 #include <omp.h>             
 
-/*	Calculates the Stokes number for each particle	*/
-/*	St = rho_particle * radius_particle * PI / (2 * sigma)	*/
-double calculateStokesNumber(double particle_radius, double gas_surfacedensity, DiskParameters *disk_params) { /*	in the Epstein drag regime	*/
+/*  Stokes number in the Epstein drag regime  */
+double calculateStokesNumber(double particle_radius, double gas_surfacedensity, DiskParameters *disk_params) { 
+
     return disk_params->particle_density_dimensionless * particle_radius * M_PI / (2.0 * gas_surfacedensity);
 }
 
 void calculateParticleMass(int number_of_particles, double (*partmassind)[5], int indii, int indio, int indoi, int indoo, double *massiout, double *massoout, const SimulationOptions *simulation_options) {
-
-    // Debug üzenet frissítve az indexekre
 
     double massitemp = 0.0;
     double massotemp = 0.0;
@@ -227,8 +225,8 @@ void calculateDustSurfaceDensity(double max_param, double min_param, const Parti
 void calculateDustDistance(const char *file_name, ParticleData *particle_data, double actual_timestep, double actual_time, int number_of_particles, const SimulationOptions *simulation_options, const DiskParameters *disk_params){
 
     int i;
-    double y, y_out, prad_new, particle_radius;
-    char scout[1024];
+    double particle_distance, particle_distance_new, particle_radius_new, particle_radius;
+    char file_path[1024];
 
 
     // Fájlkezelés t==0 esetén: ez valószínűleg egyszer történik meg a szimuláció elején,
@@ -237,8 +235,8 @@ void calculateDustDistance(const char *file_name, ParticleData *particle_data, d
     #pragma omp master
     {
         if (actual_time == 0) {
-            sprintf(scout, "%s/%s%s", file_name, kDriftTimescaleFileName, kFileNamesSuffix);
-            drift_timescale_file = fopen(scout, "w");
+            sprintf(file_path, "%s/%s%s", file_name, kDriftTimescaleFileName, kFileNamesSuffix);
+            drift_timescale_file = fopen(file_path, "w");
         }
     }
     // Szinkronizálás a master szál befejezéséig.
@@ -246,18 +244,18 @@ void calculateDustDistance(const char *file_name, ParticleData *particle_data, d
 
     // **ITT A PÁRHUZAMOSÍTÁS!**
     // Az `i` ciklus független iterációkkal rendelkezik, minden szál a saját `radius[i]` elemen dolgozik.
-    #pragma omp parallel for private(y, y_out, prad_new, particle_radius)
+    #pragma omp parallel for private(particle_distance, particle_distance_new, particle_radius_new, particle_radius)
     for (i = 0; i < number_of_particles; i++) {
         // Csak a r_min és r_max közötti részecskékkel foglalkozunk.
         // A 0.0-ra állítás kívül esik a párhuzamos részen, ha az if feltétel nem teljesül.
         if (particle_data->particle_distance_array[i][0] > disk_params->r_min && particle_data->particle_distance_array[i][0] < disk_params->r_max) {
-            y = particle_data->particle_distance_array[i][0];
+            particle_distance = particle_data->particle_distance_array[i][0];
             particle_radius = particle_data->particle_distance_array[i][1];
 
-			integrateParticleRungeKutta4(actual_time, particle_radius, particle_data->dust_surfacedensity, particle_data->particle_distance_grid, actual_timestep, y, &y_out, &prad_new, disk_params, simulation_options);
+			integrateParticleRungeKutta4(actual_time, particle_radius, particle_data->dust_surfacedensity, particle_data->particle_distance_grid, actual_timestep, particle_distance, &particle_distance_new, &particle_radius_new, disk_params, simulation_options);
             if (actual_time == 0) {
                 if (simulation_options->option_for_dust_secondary_population == 0) {
-                    double current_drdt_val = (fabs(y_out - y) / (actual_timestep));
+                    double current_timestep_value = (fabs(particle_distance_new - particle_distance) / (actual_timestep));
                     // Azért kell a critical szekció, mert az drift_timescale_file fájlba írunk.
                     // Ez a critical szekció biztosítja, hogy egyszerre csak egy szál írjon a fájlba.
 
@@ -265,7 +263,7 @@ void calculateDustDistance(const char *file_name, ParticleData *particle_data, d
                     {
                         // Ellenőrizzük, hogy a fájlmutató nem NULL
                         if (drift_timescale_file != NULL) {
-                            fprintf(drift_timescale_file, "%lg %lg\n", particle_data->particle_distance_array[i][0], (particle_data->particle_distance_array[i][0] / current_drdt_val) / (2.0 * M_PI));
+                            fprintf(drift_timescale_file, "%lg %lg\n", particle_data->particle_distance_array[i][0], (particle_data->particle_distance_array[i][0] / current_timestep_value) / (2.0 * M_PI));
                         } else {
                             fprintf(stderr, "ERROR: drift_timescale_file is NULL during write in calculateDustDistance (t=0 block).\n");
                         }
@@ -274,10 +272,10 @@ void calculateDustDistance(const char *file_name, ParticleData *particle_data, d
             }
 
             if (simulation_options->option_for_dust_secondary_population != 1) { // Ha növekedés engedélyezett vagy valami más mód
-                particle_data->particle_distance_array[i][1] = prad_new;
-                particle_data->particle_distance_array[i][0] = y_out;
+                particle_data->particle_distance_array[i][1] = particle_radius_new;
+                particle_data->particle_distance_array[i][0] = particle_distance_new;
             } else { // simulation_options->option_for_dust_secondary_population == 1, csak drift
-                particle_data->particle_distance_array[i][0] = y_out;
+                particle_data->particle_distance_array[i][0] = particle_distance_new;
             }
         } else {
             // Ha a részecske r_min vagy r_max kívülre kerül, 0.0-ra állítjuk a pozícióját.
