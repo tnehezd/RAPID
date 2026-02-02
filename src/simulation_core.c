@@ -140,7 +140,7 @@ static void snapshotMassGrowthAndSigma(double t, double snapshot, ParticleData *
 
     // 3) dust surface density print
     if (sim_opts->option_for_dust_growth == 1.) {
-        printDustSurfaceDensityPressurePressureDerivateFile(particle_data->rdvec, particle_data->rmicvec, particle_data->dust_surfacedensity, particle_data->micron_dust_surfacedensity, disk_params, sim_opts, output_files, (int)snapshot);
+        printDustSurfaceDensityPressurePressureDerivateFile(particle_data->particle_distance_grid, particle_data->micron_particle_distance_grid, particle_data->dust_surfacedensity, particle_data->micron_dust_surfacedensity, disk_params, sim_opts, output_files, (int)snapshot);
     }
 }
 
@@ -202,11 +202,11 @@ static void simulateDustDriftStep(double *t, double deltat, double *snapshot, Pa
     // --- Drift update ---
     int optsize = 0;
 
-    calculateDustDistance(sim_opts->output_dir_name, optsize,particle_data, deltat, *t,particle_number, sim_opts, disk_params);
+    calculateDustDistance(sim_opts->output_dir_name,particle_data, deltat, *t,particle_number, sim_opts, disk_params);
 
     if (sim_opts->option_for_dust_secondary_population == 1.) {
         optsize = 1;
-        calculateDustDistance(sim_opts->output_dir_name, optsize,particle_data,deltat, *t,particle_number, sim_opts, disk_params);
+        calculateDustDistance(sim_opts->output_dir_name, particle_data,deltat, *t,particle_number, sim_opts, disk_params);
     }
 
     // --- Time advance ---
