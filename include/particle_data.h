@@ -16,8 +16,8 @@ typedef struct {
 
     double *dust_surfacedensity;
     double *micron_dust_surfacedensity;
-    double *rdvec;
-    double *rmicvec;
+    double *particle_distance_grid;
+    double *micron_particle_distance_grid;
     size_t allocated_particle_number; // Az aktuálisan allokált részecskék száma
 } ParticleData;
 

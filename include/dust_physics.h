@@ -25,14 +25,14 @@ double calculateStokesNumber(double particle_radius, double gas_surfacedensity, 
  * This function fills the output arrays with the representative masses
  * of the inner/outer populations based on the particle distribution.
  *
- * @param number_of_particles Total number of dust particles.
- * @param partmassind         2D array storing intermediate mass values.
- * @param indii, indio, indoi, indoo  Index boundaries for the four mass bins.
- * @param massiout            Output pointer for inner population mass.
- * @param massoout            Output pointer for outer population mass.
- * @param sim_opts            Pointer to simulation options.
+ * @param number_of_particles           Total number of dust particles.
+ * @param partmassind                   2D array storing intermediate mass values.
+ * @param indii, indio, indoi, indoo    Index boundaries for the four mass bins.
+ * @param massiout                      Output pointer for inner population mass.
+ * @param massoout                      Output pointer for outer population mass.
+ * @param simulation_options                      Pointer to simulation options.
  */
-void calculateParticleMass(int number_of_particles, double (*partmassind)[5], int indii, int indio, int indoi, int indoo, double *massiout, double *massoout, const SimulationOptions *sim_opts);
+void calculateParticleMass(int number_of_particles, double (*partmassind)[5], int indii, int indio, int indoi, int indoo, double *massiout, double *massoout, const SimulationOptions *simulation_options);
 
 /**
  * @brief Computes the radial drift barrier size.
@@ -42,13 +42,13 @@ void calculateParticleMass(int number_of_particles, double (*partmassind)[5], in
  *
  * @param dust_surfacedensity Local dust surface density.
  * @param radial_distance     Radial position of the particle.
- * @param p                   Gas pressure at the particle location.
- * @param dp                  Radial pressure gradient.
- * @param rho_p               Intrinsic particle density.
+ * @param gas_pressure        Gas pressure at the particle location.
+ * @param pressure_gradient   Radial pressure gradient.
+ * @param particle_density    Intrinsic particle density.
  * @param disk_params         Pointer to disk parameter structure.
  * @return Maximum particle size allowed by the drift barrier.
  */
-double calculateRadialDriftBarrier(double dust_surfacedensity, double radial_distance, double p, double dp, double rho_p, const DiskParameters *disk_params);
+double calculateRadialDriftBarrier(double dust_surfacedensity, double radial_distance, double gas_pressure, double pressure_gradient, double particle_density, const DiskParameters *disk_params);
 
 /**
  * @brief Computes the turbulent fragmentation barrier size.
@@ -57,12 +57,12 @@ double calculateRadialDriftBarrier(double dust_surfacedensity, double radial_dis
  * collisions driven by turbulent relative velocities.
  *
  * @param gas_surfacedensity  Local gas surface density.
- * @param r                   Radial position.
- * @param rho_p               Intrinsic particle density.
+ * @param radial_distance     Radial position.
+ * @param particle_density    Intrinsic particle density.
  * @param disk_params         Pointer to disk parameter structure.
  * @return Maximum particle size allowed by turbulent fragmentation.
  */
-double calculateTurbulentFragmentationBarrier(double gas_surfacedensity, double r, double rho_p, const DiskParameters *disk_params);
+double calculateTurbulentFragmentationBarrier(double gas_surfacedensity, double radial_distance, double particle_density, const DiskParameters *disk_params);
 
 /**
  * @brief Computes the drift-induced fragmentation barrier size.
@@ -71,14 +71,14 @@ double calculateTurbulentFragmentationBarrier(double gas_surfacedensity, double 
  * fragmentation threshold.
  *
  * @param gas_surfacedensity  Local gas surface density.
- * @param r                   Radial position.
- * @param p                   Gas pressure.
- * @param dp                  Pressure gradient.
- * @param rho_p               Intrinsic particle density.
+ * @param radial_distance     Radial position.
+ * @param gas_pressure        Gas pressure.
+ * @param pressure_gradient   Pressure gradient.
+ * @param particle_density    Intrinsic particle density.
  * @param disk_params         Pointer to disk parameter structure.
  * @return Maximum particle size allowed by drift-induced fragmentation.
  */
-double calculateDriftInducedFragmentationBarrier(double gas_surfacedensity, double r, double p, double dp, double rho_p, const DiskParameters *disk_params);
+double calculateDriftInducedFragmentationBarrier(double gas_surfacedensity, double radial_distance, double gas_pressure, double pressure_gradient, double particle_density, const DiskParameters *disk_params);
 
 /**
  * @brief Computes the dust growth timescale.
@@ -86,12 +86,12 @@ double calculateDriftInducedFragmentationBarrier(double gas_surfacedensity, doub
  * The growth timescale determines how quickly dust grains grow due to
  * coagulation processes at a given radial location.
  *
- * @param r       Radial position.
- * @param eps     Dust-to-gas ratio.
- * @param disk_params Pointer to disk parameter structure.
+ * @param radial_distance       Radial position.
+ * @param dust_to_gas_ratio     Dust-to-gas ratio.
+ * @param disk_params           Pointer to disk parameter structure.
  * @return Growth timescale at the given location.
  */
-double calculateGrowthTimescale(double r, double eps, const DiskParameters *disk_params);
+double calculateGrowthTimescale(double radial_distance, double dust_to_gas_ratio, const DiskParameters *disk_params);
 
 /**
  * @brief Computes the dust particle size using the Birnstiel et al. model.
@@ -99,18 +99,18 @@ double calculateGrowthTimescale(double r, double eps, const DiskParameters *disk
  * This function evaluates the maximum allowed particle size based on
  * fragmentation, drift, and growth limits.
  *
- * @param prad                  Current particle radius.
- * @param pdens                 Intrinsic particle density.
+ * @param particle_radius       Current particle radius.
+ * @param particle_density      Intrinsic particle density.
  * @param gas_surfacedensity    Local gas surface density.
  * @param dust_surfacedensity   Local dust surface density.
- * @param y                     Radial position of the particle.
- * @param p                     Gas pressure.
+ * @param particle_distance     Radial position of the particle.
+ * @param gas_pressure          Gas pressure.
  * @param dpress_val            Pressure gradient.
  * @param actual_timestep       Time step.
  * @param disk_params           Pointer to disk parameter structure.
  * @return Updated particle radius after growth.
  */
-double calculateDustParticleSize(double prad, double pdens, double gas_surfacedensity, double dust_surfacedensity, double y, double p, double dpress_val, double actual_timestep, const DiskParameters *disk_params);
+double calculateDustParticleSize(double particle_radius, double pdens, double gas_surfacedensity, double dust_surfacedensity, double particle_distance, double gas_pressure, double dpress_val, double actual_timestep, const DiskParameters *disk_params);
 
 /**
  * @brief Computes the dust surface density profile from particle data.
@@ -121,10 +121,10 @@ double calculateDustParticleSize(double prad, double pdens, double gas_surfacede
  * @param max_param     Upper radial bound.
  * @param min_param     Lower radial bound.
  * @param particle_data Pointer to particle data structure.
- * @param sim_opts      Pointer to simulation options.
+ * @param simulation_options      Pointer to simulation options.
  * @param disk_params   Pointer to disk parameter structure.
  */
-void calculateDustSurfaceDensity(double max_param, double min_param, const ParticleData *particle_data, const SimulationOptions *sim_opts, const DiskParameters *disk_params);
+void calculateDustSurfaceDensity(double max_param, double min_param, const ParticleData *particle_data, const SimulationOptions *simulation_options, const DiskParameters *disk_params);
 
 /**
  * @brief Updates and stores the new radial positions of dust particles.
@@ -132,16 +132,15 @@ void calculateDustSurfaceDensity(double max_param, double min_param, const Parti
  * This function integrates the dust particle motion and writes the updated
  * positions to the particle data structure.
  *
- * @param nev                 Output filename or identifier.
- * @param opt       Output mode selector.
- * @param particle_data Pointer to particle data structure.
- * @param actual_timestep     Time step.
- * @param actual_time         Current simulation time.
- * @param n         Number of particles.
- * @param sim_opts  Pointer to simulation options.
+ * @param file_name             Output filename or identifier.
+ * @param particle_data         Pointer to particle data structure.
+ * @param actual_timestep       Time step.
+ * @param actual_time           Current simulation time.
+ * @param number_of_particles   Number of particles.
+ * @param simulation_options              Pointer to simulation options.
  * @param disk_params Pointer to disk parameter structure.
  */
-void calculateDustDistance(const char *nev, int opt, ParticleData *particle_data, double actual_timestep, double actual_time, int n, const SimulationOptions *sim_opts, const DiskParameters *disk_params);
+void calculateDustDistance(const char *file_name, ParticleData *particle_data, double actual_timestep, double actual_time, int number_of_particles, const SimulationOptions *simulation_options, const DiskParameters *disk_params);
 
 
 

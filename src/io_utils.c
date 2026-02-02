@@ -659,8 +659,8 @@ void cleanupSimulationResources(ParticleData *particle_data, OutputFiles *output
         free(particle_data->partmassmicrind); particle_data->partmassmicrind = NULL;
         free(particle_data->dust_surfacedensity); particle_data->dust_surfacedensity = NULL;
         free(particle_data->micron_dust_surfacedensity); particle_data->micron_dust_surfacedensity = NULL;
-        free(particle_data->rdvec); particle_data->rdvec = NULL;
-        free(particle_data->rmicvec); particle_data->rmicvec = NULL;
+        free(particle_data->particle_distance_grid); particle_data->particle_distance_grid = NULL;
+        free(particle_data->micron_particle_distance_grid); particle_data->micron_particle_distance_grid = NULL;
 
         fprintf(stderr, "DEBUG [cleanupSimulationResources]: All dynamically allocated particle arrays freed.\n");
     }

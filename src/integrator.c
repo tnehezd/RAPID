@@ -24,7 +24,7 @@
 
 /*	Runge-Kutta4 integrator	*/
 // prad bemenet: AU-ban!
-void integrateParticleRungeKutta4(double time, double prad, const double *dust_surfacedensity, const double *rdvec, double step, double y, double *ynew, double *pradnew, const DiskParameters *disk_params, const SimulationOptions *sim_opts){
+void integrateParticleRungeKutta4(double time, double prad, const double *dust_surfacedensity, const double *particle_distance_grid, double step, double y, double *ynew, double *pradnew, const DiskParameters *disk_params, const SimulationOptions *sim_opts){
     double dy1,dy2,dy3,dy4;
     double ytemp, ytemp2;
     double sigma, dpress, ugas; 
@@ -49,7 +49,7 @@ void integrateParticleRungeKutta4(double time, double prad, const double *dust_s
     
     int i;
     for(i=0;i<particle_number;i++) {
-        if(ytemp2 == rdvec[i]) {
+        if(ytemp2 == particle_distance_grid[i]) {
             sigmadd = dust_surfacedensity[i];
             break;
         }

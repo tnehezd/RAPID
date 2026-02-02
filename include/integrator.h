@@ -13,7 +13,7 @@
  * @param gas_pressure_gradient_vector Nyomásgradiens vektor a diszk rácspontjain.
  * @param gas_surface_density_vector Gáz felszíni sűrűség vektor a diszk rácspontjain.
  * @param sigmad Por felszíni sűrűség (adott részecske rácspontján).
- * @param rdvec A por részecskék radiális koordinátái.
+ * @param particle_distance_grid A por részecskék radiális koordinátái.
  * @param radial_grid A diszk rácspontjainak radiális koordinátái.
  * @param gas_velocity_vector Gáz sebesség vektor a diszk rácspontjain.
  * @param step Az időlépés mérete.
@@ -23,7 +23,7 @@
  * @param disk_params A diszk paramétereit tartalmazó struktúra.
  * @param sim_opts A szimulációs opciókat tartalmazó struktúra.
  */
-void integrateParticleRungeKutta4(double time, double prad, const double *sigmad, const double *rdvec, double step, double y, double *ynew, double *pradnew, const DiskParameters *disk_params, const SimulationOptions *sim_opts);
+void integrateParticleRungeKutta4(double time, double prad, const double *sigmad, const double *particle_distance_grid, double step, double y, double *ynew, double *pradnew, const DiskParameters *disk_params, const SimulationOptions *sim_opts);
 
 
 

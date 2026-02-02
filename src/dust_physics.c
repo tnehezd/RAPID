@@ -18,7 +18,7 @@ double calculateStokesNumber(double particle_radius, double gas_surfacedensity, 
     return disk_params->particle_density_dimensionless * particle_radius * M_PI / (2.0 * gas_surfacedensity);
 }
 
-void calculateParticleMass(int number_of_particles, double (*partmassind)[5], int indii, int indio, int indoi, int indoo, double *massiout, double *massoout, const SimulationOptions *sim_opts) {
+void calculateParticleMass(int number_of_particles, double (*partmassind)[5], int indii, int indio, int indoi, int indoo, double *massiout, double *massoout, const SimulationOptions *simulation_options) {
 
     // Debug üzenet frissítve az indexekre
 
@@ -26,8 +26,8 @@ void calculateParticleMass(int number_of_particles, double (*partmassind)[5], in
     double massotemp = 0.0;
     int i;
 
-    // sim_opts->flag_for_deadzone (ez helyettesíti az optdze-t): 1.0 = dinamikus DZE (flag-elt), 0.0 = fix DZE (nem flag-elt)
-    if(sim_opts->flag_for_deadzone == 1.0) { // Dinamikus DZE: flag-ek használatával (partmassind[i][3] és [4])
+    // simulation_options->flag_for_deadzone (ez helyettesíti az optdze-t): 1.0 = dinamikus DZE (flag-elt), 0.0 = fix DZE (nem flag-elt)
+    if(simulation_options->flag_for_deadzone == 1.0) { // Dinamikus DZE: flag-ek használatával (partmassind[i][3] és [4])
         #pragma omp parallel for private(i) reduction(+:massitemp, massotemp)
         for (i = 0; i < number_of_particles; i++) {
             // A részecske aktuális grid indexe (partmassind[i][1]-ből)
@@ -57,7 +57,7 @@ void calculateParticleMass(int number_of_particles, double (*partmassind)[5], in
                 }
             }
         }
-    } else { // Fix DZE (sim_opts->flag_for_deadzone == 0.0): Nincsenek flag-ek a tömeg felhalmozáshoz
+    } else { // Fix DZE (simulation_options->flag_for_deadzone == 0.0): Nincsenek flag-ek a tömeg felhalmozáshoz
         #pragma omp parallel for private(i) reduction(+:massitemp, massotemp)
         for (i = 0; i < number_of_particles; i++) {
             int current_r_index = (int)partmassind[i][1]; // A részecske grid indexe
@@ -91,104 +91,104 @@ void calculateParticleMass(int number_of_particles, double (*partmassind)[5], in
 
 //reprezentativ reszecske kezdeti meretenek meghatarozasa
 // 1. radialis drift altal meghatarozott maximalis meret			--> kimenet cm-ben!
-double calculateRadialDriftBarrier(double dust_surfacedensity, double r, double p, double dp, double rho_p, const DiskParameters *disk_params) {
+double calculateRadialDriftBarrier(double dust_surfacedensity, double radial_distance, double gas_pressure, double pressure_gradient, double particle_density, const DiskParameters *disk_params) {
 
     double dust_surfacedensity_cgs = dust_surfacedensity / SURFACE_DENSITY_CONVERSION_FACTOR;
 
-    double vkep = calculateKeplerianVelocity(r,disk_params);
-    double vkep2 = vkep * vkep;
-    double c_s = calculateLocalSoundSpeed(r,disk_params);
-    double c_s2 = c_s * c_s;
-    double dlnPdlnr = r / p * dp;
-    double s_drift =  disk_params->drift_factor * 2.0 / M_PI * dust_surfacedensity_cgs / rho_p * vkep2 / c_s2 * fabs(1.0 / dlnPdlnr);
+    double keplerian_velocity = calculateKeplerianVelocity(radial_distance,disk_params);
+    double keplerian_velocity_squared = keplerian_velocity * keplerian_velocity;
+    double local_soundspeed = calculateLocalSoundSpeed(radial_distance,disk_params);
+    double local_soundspeed_squared = local_soundspeed * local_soundspeed;
+    double log_pressure_gradient = radial_distance / gas_pressure * pressure_gradient;
+    double s_drift =  disk_params->drift_factor * 2.0 / M_PI * dust_surfacedensity_cgs / particle_density * keplerian_velocity_squared / local_soundspeed_squared * fabs(1.0 / log_pressure_gradient);
     return s_drift;
 }
 
 // 2. a kis skalaju turbulencia altal okozott fragmentacio szerinti maximalis meret	--> kimenet cm-ben!
-double calculateTurbulentFragmentationBarrier(double gas_surfacedensity, double r, double rho_p, const DiskParameters *disk_params) {
+double calculateTurbulentFragmentationBarrier(double gas_surfacedensity, double radial_distance, double particle_density, const DiskParameters *disk_params) {
 
-    double s_frag, fragmentation_velocity, fragmentation_velocity_squared, gas_surfacedensity_cgs, c_s, c_s2;
+    double s_frag, fragmentation_velocity, fragmentation_velocity_squared, gas_surfacedensity_cgs, local_soundspeed, local_soundspeed_squared;
 
     fragmentation_velocity = disk_params->fragmentation_velocity * CM_PER_SEC_TO_AU_PER_YEAR_2PI; /*	cm/sec --> AU / (yr/2pi)	*/
     fragmentation_velocity_squared = fragmentation_velocity * fragmentation_velocity;
     gas_surfacedensity_cgs = gas_surfacedensity / SURFACE_DENSITY_CONVERSION_FACTOR;
-    c_s = calculateLocalSoundSpeed(r,disk_params); // / CM_PER_SEC_TO_AU_PER_YEAR_2PI; // Komment ki, ha a calculateLocalSoundSpeed már megfelelő mértékegységben van
-    c_s2 = c_s * c_s;
+    local_soundspeed = calculateLocalSoundSpeed(radial_distance,disk_params); // / CM_PER_SEC_TO_AU_PER_YEAR_2PI; // Komment ki, ha a calculateLocalSoundSpeed már megfelelő mértékegységben van
+    local_soundspeed_squared = local_soundspeed * local_soundspeed;
 
-    s_frag = disk_params->fragmentation_factor * 2.0 / (3.0 * M_PI) * gas_surfacedensity_cgs / (rho_p * calculateTurbulentAlpha(r,disk_params)) * fragmentation_velocity_squared / c_s2;
+    s_frag = disk_params->fragmentation_factor * 2.0 / (3.0 * M_PI) * gas_surfacedensity_cgs / (particle_density * calculateTurbulentAlpha(radial_distance,disk_params)) * fragmentation_velocity_squared / local_soundspeed_squared;
 
     return s_frag;
 }
 
 // 3. radialis drift altal okozott fragmentacio szerinti maximalis meret		--> kimenet cm-ben!
-double calculateDriftInducedFragmentationBarrier(double gas_surfacedensity, double r, double p, double dp, double rho_p, const DiskParameters *disk_params) {
+double calculateDriftInducedFragmentationBarrier(double gas_surfacedensity, double radial_distance, double gas_pressure, double pressure_gradient, double particle_density, const DiskParameters *disk_params) {
 
-    double fragmentation_velocity, vkep, dlnPdlnr, c_s, c_s2, s_df, gas_surfacedensity_cgs;
+    double fragmentation_velocity, keplerian_velocity, log_pressure_gradient, local_soundspeed, local_soundspeed_squared, drift_barrier_size, gas_surfacedensity_cgs;
 
     fragmentation_velocity = disk_params->fragmentation_velocity * CM_PER_SEC_TO_AU_PER_YEAR_2PI; /*	cm/sec --> AU / (yr/2pi)	*/
     gas_surfacedensity_cgs = gas_surfacedensity / SURFACE_DENSITY_CONVERSION_FACTOR;
-    c_s = calculateLocalSoundSpeed(r,disk_params);
-    c_s2 = c_s * c_s;
-    dlnPdlnr = r / p * dp;
-    vkep = calculateKeplerianVelocity(r,disk_params);
+    local_soundspeed = calculateLocalSoundSpeed(radial_distance,disk_params);
+    local_soundspeed_squared = local_soundspeed * local_soundspeed;
+    log_pressure_gradient = radial_distance / gas_pressure * pressure_gradient;
+    keplerian_velocity = calculateKeplerianVelocity(radial_distance,disk_params);
 
-    s_df = fragmentation_velocity * vkep / fabs(dlnPdlnr * c_s2 * 0.5) * 2.0 * gas_surfacedensity_cgs / (M_PI * rho_p);
+    drift_barrier_size = fragmentation_velocity * keplerian_velocity / fabs(log_pressure_gradient * local_soundspeed_squared * 0.5) * 2.0 * gas_surfacedensity_cgs / (M_PI * particle_density);
 
-    return s_df;
+    return drift_barrier_size;
 }
 
 /*	a reszecskek novekedesenek idoskalaja	*/
-double calculateGrowthTimescale(double r, double eps,const DiskParameters *disk_params) {
-    double omega = calculateKeplerianFrequency(r,disk_params);
-    double calculateGrowthTimescale = eps / omega;
+double calculateGrowthTimescale(double radial_distance, double dust_to_gas_ratio,const DiskParameters *disk_params) {
+    double keplerian_frequency = calculateKeplerianFrequency(radial_distance,disk_params);
+    double calculateGrowthTimescale = dust_to_gas_ratio / keplerian_frequency;
     return calculateGrowthTimescale;
 }
 
 /*	kiszamolja az adott helyen a reszecske meretet --> BIRNSTIEL CIKK	*/
-double calculateDustParticleSize(double prad, double pdens, double gas_surfacedensity, double dust_surfacedensity, double y, double p, double dpress_val, double dt, const DiskParameters *disk_params) {
+double calculateDustParticleSize(double particle_radius, double particle_density, double gas_surfacedensity, double dust_surfacedensity, double particle_distance, double gas_pressure, double pressure_gradient, double actual_timestep, const DiskParameters *disk_params) {
 
-    double sturb = calculateTurbulentFragmentationBarrier(gas_surfacedensity, y, pdens, disk_params);           // cm-ben
-    double sdf = calculateDriftInducedFragmentationBarrier(gas_surfacedensity, y, p, dpress_val, pdens,disk_params); // cm-ben
-    double srdf = calculateRadialDriftBarrier(dust_surfacedensity, y, p, dpress_val, pdens, disk_params); // cm-ben
-    double smin = findMinimumOfAnArray(sturb, sdf, srdf);         // cm-ben -- megadja, hogy a fenti ket reszecske korlatbol melyik ad kisebb meretet (az a reszecskenovekedes felso korlatja
-    //	double eps = gas_surfacedensity / 100.;
-    double eps = dust_surfacedensity / gas_surfacedensity; // A korábbi kódban fordítva volt, feltételezem, hogy eps = (por sűrűség) / (gáz sűrűség)
-    double tau_gr = calculateGrowthTimescale(y, eps, disk_params);
-    double rt = 0.0;
+    double turbulent_size_barrier = calculateTurbulentFragmentationBarrier(gas_surfacedensity, particle_distance, particle_density, disk_params);           // cm-ben
+    double fragmentation_size_barrier = calculateDriftInducedFragmentationBarrier(gas_surfacedensity, particle_distance, gas_pressure, pressure_gradient, particle_density,disk_params); // cm-ben
+    double drift_size_barrier = calculateRadialDriftBarrier(dust_surfacedensity, particle_distance, gas_pressure, pressure_gradient, particle_density, disk_params); // cm-ben
+    double particle_size_minimum = findMinimumOfAnArray(turbulent_size_barrier, fragmentation_size_barrier, drift_size_barrier);         // cm-ben -- megadja, hogy a fenti ket reszecske korlatbol melyik ad kisebb meretet (az a reszecskenovekedes felso korlatja
+    //	double dust_to_gas_ratio = gas_surfacedensity / 100.;
+    double dust_to_gas_ratio = dust_surfacedensity / gas_surfacedensity; // A korábbi kódban fordítva volt, feltételezem, hogy dust_to_gas_ratio = (por sűrűség) / (gáz sűrűség)
+    double growth_timescale = calculateGrowthTimescale(particle_distance, dust_to_gas_ratio, disk_params);
+    double particle_size = 0.0;
 
-    smin = smin / AU_IN_CM; // AU-ban
+    particle_size_minimum = particle_size_minimum / AU_IN_CM; // AU-ban
 
-    /*	kiszamolja, hogy a fenti smin, vagy a novekedesi idoskalabol szarmazo meret korlatozza a reszecske meretet	*/
-    if (prad < smin) {
-        rt = findMinimumOfAnArray(prad * exp(dt / tau_gr), smin, HUGE_VAL);
-    } else { // prad >= smin
-        rt = smin;
+    /*	kiszamolja, hogy a fenti particle_size_minimum, vagy a novekedesi idoskalabol szarmazo meret korlatozza a reszecske meretet	*/
+    if (particle_radius < particle_size_minimum) {
+        particle_size = findMinimumOfAnArray(particle_radius * exp(actual_timestep / growth_timescale), particle_size_minimum, HUGE_VAL);
+    } else { // prad >= particle_size_minimum
+        particle_size = particle_size_minimum;
     }
 
-    return rt;
+    return particle_size;
 }
 
 
-void calculateDustSurfaceDensity(double max_param, double min_param, const ParticleData *particle_data, const SimulationOptions *sim_opts, const DiskParameters *disk_params) {
+void calculateDustSurfaceDensity(double max_param, double min_param, const ParticleData *particle_data, const SimulationOptions *simulation_options, const DiskParameters *disk_params) {
 
     // Suppress unused parameter warnings
     (void)max_param;
     (void)min_param;
     
     
-    double dd = (disk_params->r_max - disk_params->r_min) / (particle_number - 1);
+    double grid_step = (disk_params->r_max - disk_params->r_min) / (particle_number - 1);
     int i;
 
     // A temp tömbök deklarálását érdemes a scope tetejére tenni
-    double sigdtemp[particle_number][3];
-    double sigdmicrtemp[particle_number][3];
+    double temporary_dust_surfacedensity[particle_number][3];
+    double temporary_micron_dust_surfacedensity[particle_number][3];
 
     // Inicializálás, ha szükséges (bár a calculateDustSurfaceDensity valószínűleg felülírja)
     for(i=0; i<particle_number; i++){
-        sigdtemp[i][0] = 0.0; sigdtemp[i][1] = 0.0; sigdtemp[i][2] = 0.0;
-        sigdmicrtemp[i][0] = 0.0; sigdmicrtemp[i][1] = 0.0; sigdmicrtemp[i][2] = 0.0;
-        particle_data->rdvec[i] = 0.0;
-        particle_data->rmicvec[i] = 0.0;
+        temporary_dust_surfacedensity[i][0] = 0.0; temporary_dust_surfacedensity[i][1] = 0.0; temporary_dust_surfacedensity[i][2] = 0.0;
+        temporary_micron_dust_surfacedensity[i][0] = 0.0; temporary_micron_dust_surfacedensity[i][1] = 0.0; temporary_micron_dust_surfacedensity[i][2] = 0.0;
+        particle_data->particle_distance_grid[i] = 0.0;
+        particle_data->micron_particle_distance_grid[i] = 0.0;
         particle_data->dust_surfacedensity[i] = 0.0;
         particle_data->micron_dust_surfacedensity[i] = 0.0;
     }
@@ -197,34 +197,34 @@ void calculateDustSurfaceDensity(double max_param, double min_param, const Parti
     // calculateDustSurfaceDensity és mergeParticlesByRadius függvények hívásai:
     // Ezek valószínűleg szekvenciálisak, hacsak a függvények belsejében nincs OpenMP.
     // Ha ezek a függvények valamilyen globális állapotot módosítanak, akkor kritikusak.
-    // Feltételezve, hogy a 'sigdtemp' és 'sigdmicrtemp' kizárólagosan a hívásaikban vannak feldolgozva,
+    // Feltételezve, hogy a 'temporary_dust_surfacedensity' és 'temporary_micron_dust_surfacedensity' kizárólagosan a hívásaikban vannak feldolgozva,
     // és nem ütköznek más szálakkal globális adatokon keresztül.
-    calculateDustSurfaceDensityFromRepresentativeMass(particle_data->particle_distance_array, particle_data->particle_mass_array, sigdtemp, particle_number,disk_params);
-    if (sim_opts->option_for_dust_secondary_population == 1.0) { // Használjunk double összehasonlítást
-        calculateDustSurfaceDensityFromRepresentativeMass(particle_data->micron_particle_distance_array, particle_data->massmicradial_grid, sigdmicrtemp, particle_number,disk_params);
+    calculateDustSurfaceDensityFromRepresentativeMass(particle_data->particle_distance_array, particle_data->particle_mass_array, temporary_dust_surfacedensity, particle_number,disk_params);
+    if (simulation_options->option_for_dust_secondary_population == 1.0) { // Használjunk double összehasonlítást
+        calculateDustSurfaceDensityFromRepresentativeMass(particle_data->micron_particle_distance_array, particle_data->massmicradial_grid, temporary_micron_dust_surfacedensity, particle_number,disk_params);
     }
 
-    mergeParticlesByRadius(sigdtemp, dd, particle_number,disk_params);
-    if (sim_opts->option_for_dust_secondary_population == 1.0) { // Használjunk double összehasonlítást
-        mergeParticlesByRadius(sigdmicrtemp, dd, particle_number,disk_params);
+    mergeParticlesByRadius(temporary_dust_surfacedensity, grid_step, particle_number,disk_params);
+    if (simulation_options->option_for_dust_secondary_population == 1.0) { // Használjunk double összehasonlítást
+        mergeParticlesByRadius(temporary_micron_dust_surfacedensity, grid_step, particle_number,disk_params);
     }
 
     // Utolsó másoló ciklus: Ez is jól párhuzamosítható.
     #pragma omp parallel for private(i)
     for (i = 0; i < particle_number; i++) {
-        particle_data->rdvec[i] = sigdtemp[i][1];
-        particle_data->dust_surfacedensity[i] = sigdtemp[i][0];
+        particle_data->particle_distance_grid[i] = temporary_dust_surfacedensity[i][1];
+        particle_data->dust_surfacedensity[i] = temporary_dust_surfacedensity[i][0];
 
-        if (sim_opts->option_for_dust_secondary_population == 1.0) { // double összehasonlítás
-            particle_data->rmicvec[i] = sigdmicrtemp[i][1];
-            particle_data->micron_dust_surfacedensity[i] = sigdmicrtemp[i][0];
+        if (simulation_options->option_for_dust_secondary_population == 1.0) { // double összehasonlítás
+            particle_data->micron_particle_distance_grid[i] = temporary_micron_dust_surfacedensity[i][1];
+            particle_data->micron_dust_surfacedensity[i] = temporary_micron_dust_surfacedensity[i][0];
         }
     }
 }
 
 
 /*	Fuggveny a porszemcsek uj tavolsaganak elraktarozasara		*/
-void calculateDustDistance(const char *nev, int opt, ParticleData *particle_data, double deltat, double t, int n, const SimulationOptions *sim_opts, const DiskParameters *disk_params){
+void calculateDustDistance(const char *file_name, ParticleData *particle_data, double actual_timestep, double actual_time, int number_of_particles, const SimulationOptions *simulation_options, const DiskParameters *disk_params){
 
     int i;
     double y, y_out, prad_new, particle_radius;
@@ -236,8 +236,8 @@ void calculateDustDistance(const char *nev, int opt, ParticleData *particle_data
     // Biztosítjuk, hogy csak egy szál nyissa meg/zárja be a fájlt.
     #pragma omp master
     {
-        if (t == 0) {
-            sprintf(scout, "%s/%s%s", nev, kDriftTimescaleFileName, kFileNamesSuffix);
+        if (actual_time == 0) {
+            sprintf(scout, "%s/%s%s", file_name, kDriftTimescaleFileName, kFileNamesSuffix);
             drift_timescale_file = fopen(scout, "w");
         }
     }
@@ -247,17 +247,17 @@ void calculateDustDistance(const char *nev, int opt, ParticleData *particle_data
     // **ITT A PÁRHUZAMOSÍTÁS!**
     // Az `i` ciklus független iterációkkal rendelkezik, minden szál a saját `radius[i]` elemen dolgozik.
     #pragma omp parallel for private(y, y_out, prad_new, particle_radius)
-    for (i = 0; i < n; i++) {
+    for (i = 0; i < number_of_particles; i++) {
         // Csak a r_min és r_max közötti részecskékkel foglalkozunk.
         // A 0.0-ra állítás kívül esik a párhuzamos részen, ha az if feltétel nem teljesül.
         if (particle_data->particle_distance_array[i][0] > disk_params->r_min && particle_data->particle_distance_array[i][0] < disk_params->r_max) {
             y = particle_data->particle_distance_array[i][0];
             particle_radius = particle_data->particle_distance_array[i][1];
 
-			integrateParticleRungeKutta4(t, particle_radius, particle_data->dust_surfacedensity, particle_data->rdvec, deltat, y, &y_out, &prad_new, disk_params, sim_opts);
-            if (t == 0) {
-                if (sim_opts->option_for_dust_secondary_population == 0) {
-                    double current_drdt_val = (fabs(y_out - y) / (deltat));
+			integrateParticleRungeKutta4(actual_time, particle_radius, particle_data->dust_surfacedensity, particle_data->particle_distance_grid, actual_timestep, y, &y_out, &prad_new, disk_params, simulation_options);
+            if (actual_time == 0) {
+                if (simulation_options->option_for_dust_secondary_population == 0) {
+                    double current_drdt_val = (fabs(y_out - y) / (actual_timestep));
                     // Azért kell a critical szekció, mert az drift_timescale_file fájlba írunk.
                     // Ez a critical szekció biztosítja, hogy egyszerre csak egy szál írjon a fájlba.
 
@@ -273,10 +273,10 @@ void calculateDustDistance(const char *nev, int opt, ParticleData *particle_data
                 }
             }
 
-            if (sim_opts->option_for_dust_secondary_population != 1) { // Ha növekedés engedélyezett vagy valami más mód
+            if (simulation_options->option_for_dust_secondary_population != 1) { // Ha növekedés engedélyezett vagy valami más mód
                 particle_data->particle_distance_array[i][1] = prad_new;
                 particle_data->particle_distance_array[i][0] = y_out;
-            } else { // sim_opts->option_for_dust_secondary_population == 1, csak drift
+            } else { // simulation_options->option_for_dust_secondary_population == 1, csak drift
                 particle_data->particle_distance_array[i][0] = y_out;
             }
         } else {
@@ -289,7 +289,7 @@ void calculateDustDistance(const char *nev, int opt, ParticleData *particle_data
     // A fájl bezárása ismételten egy szál által kell, hogy történjen.
     #pragma omp master
     {
-        if (t == 0) { // Csak akkor zárjuk be, ha meg is nyitottuk a t=0 blokkban
+        if (actual_time == 0) { // Csak akkor zárjuk be, ha meg is nyitottuk a t=0 blokkban
             if (drift_timescale_file != NULL) {
                 fclose(drift_timescale_file);
                 drift_timescale_file = NULL; // Fontos, hogy NULL-ra állítsuk, miután bezártuk.
