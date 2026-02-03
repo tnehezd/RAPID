@@ -4,7 +4,7 @@ This repository contains the source code for `RAPID` (Representative Approach fo
 
 The core of the code was originally written in C during my PhD between 2012 and 2015. It has since been restructured into a more modular form to improve its functionality and maintainability.
 
-#### ⚠️ 2.0-Beta Version: This code is currently under active development!
+#### ⚠️ 2.1.1-Beta Version: This code is currently under active development!
 
 While the fundamental physics and algorithms are robust, the codebase is still under active development! A significant number of the internal comments are currently in Hungarian, which I am in the process of translating and updating to English. Furthermore, the original code was written in the early years of my PhD with moderate programming knowledge and some of the part of the code is a bit messy. Currently, I may make some break-point frefractoring for readability and maintainability, so alwys make sure to git pull before using my code. Besides, I'm updating function names, variable names, etc to follow the a naming convention (see [Coding Standard](docs/CodingStandard.md)). After I made all the ncessary changes, I'll release the stable version.
 
@@ -69,21 +69,22 @@ primaryClass = {astro-ph.EP},
     adsnote = {Provided by the SAO/NASA Astrophysics Data System}
 }
 
-@ARTICLE{2026arXiv260101468T,
-       author = {{Tarczay-Neh{\'e}z}, D.},
-        title = "{Trajectory-Based Dust Evolution in Disks: First Results from the RAPID Simulation Code}",
-      journal = {arXiv e-prints},
-     keywords = {Earth and Planetary Astrophysics},
-         year = 2026,
-        month = jan,
-          eid = {arXiv:2601.01468},
-        pages = {arXiv:2601.01468},
-          doi = {10.48550/arXiv.2601.01468},
-archivePrefix = {arXiv},
-       eprint = {2601.01468},
- primaryClass = {astro-ph.EP},
-       adsurl = {https://ui.adsabs.harvard.edu/abs/2026arXiv260101468T},
-      adsnote = {Provided by the SAO/NASA Astrophysics Data System}
-}
 
+@article{cite-key,
+    author = {Tarczay-Neh{\'e}z, D{\'o}ra},
+    date = {2026/02/03},
+    date-added = {2026-02-03 12:16:24 +0100},
+    date-modified = {2026-02-03 12:16:24 +0100},
+    doi = {10.1007/s10569-026-10278-2},
+    id = {Tarczay-Neh{\'e}z2026},
+    isbn = {1572-9478},
+    journal = {Celestial Mechanics and Dynamical Astronomy},
+    number = {1},
+    pages = {6},
+    title = {Trajectory-based dust evolution in disks: first results from the RAPID simulation code},
+    url = {https://doi.org/10.1007/s10569-026-10278-2},
+    volume = {138},
+    year = {2026},
+    bdsk-url-1 = {https://doi.org/10.1007/s10569-026-10278-2}}
+}
 
