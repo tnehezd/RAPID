@@ -62,12 +62,11 @@ void printDustParticleSizeFile(char *size_name, int step, double (*rad)[2], doub
 
 // Enumeráció a fájltípusok azonosítására
 typedef enum {
-    FILE_TYPE_DUST_MOTION,
-    FILE_TYPE_MICRON_MOTION,
     FILE_TYPE_MASS_ACCUMULATION,
     FILE_TYPE_GAS_DENSITY,
     FILE_TYPE_DUST_DENSITY,
     FILE_TYPE_DUST_MICRON_DENSITY,
+    FILE_TYPE_INTIIAL_DUST_PROFILE,
     FILE_TYPE_PARTICLE_SIZE,
     FILE_TYPE_DISK_PARAM // ÚJ: a disk_config.dat fájlhoz
 

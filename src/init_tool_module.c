@@ -276,7 +276,7 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
 
     // --- Write Headers using the new function ---
     if (dust_ouputput_file != NULL) {
-        printFileHeader(dust_ouputput_file, FILE_TYPE_PARTICLE_SIZE, &initial_header_data);
+        printFileHeader(dust_ouputput_file, FILE_TYPE_INTIIAL_DUST_PROFILE, &initial_header_data);
     }
     if (gas_parameters_output_file != NULL) {
         printFileHeader(gas_parameters_output_file, FILE_TYPE_GAS_DENSITY, &initial_header_data);
@@ -355,8 +355,8 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
         double pressure_local_val = disk_params->gas_pressure_vector[i_loop + 1];
         double dPdr_local_val = disk_params->gas_pressure_gradient_vector[i_loop + 1];
 
-        fprintf(gas_parameters_output_file, "%-15.6e %-15.6Lg %-15.6e %-15.6e\n",
-            r_gas_grid_au,
+        fprintf(gas_parameters_output_file, "%-5d %-15.6e %-15.6Le %-15.6e %15.6e\n",
+            i_loop, r_gas_grid_au,
             sigma_gas_local_val,
             pressure_local_val,
             dPdr_local_val);
