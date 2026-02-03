@@ -78,6 +78,11 @@ static void handleSnapshot(double actual_time, double current_time_years, double
     if (sim_opts->option_for_dust_secondary_population == 1.0) {
         output_files->micron_dust_file = openSnapshotFile(dust_name2, FILE_TYPE_DUST_MICRON_DENSITY, current_time_years);
     }
+
+    // 5. Részecskenövekedés
+    output_files->size_file = openSnapshotFile(size_name, FILE_TYPE_PARTICLE_SIZE, current_time_years);
+
+
 }
 
 static void snapshotInitAtT0(double t, double current_time_years, ParticleData *particle_data, DiskParameters *disk_params, const SimulationOptions *sim_opts, int particle_number, double min_radius, double max_radius) {

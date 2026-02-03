@@ -276,7 +276,7 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
 
     // --- Write Headers using the new function ---
     if (dust_ouputput_file != NULL) {
-        printFileHeader(dust_ouputput_file, FILE_TYPE_PARTICLE_SIZE, &initial_header_data);
+        printFileHeader(dust_ouputput_file, FILE_TYPE_INTIIAL_DUST_PROFILE, &initial_header_data);
     }
     if (gas_parameters_output_file != NULL) {
         printFileHeader(gas_parameters_output_file, FILE_TYPE_GAS_DENSITY, &initial_header_data);

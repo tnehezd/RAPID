@@ -499,12 +499,12 @@ void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const 
 
     for(i=0;i<particle_number;i++){ // particle_number from config.h
         if (r[i] >= disk_params->r_min) { // Using disk_params->r_min
-            fprintf(output_files->dust_file,"%lg %.11lg  %lg \n",(double)step,r[i],dust_surfacedensity[i]);
+            fprintf(output_files->dust_file,"%-16lg %-23.5f %-20.6e\n",(double)step,r[i],dust_surfacedensity[i]);
         }
 
         if(sim_opts->option_for_dust_secondary_population == 1.0 && output_files->micron_dust_file != NULL) {
             if (rm[i] >= disk_params->r_min) { // Using disk_params->r_min
-                fprintf(output_files->micron_dust_file,"%lg %lg  %lg \n",(double)step,rm[i],micron_dust_surfacedensity[i]);
+                fprintf(output_files->micron_dust_file,"%-16lg %-23.5f %-20.6e\n",(double)step,rm[i],micron_dust_surfacedensity[i]);
             }
         }
     }
@@ -519,11 +519,14 @@ void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const 
 void printDustParticleSizeFile(char *size_name, int step, double (*rad)[2], double (*micron_particle_radius)[2], const DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files) {
 
     FILE *fout_size = NULL;
-
     int i;
 
     if (sim_opts->option_for_dust_growth == 1.0) {
-        fout_size = fopen(size_name, "w");
+        // JAVÍTÁS: fopen helyett openSnapshotFile-t használunk!
+        // A (double)step-et évekké kell konvertálni, ha a fejlécben azt akarod látni, 
+        // vagy hagyd meg step-ként, ha az integrációs lépés kell.
+        fout_size = openSnapshotFile(size_name, FILE_TYPE_PARTICLE_SIZE, (double)step / (2.0 * M_PI));
+        
         if (fout_size == NULL) {
             fprintf(stderr, "ERROR: Could not open size file '%s' in printDustParticleSizeFile!\n", size_name);
             return;
@@ -534,13 +537,13 @@ void printDustParticleSizeFile(char *size_name, int step, double (*rad)[2], doub
 
         if (sim_opts->option_for_dust_secondary_population == 1.0 && output_files->micron_motion_file != NULL) {
             if (micron_particle_radius[i][0] >= disk_params->r_min) { // Using disk_params->r_min
-                fprintf(output_files->micron_motion_file, "%lg %d %lg %lg\n", (double)step, i, micron_particle_radius[i][0],micron_particle_radius[i][1] * AU_IN_CM);
+                fprintf(output_files->micron_motion_file, "%-16lg %-10d %-20.6e %-20.6e\n", (double)step, i, micron_particle_radius[i][0],micron_particle_radius[i][1] * AU_IN_CM);
             }
         }
 
         if (sim_opts->option_for_dust_growth == 1.0 && fout_size != NULL) {
             if (rad[i][0] >= disk_params->r_min) { // Using disk_params->r_min
-                fprintf(fout_size, "%lg %d %lg %lg \n", (double)step, i, rad[i][0], rad[i][1] * AU_IN_CM); // AU_IN_CM from config.h
+                fprintf(fout_size, "%-10lg %-10d %-20.6e %-20.6e\n", (double)step, i, rad[i][0], rad[i][1] * AU_IN_CM); // AU_IN_CM from config.h
             }
         }
     }
@@ -586,7 +589,7 @@ void printFileHeader(FILE *file, FileType_e file_type, const HeaderData *header_
             if (header_data && header_data->is_initial_data) {
                 fprintf(file, "# Initial gas profile\n");
             } else {
-                fprintf(file, "# Time: %e years\n", header_data ? header_data->current_time : 0.0);
+                fprintf(file, "# This file contains the time evolution of the gas component at %e years\n", header_data ? header_data->current_time : 0.0);
             }
             // A fejléc az init_tool_module-ból, módosítva a HeaderData használatára
             fprintf(file, "#--------------------------------------------------------------------------\n");
@@ -597,18 +600,46 @@ void printFileHeader(FILE *file, FileType_e file_type, const HeaderData *header_
             break;
 
         case FILE_TYPE_DUST_DENSITY:
-            fprintf(file, "# Main Dust Surface Density Profile\n");
-            fprintf(file, "# Time: %e years\n", header_data ? header_data->current_time : 0.0);
-            fprintf(file, "# Columns: 1. Radius [AU], 2. Sigma_dust [M_Sun/AU^2]\n");
+            // Kiegészítő infók, ha t=0 (is_initial_data)
+            if (header_data && header_data->is_initial_data) {
+                fprintf(file, "# Initial dust profile\n");
+            } else {
+                fprintf(file, "# This file contains the time evolution of the dust component at %e years\n", header_data ? header_data->current_time : 0.0);
+            }
+            fprintf(file, "#--------------------------------------------------------------------------\n");
+            fprintf(file, "# %-10s %-20s %-20s\n",
+                    "Time_step","Radial_distance_AU", "Dust_surfacedensity_M_Sun/AU^2");
+            fprintf(file, "#--------------------------------------------------------------------------\n");
+
             break;
 
         case FILE_TYPE_DUST_MICRON_DENSITY:
-            fprintf(file, "# Micron Dust Surface Density Profile\n");
-            fprintf(file, "# Time: %e years\n", header_data ? header_data->current_time : 0.0);
-            fprintf(file, "# Columns: 1. Radius [AU], 2. Sigma_micron_dust [M_Sun/AU^2]\n");
+            if (header_data && header_data->is_initial_data) {
+                fprintf(file, "# Initial micron-sized dust profile\n");
+            } else {
+                fprintf(file, "# This file contains the time evolution of the micron-sized dust component at %e years\n", header_data ? header_data->current_time : 0.0);
+            }
+            fprintf(file, "#--------------------------------------------------------------------------\n");
+            fprintf(file, "# %-10s %-20s %-20s\n",
+                    "Time_step","Radial_distance_AU", "Dust_surfacedensity_M_Sun/AU^2");
+            fprintf(file, "#--------------------------------------------------------------------------\n");
+
             break;
 
         case FILE_TYPE_PARTICLE_SIZE:
+            if (header_data && header_data->is_initial_data) {
+                fprintf(file, "# Initial particle size profile\n");
+            } else {
+                fprintf(file, "# This file contains the size of each dust particle at %e years\n", header_data ? header_data->current_time : 0.0);
+            }
+            fprintf(file, "#--------------------------------------------------------------------------\n");
+            fprintf(file, "# %-10s %-10s  %-20s %-20s\n",
+                    "Time_step", "Index" ,"Radial_distance_AU", "Particle_size_cm");
+            fprintf(file, "#--------------------------------------------------------------------------\n");
+
+            break;            
+
+        case FILE_TYPE_INTIIAL_DUST_PROFILE:
             // A fejléc az init_tool_module-ból, módosítva a HeaderData használatára
             // Kiegészítő infók, ha t=0 (is_initial_data)
             if (header_data && header_data->is_initial_data) {
@@ -797,6 +828,7 @@ void closeSnapshotFiles(OutputFiles *output_files, const SimulationOptions *sim_
         fclose(output_files->dust_file);
         output_files->dust_file = NULL;
     }
+
     if (sim_opts->option_for_dust_secondary_population == 1 && output_files->micron_dust_file != NULL) {
         fclose(output_files->micron_dust_file);
         output_files->micron_dust_file = NULL;
