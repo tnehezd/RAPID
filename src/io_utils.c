@@ -161,6 +161,7 @@ void loadGasSurfaceDensityFromFile(DiskParameters *disk_params, const char *disk
         exit(EXIT_FAILURE);
     }
 
+    int index;
     double r_value;
     double surfacedensity_gas_value;
     double gas_pressure_value;
@@ -170,8 +171,8 @@ void loadGasSurfaceDensityFromFile(DiskParameters *disk_params, const char *disk
     for (int i = 0; i < disk_params->grid_number; i++) {
         // MOST MÁR PONTOSAN A FÁJLOD FORMÁTUMÁT OLVASSUK BE:
         // Radius_AU, GasSurfDensity, GasPressure, GasPressureDeriv (4 oszlop, mind double)
-        if (fscanf(input_file, "%lf %lf %lf %lf",
-                         &r_value, &surfacedensity_gas_value, &gas_pressure_value, &gas_pressure_gradient_value) != 4) {
+        if (fscanf(input_file, "%d %lf %lf %lf %lf",
+                         &index, &r_value, &surfacedensity_gas_value, &gas_pressure_value, &gas_pressure_gradient_value) != 5) {
             // Hiba kezelése, ha nem tudunk 4 double értéket beolvasni
             fprintf(stderr, "ERROR [loadGasSurfaceDensityFromFile]: Failed to read 4 values for row %d from file '%s'. File may be malformed or ended unexpectedly.\n", i, input_disk_file_name);
             fclose(input_file);
@@ -450,8 +451,14 @@ void printMassGrowthAtDZEFile(double step, double (*dust_particle_mass_array)[5]
     *tavout = tav;
 
     if (output_files->mass_file != NULL) {
-        fprintf(output_files->mass_file, "%lg %lg %lg %lg %lg\n", step, *tavin, massi+massim, *tavout, masso+massom);
-        fflush(output_files->mass_file);
+        fprintf(output_files->mass_file, "%-10d %-15.6f %-20.6e %-15.6f %-15.6e\n", 
+                    (int)step, 
+                    (double)*tavin, 
+                    (double)(massi + massim), 
+                    (double)*tavout, 
+                    (double)(masso + massom));
+            fflush(output_files->mass_file);
+
     } else {
         fprintf(stderr, "WARNING: output_files->mass_file is NULL in printMassGrowthAtDZEFile. Cannot write mass data or fflush.\n");
     }
@@ -474,7 +481,7 @@ void printGasSurfaceDensityPressurePressureDerivateFile(const DiskParameters *di
 
 //%-15.6e %-15.6Lg %-15.6e %-15.6e\n",
     for(i = 1; i <= disk_params->grid_number; i++) { // Using disk_params->grid_number
-        fprintf(output_files->surface_file, "%-15.6e %-15.6lg %-15.6e %15.6e\n", disk_params->radial_grid[i], disk_params->gas_surface_density_vector[i], disk_params->gas_pressure_vector[i], disk_params->gas_pressure_gradient_vector[i]);
+        fprintf(output_files->surface_file, "%-5d %-15.6e %-15.6le %-15.6e %15.6e\n",i, disk_params->radial_grid[i], disk_params->gas_surface_density_vector[i], disk_params->gas_pressure_vector[i], disk_params->gas_pressure_gradient_vector[i]);
     }
 
     fflush(output_files->surface_file);
@@ -525,35 +532,17 @@ void printDustParticleSizeFile(char *size_name, int step, double (*rad)[2], doub
 
     for (i = 0; i < particle_number; i++) { // particle_number from config.h
 
-        if (output_files->dust_motion_file != NULL) {
-            if (rad[i][0] >= disk_params->r_min) { // Using disk_params->r_min
-                fprintf(output_files->dust_motion_file, "%lg %d %lg\n", (double)step, i, rad[i][0]);
-            }
-        } else {
-            fprintf(stderr, "WARNING: output_files->dust_motion_file is NULL. Cannot write main particle motion.\n");
-        }
-
         if (sim_opts->option_for_dust_secondary_population == 1.0 && output_files->micron_motion_file != NULL) {
             if (micron_particle_radius[i][0] >= disk_params->r_min) { // Using disk_params->r_min
-                fprintf(output_files->micron_motion_file, "%lg %d %lg\n", (double)step, i, micron_particle_radius[i][0]);
+                fprintf(output_files->micron_motion_file, "%lg %d %lg %lg\n", (double)step, i, micron_particle_radius[i][0],micron_particle_radius[i][1] * AU_IN_CM);
             }
         }
 
         if (sim_opts->option_for_dust_growth == 1.0 && fout_size != NULL) {
             if (rad[i][0] >= disk_params->r_min) { // Using disk_params->r_min
-                fprintf(fout_size, "%lg %lg %lg \n", (double)step, rad[i][0], rad[i][1] * AU_IN_CM); // AU_IN_CM from config.h
+                fprintf(fout_size, "%lg %d %lg %lg \n", (double)step, i, rad[i][0], rad[i][1] * AU_IN_CM); // AU_IN_CM from config.h
             }
         }
-    }
-
-    if (output_files->dust_motion_file != NULL) {
-        fflush(output_files->dust_motion_file);
-    } else {
-        fprintf(stderr, "WARNING: Cannot fflush dust_motion_file, as it is NULL.\n");
-    }
-
-    if (sim_opts->option_for_dust_secondary_population == 1.0 && output_files->micron_motion_file != NULL) {
-        fflush(output_files->micron_motion_file);
     }
 
     if (sim_opts->option_for_dust_growth == 1.0 && fout_size != NULL) {
@@ -583,26 +572,13 @@ void printFileHeader(FILE *file, FileType_e file_type, const HeaderData *header_
     fprintf(file, "#############################################################################\n");
 
     switch (file_type) {
-        case FILE_TYPE_DUST_MOTION:
-            fprintf(file, "# Main Dust Particle Motion and Properties\n");
-            fprintf(file, "# Columns: 1. Time Step (Simulation Time), 2. Particle Index, 3. Radius [AU]\n");
-            break;
-
-        case FILE_TYPE_MICRON_MOTION:
-            fprintf(file, "# Micron Dust Particle Motion and Properties\n");
-            fprintf(file, "# Columns: 1. Time Step (Simulation Time), 2. Particle Index, 3. Radius [AU]\n");
-            fprintf(file, "# (Two-Population Model)\n");
-            break;
 
         case FILE_TYPE_MASS_ACCUMULATION:
             fprintf(file, "# This file contains the time evolution of dust mass within specified disk regions.\n");
-            fprintf(file, "# Columns:\n");
-            fprintf(file, "# 1. Time [years]\n");
-            fprintf(file, "# 2. Inner Boundary Radius (R_in) of the inner region [AU] (%.2f)\n", header_data ? header_data->R_in : 0.0);
-            fprintf(file, "# 3. Total Dust Mass (non-micron + micron) within R < R_in [M_Jupiter]\n");
-            fprintf(file, "# 4. Outer Boundary Radius (R_out) of the outer region [AU] (%.2f)\n", header_data ? header_data->R_out : 0.0);
-            fprintf(file, "# 5. Total Dust Mass (non-micron + micron) within R > R_out [M_Jupiter]\n");
-            fprintf(file, "# All masses include both 'cm-sized' (larger) and 'micron-sized' dust populations.\n");
+            fprintf(file, "#--------------------------------------------------------------------------\n");
+            fprintf(file, "# %-5s %-15s %-15s %-15s %-15s\n",
+                    "Time", "Inner_DZE_AU", "Accum._mass_inner_MSun", "Outer_DZE_AU", "Accum._mass_outer_MSun");
+            fprintf(file, "#--------------------------------------------------------------------------\n");            
             break;
 
         case FILE_TYPE_GAS_DENSITY:
@@ -614,8 +590,8 @@ void printFileHeader(FILE *file, FileType_e file_type, const HeaderData *header_
             }
             // A fejléc az init_tool_module-ból, módosítva a HeaderData használatára
             fprintf(file, "#--------------------------------------------------------------------------\n");
-            fprintf(file, "# %-15s %-15s %-15s %-15s\n",
-                    "Radius_AU", "GasSurfDensity", "GasPressure", "GasPressureDeriv");
+            fprintf(file, "# %-5s %-15s %-15s %-15s %-15s\n",
+                    "Index", "Radius_AU", "GasSurfDensity", "GasPressure", "GasPressureDeriv");
             fprintf(file, "#--------------------------------------------------------------------------\n");
 
             break;
@@ -704,63 +680,46 @@ void printFinalSimulationSummary(const char *directory_name, double elapsed_seco
 
 int setupInitialOutputFiles(OutputFiles *output_files, const SimulationOptions *sim_opts,
                                const DiskParameters *disk_params, HeaderData *header_data_for_files) {
-    char *dust_ouput = NULL;
-    char *micron_dust_ouput = NULL;
     char *mass_output = NULL;
 
-    // Készítsük elő a header_data_for_files struktúrát a specifikus adatokkal
+    // Fejléc adatok előkészítése
     header_data_for_files->current_time = 0.0;
     header_data_for_files->is_initial_data = 1;
     header_data_for_files->R_in = disk_params->r_min;
     header_data_for_files->R_out = disk_params->r_max;
 
-    // Fájlnevek generálása
-    asprintf(&dust_ouput, "%s/%s/%s%s", sim_opts->output_dir_name, kLogFilesDirectory, kDustAccumulationFileName,kFileNamesSuffix);
+    // --- Fájlnevek generálása ---
+    
+    
+    // Itt marad a kDustAccumulationFileName
+    asprintf(&mass_output, "%s/%s/%s%s", sim_opts->output_dir_name, kLogFilesDirectory, kDustAccumulationFileName, kFileNamesSuffix);
 
-    if (sim_opts->option_for_dust_secondary_population == 1.0) {
-        asprintf(&micron_dust_ouput, "%s/%s/%s%s", sim_opts->output_dir_name, kLogFilesDirectory,kDustMicronParticleEvolutionFile,kFileNamesSuffix);
-    }
-    asprintf(&mass_output, "%s/%s/%s%s", sim_opts->output_dir_name, kLogFilesDirectory, kDustAccumulationFileName,kFileNamesSuffix);
+    fprintf(stderr, "DEBUG [setupInitialOutputFiles]: Paths:\n  Mass: %s\n", mass_output);
 
-    fprintf(stderr, "DEBUG [setupInitialOutputFiles]: Opening output files: %s, %s (if 2pop), %s\n", dust_ouput, micron_dust_ouput, mass_output);
+    // --- Fájlok megnyitása ---
 
-    // Fájlok megnyitása és fejlécek írása
-    output_files->dust_motion_file = fopen(dust_ouput, "w");
-    if (output_files->dust_motion_file == NULL) {
-        fprintf(stderr, "ERROR: Could not open %s\n", dust_ouput);
-        return 1; // Hiba
-    }
-    printFileHeader(output_files->dust_motion_file, FILE_TYPE_DUST_MOTION, header_data_for_files);
+    
 
-    if (sim_opts->option_for_dust_secondary_population == 1.0) {
-        output_files->micron_motion_file = fopen(micron_dust_ouput, "w");
-        if (output_files->micron_motion_file == NULL) {
-            fprintf(stderr, "ERROR: Could not open %s\n", micron_dust_ouput);
-            // Itt fontos lehet, hogy felszabadítsuk az eddig megnyitott fájlokat
-            fclose(output_files->dust_motion_file);
-            output_files->dust_motion_file = NULL;
-            return 1; // Hiba
-        }
-        printFileHeader(output_files->micron_motion_file, FILE_TYPE_MICRON_MOTION, header_data_for_files);
-    }
 
+    // 3. Tömeggyarapodás fájl
     output_files->mass_file = fopen(mass_output, "w");
     if (output_files->mass_file == NULL) {
         fprintf(stderr, "ERROR: Could not open %s\n", mass_output);
-        // Itt is felszabadítjuk a már megnyitott fájlokat
-        fclose(output_files->dust_motion_file);
-        output_files->dust_motion_file = NULL;
-        if (sim_opts->option_for_dust_secondary_population == 1.0 && output_files->micron_motion_file != NULL) {
-            fclose(output_files->micron_motion_file);
-            output_files->micron_motion_file = NULL;
-        }
-        return 1; // Hiba
+        goto cleanup_error;
     }
     printFileHeader(output_files->mass_file, FILE_TYPE_MASS_ACCUMULATION, header_data_for_files);
 
-    return 0; // Siker
-}
+    free(mass_output);
 
+    return 0;
+
+cleanup_error:
+    if (output_files->mass_file) fclose(output_files->mass_file);
+    
+    if (mass_output) free(mass_output);
+    
+    return 1;
+}
 
 void cleanupSimulationResources(ParticleData *particle_data, OutputFiles *output_files) {
     if (particle_number > 0) {
@@ -778,16 +737,7 @@ void cleanupSimulationResources(ParticleData *particle_data, OutputFiles *output
         fprintf(stderr, "DEBUG [cleanupSimulationResources]: All dynamically allocated particle arrays freed.\n");
     }
 
-    if (output_files->dust_motion_file != NULL) {
-        fclose(output_files->dust_motion_file);
-        output_files->dust_motion_file = NULL;
-        fprintf(stderr, "DEBUG [cleanupSimulationResources]: Closed %s%s\n", kDustParticleEvolutionFile,kFileNamesSuffix);
-    }
-    if (output_files->micron_motion_file != NULL) { // Ellenőrzés option_for_dust_secondary_population-ra itt is
-        fclose(output_files->micron_motion_file);
-        output_files->micron_motion_file = NULL;
-        fprintf(stderr, "DEBUG [cleanupSimulationResources]: Closed %s%s\n",kDustMicronParticleEvolutionFile,kFileNamesSuffix);
-    }
+
     if (output_files->mass_file != NULL) {
         fclose(output_files->mass_file);
         output_files->mass_file = NULL;
