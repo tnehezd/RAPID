@@ -15,10 +15,10 @@ sys.path.insert(0, os.path.abspath('../xml')) # <--- CORRECTED: This adds 'docs/
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'RAPID code'
-copyright = '2025, D. Tarczay-Nehez'
+project = 'RAPID Simulation code'
+copyright = '2026, D. Tarczay-Nehez'
 author = 'D. Tarczay-Nehez'
-release = '1.0.0'
+release = '2.2.0-beta'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -46,6 +46,11 @@ exclude_patterns = []
 
 html_theme = 'sphinx_rtd_theme'
 
+html_theme_options = {
+    'collapse_navigation': False,
+    'sticky_navigation': True,
+    'navigation_depth': 4,
+}
 
 # -- Breathe configuration ---------------------------------------------------
 
