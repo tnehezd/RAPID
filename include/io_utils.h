@@ -6,8 +6,6 @@
 #include "simulation_types.h"
 #include "particle_data.h"
 
-extern FILE *fin1, *fin2, *fmo, *fout, *foutmicr, *fout3, *massfil, *jelfut;
-
 int calculateNumbersOfParticles(const char *particle_data_file_name);
 void loadDustParticlesFromFile(ParticleData *particle_data, const char *particle_data_file_name);
 void loadGasSurfaceDensityFromFile(DiskParameters *disk_params, const char *disk_file_name);
