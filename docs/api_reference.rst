@@ -76,6 +76,20 @@ gas_physics.h
 
 ----
 
+Boundary Conditions
+-------------------
+
+This section details the API for the ``boundary_conditions.h`` header file. It provides functions for managing ghost-cell extrapolation and enforcing physical boundary conditions at the inner and outer edges of the computational domain to ensure numerical stability.
+
+boundary_conditions.h
+^^^^^^^^^^^^^^^^^^^^^
+
+.. doxygenfile:: boundary_conditions.h
+   :project: rapid
+
+----
+
+
 Utils Module
 ------------
 

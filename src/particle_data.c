@@ -1,16 +1,15 @@
 // src/particle_data.c
-
 #include "particle_data.h"
 #include <stdio.h>
-#include <stdlib.h> // malloc, free, exit
+#include <stdlib.h> 
 
 int allocateParticleData(ParticleData *particle_data, size_t particle_count, int is_twopop_enabled) {
+
     if (particle_data == NULL) {
         fprintf(stderr, "ERROR [allocateParticleData]: ParticleData pointer is NULL.\n");
-        return 1; // Hiba
+        return 1; 
     }
 
-    // Inicializálás NULL-ra
     particle_data->particle_distance_array = NULL;
     particle_data->micron_particle_distance_array = NULL;
     particle_data->dust_particle_mass_grid = NULL;
@@ -25,10 +24,9 @@ int allocateParticleData(ParticleData *particle_data, size_t particle_count, int
 
     if (particle_count == 0) {
         fprintf(stderr, "DEBUG [allocateParticleData]: Particle count is 0. No particle arrays allocated.\n");
-        return 0; // Sikeres, de nincs allokáció
+        return 0; 
     }
 
-    // Fő részecske tömbök
     particle_data->particle_distance_array = malloc(particle_count * sizeof(*particle_data->particle_distance_array));
     particle_data->micron_particle_distance_array = malloc(particle_count * sizeof(*particle_data->micron_particle_distance_array));
     particle_data->dust_particle_mass_grid = malloc(particle_count * sizeof(double));
@@ -40,33 +38,30 @@ int allocateParticleData(ParticleData *particle_data, size_t particle_count, int
     particle_data->particle_distance_grid = malloc(particle_count * sizeof(double));
     particle_data->micron_particle_distance_grid = malloc(particle_count * sizeof(double));
 
-    // Ellenőrzés
     if (!particle_data->particle_distance_array || !particle_data->micron_particle_distance_array  || !particle_data->dust_particle_mass_grid || !particle_data->massmicradial_grid ||
         !particle_data->dust_particle_mass_array || !particle_data->micron_dust_particle_mass_array || !particle_data->dust_surfacedensity || !particle_data->micron_dust_surfacedensity ||
         !particle_data->particle_distance_grid || !particle_data->micron_particle_distance_grid) {
         fprintf(stderr, "ERROR [allocateParticleData]: Primary particle array allocation failed!\n");
-        freeParticleData(particle_data); // Felszabadítás, ha valami elszállt
-        return 1; // Hiba
+        freeParticleData(particle_data); 
+        return 1; 
     }
 
-    // Secondary particles (csak ha twopop engedélyezve van, feltételezve, hogy a growth ehhez kapcsolódik)
-    // A 4-szeres méretet a calculateDustDistance függvényben látottak alapján vettem.
     if (is_twopop_enabled) {
-
         printf("TWOPO VAN, DE ITT HIÁNYZIK VALAMI!");
-
     } else {
         fprintf(stderr, "DEBUG [allocateParticleData]: Two-population model is OFF. Secondary particle arrays not allocated.\n");
     }
 
     particle_data->allocated_particle_number = particle_count;
+
     fprintf(stderr, "DEBUG [allocateParticleData]: Particle arrays allocated for %zu particles.\n", particle_count);
-    return 0; // Sikeres allokáció
+    return 0;
 }
 
 void freeParticleData(ParticleData *particle_data) {
+
     if (particle_data == NULL) {
-        return; // Nincs mit felszabadítani
+        return; 
     }
 
     free(particle_data->particle_distance_array);
@@ -80,7 +75,6 @@ void freeParticleData(ParticleData *particle_data) {
     free(particle_data->particle_distance_grid);
     free(particle_data->micron_particle_distance_grid);
 
-    // Fontos: a pointereket NULL-ra állítjuk felszabadítás után, hogy elkerüljük a dangling pointereket
     particle_data->particle_distance_array = NULL;
     particle_data->micron_particle_distance_array = NULL;
     particle_data->dust_particle_mass_grid = NULL;

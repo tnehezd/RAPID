@@ -1,37 +1,24 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#include <stdio.h> // Required for FILE* type
-#include <math.h>  // Required for M_PI (for TWOPI macro)
+#include <stdio.h> 
+#include <math.h>  
 
-
-// --- Global Variable Declarations (extern) ---
-// Dust parameters
 extern int particle_number;
-
-
-// --- Global File Pointer Declarations (extern) ---
 extern FILE *drift_timescale_file;
 extern FILE *current_info_file;
 extern FILE *load_dust_particles_file;
 
 #include "simulation_types.h"
 
-// --- Physical Constants (Macros) ---
-// These constants have been moved here from init_tool.c for global access,
-// to prevent duplication or static limitations.
-
-#define SURFACE_DENSITY_CONVERSION_FACTOR       1.12521e-7          // Surface density conversion factor
-#define G_DIMENSIONLESS 						1.0 				// Gravitációs Konstans (dimenziótlan G=1 rendszerben)
-#define CM_PER_SEC_TO_AU_PER_YEAR_2PI			3.35725e-07         // cm/sec to AU/(yr/2pi) conversion
-#define SOLAR_MASS_IN_GRAMS 					1.989e33            // Solar Mass in grams (M_solar -> g) - PLEASE VERIFY THIS VALUE!
-#define AU_IN_CM 								1.496e13            // Astronomical Unit in centimeters (AU -> cm) - PLEASE VERIFY THIS VALUE!
-#define ROUNDING_FACTOR 						1.0                 // Make sure this value is correct for your physics model!
+#define SURFACE_DENSITY_CONVERSION_FACTOR       1.12521e-7   
+#define G_DIMENSIONLESS 						1.0 		
+#define CM_PER_SEC_TO_AU_PER_YEAR_2PI			3.35725e-07 
+#define SOLAR_MASS_IN_GRAMS 					1.989e33    
+#define AU_IN_CM 								1.496e13    
+#define ROUNDING_FACTOR 						1.0         
 #define SIM_VERSION 							"2.1-beta"
 
-
-// --- Global Filename Declarations (extern) ---
-// Define distinct names for gas and dust initial profiles
 extern const char * const kInitialGasProfileFileName;   
 extern const char * const kInitialDustProfileFileName;  
 extern const char * const kGasDensityProfileFilePrefix;
@@ -48,6 +35,5 @@ extern const char * const kFileNamesSuffix;
 extern const char * const kCurrentInfoFile;
 extern const char * const kDustParticleSizeFileName;
 extern const char * const kCurrentRuntimeInfoFile;
-
 
 #endif // CONFIG_H

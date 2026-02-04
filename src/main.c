@@ -2,36 +2,25 @@
 #include <string.h>
 #include <math.h>
 #include <time.h>
-
-// Header files
-#include "config.h"           // Declarations of global variables and constants
-#include "init_tool_module.h" // runInitialization and InitializeDefaultOptions
-#include "io_utils.h"         // Functions from io_utils.c
-#include "disk_model.h"       // Functions from disk_model.c
-#include "dust_physics.h"     // Functions from dust_physics.c
-#include "simulation_core.h"  // Functions from simulation_core.c
-#include "utils.h"            // Functions from utils.h
+#include "config.h"       
+#include "init_tool_module.h"
+#include "io_utils.h"        
+#include "disk_model.h"      
+#include "dust_physics.h"    
+#include "simulation_core.h" 
+#include "utils.h"           
 #include "gas_physics.h"
 #include "boundary_conditions.h"
 #include "integrator.h"
-
-
-// NEW: Include your simulation_types.h and parser.h
 #include "simulation_types.h"
-#include "parser.h"           // Now includes function declarations for parsing
+#include "parser.h"        
 
-// Function declaration for default init_tool options, assuming it's in init_tool_module.h
 extern void initializeDefaultOptions(InitializeDefaultOptions *def);
 
-// Global variable definition for particle_number (if not defined elsewhere)
-// Ensure this is only defined in ONE .c file, and declared as 'extern int particle_number;' in config.h
-
 int main(int argc, const char **argv) {
-    // DEBUG: Program start
-    // fprintf(stderr, "DEBUG [main]: Program started.\n");
 
     time_t wall_start, wall_end;
-    time(&wall_start); // Kezdési időpont
+    time(&wall_start); 
 
     char *initial_dir_path = NULL;
     char *kLogFilesDirectory_path = NULL;
@@ -41,37 +30,29 @@ int main(int argc, const char **argv) {
     char *dens_name_initial = NULL;
     char *actual_run_dir = NULL;
 
-
-
-    // Local structure to store command-line options
     ParserOptions def;
     createDefaultOptions(&def);
 
-    // Local structure to store init_tool parameters (these will be populated from 'def')
     InitializeDefaultOptions init_tool_params;
     initializeDefaultOptions(&init_tool_params);
 
-    // Parse command-line options and populate the 'def' structure
     int retCode = parseCLIOptions(argc, argv, &def);
+
     if (0 != retCode) {
         fprintf(stderr, "Error parsing command-line options. Exiting with code %d.\n", retCode);
         return retCode;
     }
 
-    // Remove trailing slash from output directory name
     size_t len = strlen(def.output_dir_name);
+
     if (len > 0 && def.output_dir_name[len - 1] == '/') {
         def.output_dir_name[len - 1] = '\0';
     }
 
-
-    // --- Declare instances of the new simulation structs ---
-    DiskParameters disk_params; // Main disk parameters struct
+    DiskParameters disk_params; 
     SimulationOptions sim_opts;
     OutputFiles output_files;
     
-
-    // Initialize output_files pointers to NULL
     output_files.dust_motion_file = NULL;
     output_files.micron_motion_file = NULL;
     output_files.mass_file = NULL;
@@ -80,7 +61,6 @@ int main(int argc, const char **argv) {
     output_files.micron_dust_file = NULL;
     output_files.size_file = NULL;
 
-    /* Populate the SimulationOptions struct from 'def' (parsed options) */
     sim_opts.option_for_evolution = def.option_for_evolution;
     sim_opts.option_for_dust_drift = def.option_for_dust_drift;
     sim_opts.option_for_dust_growth = def.option_for_dust_growth;
@@ -88,22 +68,17 @@ int main(int argc, const char **argv) {
     sim_opts.user_defined_time_step = def.user_defined_time_step;
     sim_opts.maximum_simulation_time = def.maximum_simulation_time;
     sim_opts.output_frequency = def.output_frequency;
-    sim_opts.number_of_dust_particles = def.number_of_dust_particles; // NEW: Populate number_of_dust_particles from parsed options
+    sim_opts.number_of_dust_particles = def.number_of_dust_particles; 
 
-    // DEBUG: Show def.output_dir_name BEFORE it's used to populate sim_opts.output_dir_name
     fprintf(stderr, "DEBUG [main]: def.output_dir_name BEFORE sim_opts population: '%s'\n", def.output_dir_name);
-
     fprintf(stderr, "DEBUG [main]: Evolution (sim_opts.option_for_evolution=%.2f) or drift (sim_opts.option_for_dust_drift=%.2f) is ON. Starting main simulation loop.\n", sim_opts.option_for_evolution, sim_opts.option_for_dust_drift);
 
     SnapshotMode mode = determineSnapshotMode(&sim_opts);
     fprintf(stderr, "DEBUG [main]: SnapshotMode = %s\n", snapshotModeToString(mode));
 
-
-
-    // --- Populate DiskParameters with parameters from 'def' ---
     disk_params.r_min = def.rmin_val;
     disk_params.r_max = def.rmax_val;
-    disk_params.grid_number = def.number_of_grid_points; // grid_number (gas grid points) is from parsed options
+    disk_params.grid_number = def.number_of_grid_points; 
     disk_params.sigma_0 = def.sigma0_val;
     disk_params.sigma_power_law_index = def.sigmap_exp_val;
     disk_params.alpha_parameter = def.alpha_visc_val;
@@ -120,46 +95,32 @@ int main(int argc, const char **argv) {
     disk_params.drift_factor = 0.55; // set by Birnstiel 2012
     disk_params.particle_density = def.pdensity_val;
 
-    // Set sim_opts->flag_for_deadzone based on dead zone radii from disk_params
     sim_opts.flag_for_deadzone = (disk_params.r_dze_i > 0.0 || disk_params.r_dze_o > 0.0) ? 1.0 : 0.0;
 
-    // --- Output directory handling ---
-    // createRunDirectory contains the numbering logic if the directory already exists.
     actual_run_dir = createRunDirectory(def.output_dir_name);
 
-    // Create the 'intial' subdirectory using kConfigFilesDirectory
     asprintf(&initial_dir_path, "%s/%s", actual_run_dir, kConfigFilesDirectory);
     createRunDirectory(initial_dir_path);
 
-    // Create the 'LOGS' subdirectory using kLogFilesDirectory
     asprintf(&kLogFilesDirectory_path, "%s/%s", actual_run_dir, kLogFilesDirectory);
     fprintf(stderr, "DEBUG [main]: kLogFilesDirectory_path assembled as: '%s'\n", kLogFilesDirectory_path);
 
     createRunDirectory(kLogFilesDirectory_path);
 
-    // CRITICAL: Populate sim_opts.output_dir_name from def.output_dir_name
     strncpy(sim_opts.output_dir_name, actual_run_dir, MAX_PATH_LEN - 1);
     sim_opts.output_dir_name[MAX_PATH_LEN - 1] = '\0'; // Ensure null-termination
-    // DEBUG: Show sim_opts.output_dir_name immediately after population
     fprintf(stderr, "DEBUG [main]: sim_opts.output_dir_name AFTER population: '%s'\n", sim_opts.output_dir_name);
-
     fprintf(stderr, "Output subdirectories created.\n");
 
-    int dummy_sys_ret; // Dummy variable for system() call return value
+    int dummy_sys_ret; 
 
-    // --- Input file handling logic ---
-    // This is where it's decided whether to read from a file or generate a new profile.
-    // It's crucial that disk_params members are allocated memory ONLY ONCE.
     if (def.input_file != NULL && strcmp(def.input_file, "") != 0) {
-        // If an input file is specified:
         strncpy(current_inputsig_file, def.input_file, MAX_PATH_LEN - 1);
         current_inputsig_file[MAX_PATH_LEN - 1] = '\0';
         fprintf(stderr, "DEBUG [main]: Input file specified: '%s'. Attempting to read initial profile.\n", current_inputsig_file);
 
-        // disk_params.grid_number update from file *before* allocation.
-        disk_params.grid_number = calculateNumbersOfParticles(current_inputsig_file); // Update grid_number from file (for GAS grid)
+        disk_params.grid_number = calculateNumbersOfParticles(current_inputsig_file); 
 
-        // Recalculate delta_r based on the updated grid_number
         if (disk_params.grid_number > 1) {
             disk_params.delta_r = (disk_params.r_max - disk_params.r_min) / (disk_params.grid_number - 1.0);
         } else {
@@ -167,8 +128,6 @@ int main(int argc, const char **argv) {
         }
         fprintf(stderr, "DEBUG [main]: grid_number set from input file: %d. delta_r calculated as %.4e.\n", disk_params.grid_number, disk_params.delta_r);
 
-        // --- Dynamic Memory Allocation for Disk Arrays ---
-        // This happens ONLY HERE, because runInitialization is not called!
         disk_params.radial_grid = (double *)malloc((disk_params.grid_number + 2) * sizeof(double));
         disk_params.gas_surface_density_vector = (double *)malloc((disk_params.grid_number + 2) * sizeof(double));
         disk_params.gas_pressure_vector = (double *)malloc((disk_params.grid_number + 2) * sizeof(double));
@@ -181,27 +140,20 @@ int main(int argc, const char **argv) {
         }
         fprintf(stderr, "DEBUG [main]: Disk profile arrays dynamically allocated with size grid_number+2 = %d (input file branch).\n", disk_params.grid_number + 2);
 
-        // Call readDiskParameters because runInitialization is not called
         fprintf(stderr, "DEBUG [main]: Calling readDiskParameters to calculate derived disk parameters for main disk_params struct (input file branch).\n");
         readDiskParameters(&disk_params);
         fprintf(stderr, "DEBUG [main]: readDiskParameters completed (input file branch).\n");
-
-        // Copy input profile file to the 'initial' directory
         asprintf(&cmd_buffer, "cp %s %s/", current_inputsig_file, initial_dir_path);
         dummy_sys_ret = system(cmd_buffer); (void)dummy_sys_ret;
         fprintf(stderr, "DEBUG [main]: Copied initial profile file '%s' to '%s/'.\n", current_inputsig_file, initial_dir_path);
-
-        // Copy disk_config.dat (kDiskConfigFile) file to the 'initial' directory
         asprintf(&cmd_buffer, "cp %s%s %s/", kDiskConfigFile,kFileNamesSuffix, initial_dir_path);
         dummy_sys_ret = system(cmd_buffer); (void)dummy_sys_ret;
         fprintf(stderr, "DEBUG [main]: Copied %s to %s%s/\n", kDiskConfigFile,kFileNamesSuffix, initial_dir_path);
 
     } else {
-        // If NO input file is specified:
         fprintf(stderr, "DEBUG [main]: No input file specified (-i flag not used). Generating default grid and profile.\n");
 
-        // Populate InitializeDefaultOptions from 'def' (command-line) values
-        init_tool_params.n_grid_points = disk_params.grid_number; // This is the gas grid resolution
+        init_tool_params.n_grid_points = disk_params.grid_number; 
         init_tool_params.r_inner= disk_params.r_min;
         init_tool_params.r_outer = disk_params.r_max;
         init_tool_params.sigma0_gas_au = disk_params.sigma_0;
@@ -216,29 +168,21 @@ int main(int argc, const char **argv) {
         init_tool_params.flaring_index = disk_params.flaring_index;
         init_tool_params.star_mass = disk_params.stellar_mass;
         init_tool_params.dust_to_gas_ratio = def.eps_val;
-        init_tool_params.n_dust_particles = def.number_of_dust_particles; // Uses the specific dust particle count
+        init_tool_params.n_dust_particles = def.number_of_dust_particles; 
         init_tool_params.two_pop_ratio = def.ratio_val;
         init_tool_params.micro_size_cm = def.mic_val;
         init_tool_params.one_size_particle_cm = def.onesize_val;
         init_tool_params.dust_density_g_cm3 = def.pdensity_val;
-        fprintf(stderr, "DEBUG [main]: InitializeDefaultOptions (init_tool_params) structure populated for profile generation.\n");
 
-        // --- Generate profile directly into the 'initial' directory ---
+        fprintf(stderr, "DEBUG [main]: InitializeDefaultOptions (init_tool_params) structure populated for profile generation.\n");
         fprintf(stderr, "DEBUG [main]: Calling runInitialization(&init_tool_params, &disk_params)...\n");
         strncpy(init_tool_params.output_base_path, initial_dir_path, MAX_PATH_LEN - 1);
         init_tool_params.output_base_path[MAX_PATH_LEN - 1] = '\0';
-        // runInitialization is responsible for allocating and populating disk_params members
         runInitialization(&init_tool_params, &disk_params);
         fprintf(stderr, "DEBUG [main]: runInitialization completed. disk_params allocated and populated.\n");
-
-        // Now current_inputsig_file points to the generated file in initial_dir_path
-        // CHANGE HERE: FILENAME_INIT_PROFILE -> kInitialGasProfileFileName
         asprintf(&current_inputsig_file, "%s/%s%s", initial_dir_path, kInitialGasProfileFileName,kFileNamesSuffix);
         fprintf(stderr, "DEBUG [main]: Generated GAS profile will be loaded from '%s'.\n", current_inputsig_file);
 
-        // --- Update grid_number from the generated file (critical for loadGasSurfaceDensityFromFile sizing) ---
-        // Important: Here, the number of lines should be read from kInitialGasProfileFileName,
-        // provided that init_tool_module.c creates this file.
         disk_params.grid_number = calculateNumbersOfParticles(current_inputsig_file);
 
         if (disk_params.grid_number > 1) {
@@ -247,64 +191,41 @@ int main(int argc, const char **argv) {
             disk_params.delta_r = 0.0;
         }
         fprintf(stderr, "DEBUG [main]: grid_number updated from generated file: %d. delta_r calculated as %.4e.\n", disk_params.grid_number, disk_params.delta_r);
-
-        // No need for 'cp' here for kDiskConfigFile or FILENAME_INIT_PROFILE,
-        // since runInitialization created them directly in initial_dir_path.
     }
 
-    // --- CRITICAL STEP: Now that current_inputsig_file is set,
-    //     copy it to sim_opts.input_filename for timeIntegrationForTheSystem. ---
-    // This is the gas profile filename that loadGasSurfaceDensityFromFile reads.
     strncpy(sim_opts.input_filename, current_inputsig_file, MAX_PATH_LEN - 1);
-    sim_opts.input_filename[MAX_PATH_LEN - 1] = '\0'; // Ensure null-termination
+    sim_opts.input_filename[MAX_PATH_LEN - 1] = '\0'; 
     fprintf(stderr, "DEBUG [main]: sim_opts.input_filename set to '%s' for timeIntegrationForTheSystem (gas profile).\n", sim_opts.input_filename);
-
-    // --- NEW PART: Set the dust profile filename in sim_opts.dust_input_filename ---
-    // This is the dust profile filename that loadDustParticlesFromFile reads within timeIntegrationForTheSystem.
     asprintf(&current_inputdust_file, "%s/%s%s", initial_dir_path, kInitialDustProfileFileName, kFileNamesSuffix);
     strncpy(sim_opts.dust_input_filename, current_inputdust_file, MAX_PATH_LEN - 1);
-    sim_opts.dust_input_filename[MAX_PATH_LEN - 1] = '\0'; // Ensure null-termination
+    sim_opts.dust_input_filename[MAX_PATH_LEN - 1] = '\0'; 
     fprintf(stderr, "DEBUG [main]: sim_opts.dust_input_filename set to '%s' for timeIntegrationForTheSystem (dust profile).\n", sim_opts.dust_input_filename);
-
-    // --- CRITICAL STEP: Set the global particle_number based on the actual dust particle file. ---
-    // This ensures particle_number reflects the *dust* particle count, not the gas grid count.
-    particle_number = calculateNumbersOfParticles(sim_opts.dust_input_filename); // Read lines from the dust profile
+    particle_number = calculateNumbersOfParticles(sim_opts.dust_input_filename); 
     fprintf(stderr, "DEBUG [main]: Global particle_number set to %d (from dust input file: %s).\n", particle_number, sim_opts.dust_input_filename);
-
-    // The readDiskParameters call has already occurred in the appropriate branch (if using input file)
-    // or was called by runInitialization (if generating).
-
     fprintf(stderr, "DEBUG [main]: Initial profile loading for loadGasSurfaceDensityFromFile...\n");
-    loadGasSurfaceDensityFromFile(&disk_params, current_inputsig_file); // This populates disk_params.gas_surface_density_vector and radial_grid
+    loadGasSurfaceDensityFromFile(&disk_params, current_inputsig_file); 
     fprintf(stderr, "DEBUG [main]: loadGasSurfaceDensityFromFile completed. Calling applyBoundaryConditions for disk_params.radial_grid and disk_params.gas_surface_density_vector...\n");
     applyBoundaryConditions(disk_params.radial_grid, &disk_params);
     applyBoundaryConditions(disk_params.gas_surface_density_vector, &disk_params);
     fprintf(stderr, "DEBUG [main]: applyBoundaryConditions calls completed for initial profile.\n");
-
-    // Print current information
     fprintf(stderr, "DEBUG [main]: Calling printCurrentInformationAboutRun...\n");
-    // Here, def.output_dir_name is passed, which already contains the numbered folder name
     printCurrentInformationAboutRun(actual_run_dir, &disk_params);
 
-    // Run simulation or exit based on options
     if(mode == SnapshotNonevolving) {
         fprintf(stderr, "DEBUG [main]: Evolution (sim_opts.option_for_evolution=%.2f) and drift (sim_opts.option_for_dust_drift=%.2f) are OFF.\n", sim_opts.option_for_evolution, sim_opts.option_for_dust_drift);
 
         asprintf(&dens_name_initial, "%s/%s%s", initial_dir_path, kInitialGasProfileFileName,kFileNamesSuffix);
         fprintf(stderr, "DEBUG [main]: Printing initial surface density to %s.\n", dens_name_initial);
 
-        // Special handling for printGasSurfaceDensityPressurePressureDerivateFile when only initial output is needed
         OutputFiles temp_output_for_initial_print;
         temp_output_for_initial_print.surface_file = fopen(dens_name_initial, "w");
         if (temp_output_for_initial_print.surface_file != NULL) {
-            // Add header to initial surface density file
             fprintf(temp_output_for_initial_print.surface_file, "# Initial Disk Profile Data (Gas Surface Density, Pressure, Gradient)\n");
             fprintf(temp_output_for_initial_print.surface_file, "# Columns: 1. Radius [AU], 2. Sigma_gas [M_Sun/AU^2],\n");
             fprintf(temp_output_for_initial_print.surface_file, "#   3. Pressure [units], 4. dP/dR [units]\n");
             fprintf(temp_output_for_initial_print.surface_file, "#\n");
             fprintf(temp_output_for_initial_print.surface_file, "# Data generated by Dust Drift Simulation (Initial State)\n");
             fflush(temp_output_for_initial_print.surface_file);
-
             printGasSurfaceDensityPressurePressureDerivateFile(&disk_params, &temp_output_for_initial_print);
             fclose(temp_output_for_initial_print.surface_file);
             temp_output_for_initial_print.surface_file = NULL;
@@ -319,36 +240,25 @@ int main(int argc, const char **argv) {
 
         fprintf(stderr, "\n\nDEBUG [main]: Disk evolution is ON (mode: %s). Starting main simulation loop.\n\n",snapshotModeToString(mode));
         fprintf(stderr, "DEBUG [main]: Calling timeIntegrationForTheSystem...\n");
-        // Pass sim_opts to timeIntegrationForTheSystem.
-        // timeIntegrationForTheSystem must ensure to use the correct (numbered) output_dir_name.
         timeIntegrationForTheSystem(mode,&disk_params, &sim_opts, &output_files);
         fprintf(stderr, "DEBUG [main]: timeIntegrationForTheSystem completed. Program finished normally.\n");
     }
 
-    // --- Free dynamically allocated memory ---
-    // Free the memory allocated for disk_params.radial_grid, gas_surface_density_vector, etc.
-    // This allocation happened in the 'if' branch if an input file was used,
-    // or within runInitialization in the 'else' branch.
     if (disk_params.radial_grid) free(disk_params.radial_grid);
     if (disk_params.gas_surface_density_vector) free(disk_params.gas_surface_density_vector);
     if (disk_params.gas_pressure_vector) free(disk_params.gas_pressure_vector);
     if (disk_params.gas_pressure_gradient_vector) free(disk_params.gas_pressure_gradient_vector);
     if (disk_params.gas_velocity_vector) free(disk_params.gas_velocity_vector);
     fprintf(stderr, "DEBUG [main]: Dynamically allocated disk arrays freed.\n");
-
-
     free(current_inputsig_file);
     free(current_inputdust_file);
     free(initial_dir_path);
     free(kLogFilesDirectory_path);
-
     fprintf(stderr, "DEBUG [main]: Program exiting normally.\n");
 
-
-    time(&wall_end); // Befejezési időpont
+    time(&wall_end);
     double elapsed_wall_time = difftime(wall_end, wall_start);
 
-    // Meghívjuk a lezáró statisztikát
     printFinalSimulationSummary(actual_run_dir, elapsed_wall_time, &sim_opts);
 
     return 0;

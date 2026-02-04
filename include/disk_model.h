@@ -38,7 +38,7 @@ void readDiskParameters(DiskParameters *disk_params);
  *
  * The radial grid defines the spatial discretization used for all gas and dust
  * calculations. This function fills the radial_grid array and computes the
- * uniform grid spacing delta_r.
+ * uniform grid spacing \f$\Delta r\f$.
  *
  * @param disk_params Pointer to the DiskParameters structure containing grid arrays.
  */
@@ -47,7 +47,7 @@ void createRadialGrid(DiskParameters *disk_params);
 /**
  * @brief Computes the initial gas surface density profile.
  *
- * This routine initializes the gas surface density Σ(r) according to the chosen
+ * This routine initializes the gas surface density \f$\Sigma(r)\f$ according to the chosen
  * disk model (e.g., power‑law or tapered profile). The resulting array is used
  * by all subsequent gas and dust physics modules.
  *
@@ -59,14 +59,14 @@ void createInitialGasSurfaceDensity(DiskParameters *disk_params);
  * @brief Computes the initial gas pressure profile.
  *
  * Using the initialized surface density and temperature (or scale height)
- * structure, this function evaluates the gas pressure P(r) across the grid.
+ * structure, this function evaluates the gas pressure \f$P(r)\f$ across the grid.
  *
  * @param disk_params Pointer to the DiskParameters structure.
  */
 void createInitialGasPressure(DiskParameters *disk_params);
 
 /**
- * @brief Computes the initial radial pressure gradient dP/dr.
+ * @brief Computes the initial radial pressure gradient \f$dP/dr\f$\f$.
  *
  * The pressure gradient is a key quantity for dust drift, gas velocity, and
  * stability analysis. This function computes the discrete derivative of the

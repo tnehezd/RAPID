@@ -34,7 +34,7 @@
  * and the surrounding gas. It depends on the particle size, local gas surface
  * density, and disk physical parameters.
  *
- * @param particle_radius       Radius of the dust particle (cm or AU, depending on code units).
+ * @param particle_radius       Radius of the dust particle (cm).
  * @param gas_surfacedensity    Local gas surface density at the particle position.
  * @param disk_params           Pointer to disk parameter structure.
  * @return The Stokes number at the given location.
@@ -139,14 +139,11 @@ double calculateDustParticleSize(double particle_radius, double pdens, double ga
  *
  * This function reconstructs the dust surface density on the gas grid
  * based on the positions and masses of dust particles.
- *
- * @param outer_distance          Upper radial bound.
- * @param inner_distance          Lower radial bound.
  * @param particle_data           Pointer to particle data structure.
  * @param simulation_options      Pointer to simulation options.
  * @param disk_params             Pointer to disk parameter structure.
  */
-void calculateDustSurfaceDensity(double outer_distance, double inner_distance, const ParticleData *particle_data, const SimulationOptions *simulation_options, const DiskParameters *disk_params);
+void calculateDustSurfaceDensity(const ParticleData *particle_data, const SimulationOptions *simulation_options, const DiskParameters *disk_params);
 
 /**
  * @brief Updates and stores the new radial positions of dust particles.

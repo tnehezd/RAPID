@@ -21,7 +21,7 @@
 #include "simulation_types.h" 
 
 /**
- * @brief Calculates the turbulent alpha parameter α(r).
+ * @brief Calculates the turbulent alpha parameter \f$\alpha(r)\f$.
  *
  * The turbulent alpha parameter controls the strength of angular momentum
  * transport in the disk. It may depend on radius through a prescribed model
@@ -34,10 +34,10 @@
 double calculateTurbulentAlpha(double radial_distance, const DiskParameters *disk_params);
 
 /**
- * @brief Computes the kinematic viscosity ν(r).
+ * @brief Computes the kinematic viscosity \f$\nu(r)\f$.
  *
- * The kinematic viscosity is given by ν = α c_s H, where c_s is the sound speed
- * and H is the pressure scale height. This function evaluates ν at a given
+ * The kinematic viscosity is given by \f$\nu = \alpha c_s H\f$, where \f$c_s\f$ is the sound speed
+ * and \f$H\f$ is the pressure scale height. This function evaluates ν at a given
  * radial position.
  *
  * @param radial_distance   Radial position.
@@ -47,11 +47,11 @@ double calculateTurbulentAlpha(double radial_distance, const DiskParameters *dis
 double calculateKinematicViscosity(double radial_distance, const DiskParameters *disk_params);
 
 /**
- * @brief Computes the pressure scale height H(r).
+ * @brief Computes the pressure scale height \f$H(r)\f$.
  *
- * The pressure scale height is defined as H = c_s / Ω_K, where c_s is the local
- * sound speed and Ω_K is the Keplerian frequency. It characterizes the vertical
- * thickness of the gas disk.
+ * The pressure scale height is defined as: \f$ H(r) = c_s(r)/\Omega_K(r)\f$
+ * where \f$ c_s \f$ is the local sound speed and \f$ \Omega_K \f$ is the Keplerian frequency.
+ * It characterizes the vertical thickness of the gas disk.
  *
  * @param radial_distance   Radial position.
  * @param disk_params       Pointer to disk parameter structure.
@@ -60,9 +60,9 @@ double calculateKinematicViscosity(double radial_distance, const DiskParameters 
 double calculatePressureScaleHeight(double radial_distance, const DiskParameters *disk_params);
 
 /**
- * @brief Computes the Keplerian orbital velocity v_K(r).
+ * @brief Computes the Keplerian orbital velocity: \f$v_K(r)\f$.
  *
- * The Keplerian velocity is given by v_K = sqrt(GM_star/r). It is used in gas and
+ * The Keplerian velocity is given by \f$v_K = \sqrt{(GM_\star/r)}\f$. It is used in gas and
  * dust dynamical calculations.
  *
  * @param radial_distance   Radial position.
@@ -72,9 +72,9 @@ double calculatePressureScaleHeight(double radial_distance, const DiskParameters
 double calculateKeplerianVelocity(double radial_distance, const DiskParameters *disk_params);
 
 /**
- * @brief Computes the Keplerian orbital frequency Ω_K(r).
+ * @brief Computes the Keplerian orbital frequency \f$\Omega_K(r)\f$.
  *
- * The Keplerian frequency is defined as Ω_K = sqrt(GM_star/r^3). It is used in
+ * The Keplerian frequency is defined as \f$\Omega_K = \sqrt(GM_star/r^3)\f$. It is used in
  * scale height, viscosity, and dynamical calculations.
  *
  * @param radial_distance   Radial position.
@@ -84,7 +84,7 @@ double calculateKeplerianVelocity(double radial_distance, const DiskParameters *
 double calculateKeplerianFrequency(double radial_distance, const DiskParameters *disk_params);
 
 /**
- * @brief Computes the local sound speed c_s(r).
+ * @brief Computes the local sound speed \f$c_s(r)\f$.
  *
  * The sound speed depends on the disk temperature or scale height. It is used
  * in viscosity, pressure, and dust–gas coupling calculations.
@@ -96,10 +96,10 @@ double calculateKeplerianFrequency(double radial_distance, const DiskParameters 
 double calculateLocalSoundSpeed(double radial_distance, const DiskParameters *disk_params);
 
 /**
- * @brief Computes the midplane gas density ρ_g(r).
+ * @brief Computes the midplane gas density \f$\rho_g(r)\f$.
  *
- * The midplane density is obtained from the surface density Σ and the scale
- * height H via ρ_g = Σ / (sqrt(2π) H).
+ * The midplane density is obtained from the surface density \f$\Sigma\f$ and the scale
+ * height \f$H\f$ via \f$\rho_g = \Sigma / (sqrt(2\pi) H)\f$.
  *
  * @param gas_surface_density   Gas surface density at the given radius.
  * @param radial_distance       Radial position.
@@ -109,10 +109,10 @@ double calculateLocalSoundSpeed(double radial_distance, const DiskParameters *di
 double calcualteMidplaneGasDensity(double gas_surface_density, double radial_distance, const DiskParameters *disk_params);
 
 /**
- * @brief Computes the gas pressure P(r).
+ * @brief Computes the gas pressure \f$P(r)\f$.
  *
- * The gas pressure is computed using P = ρ_g c_s^2, where ρ_g is the midplane
- * gas density and c_s is the local sound speed.
+ * The gas pressure is computed using \f$P = \rho_g c_s^2\f$, where \f$\rho_g\f$ is the midplane
+ * gas density and \f$c_s\f$ is the local sound speed.
  *
  * @param gas_surface_density   Gas surface density.
  * @param radial_distance       Radial position.
@@ -122,7 +122,7 @@ double calcualteMidplaneGasDensity(double gas_surface_density, double radial_dis
 double calculateGasPressure(double gas_surface_density, double radial_distance, const DiskParameters *disk_params);
 
 /**
- * @brief Computes the radial pressure gradient dP/dr across the grid.
+ * @brief Computes the radial pressure gradient \f$dP/dr\f$ across the grid.
  *
  * This function updates the gas_pressure_gradient_vector field in the
  * DiskParameters structure using finite differences.
@@ -136,7 +136,7 @@ void calculateGasPressureGradient(DiskParameters *disk_params);
  *
  * This helper function evaluates the coefficient appearing in the expression
  * for the viscous radial velocity:
- *   v_r = -3 / (Σ r^{1/2}) * d/dr (ν Σ r^{1/2})
+ *   \f$v_r = -3 / (\Sigma r^{1/2}) \cdot d/dr (\nu \Sigma r^{1/2})\f$
  *
  * @param gas_surface_density   Gas surface density.
  * @param radial_distance       Radial position.
@@ -149,7 +149,7 @@ void calculateGasPressureGradient(DiskParameters *disk_params);
  *
  * Updates the gas_velocity_vector field in the DiskParameters structure using
  * the standard viscous accretion formula:
- *   v_r = -3 / (Σ r^{1/2}) * d/dr (ν Σ r^{1/2})
+ *   \f$v_r = -3 / (\Sigma r^{1/2}) \cdot d/dr (\nu \Sigma r^{1/2})\f$
  *
  * @param disk_params Pointer to disk parameter structure.
  */
@@ -158,7 +158,7 @@ void calculateGasPressureGradient(DiskParameters *disk_params);
 /**
  * @brief Updates gas surface density, pressure, and pressure gradient.
  *
- * This function recomputes Σ(r), P(r), and dP/dr after the gas surface density
+ * This function recomputes \f$\Sigma(r)\f$, \f$P(r)\f$, and \f$dP/dr\f$ after the gas surface density
  * has been evolved by the simulation. It ensures that all dependent quantities
  * remain consistent.
  *

@@ -1,13 +1,10 @@
-
 // src/integrator.h
 
-// Standard C Library Includes
 #include <stdio.h>    
 #include <stdlib.h>   
 #include <math.h>     
 #include <string.h>   
 #include <omp.h>
-
 #include "config.h"      
 #include "io_utils.h"     
 #include "disk_model.h"   
@@ -19,10 +16,6 @@
 #include "boundary_conditions.h"
 #include "integrator.h"
 
-
-
-/*	Runge-Kutta4 integrator	*/
-// prad bemenet: AU-ban!
 void integrateParticleRungeKutta4(double time, double prad, const double *dust_surfacedensity, const double *particle_distance_grid, double step, double y, double *ynew, double *pradnew, const DiskParameters *disk_params, const SimulationOptions *sim_opts){
     double dy1,dy2,dy3,dy4;
     double ytemp, ytemp2;
@@ -32,7 +25,6 @@ void integrateParticleRungeKutta4(double time, double prad, const double *dust_s
     int opt = 0;
     double sigmadd = 0.0;
     
-/*	Mivel a kulongozo parametereket csak a megadott gridcella pontokban ismerjuk, de ez nem feltetlen egyezik meg a reszecskek pozicijaval, ezert minden fontos parametert linearInterpolationalunk a reszecskek tavolsagara	*/
     linearInterpolation(disk_params->gas_surface_density_vector,disk_params->radial_grid,y,&sigma,disk_params->delta_r,opt,disk_params);
     linearInterpolation(disk_params->gas_pressure_gradient_vector,disk_params->radial_grid,y,&dpress,disk_params->delta_r,opt,disk_params);
     linearInterpolation(disk_params->gas_velocity_vector,disk_params->radial_grid,y,&ugas,disk_params->delta_r,opt,disk_params);
@@ -54,19 +46,18 @@ void integrateParticleRungeKutta4(double time, double prad, const double *dust_s
         }
     }
 
-    if(sim_opts->option_for_dust_growth == 1.) {		// ha van reszecskenovekedes
-        if(time != 0.) {	// ha nem t0 idopontban vagyunk
+    if(sim_opts->option_for_dust_growth == 1.) {
+        if(time != 0.) {
             pradtemp = prad;
             linearInterpolation(disk_params->gas_pressure_vector,disk_params->radial_grid,y,&p,disk_params->delta_r,opt,disk_params);
             pdens = disk_params->particle_density; 
-            pradtemp = calculateDustParticleSize(prad,pdens,sigma,sigmadd,y,p,dpress,step,disk_params);	// itt szamolja a reszecskenovekedest
+            pradtemp = calculateDustParticleSize(prad,pdens,sigma,sigmadd,y,p,dpress,step,disk_params);
             prad = pradtemp;
         }
     }
 
     *pradnew = prad;
 
-/*	Itt szamolja a reszecske poziciojat	*/
     calculate1DDustDrift(prad, dpress, sigma, ugas, y, &dy1,disk_params);
 
     ytemp = y + 0.5 * step * dy1;

@@ -1,32 +1,25 @@
-#include "utils.h"    // Ezt kell includolni, mert ebben lesz a parabolicExtrapolationToGhostCells deklarációja
-#include "config.h"   // Szükséges a r_min és delta_r makrók miatt, amiket a parabolicExtrapolationToGhostCells használ
-#include <math.h>     // Bár a parabolicExtrapolationToGhostCells most nem használ math.h függvényt,
-#include <stdlib.h>                      // más utility függvényeknek szüksége lehet rá.
-                      // Jó gyakorlat ide tenni.
-
-#include "particle_data.h" // Új include
+#include "utils.h"
+#include "config.h"
+#include <math.h>
+#include <stdlib.h>
+#include "particle_data.h"
 #include "simulation_types.h" 
 #include "dust_physics.h"
 #include "gas_physics.h"
-
 #include "boundary_conditions.h"
 
 
-
-/*	egy megadott, diszkret pontokban ismert fuggvenyt linearInterpolational a reszecske aktualis helyere	*/
 void linearInterpolation(double *invec, double *radial_grid, double pos, double *out, double rd, int opt, const DiskParameters *disk_params) {
 
 	double rmid, rindex, coef1, temp;
 	int index; 
 
     rmid = pos - disk_params->r_min;
-	rmid = rmid / rd;     						/* 	the integer part of this gives at which index is the body	*/
-	index = (int) floor(rmid);					/* 	ez az rmid egesz resze	(roundParticleRadiies 0.5-tol)			*/
-	rindex = radial_grid[index];       					/* 	the corresponding r, e.g rd[ind] < r < rd[ind+1]		*/
-
- 	coef1 = (invec[index + 1] - invec[index]) / rd; 		/*	ez az alabbi ket sor a linearis linearInterpolationacio - remelem, jo!!!	*/
-	temp = invec[index] + coef1 * (pos - rindex);          		/*	a beerkezo dimenzionak megfelelo mertekegysegben		*/
-
+	rmid = rmid / rd;     					
+	index = (int) floor(rmid);				
+	rindex = radial_grid[index];       		
+ 	coef1 = (invec[index + 1] - invec[index]) / rd; 
+	temp = invec[index] + coef1 * (pos - rindex);   
 	if(opt == 1) if(temp < 0) temp = -1.*temp;
 
 	*out = temp;
@@ -34,50 +27,40 @@ void linearInterpolation(double *invec, double *radial_grid, double pos, double 
 }
 
 
-/* for solving d(sigma*nu)/dt = 3*nu*d2(sigma*nu)/dr2 + 9*hu/(2*r)*dsigma/dr	--> 3*nu  	*/
 double ftcsSecondDerivativeCoefficient(double radial_distance, const DiskParameters *disk_params){					
+
     double second_derivate_coefficient;
     second_derivate_coefficient = 3.0 * calculateKinematicViscosity(radial_distance, disk_params);
     return second_derivate_coefficient;
 }
 
-/* for solving d(sigma*nu)/dt = 3*nu*d2(sigma*nu)/dr2 + 9*hu/(2*r)*dsigma/dr	--> 9*nu /(2*r)	*/
 double ftcsFirstDerivativeCoefficient(double radial_distance, const DiskParameters *disk_params){							
+
     double first_derivate_coefficient;
     first_derivate_coefficient = 9.0 * calculateKinematicViscosity(radial_distance,disk_params) / (2.0 * radial_distance);
     return first_derivate_coefficient;
 }
 
-
-
-/*	minimum megkeresese harom elem kozul	*/
 double findMinimumOfAnArray(double s1, double s2, double s3) {
 
 	double minimum = (s1 < s2) ? s1 : s2; return (minimum < s3) ? minimum : s3;
 
 }
 
-
-
-/*	counting the number of zero points of the pressure gradient function	*/
 int countZeroPoints(const DiskParameters *disk_params) {
 
 	int i,count;
 	count = 0;
 
 	for(i = 0; i < disk_params->grid_number-1; i++) {
-		if(((disk_params->gas_pressure_gradient_vector[i] * disk_params->gas_pressure_gradient_vector[i+1]) <= 0.)  && (disk_params->gas_pressure_gradient_vector[i] > disk_params->gas_pressure_gradient_vector[i+1])) {	/*	Osszeszorozza a ket ponton a nyomas derivaltjanak erteket, ahol a szorzat negativ, ott elojelvaltas tortenik --> negativbol pozitivba, vagy pozitivbol negativba valt --> nyomasi maximum. Maximum pedig ott talalhato, ahol a fuggveny pozitivbol negativba valt at (ezt keresi a masodik feltetel).	*/
+		if(((disk_params->gas_pressure_gradient_vector[i] * disk_params->gas_pressure_gradient_vector[i+1]) <= 0.)  && (disk_params->gas_pressure_gradient_vector[i] > disk_params->gas_pressure_gradient_vector[i+1])) {
 			count++;
 		} 
-
 	}
 
 	return count;
 }
 
-
-/*	mivel a dp csak diszkret pontokban ismert, ezert 2 pontra illeszt egy egyenest, es megnezi, hogy annak hol lenne 0 az erteke	*/
-/*	solving a*x + b = y (here a = r, y = dp)	*/
 double findZeroPointRadius(double r1, double r2, double dp1, double dp2) {
 
 	double a, b, r_zero;
@@ -89,91 +72,59 @@ double findZeroPointRadius(double r1, double r2, double dp1, double dp2) {
 
 }
 
-
-
-/*	this function counts where (which r) the pressure maximum is	*/
 double findZeroPoint(int i, const double *radial_grid, const double *dp) {
 
 	double r;
 	
-	if(((dp[i] * dp[i+1]) <= 0.) && (dp[i] > dp[i+1])) {		/*	Ha a ket pont szorzata negativ --> elojel valtas a dp-ben, nyomasi min/max. Maximum hely ott van, ahol pozitivbol negativba valt az ertek	*/
-		r = findZeroPointRadius(radial_grid[i],radial_grid[i+1],dp[i],dp[i+1]);	/*	Ha elojel valtas tortenik es nyomasi maximum van, akkor kiszamolja a ket pont kozott, hogy hol lenne a zerus hely pontosan	*/
-
+	if(((dp[i] * dp[i+1]) <= 0.) && (dp[i] > dp[i+1])) {	
+		r = findZeroPointRadius(radial_grid[i],radial_grid[i+1],dp[i],dp[i+1]);	
 	} else {
 		r = 0.0;
 	}
-
-
 
 	return r;
 
 }
 
-// calculateIndexFromRadius függvény (melyet korábban megbeszéltünk, valahol globálisan)
-/*double calculateIndexFromRadius(double r_coord, DiskParameters *disk_params) {
-    if (r_coord < disk_params->r_min) return 0.0;
-    return fmax(0.0, fmin((double)(disk_params->grid_number - 1), floor((r_coord - disk_params->r_min) / disk_params->delta_r + 0.5)));
-}
-*/
-// Az átalakított findRAnnulusAroundDZE függvény
-// Paraméterek módosítva a struktúrák átadására és a konstansok használatára
-/*	A nyomasi maximum korul 1H tavolsagban jeloli ki a korgyurut	*/
 void findRAnnulusAroundDZE(double rin, double *ind_ii, double *ind_io,
                             double rout, double *ind_oi, double *ind_oo,
                             const SimulationOptions *sim_opts, const DiskParameters *disk_params) {
 
     if (disk_params == NULL) {
         fprintf(stderr, "ERROR [findRAnnulusAroundDZE]: disk_params is NULL!\n");
-        exit(1); // Program leállítása
+        exit(1);
     }
 
-
-    // Lokális változók deklarálása
     int i;
     double rmid, rtemp;
     double roimH, roipH, roomH, roopH;
     double riimH, riipH, riomH, riopH;
 
-    // --- FONTOS: Inicializáljuk az összes kimeneti indexet a ciklus ELŐTT! ---
     *ind_ii = 0.0;
     *ind_io = 0.0;
     *ind_oi = 0.0;
     *ind_oo = 0.0;
 
-    // --- ITT HÍVJUK MEG A scale_height-et EGYSZER, ÉS MENTSÜK EL AZ EREDMÉNYT ---
-    double h_rin = calculatePressureScaleHeight(rin, disk_params); // Első hívás, eredmény mentése
-
-    double h_rout = calculatePressureScaleHeight(rout, disk_params); // Rout-ra is számoljuk ki egyszer
-
-    // Számítsuk ki a határokhoz szükséges "rin +/- h_rin" és "rout +/- h_rout" értékeket
-    // Ezeket a változókat használjuk majd a riimH, roimH stb. számításoknál
+    double h_rin = calculatePressureScaleHeight(rin, disk_params); 
+    double h_rout = calculatePressureScaleHeight(rout, disk_params); 
     double rin_minus_h_rin = rin - h_rin;
     double rin_plus_h_rin = rin + h_rin;
     double rout_minus_h_rout = rout - h_rout;
     double rout_plus_h_rout = rout + h_rout;
 
-
-    // Határok kiszámítása: HASZNÁLJUK A MENTETT h_rin ÉS h_rout VÁLTOZÓKAT!
-    // Ez kritikus, az eredeti elírásokat javítja.
     riimH = rin_minus_h_rin - disk_params->delta_r / 2.0;
     riipH = rin_minus_h_rin + disk_params->delta_r / 2.0;
     riomH = rin_plus_h_rin - disk_params->delta_r / 2.0;
     riopH = rin_plus_h_rin + disk_params->delta_r / 2.0;
-
     roimH = rout_minus_h_rout - disk_params->delta_r / 2.0;
     roipH = rout_minus_h_rout + disk_params->delta_r / 2.0;
     roomH = rout_plus_h_rout - disk_params->delta_r / 2.0;
     roopH = rout_plus_h_rout + disk_params->delta_r / 2.0;
 
 
-    // Iteráció az radial_grid tömbön
     for (i = 0; i < disk_params->grid_number; i++) {
-        // Ezen a ponton érdemes ellenőrizni disk_params->radial_grid[i] értékét
-        // fprintf(stderr, "DEBUG_FIRA_LOOP: i=%d, radial_grid[i]=%.10lg\n", i, disk_params->radial_grid[i]);
 
-        // Ez az if blokk csak akkor aktív, ha sim_opts->flag_for_deadzone == 1
         if (sim_opts->flag_for_deadzone == 1) {
-            // INNER (RIN) határok
             if (disk_params->radial_grid[i] > riimH && disk_params->radial_grid[i] < riipH) {
                 rmid = (disk_params->radial_grid[i] - disk_params->r_min) / disk_params->delta_r;
                 rtemp = floor(rmid + 0.5);
@@ -187,7 +138,6 @@ void findRAnnulusAroundDZE(double rin, double *ind_ii, double *ind_io,
             }
         }
 
-        // OUTER (ROUT) határok
         if (disk_params->radial_grid[i] > roimH && disk_params->radial_grid[i] < roipH) {
             rmid = (disk_params->radial_grid[i] - disk_params->r_min) / disk_params->delta_r;
             rtemp = floor(rmid + 0.5);
@@ -200,14 +150,10 @@ void findRAnnulusAroundDZE(double rin, double *ind_ii, double *ind_io,
             *ind_oo = rtemp;
         }
 
-        // KILÉPÉS feltétele
         if (disk_params->radial_grid[i] > roopH) break;
     }
-
-
 }
 
-/*	fuggveny egy tomb elemeinek sorbarendezesere --> ezt jelenleg nem hasznalja sehol a program	*/
 void sortAnArray(double *rv,int n) {
 
 	double temp;
@@ -218,73 +164,53 @@ void sortAnArray(double *rv,int n) {
 		for(i = 0; i <= (n-2); i++) {
 
 			if(rv[i] > rv[i + 1]) {
-
 				temp = rv[i];
 				rv[i] = rv[i + 1];
 				rv[i + 1] = temp;
-
 			}
 		}
 	}
 }
-// If grid_number is not directly available, you might need to pass the array size
-// void histogram(double r, int *hist, double dd, int hist_size) {
-void histogram(double r, int *hist, double dd, DiskParameters *disk_params) {
-    int index;
-    double rmid; // hist_i is no longer needed as a separate variable
 
-    // 1. Clamp 'r' to ensure it's within the valid range [r_min, r_max]
-    // This prevents negative indices or indices that are too large.
+void histogram(double r, int *hist, double dd, DiskParameters *disk_params) {
+
+    int index;
+    double rmid; 
+
     if (r < disk_params->r_min) {
         r = disk_params->r_min;
     } else if (r > disk_params->r_max) {
         r = disk_params->r_max;
     }
 
-    // Calculate the potential index
     rmid = (r - disk_params->r_min) / dd;
     index = (int) floor(rmid);
 
-    // 2. Explicitly check and clamp the index to the array bounds
-    // Assuming 'hist' is an array of size grid_number, valid indices are 0 to grid_number - 1.
-    // Replace grid_number with particle_number if that's the actual array size used for hist.
     if (index < 0) {
-        index = 0; // Ensure index is not negative
-        // Optionally, you could print a debug message if this happens unexpectedly:
-        // fprintf(stderr, "DEBUG WARNING: histogram index became negative. Clamped to 0. r=%.10f, r_min=%.10f, dd=%.10e, rmid=%.10f\n", r, r_min, dd, rmid);
-    }
-    // Make sure grid_number is the correct size of the array 'hist'
-    // If hist is int hist[particle_number], then upper bound is particle_number-1
-    if (index >= disk_params->grid_number) { // grid_number should be defined and accessible here
-        index = disk_params->grid_number - 1; // Ensure index does not exceed the array's upper bound
-        // Optionally print a debug message:
-        // fprintf(stderr, "DEBUG WARNING: histogram index exceeded grid_number. Clamped to grid_number-1. r=%.10f, r_max=%.10f, dd=%.10e, rmid=%.10f\n", r, r_max, dd, rmid);
+        index = 0; 
     }
 
-    // 3. Increment the counter directly (since hist is an int array)
+    if (index >= disk_params->grid_number) { 
+        index = disk_params->grid_number - 1;
+    }
+
     hist[index]++;
 }
 
-/*	fuggveny egy tomb elemeinek sorbarendezesere --> ezt jelenleg nem hasznalja sehol a program	*/
 void sortAnArrayarray(double rv[][3],int n) {
 
 	double temp, temp2, temp3;
 	int i, step;
 
 	for(step = 1; step <= (n-1); step++) {
-
 		for(i = 0; i <= (n-2); i++) {
-
 			if(rv[i][1] > rv[i + 1][1]) {
-
 				temp = rv[i][1];
 				rv[i][1] = rv[i + 1][1];
 				rv[i + 1][1] = temp;
-
 				temp2 = rv[i][0];
 				rv[i][0] = rv[i + 1][0];
 				rv[i + 1][0] = temp2;
-
 				temp3 = rv[i][2];
 				rv[i][2] = rv[i + 1][2];
 				rv[i + 1][2] = temp3;
@@ -304,12 +230,9 @@ void roundParticleRadii(double in[][3], int n, const DiskParameters *disk_params
 	int temp;
 
 	for(i = 0; i<n; i++) {
-
 		temp = (int)floor(in[i][1] * ddker+0.5);
 		in[i][1] = (double)temp / ddker;
-	
 	}
-
 }
 
 
@@ -335,10 +258,8 @@ void mergeParticlesByRadius(double in[][3], double dd, int n, const DiskParamete
 	roundParticleRadii(in,n,disk_params);
 	sortAnArrayarray(in,n);
 
-
 	do {
 		if(in[i][1] != in[i+1][1]) {
-
 			radout[j] = in[i][1];
 			sigout[j] = in[i][0];
 			sig = 0;
@@ -346,14 +267,11 @@ void mergeParticlesByRadius(double in[][3], double dd, int n, const DiskParamete
 			j++;
 			i++;
 		} else {
-
 			do {
-
 				radout[j] = in[i][1];
 				sig = sig + in[i+k][0];
 				sigout[j] = sig;
 				k++;
-
 			} while (in[i][1] == in[i+k][1]);
 			i = i+k;
 			k = 0;
@@ -363,14 +281,12 @@ void mergeParticlesByRadius(double in[][3], double dd, int n, const DiskParamete
 	} while (i < n);
 
 	for(i = 0; i < n; i++) {
-	
 		in[i][0] = sigout[i];
 		in[i][1] = radout[i];
-  		double rmid = (in[i][1] - disk_params->r_min) / dd;     						/* 	The integer part of this gives at which index is the body			*/
-		int rindex = (int) floor(rmid);							/* 	Ez az rmid egesz resze --> floor egeszreszre roundParticleRadii lefele, a +0.5-el elerheto, hogy .5 felett felfele, .5 alatt lefele roundParticleRadiisen						*/
+  		double rmid = (in[i][1] - disk_params->r_min) / dd;     	
+		int rindex = (int) floor(rmid);	
 		in[i][2] = (double)rindex;
 	}
-
 }
 
 void updateParticleGridIndices(const ParticleData *particle_data, double t, int n, const DiskParameters *disk_params) {
@@ -378,24 +294,18 @@ void updateParticleGridIndices(const ParticleData *particle_data, double t, int 
     int i, rindex;
     double rmid;  
 
-
     for (i = 0; i < n; i++) {   
-        // A részecske aktuális sugara radin[i][0]-ban van
         rmid = (particle_data->particle_distance_array[i][0] - disk_params->r_min) / disk_params->delta_r; 
         rindex = (int) floor(rmid+0.5);
         if(rmid < 0) rindex = 0;
         if(isnan(rmid)) rindex = 0;
-
-
-		if(n == particle_number) particle_data->dust_particle_mass_array[i][0] = particle_data->dust_particle_mass_grid[i];							/*	mass of the particles				*/
-		particle_data->dust_particle_mass_array[i][1] = rindex;							/*	initial distance of the particles				*/
+		if(n == particle_number) particle_data->dust_particle_mass_array[i][0] = particle_data->dust_particle_mass_grid[i];	
+		particle_data->dust_particle_mass_array[i][1] = rindex;		
 		if(t == 0) {
-			particle_data->dust_particle_mass_array[i][2] = particle_data->dust_particle_mass_array[i][0];							/*	initial distance of the particles				*/
+			particle_data->dust_particle_mass_array[i][2] = particle_data->dust_particle_mass_array[i][0];					
 			particle_data->dust_particle_mass_array[i][3] = 0;
 		}
- 	
 	}
-
 }
 
 
