@@ -333,15 +333,15 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
 
         double temp_sigma, temp_pressure, temp_dPdr;
         
-        linearInterpolation(disk_params->gas_surface_density_vector, disk_params->radial_grid, r_dust_particle_au, &temp_sigma, disk_params->delta_r, 0, disk_params);
+        linearInterpolation(disk_params->gas_surface_density_vector, disk_params->radial_grid, r_dust_particle_au, &temp_sigma, disk_params->delta_r,disk_params);
         
         long double sigma_gas_local = temp_sigma;
         
-        linearInterpolation(disk_params->gas_pressure_vector, disk_params->radial_grid, r_dust_particle_au, &temp_pressure, disk_params->delta_r, 0, disk_params);
+        linearInterpolation(disk_params->gas_pressure_vector, disk_params->radial_grid, r_dust_particle_au, &temp_pressure, disk_params->delta_r, disk_params);
         
         double pressure_local = temp_pressure;
         
-        linearInterpolation(disk_params->gas_pressure_gradient_vector, disk_params->radial_grid, r_dust_particle_au, &temp_dPdr, disk_params->delta_r, 0, disk_params);
+        linearInterpolation(disk_params->gas_pressure_gradient_vector, disk_params->radial_grid, r_dust_particle_au, &temp_dPdr, disk_params->delta_r, disk_params);
         
         double dPdr_local = temp_dPdr;
         double s_max_cm;

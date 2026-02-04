@@ -9,7 +9,7 @@
 #include "boundary_conditions.h"
 
 
-void linearInterpolation(double *invec, double *radial_grid, double pos, double *out, double rd, int opt, const DiskParameters *disk_params) {
+void linearInterpolation(double *invec, double *radial_grid, double pos, double *out, double rd, const DiskParameters *disk_params) {
 
 	double rmid, rindex, coef1, temp;
 	int index; 
@@ -20,10 +20,8 @@ void linearInterpolation(double *invec, double *radial_grid, double pos, double 
 	rindex = radial_grid[index];       		
  	coef1 = (invec[index + 1] - invec[index]) / rd; 
 	temp = invec[index] + coef1 * (pos - rindex);   
-	if(opt == 1) if(temp < 0) temp = -1.*temp;
 
 	*out = temp;
-
 }
 
 

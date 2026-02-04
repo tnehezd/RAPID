@@ -4,7 +4,7 @@
 #include "particle_data.h"
 #include "simulation_types.h" 
 
-void linearInterpolation(double *invec, double *radial_grid, double pos, double *out, double rd, int opt, const DiskParameters *disk_params);
+void linearInterpolation(double *invec, double *radial_grid, double pos, double *out, double rd, const DiskParameters *disk_params);
 double findMinimumOfAnArray(double s1, double s2, double s3);
 double ftcsSecondDerivativeCoefficient(double radial_distance, const DiskParameters *disk_params);
 double ftcsFirstDerivativeCoefficient(double radial_distance, const DiskParameters *disk_params);
