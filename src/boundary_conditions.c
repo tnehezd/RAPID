@@ -11,7 +11,6 @@
 
 void parabolicExtrapolationToGhostCells(double *input_vector, int reference_index1, int reference_index2, int reference_index3, double *out_coefficient_quadratic, double *out_coefficient_linear, double *out_coefficient_constant, double grid_spacing, const DiskParameters *disk_params) {
 
-
 /**
  * @brief Parabolic ghost-cell extrapolation for smooth outflow boundaries.
  *
@@ -34,7 +33,6 @@ void parabolicExtrapolationToGhostCells(double *input_vector, int reference_inde
  * closure is desired. For true Dirichlet or Neumann boundaries, use the
  * corresponding explicit ghost-cell formulas instead.
  */
-
 
 	double x_coordinate_1, x_coordinate_2, x_coordinate_3;
 	double value_1, value_2, value_3;	
@@ -61,10 +59,7 @@ void parabolicExtrapolationToGhostCells(double *input_vector, int reference_inde
 
 void applyBoundaryConditions(double *input_vector, const DiskParameters *disk_params) {
 
-
 //  OPEN BOUNDARY: Parabolic extrapolation is applied to both velocity and all other physical quantities.
-	
-
 //	parabolicExtrapolationToGhostCells(veinput_vectorc, 1, 2, 3, &a, &b, &c, disk_params->delta_r,disk_params);
 //	input_vector[0] =  a * (disk_params->r_min - disk_params->delta_r) * (disk_params->r_min - disk_params->delta_r) + b * (disk_params->r_min - disk_params->delta_r) + c;
 	input_vector[0] = input_vector[1];
