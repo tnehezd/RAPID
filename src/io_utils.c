@@ -66,7 +66,7 @@ int calculateNumbersOfParticles(const char *particle_data_file_name) {
 
 void loadDustParticlesFromFile(ParticleData *particle_data, const char *particle_data_file_name) {
 
-    int i, dummy;
+    int i, particle_index;
     double distance, particle_radius, micron_particle_radius;
     long double representative_mass;
     long double micron_representative_mass;
@@ -91,7 +91,7 @@ void loadDustParticlesFromFile(ParticleData *particle_data, const char *particle
 
 
     for (i = 0; i < particle_number; i++) {
-        if(fscanf(load_dust_particles_file,"%d %lg %Lg %Lg %lg %lg",&dummy,&distance,&representative_mass,&micron_representative_mass,&particle_radius,&micron_particle_radius) == 6) {
+        if(fscanf(load_dust_particles_file,"%d %lg %Lg %Lg %lg %lg",&particle_index,&distance,&representative_mass,&micron_representative_mass,&particle_radius,&micron_particle_radius) == 6) {
             particle_data->particle_distance_array[i][0] = distance;
             particle_data->particle_distance_array[i][1] = particle_radius / AU_IN_CM; 
             particle_data->dust_particle_mass_grid[i] = representative_mass;
@@ -194,13 +194,13 @@ char *createRunDirectory(const char *dir_path) {
 
 void printCentered(FILE *file, const char *text) {
 
-    int len = strlen(text);
-    int padding = (HEADER_WIDTH - len) / 2;
+    int length = strlen(text);
+    int padding = (HEADER_WIDTH - length) / 2;
     
     fprintf(file, "#");
     for (int i = 0; i < padding; i++) fprintf(file, " ");
     fprintf(file, "%s", text);
-    for (int i = 0; i < (HEADER_WIDTH - len - padding); i++) fprintf(file, " ");
+    for (int i = 0; i < (HEADER_WIDTH - length - padding); i++) fprintf(file, " ");
     fprintf(file, "#\n"); 
 }
 
@@ -226,58 +226,58 @@ void printCurrentInformationAboutRun(const char *directory_name, const DiskParam
 
     fprintf(stderr, "DEBUG [printCurrentInformationAboutRun]: Writing run info to: '%s'\n", full_path);
 
-    FILE *info_f = fopen(full_path, "w");
-    if (info_f == NULL) {
+    FILE *info_file = fopen(full_path, "w");
+    if (info_file == NULL) {
         fprintf(stderr, "ERROR: Could not open info file '%s'.\n", full_path);
         if (full_path) free(full_path);
         return;
     }
 
-    fprintf(info_f, "==========================================================\n");
-    fprintf(info_f, "        DUST DRIFT SIMULATION - RUN SNAPSHOT\n");
-    fprintf(info_f, "==========================================================\n");
-    fprintf(info_f, "  Run Started:       %s\n", time_buffer);
-    fprintf(info_f, "  Host Machine:      %s\n", hostname);
-    fprintf(info_f, "  User:              %s\n", user);
+    fprintf(info_file, "==========================================================\n");
+    fprintf(info_file, "        DUST DRIFT SIMULATION - RUN SNAPSHOT\n");
+    fprintf(info_file, "==========================================================\n");
+    fprintf(info_file, "  Run Started:       %s\n", time_buffer);
+    fprintf(info_file, "  Host Machine:      %s\n", hostname);
+    fprintf(info_file, "  User:              %s\n", user);
     
 #ifdef _OPENMP
-    fprintf(info_f, "  Parallel Threads:  %d\n", omp_get_max_threads());
+    fprintf(info_file, "  Parallel Threads:  %d\n", omp_get_max_threads());
 #else
-    fprintf(info_f, "  Parallel Threads:  1 (Serial mode)\n");
+    fprintf(info_file, "  Parallel Threads:  1 (Serial mode)\n");
 #endif
 
-    fprintf(info_f, "  Binary Compiled:   %s %s\n", __DATE__, __TIME__);
-    fprintf(info_f, "  Output Directory:  %s\n", directory_name);
-    fprintf(info_f, "==========================================================\n\n");
-    fprintf(info_f, "--- [ Central Star ] ---\n");
-    fprintf(info_f, "  Stellar Mass:      %.4f M_Sun\n\n", disk_params->stellar_mass);
-    fprintf(info_f, "--- [ Disk Geometry & Gas ] ---\n");
-    fprintf(info_f, "  Radial Range:      %.2f - %.2f AU\n", disk_params->r_min, disk_params->r_max);
-    fprintf(info_f, "  Gas Grid Points:   %d\n", disk_params->grid_number);
-    fprintf(info_f, "  Sigma_0 (1 AU):    %.4e M_Sun/AU^2\n", disk_params->sigma_0);
-    fprintf(info_f, "  Sigma Exponent:    %.4f\n", disk_params->sigma_power_law_index);
-    fprintf(info_f, "  Aspect Ratio (H/R): %.4f\n", disk_params->h_aspect_ratio);
-    fprintf(info_f, "  Flaring Index:     %.4f\n", disk_params->flaring_index);
-    fprintf(info_f, "  Alpha Viscosity:   %.4e\n\n", disk_params->alpha_parameter);
+    fprintf(info_file, "  Binary Compiled:   %s %s\n", __DATE__, __TIME__);
+    fprintf(info_file, "  Output Directory:  %s\n", directory_name);
+    fprintf(info_file, "==========================================================\n\n");
+    fprintf(info_file, "--- [ Central Star ] ---\n");
+    fprintf(info_file, "  Stellar Mass:      %.4f M_Sun\n\n", disk_params->stellar_mass);
+    fprintf(info_file, "--- [ Disk Geometry & Gas ] ---\n");
+    fprintf(info_file, "  Radial Range:      %.2f - %.2f AU\n", disk_params->r_min, disk_params->r_max);
+    fprintf(info_file, "  Gas Grid Points:   %d\n", disk_params->grid_number);
+    fprintf(info_file, "  Sigma_0 (1 AU):    %.4e M_Sun/AU^2\n", disk_params->sigma_0);
+    fprintf(info_file, "  Sigma Exponent:    %.4f\n", disk_params->sigma_power_law_index);
+    fprintf(info_file, "  Aspect Ratio (H/R): %.4f\n", disk_params->h_aspect_ratio);
+    fprintf(info_file, "  Flaring Index:     %.4f\n", disk_params->flaring_index);
+    fprintf(info_file, "  Alpha Viscosity:   %.4e\n\n", disk_params->alpha_parameter);
 
-    fprintf(info_f, "--- [ Dead Zone Configuration ] ---\n");
+    fprintf(info_file, "--- [ Dead Zone Configuration ] ---\n");
     if (disk_params->r_dze_i > 0.0 || disk_params->r_dze_o > 0.0) {
-        fprintf(info_f, "  Status:            ENABLED\n");
-        fprintf(info_f, "  Inner DZE Radius:  %.2f AU (Trans. width: %.2f)\n", disk_params->r_dze_i, disk_params->dr_dze_i);
-        fprintf(info_f, "  Outer DZE Radius:  %.2f AU (Trans. width: %.2f)\n", disk_params->r_dze_o, disk_params->dr_dze_o);
-        fprintf(info_f, "  Alpha Mod Factor:  %.4e\n", disk_params->alpha_parameter_modification);
+        fprintf(info_file, "  Status:            ENABLED\n");
+        fprintf(info_file, "  Inner DZE Radius:  %.2f AU (Trans. width: %.2f)\n", disk_params->r_dze_i, disk_params->dr_dze_i);
+        fprintf(info_file, "  Outer DZE Radius:  %.2f AU (Trans. width: %.2f)\n", disk_params->r_dze_o, disk_params->dr_dze_o);
+        fprintf(info_file, "  Alpha Mod Factor:  %.4e\n", disk_params->alpha_parameter_modification);
     } else {
-        fprintf(info_f, "  Status:            DISABLED (Uniform alpha)\n");
+        fprintf(info_file, "  Status:            DISABLED (Uniform alpha)\n");
     }
 
-    fprintf(info_f, "\n--- [ Dust Properties ] ---\n");
-    fprintf(info_f, "  Particle Density:  %.2f g/cm^3\n", disk_params->particle_density);
-    fprintf(info_f, "  Fragmentation Vel: %.2f cm/s\n", disk_params->fragmentation_velocity);
-    fprintf(info_f, "  Global Dust Count: %d\n", particle_number);
-    fprintf(info_f, "\n==========================================================\n");
-    fprintf(info_f, "         End of Configuration Summary\n");
-    fprintf(info_f, "==========================================================\n");
-    fclose(info_f);
+    fprintf(info_file, "\n--- [ Dust Properties ] ---\n");
+    fprintf(info_file, "  Particle Density:  %.2f g/cm^3\n", disk_params->particle_density);
+    fprintf(info_file, "  Fragmentation Vel: %.2f cm/s\n", disk_params->fragmentation_velocity);
+    fprintf(info_file, "  Global Dust Count: %d\n", particle_number);
+    fprintf(info_file, "\n==========================================================\n");
+    fprintf(info_file, "         End of Configuration Summary\n");
+    fprintf(info_file, "==========================================================\n");
+    fclose(info_file);
     if (full_path) free(full_path);
 }
 

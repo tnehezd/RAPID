@@ -72,4 +72,44 @@ typedef enum {
 SnapshotMode determineSnapshotMode(const SimulationOptions *sim_opts);
 const char* snapshotModeToString(SnapshotMode mode);
 
+
+/**
+ * @struct PressureTrap
+ * @brief Data structure characterizing gas pressure maxima and the localized dust accumulation.
+ *
+ * In protoplanetary disks, pressure maxima occur where the radial gas pressure gradient 
+ * vanishes (transitioning from positive to negative values). These regions act as 
+ * "dust traps" by halting the inward radial drift of solid particles, making them 
+ * prime locations for planetesimal formation.
+ * * This structure stores the precise location of the trap, its defined measurement 
+ * boundaries, and the mass of various dust populations collected within.
+ */
+typedef struct {
+    /** @brief Radial position of the pressure maximum [AU].
+     * Determined by finding the root (zero-crossing) of the gas pressure gradient. */
+    double radial_position;             
+
+    /** @brief Inner boundary of the measurement annulus [AU].
+     * Defines the starting radius for integrating the dust mass around the trap. */
+    double inner_boundary;              
+
+    /** @brief Outer boundary of the measurement annulus [AU].
+     * Defines the ending radius for integrating the dust mass around the trap. */
+    double outer_boundary;              
+    
+    /** @brief Total mass of the primary (cm-sized) dust population [M_sun]. */
+    double primary_dust_mass;           
+    
+    /** @brief Total mass of the secondary (micron-sized) dust population [M_sun]. */
+    double secondary_dust_mass;         
+    
+    /** @brief Combined mass of all dust populations within the trap [M_sun].
+     * Calculated as primary_dust_mass + secondary_dust_mass. */
+    double total_dust_mass;             
+    
+    /** @brief Unique identifier for the trap within the current timestep. 
+     * Essential for tracking multiple features (e.g., DZE edges vs. planet-carved gaps). */
+    int trap_id;                        
+} PressureTrap;
+
 #endif // SIMULATION_TYPES_H
