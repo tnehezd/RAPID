@@ -49,7 +49,7 @@ extern FILE *load_dust_particles_file;  /**< Pointer to the input file used for 
 #define ROUNDING_FACTOR                         1.0          
 
 /** @brief Current version string of the RAPID simulation core. */
-#define SIM_VERSION                             "2.1-beta"
+#define SIM_VERSION                             "2.3.0."
 /**@}*/
 
 /** @name File and Directory Name Constants
