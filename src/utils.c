@@ -45,45 +45,6 @@ double findMinimumOfAnArray(double s1, double s2, double s3) {
 
 }
 
-int countZeroPoints(const DiskParameters *disk_params) {
-
-	int i,count;
-	count = 0;
-
-	for(i = 0; i < disk_params->grid_number-1; i++) {
-		if(((disk_params->gas_pressure_gradient_vector[i] * disk_params->gas_pressure_gradient_vector[i+1]) <= 0.)  && (disk_params->gas_pressure_gradient_vector[i] > disk_params->gas_pressure_gradient_vector[i+1])) {
-			count++;
-		} 
-	}
-
-	return count;
-}
-
-double findZeroPointRadius(double r1, double r2, double dp1, double dp2) {
-
-	double a, b, r_zero;
-	a = (dp2 - dp1) / (r2 - r1);
-	b = dp1 - a * r1;
-	r_zero = - b / a;
-
-	return r_zero;
-
-}
-
-double findZeroPoint(int i, const double *radial_grid, const double *dp) {
-
-	double r;
-	
-	if(((dp[i] * dp[i+1]) <= 0.) && (dp[i] > dp[i+1])) {	
-		r = findZeroPointRadius(radial_grid[i],radial_grid[i+1],dp[i],dp[i+1]);	
-	} else {
-		r = 0.0;
-	}
-
-	return r;
-
-}
-
 int identifyPressureTraps(const DiskParameters *disk_params, PressureTrap *traps, int max_traps) {
     PressureTrap temp_list[10];
     int temp_count = 0;
@@ -163,72 +124,36 @@ int identifyPressureTraps(const DiskParameters *disk_params, PressureTrap *traps
     return (max_reached_idx + 1);
 }
 
-void findRAnnulusAroundDZE(double rin, double *ind_ii, double *ind_io,
-                            double rout, double *ind_oi, double *ind_oo,
-                            const SimulationOptions *sim_opts, const DiskParameters *disk_params) {
 
-    if (disk_params == NULL) {
-        fprintf(stderr, "ERROR [findRAnnulusAroundDZE]: disk_params is NULL!\n");
-        exit(1);
-    }
+/**
+ * @brief Calculates dust mass for a specific trap based on Lagrangian particle positions.
+ */
+void calculateMassInSpecificTrap(PressureTrap *trap, const ParticleData *particle_data, int particle_number, const SimulationOptions *sim_opts) {
 
-    int i;
-    double rmid, rtemp;
-    double roimH, roipH, roomH, roopH;
-    double riimH, riipH, riomH, riopH;
-
-    *ind_ii = 0.0;
-    *ind_io = 0.0;
-    *ind_oi = 0.0;
-    *ind_oo = 0.0;
-
-    double h_rin = calculatePressureScaleHeight(rin, disk_params); 
-    double h_rout = calculatePressureScaleHeight(rout, disk_params); 
-    double rin_minus_h_rin = rin - h_rin;
-    double rin_plus_h_rin = rin + h_rin;
-    double rout_minus_h_rout = rout - h_rout;
-    double rout_plus_h_rout = rout + h_rout;
-
-    riimH = rin_minus_h_rin - disk_params->delta_r / 2.0;
-    riipH = rin_minus_h_rin + disk_params->delta_r / 2.0;
-    riomH = rin_plus_h_rin - disk_params->delta_r / 2.0;
-    riopH = rin_plus_h_rin + disk_params->delta_r / 2.0;
-    roimH = rout_minus_h_rout - disk_params->delta_r / 2.0;
-    roipH = rout_minus_h_rout + disk_params->delta_r / 2.0;
-    roomH = rout_plus_h_rout - disk_params->delta_r / 2.0;
-    roopH = rout_plus_h_rout + disk_params->delta_r / 2.0;
+    double primary_mass = 0.0;
+    double secondary_mass = 0.0;
 
 
-    for (i = 0; i < disk_params->grid_number; i++) {
 
-        if (sim_opts->flag_for_deadzone == 1) {
-            if (disk_params->radial_grid[i] > riimH && disk_params->radial_grid[i] < riipH) {
-                rmid = (disk_params->radial_grid[i] - disk_params->r_min) / disk_params->delta_r;
-                rtemp = floor(rmid + 0.5);
-                *ind_ii = rtemp;
-            }
+    for (int i = 0; i < particle_number; i++) {
+        // Elsődleges (cm) por
+        double radial_distance = particle_data->particle_distance_array[i][0];
+        if (radial_distance >= trap->inner_boundary && radial_distance <= trap->outer_boundary) {
+            primary_mass += particle_data->dust_particle_mass_array[i][0];
+        }
 
-            if (disk_params->radial_grid[i] > riomH && disk_params->radial_grid[i] < riopH) {
-                rmid = (disk_params->radial_grid[i] - disk_params->r_min) / disk_params->delta_r;
-                rtemp = floor(rmid + 0.5);
-                *ind_io = rtemp;
+        // Másodlagos (mikron) por
+        if (sim_opts->option_for_dust_secondary_population == 1.0) {
+            double radial_distance_micron = particle_data->micron_particle_distance_array[i][0];
+            if (radial_distance_micron >= trap->inner_boundary && radial_distance_micron <= trap->outer_boundary) {
+                secondary_mass += particle_data->micron_dust_particle_mass_array[i][0];
             }
         }
-
-        if (disk_params->radial_grid[i] > roimH && disk_params->radial_grid[i] < roipH) {
-            rmid = (disk_params->radial_grid[i] - disk_params->r_min) / disk_params->delta_r;
-            rtemp = floor(rmid + 0.5);
-            *ind_oi = rtemp;
-        }
-
-        if (disk_params->radial_grid[i] > roomH && disk_params->radial_grid[i] < roopH) {
-            rmid = (disk_params->radial_grid[i] - disk_params->r_min) / disk_params->delta_r;
-            rtemp = floor(rmid + 0.5);
-            *ind_oo = rtemp;
-        }
-
-        if (disk_params->radial_grid[i] > roopH) break;
     }
+
+    trap->primary_dust_mass = primary_mass;
+    trap->secondary_dust_mass = secondary_mass;
+    trap->total_dust_mass = primary_mass + secondary_mass;
 }
 
 void sortAnArray(double *rv,int n) {

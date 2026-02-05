@@ -42,21 +42,6 @@
 double calculateStokesNumber(double particle_radius, double gas_surfacedensity, const DiskParameters *disk_params);
 
 /**
- * @brief Computes particle masses for the two-population dust model.
- *
- * This function fills the output arrays with the representative masses
- * of the inner/outer populations based on the particle distribution.
- *
- * @param number_of_particles           Total number of dust particles.
- * @param dust_particle_mass_array      2D array storing intermediate mass values.
- * @param indii, indio, indoi, indoo    Index boundaries for the four mass bins.
- * @param massiout                      Output pointer for inner population mass.
- * @param massoout                      Output pointer for outer population mass.
- * @param simulation_options            Pointer to simulation options.
- */
-void calculateParticleMass(int number_of_particles, double (*dust_particle_mass_array)[5], int indii, int indio, int indoi, int indoo, double *massiout, double *massoout, const SimulationOptions *simulation_options);
-
-/**
  * @brief Computes the radial drift barrier size.
  *
  * The drift barrier is the maximum grain size limited by radial drift

@@ -281,135 +281,30 @@ void printCurrentInformationAboutRun(const char *directory_name, const DiskParam
     if (full_path) free(full_path);
 }
 
-
-void printMassGrowthAtDZEFile(double step, double (*dust_particle_mass_array)[5], double (*micron_dust_particle_mass_array)[5], double massbtempii, double massbtempoi, double massmtempii, double massmtempoi, 
-                double *massbtempio, double *massbtempoo, double *massmtempio, double *massmtempoo, double *tavin, double *tavout, 
-                const DiskParameters *disk_params, const SimulationOptions *sim_opts,OutputFiles *output_files) {
-
-
-    double ind_ii, ind_io, ind_oi, ind_oo, tav, tav2;
-
-    tav = disk_params->r_dze_o;
-    tav2 = disk_params->r_dze_i;
-
-    int dim = countZeroPoints(disk_params); 
-    double *r_count = (double *)malloc(sizeof(double) * dim); 
-
-    if (dim > 0 && r_count == NULL) {
-        fprintf(stderr, "ERROR [printMassGrowthAtDZEFile]: Failed to allocate memory for r_count. Exiting.\n");
-        exit(EXIT_FAILURE);
-    }
-
-    double temp_new = 0.;
-    double temp = 0.;
-    double rin = disk_params->r_dze_i;
-    double rout = disk_params->r_dze_o;
-    double rin_new = 0.0;
-    double rout_new = 0.0;
-    int j = 0, i;
-
-    if(dim != 0) {
-        for(i = 0; i < disk_params->grid_number; i++) {
-            temp_new = findZeroPoint(i,disk_params->radial_grid,disk_params->gas_pressure_gradient_vector); 
-            if(temp != temp_new && i > 3 && temp_new != 0.0) {
-                if (j < dim) { 
-                    r_count[j] = temp_new;
-                    j++;
-                } else {
-                    fprintf(stderr, "WARNING [printMassGrowthAtDZEFile]: r_count array overflow, skipping data. dim: %d, j: %d\n", dim, j);
-                }
-            }
-            if(sim_opts->flag_for_deadzone == 0.0) { 
-                if(temp_new > 0.) {
-                    temp = temp_new;
-                    rout_new = temp;
-                }
-            }
-        }
-    }
-
-    if(sim_opts->flag_for_deadzone == 1.0) {
-        if(dim > 0) {
-            if (dim == 1) { 
-                rin_new = r_count[0]; 
-                rout_new = rout; 
-            } else {
-                rin_new = r_count[0]; 
-                rout_new = r_count[1]; 
-            } 
-        }
-        if(dim == 0) { 
-            rin_new = rin; 
-            rout_new = rout; 
-        }
-    }
-
-    rin = rin_new;
-    if(sim_opts->flag_for_deadzone == 0.0) rin = 0;
-    rout = rout_new;
+void printTrapMassEvolution(double snapshot, int num_found, const PressureTrap *traps, OutputFiles *output_files) {
     
-    tav2 = rin;
-    tav = rout;
+    if (output_files->mass_file == NULL) return;
 
-    findRAnnulusAroundDZE(tav2, &ind_ii, &ind_io, tav, &ind_oi, &ind_oo, sim_opts, disk_params);
+    // Idő (Év)
 
-    double massii = 0, massoi = 0;
-    double massiim = 0, massoim = 0;
-    double massis = 0, massos = 0;
+    fprintf(output_files->mass_file, "%-10.0f", snapshot);
 
-    calculateParticleMass(particle_number, dust_particle_mass_array, 
-            (int)ind_ii, (int)ind_io, 
-            (int)ind_oi, (int)ind_oo, 
-            &massii, &massoi, sim_opts); 
-
-    if(sim_opts->option_for_dust_secondary_population == 1.0) {
-        calculateParticleMass(particle_number, micron_dust_particle_mass_array, 
-                (int)ind_ii, (int)ind_io, 
-                (int)ind_oi, (int)ind_oo, 
-                &massiim, &massoim, sim_opts);
+    // Végigmegyünk az 5 lehetséges sloton
+    for (int i = 0; i < 3; i++) {
+        if (i < num_found && traps[i].radial_position > 0.0) {
+            // Távolság (AU) | Pillanatnyi tömeg (M_sun)
+            fprintf(output_files->mass_file, " %-12.4f %-15.6e", 
+                    traps[i].radial_position, 
+                    traps[i].total_dust_mass);
+        } else {
+            // Ha nincs csapda, nullákat írunk, hogy az oszlopszám fix maradjon
+            fprintf(output_files->mass_file, " %-12.4f %-15.6e", 0.0, 0.0);
+        }
     }
-
-    double massi, massim, masso, massom;
-
-    if(tav2 != disk_params->r_dze_i) {
-        massi = massii + massbtempii + massis;
-        massim = massiim + massmtempii;
-    } else {
-        massi = massii + massis;
-        massim = massiim;
-    }
-    if(tav != disk_params->r_dze_o) {
-        masso = massoi + massbtempoi + massos;
-        massom = massoim + massmtempoi;
-    } else {
-        masso = massoi + massos;
-        massom = massoim;
-    }
-
-    *massbtempio = massi;
-    *massbtempoo = masso;
-    *massmtempio = massim;
-    *massmtempoo = massom;
-    *tavin = tav2;
-    *tavout = tav;
-
-    if (output_files->mass_file != NULL) {
-        fprintf(output_files->mass_file, "%-10d %-15.6f %-20.6e %-15.6f %-15.6e\n", 
-                    (int)step, 
-                    (double)*tavin, 
-                    (double)(massi + massim), 
-                    (double)*tavout, 
-                    (double)(masso + massom));
-            fflush(output_files->mass_file);
-
-    } else {
-        fprintf(stderr, "WARNING: output_files->mass_file is NULL in printMassGrowthAtDZEFile. Cannot write mass data or fflush.\n");
-    }
-
-    if (dim > 0) {
-        free(r_count);
-    }
+    fprintf(output_files->mass_file, "\n");
+    fflush(output_files->mass_file);
 }
+
 
 void printGasSurfaceDensityPressurePressureDerivateFile(const DiskParameters *disk_params, OutputFiles *output_files) {
 
@@ -502,12 +397,22 @@ void printFileHeader(FILE *file, FileType_e file_type, const HeaderData *header_
 
     switch (file_type) {
 
-        case FILE_TYPE_MASS_ACCUMULATION:
+/*        case FILE_TYPE_MASS_ACCUMULATION:
             fprintf(file, "# This file contains the time evolution of dust mass within specified disk regions.\n");
             fprintf(file, "#--------------------------------------------------------------------------\n");
             fprintf(file, "# %-5s %-15s %-15s %-15s %-15s\n",
                     "Time", "Inner_DZE_AU", "Accum._mass_inner_MSun", "Outer_DZE_AU", "Accum._mass_outer_MSun");
             fprintf(file, "#--------------------------------------------------------------------------\n");            
+            break;
+*/
+
+
+        case FILE_TYPE_MASS_ACCUMULATION:
+            fprintf(file, "# Instantaneous dust mass inventory in identified pressure traps (0.5H width)\n");
+            fprintf(file, "#--------------------------------------------------------------------------\n");
+            fprintf(file, "# %-13s  %-12s %-15s  %-12s %-15s  %-12s %-15s\n",
+                    "Time_yr", "RDzei_AU", "MassDzei_Msun", "RDzeo_AU", "MassDzeo_Msun", "RSecondary_AU", "MassSecondary_Msun");
+            fprintf(file, "#--------------------------------------------------------------------------\n");
             break;
 
         case FILE_TYPE_GAS_DENSITY:

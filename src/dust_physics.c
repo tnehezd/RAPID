@@ -17,64 +17,6 @@ double calculateStokesNumber(double particle_radius, double gas_surfacedensity, 
     return disk_params->particle_density_dimensionless * particle_radius * M_PI / (2.0 * gas_surfacedensity);
 }
 
-void calculateParticleMass(int number_of_particles, double (*dust_particle_mass_array)[5], int indii, int indio, int indoi, int indoo, double *massiout, double *massoout, const SimulationOptions *simulation_options) {
-
-    double massitemp = 0.0;
-    double massotemp = 0.0;
-    int i;
-
-    if(simulation_options->flag_for_deadzone == 1.0) {
-        #pragma omp parallel for private(i) reduction(+:massitemp, massotemp)
-        for (i = 0; i < number_of_particles; i++) {
-
-            int current_r_index = (int)dust_particle_mass_array[i][1]; 
-
-            if ((current_r_index >= indii) && (current_r_index <= indio)) {
-                if (dust_particle_mass_array[i][3] == 0.0) { 
-                    #pragma omp critical(inner_dze_update)
-                    {
-                        dust_particle_mass_array[i][3] = 1.0;
-                        massitemp = massitemp + dust_particle_mass_array[i][0];
-                    }
-                }
-            }
-
-            if ((current_r_index >= indoi) && (current_r_index <= indoo)) {
-                if (dust_particle_mass_array[i][4] == 0.0) { 
-                    #pragma omp critical(outer_dze_update)
-                    {
-                        dust_particle_mass_array[i][4] = 1.0;
-                        massotemp = massotemp + dust_particle_mass_array[i][0]; 
-                    }
-                }
-            }
-        }
-    } else { 
-        #pragma omp parallel for private(i) reduction(+:massitemp, massotemp)
-        for (i = 0; i < number_of_particles; i++) {
-            int current_r_index = (int)dust_particle_mass_array[i][1]; 
-
-            if ((current_r_index >= indii) && (current_r_index <= indio)) {
-                #pragma omp critical(inner_dze_update_fixed)
-                {
-                    massitemp = massitemp + dust_particle_mass_array[i][0]; 
-                }
-            }
-
-            if ((current_r_index >= indoi) && (current_r_index <= indoo)) {
-                #pragma omp critical(outer_dze_update_fixed)
-                {
-                    massotemp = massotemp + dust_particle_mass_array[i][0];
-                }
-            }
-        }
-    }
-
-    *massiout = massitemp;
-    *massoout = massotemp;
-}
-
-
 /*			BIRNSTIEL EL AL 2012			*/
 double calculateRadialDriftBarrier(double dust_surfacedensity, double radial_distance, double gas_pressure, double pressure_gradient, double particle_density, const DiskParameters *disk_params) {
 

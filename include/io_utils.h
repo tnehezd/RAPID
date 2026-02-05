@@ -11,13 +11,6 @@ void loadDustParticlesFromFile(ParticleData *particle_data, const char *particle
 void loadGasSurfaceDensityFromFile(DiskParameters *disk_params, const char *disk_file_name);
 char *createRunDirectory(const char *base_path);
 void printCurrentInformationAboutRun(const char *directory_name, const DiskParameters *disk_params);
-void printMassGrowthAtDZEFile(double step, 
-                double (*dust_particle_mass_array)[5], double (*micron_dust_particle_mass_array)[5], 
-                double massbtempii, double massbtempoi, double massmtempii, double massmtempoi, 
-                double *massbtempio, double *massbtempoo, double *massmtempio, double *massmtempoo, 
-                double *tavin, double *tavout, 
-                const DiskParameters *disk_params, const SimulationOptions *sim_opts,
-                OutputFiles *output_files);
 void printGasSurfaceDensityPressurePressureDerivateFile(const DiskParameters *disk_params, OutputFiles *output_files);
 void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const double *rm, const double *dust_surfacedensity, const double *micron_dust_surfacedensity,
                   const DiskParameters *disk_params, const SimulationOptions *sim_opts,
@@ -25,6 +18,7 @@ void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const 
 void printDustParticleSizeFile(char *size_name, int step, double (*rad)[2], double (*radmicr)[2],
                         const DiskParameters *disk_params, const SimulationOptions *sim_opts,
                         OutputFiles *output_files);
+void printTrapMassEvolution(double current_time_years, int num_found, const PressureTrap *traps, OutputFiles *output_files);
 
 typedef enum {
     FILE_TYPE_MASS_ACCUMULATION,
