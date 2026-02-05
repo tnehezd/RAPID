@@ -84,6 +84,85 @@ double findZeroPoint(int i, const double *radial_grid, const double *dp) {
 
 }
 
+int identifyPressureTraps(const DiskParameters *disk_params, PressureTrap *traps, int max_traps) {
+    PressureTrap temp_list[10];
+    int temp_count = 0;
+    const double *gradient = disk_params->gas_pressure_gradient_vector;
+    const double *grid = disk_params->radial_grid;
+
+    // 1. Összes zérushely megkeresése
+    for (int i = 0; i < disk_params->grid_number - 1; i++) {
+        if ((gradient[i] * gradient[i+1] <= 0.0) && (gradient[i] > gradient[i+1])) {
+            if (temp_count < 10) {
+                double slope = (gradient[i+1] - gradient[i]) / (grid[i+1] - grid[i]);
+                temp_list[temp_count].radial_position = grid[i] - (gradient[i] / slope);
+                temp_list[temp_count].trap_id = -1; 
+                temp_count++;
+            }
+        }
+    }
+
+    // Alaphelyzetbe állítás (MINDENKIT nullázunk)
+    for(int i = 0; i < max_traps; i++) {
+        traps[i].radial_position = 0.0;
+        traps[i].trap_id = i;
+    }
+
+    if (temp_count == 0) return 0;
+
+    double dze_inner_target = disk_params->r_dze_i;
+    double dze_outer_target = disk_params->r_dze_o;
+    double tolerance = 5.0; // AU
+
+    // 2. TRAP 0 (Inner DZE) keresése
+    int best_inner_idx = -1;
+    double min_dist_inner = tolerance;
+    for (int i = 0; i < temp_count; i++) {
+        double dist = fabs(temp_list[i].radial_position - dze_inner_target);
+        if (dist < min_dist_inner) {
+            min_dist_inner = dist;
+            best_inner_idx = i;
+        }
+    }
+    if (best_inner_idx != -1) {
+        traps[0].radial_position = temp_list[best_inner_idx].radial_position;
+        temp_list[best_inner_idx].trap_id = 0;
+    }
+
+    // 3. TRAP 1 (Outer DZE) keresése
+    int best_outer_idx = -1;
+    double min_dist_outer = tolerance;
+    for (int i = 0; i < temp_count; i++) {
+        if (temp_list[i].trap_id != -1) continue; 
+        double dist = fabs(temp_list[i].radial_position - dze_outer_target);
+        if (dist < min_dist_outer) {
+            min_dist_outer = dist;
+            best_outer_idx = i;
+        }
+    }
+    if (best_outer_idx != -1) {
+        traps[1].radial_position = temp_list[best_outer_idx].radial_position;
+        temp_list[best_outer_idx].trap_id = 1;
+    }
+
+    // 4. Maradék feltöltése Traps 2+ helyre
+    int extra_slot = 2;
+    int max_reached_idx = 1; // Legalább a Trap 1-ig nézzük a logban
+
+    for (int i = 0; i < temp_count; i++) {
+        if (temp_list[i].trap_id == -1) {
+            if (extra_slot < max_traps) {
+                traps[extra_slot].radial_position = temp_list[i].radial_position;
+                max_reached_idx = extra_slot;
+                extra_slot++;
+            }
+        }
+    }
+
+    // A legnagyobb használt index + 1-et adjuk vissza, hogy a ciklus mindent lásson
+    return (max_reached_idx + 1);
+}
+
 void findRAnnulusAroundDZE(double rin, double *ind_ii, double *ind_io,
                             double rout, double *ind_oi, double *ind_oo,
                             const SimulationOptions *sim_opts, const DiskParameters *disk_params) {

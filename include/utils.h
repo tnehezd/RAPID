@@ -8,6 +8,7 @@ void linearInterpolation(double *invec, double *radial_grid, double pos, double 
 double findMinimumOfAnArray(double s1, double s2, double s3);
 double ftcsSecondDerivativeCoefficient(double radial_distance, const DiskParameters *disk_params);
 double ftcsFirstDerivativeCoefficient(double radial_distance, const DiskParameters *disk_params);
+int identifyPressureTraps(const DiskParameters *disk_params, PressureTrap *traps, int max_traps);
 int countZeroPoints(const DiskParameters *disk_params);
 double findZeroPointRadius(double r1, double r2, double dp1, double dp2);
 double findZeroPoint(int i, const double *radial_grid, const double *dp);

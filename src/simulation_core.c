@@ -160,6 +160,22 @@ static void simulateDustDriftStep(double *t, double deltat, double *snapshot, Pa
 
     if (sim_opts->option_for_evolution == 1.) {
         refreshGasSurfaceDensityPressurePressureGradient(sim_opts, disk_params);
+
+
+        // --- IDE JÖN A TESZT MEGHÍVÁS ---
+        PressureTrap current_traps[5]; // MAX_TRAPS = 5
+        int num_to_show = identifyPressureTraps(disk_params, current_traps, 5);
+
+        // Fontos: num_to_show-ig megyünk, így ha a traps[2]-ben van valami, azt is látjuk!
+        for (int k = 0; k < num_to_show; k++) {
+            // Kiírjuk akkor is, ha 0.0, hogy lásd: a helye megvan, csak üres
+            if (current_traps[k].radial_position > 0) {
+                fprintf(stderr, "  Trap %d: Radius = %.4f AU\n", k, current_traps[k].radial_position);
+            }
+        }
+
+
+
     }
 
     updateParticleGridIndices(particle_data,*t, particle_number, disk_params);
