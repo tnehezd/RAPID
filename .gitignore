@@ -4,6 +4,8 @@ output/
 output_*/
 run_*/
 
+plot_hdf5.py
+
 .ipynb_checkpoints
 
 *.o

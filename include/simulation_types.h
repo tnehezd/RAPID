@@ -109,21 +109,57 @@ typedef struct {
     OutputFormat output_format;               /**< Selects ASCII or HDF5 output backend. */
 } SimulationOptions;
 
+
 /**
- * @brief File handles for all simulation output streams.
+ * @brief File handles and metadata for simulation output.
  *
- * This structure groups all open file pointers used to write simulation
- * results, allowing centralized management and cleanup.
+ * This structure centralizes all output-related resources used during
+ * the simulation. It stores file pointers for ASCII output streams
+ * as well as placeholders for HDF5 output handling.
+ *
+ * The structure allows unified initialization, writing, and cleanup
+ * of output resources independent of the selected output format.
+ *
+ * @note
+ * The codebase currently supports ASCII output and is being extended
+ * with optional HDF5 support. To avoid forcing a hard dependency on
+ * the HDF5 library in public headers, the HDF5 file handle is stored
+ * as a generic pointer (`void *`). This will later be mapped to the
+ * native `hid_t` type internally when HDF5 support is enabled.
+ *
+ * The `snapshot_index` member is format-independent and provides a
+ * consistent mechanism for indexing time-dependent outputs. While
+ * ASCII output typically appends data sequentially to files, HDF5
+ * output will use this index to write into structured datasets.
  */
 typedef struct {
-    FILE *dust_motion_file;       /**< Drift velocities of dust particles. */
-    FILE *micron_motion_file;     /**< Drift velocities of micron‑sized dust. */
-    FILE *mass_file;              /**< Dust mass evolution output. */
-    FILE *surface_file;           /**< Gas surface density and pressure output. */
-    FILE *dust_file;              /**< Dust surface density output. */
-    FILE *micron_dust_file;       /**< Micron dust surface density output. */
-    FILE *size_file;              /**< Dust particle size distribution output. */
+
+    /* =========================
+     * ASCII output format
+     * ========================= */
+
+    FILE *dust_motion_file;   /**< Drift velocities of dust particles. */
+    FILE *micron_motion_file; /**< Drift velocities of micron-sized dust. */
+    FILE *mass_file;          /**< Dust mass evolution output. */
+    FILE *surface_file;       /**< Gas surface density and pressure output. */
+    FILE *dust_file;          /**< Dust surface density output. */
+    FILE *micron_dust_file;   /**< Micron dust surface density output. */
+    FILE *size_file;          /**< Dust particle size distribution output. */
+
+    /* =========================
+     * HDF5 output handling
+     * ========================= */
+
+    void *hdf5_file;          /**< Opaque handle to the HDF5 file object.
+                                   Currently stored as void* to avoid
+                                   direct dependency on the HDF5 library
+                                   in headers. Will later map to hid_t. */
+
+    int snapshot_index;       /**< Sequential snapshot counter used for
+                                   indexing time-dependent datasets. */
+
 } OutputFiles;
+
 
 /**
  * @brief Enumeration of available snapshot output modes.

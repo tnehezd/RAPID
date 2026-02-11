@@ -1,5 +1,5 @@
 /**
- * @file io_utils.h
+ * @file ascii_output.h
  * @brief Utility functions for reading and writing simulation data.
  *
  * Provides routines for loading input profiles, writing snapshot files,
@@ -7,8 +7,8 @@
  * simulation output directories and file resources.
  */
 
-#ifndef IO_UTILS_H
-#define IO_UTILS_H
+#ifndef ASCII_OUTPUT_H
+#define ASCII_OUTPUT_H
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -219,5 +219,5 @@ void printFinalSimulationSummary(const char *directory_name, double elapsed_seco
  */
 void buildSnapshotFilenames(char *dens_name, char *dust_name, char *dust_name2, char *size_name, const SimulationOptions *sim_opts, int snapshot_id);
 
-#endif // IO_UTILS_H
+#endif // ASCII_OUTPUT_H
 

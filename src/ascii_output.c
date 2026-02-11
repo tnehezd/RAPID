@@ -24,7 +24,7 @@
     #define MKDIR_CALL(path) mkdir(path, 0755)
 #endif
 
-#include "io_utils.h"
+#include "ascii_output.h"
 #include "config.h"         
 #include "dust_physics.h"  
 #include "utils.h"         

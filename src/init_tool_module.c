@@ -3,7 +3,7 @@
 #include "disk_model.h" 
 #include "dust_physics.h" 
 #include "utils.h" 
-#include "io_utils.h" 
+#include "ascii_output.h" 
 #include "gas_physics.h"
 #include "boundary_conditions.h"
 #include "simulation_types.h"

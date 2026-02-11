@@ -1,12 +1,14 @@
 // src/simulation_core.c
 #include <stdio.h>    
 #include <stdlib.h>   
+#include <stdint.h>
 #include <math.h>     
-#include <string.h>   
+#include <string.h> 
+#include <hdf5.h>  
 #include <omp.h>
 #include <time.h>
 #include "config.h"       
-#include "io_utils.h"     
+#include "ascii_output.h"     
 #include "disk_model.h"   
 #include "dust_physics.h" 
 #include "utils.h"        
@@ -15,6 +17,8 @@
 #include "gas_physics.h"
 #include "boundary_conditions.h"
 #include "integrator.h"
+#include "hdf5_output.h"
+
 
 void calculate1DDustDrift(double particle_radius, double pressure_gradient, double gas_surface_density, double gas_velocity, double radial_distance, double *drift_velocity, const DiskParameters *disk_params) {
 
@@ -149,13 +153,33 @@ static void handleSnapshotASCII(double t, double current_time_years, double *sna
 
 }
 
-static void handleSnapshotHDF5(double *t, double current_time_years, double *snapshot, const SimulationOptions *sim_opts,
-                               OutputFiles *output_files) {
+static void handleSnapshotHDF5(double *t, double current_time_years, double *snapshot,
+                               const SimulationOptions *sim_opts, OutputFiles *output_files,
+                               DiskParameters *disk_params, ParticleData *particle_data)
+{
+    char filename[MAX_PATH_LEN];
+    snprintf(filename, MAX_PATH_LEN, "%s/snapshot_%08d.h5", sim_opts->output_dir_name, (int)(*snapshot));
 
-    printf("HDF");
-    exit(EXIT_SUCCESS);
+    // 1️⃣ Init file
+    if (initHDF5File(filename, output_files) != 0) {
+        fprintf(stderr, "ERROR: Could not initialize HDF5 file %s\n", filename);
+        return;
+    }
 
+    // 2️⃣ Write datasets to the already opened file
+    if (particle_data != NULL) {
+        hid_t file_id = (hid_t)(intptr_t)output_files->hdf5_file;
+        writeHDF5SnapshotToFile(file_id, sim_opts, disk_params, particle_data); // új verzió, ami **nem csinál H5Fcreate-t**
+    }
+
+    // 3️⃣ Close file
+    closeHDF5File(output_files);
+
+    (*snapshot) += (double)(sim_opts->maximum_simulation_time / sim_opts->output_frequency);
+    fprintf(stderr, "HDF5 snapshot %d done at time %.2e years\n", (int)(*snapshot), current_time_years);
 }
+
+
 
 static void simulateDustDriftStep(double *t, double deltat, double *snapshot, ParticleData *particle_data, int particle_number, DiskParameters *disk_params, const SimulationOptions *sim_opts,
                                   OutputFiles *output_files, char *dens_name, char *dust_name, char *dust_name2, char *size_name) {
@@ -172,7 +196,7 @@ static void simulateDustDriftStep(double *t, double deltat, double *snapshot, Pa
             handleSnapshotASCII(*t, current_time_years, snapshot,particle_data,particle_number,disk_params,sim_opts,
                                 output_files,dens_name,dust_name,dust_name2,size_name);
         } else {
-            handleSnapshotHDF5(t, current_time_years, snapshot, sim_opts, output_files);
+            handleSnapshotHDF5(t, current_time_years, snapshot, sim_opts, output_files, disk_params, particle_data);
         }
 
     }
@@ -231,7 +255,9 @@ static void simulateGasOnlyStep(double *t,double deltat,double *snapshot,DiskPar
                 output_files->surface_file = NULL;
             } else {
             
-            /// HDF5 !!!!
+                handleSnapshotHDF5(t, current_time_years, snapshot, sim_opts, output_files, disk_params, NULL);
+            
+            }
         }
         snapshotAdvance(snapshot, sim_opts);
         fprintf(stderr, "snapshot updated to %lg\n", *snapshot);
@@ -314,4 +340,5 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
     cleanupSimulationResources(&particle_data, output_files);
     fprintf(stderr,"DEBUG [timeIntegrationForTheSystem]: Cleanup completed.\n");
 }
+
 

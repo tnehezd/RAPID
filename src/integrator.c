@@ -6,7 +6,7 @@
 #include <string.h>   
 #include <omp.h>
 #include "config.h"      
-#include "io_utils.h"     
+#include "ascii_output.h"     
 #include "disk_model.h"   
 #include "dust_physics.h" 
 #include "utils.h"        

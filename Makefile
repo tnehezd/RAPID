@@ -1,6 +1,8 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -std=c99 -g -O0 -fopenmp -I$(INC_DIR) -D_GNU_SOURCE
-LDFLAGS = -lm -fopenmp -g
+CFLAGS = -Wall -Wextra -std=c99 -g -O0 -fopenmp -I$(INC_DIR) -D_GNU_SOURCE \
+         -I/usr/local/Cellar/hdf5/2.0.0_1/include
+LDFLAGS = -lm -fopenmp -g \
+          -L/usr/local/Cellar/hdf5/2.0.0_1/lib -lhdf5 -lhdf5_hl
 
 BIN_DIR = bin
 OBJ_DIR = obj

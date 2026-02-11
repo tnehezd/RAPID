@@ -5,7 +5,7 @@
 #include "simulation_types.h"
 #include "gas_physics.h"
 #include "dust_physics.h" 
-#include "io_utils.h"     
+#include "ascii_output.h"     
 #include "utils.h" 
 #include "boundary_conditions.h"
 #include <stdio.h>
