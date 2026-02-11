@@ -85,7 +85,7 @@ primaryClass = {astro-ph.EP},
 }
 
 
-@article{cite-key,
+@article{TarczayNehez2026,
     author = {Tarczay-Neh{\'e}z, D{\'o}ra},
     date = {2026/02/03},
     date-added = {2026-02-03 12:16:24 +0100},
