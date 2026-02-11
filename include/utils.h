@@ -84,51 +84,33 @@ int identifyPressureTraps(const DiskParameters *disk_params, PressureTrap *traps
 void calculateMassInSpecificTrap(PressureTrap *trap, const ParticleData *particle_data, int particle_number, const SimulationOptions *sim_opts);
 
 /**
- * @brief Sorts an array of doubles in ascending order.
- *
- * @param sorted_array Array to sort.
- * @param number_of_elements Number of elements.
- */
-void sortAnArray(double *sorted_array,int number_of_elements);
-
-/**
- * @brief Updates a histogram bin for a given radius.
- *
- * @param r Radius value.
- * @param hist Histogram array.
- * @param dd Bin width.
- * @param disk_params Pointer to disk parameters.
- */
-void histogram(double r, int *hist, double dd, DiskParameters *disk_params);
-
-/**
  * @brief Sorts a 2D array with 3 columns by the first column.
  *
- * @param rv 2D array of size n×3.
- * @param n Number of rows.
+ * @param array 2D array of size n×3.
+ * @param number_of_rows Number of rows.
  */
-void sortAnArrayarray(double rv[][3],int n);
+void sortAnArray(double array[][3],int number_of_rows);
 
 /**
  * @brief Rounds particle radii to the nearest grid cell.
  *
- * @param in 2D array containing particle radii and metadata.
- * @param n Number of particles.
+ * @param particle_data 2D array containing particle radii and metadata.
+ * @param particle_number Number of particles.
  * @param disk_params Pointer to disk parameters.
  */
-void roundParticleRadii(double in[][3], int n, const DiskParameters *disk_params);
+void roundParticleRadii(double particle_data[][3], int particle_number, const DiskParameters *disk_params);
 
 /**
  * @brief Merges particles that fall within the same radial bin.
  *
  * Used to reduce particle count by combining nearby particles.
  *
- * @param in 2D array of particle data.
- * @param dd Radial bin width.
- * @param n Number of particles.
+ * @param particle_data 2D array of particle data.
+ * @param grid_step Radial bin width.
+ * @param particle_number Number of particles.
  * @param disk_params Pointer to disk parameters.
  */
-void mergeParticlesByRadius(double in[][3], double dd, int n, const DiskParameters *disk_params); 
+void mergeParticlesByRadius(double particle_data[][3], double grid_step, int particle_number, const DiskParameters *disk_params); 
 
 /**
  * @brief Updates the grid index of each particle based on its radial position.

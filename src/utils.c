@@ -9,21 +9,26 @@
 #include "boundary_conditions.h"
 
 
-void linearInterpolation(double *invec, double *radial_grid, double pos, double *out, double rd, const DiskParameters *disk_params) {
+void linearInterpolation(double *input_value, double *radial_grid, double actual_position, double *interpolated_value, double grid_spacing, const DiskParameters *disk_params) {
 
-	double rmid, rindex, coef1, temp;
-	int index; 
+	double relative_grid_position, left_cell_radius, linear_slope, interpolated_result;
+	int left_cell_index; 
 
-    rmid = pos - disk_params->r_min;
-	rmid = rmid / rd;     					
-	index = (int) floor(rmid);				
-	rindex = radial_grid[index];       		
- 	coef1 = (invec[index + 1] - invec[index]) / rd; 
-	temp = invec[index] + coef1 * (pos - rindex);   
+    relative_grid_position = actual_position - disk_params->r_min;
+	relative_grid_position = relative_grid_position / grid_spacing;     					
+	left_cell_index = (int) floor(relative_grid_position);				
+	left_cell_radius = radial_grid[left_cell_index];       		
+ 	linear_slope = (input_value[left_cell_index + 1] - input_value[left_cell_index]) / grid_spacing; 
+	interpolated_result = input_value[left_cell_index] + linear_slope * (actual_position - left_cell_radius);   
 
-	*out = temp;
+	*interpolated_value = interpolated_result;
 }
 
+double findMinimumOfAnArray(double value_1, double value_2, double value_3) {
+
+    double minimum = (value_1 < value_2) ? value_1 : value_2; return (minimum < value_3) ? minimum : value_3;
+
+}
 
 double ftcsSecondDerivativeCoefficient(double radial_distance, const DiskParameters *disk_params){					
 
@@ -39,11 +44,6 @@ double ftcsFirstDerivativeCoefficient(double radial_distance, const DiskParamete
     return first_derivate_coefficient;
 }
 
-double findMinimumOfAnArray(double s1, double s2, double s3) {
-
-	double minimum = (s1 < s2) ? s1 : s2; return (minimum < s3) ? minimum : s3;
-
-}
 
 int identifyPressureTraps(const DiskParameters *disk_params, PressureTrap *traps, int max_traps) {
     PressureTrap temp_list[10];
@@ -133,8 +133,6 @@ void calculateMassInSpecificTrap(PressureTrap *trap, const ParticleData *particl
     double primary_mass = 0.0;
     double secondary_mass = 0.0;
 
-
-
     for (int i = 0; i < particle_number; i++) {
         // Elsődleges (cm) por
         double radial_distance = particle_data->particle_distance_array[i][0];
@@ -156,160 +154,161 @@ void calculateMassInSpecificTrap(PressureTrap *trap, const ParticleData *particl
     trap->total_dust_mass = primary_mass + secondary_mass;
 }
 
-void sortAnArray(double *rv,int n) {
 
-	double temp;
-	int i, step;
+void sortAnArray(double array[][3], int number_of_rows) {
 
-	for(step = 1; step <= (n-1); step++) {
+    double temporary_value_column1;
+    double temporary_value_column0;
+    double temporary_value_column2;
 
-		for(i = 0; i <= (n-2); i++) {
+    int row_index;
+    int i;
 
-			if(rv[i] > rv[i + 1]) {
-				temp = rv[i];
-				rv[i] = rv[i + 1];
-				rv[i + 1] = temp;
-			}
-		}
-	}
+    for (i = 1; i <= number_of_rows - 1; i++) {
+
+        for (row_index = 0; row_index <= number_of_rows - 2; row_index++) {
+
+            if (array[row_index][1] > array[row_index + 1][1]) {
+
+                temporary_value_column1 = array[row_index][1];
+                array[row_index][1] = array[row_index + 1][1];
+                array[row_index + 1][1] = temporary_value_column1;
+
+                temporary_value_column0 = array[row_index][0];
+                array[row_index][0] = array[row_index + 1][0];
+                array[row_index + 1][0] = temporary_value_column0;
+
+                temporary_value_column2 = array[row_index][2];
+                array[row_index][2] = array[row_index + 1][2];
+                array[row_index + 1][2] = temporary_value_column2;
+            }
+        }
+    }
 }
 
-void histogram(double r, int *hist, double dd, DiskParameters *disk_params) {
+void roundParticleRadii(double particle_data[][3], int particle_number, const DiskParameters *disk_params) {
 
-    int index;
-    double rmid; 
+    double radial_grid_spacing =
+        (disk_params->r_max - disk_params->r_min) / (particle_number - 1);
 
-    if (r < disk_params->r_min) {
-        r = disk_params->r_min;
-    } else if (r > disk_params->r_max) {
-        r = disk_params->r_max;
+    int rounding_resolution_integer = (int)(1.0 / radial_grid_spacing);
+    rounding_resolution_integer *= ROUNDING_FACTOR;
+
+    double rounding_resolution = (double)rounding_resolution_integer;
+
+    int particle_index;
+    int rounded_grid_index;
+
+    for (particle_index = 0; particle_index < particle_number; particle_index++) {
+
+        rounded_grid_index =
+            (int)floor(particle_data[particle_index][1] * rounding_resolution + 0.5);
+
+        particle_data[particle_index][1] =
+            (double)rounded_grid_index / rounding_resolution;
+    }
+}
+
+void mergeParticlesByRadius(double particle_data[][3], double radial_grid_spacing, int particle_count, const DiskParameters *disk_params) {
+
+    double merged_radius[particle_count];
+    double merged_surface_density[particle_count];
+
+    double accumulated_surface_density = 0.0;
+
+    int particle_index;
+    int merged_index = 0;
+    int merge_offset = 0;
+
+    // Initialize output arrays
+    for (particle_index = 0; particle_index < particle_count; particle_index++) {
+        merged_radius[particle_index] = 0.0;
+        merged_surface_density[particle_index] = 0.0;
+        particle_data[particle_index][2] = 0.0;
     }
 
-    rmid = (r - disk_params->r_min) / dd;
-    index = (int) floor(rmid);
+    // Round radii and sort by radius
+    roundParticleRadii(particle_data, particle_count, disk_params);
+    sortAnArray(particle_data, particle_count);
 
-    if (index < 0) {
-        index = 0; 
+    particle_index = 0;
+
+    // Merge particles with identical radii
+    do {
+        if (particle_data[particle_index][1] != particle_data[particle_index + 1][1]) {
+
+            merged_radius[merged_index] = particle_data[particle_index][1];
+            merged_surface_density[merged_index] = particle_data[particle_index][0];
+
+            accumulated_surface_density = 0.0;
+            merge_offset = 0;
+
+            merged_index++;
+            particle_index++;
+
+        } else {
+
+            do {
+                merged_radius[merged_index] = particle_data[particle_index][1];
+                accumulated_surface_density += particle_data[particle_index + merge_offset][0];
+                merged_surface_density[merged_index] = accumulated_surface_density;
+                merge_offset++;
+
+            } while (particle_data[particle_index][1] ==
+                     particle_data[particle_index + merge_offset][1]);
+
+            particle_index += merge_offset;
+            merge_offset = 0;
+            merged_index++;
+        }
+
+    } while (particle_index < particle_count);
+
+    // Write merged values back and compute grid index
+    for (particle_index = 0; particle_index < particle_count; particle_index++) {
+
+        particle_data[particle_index][0] = merged_surface_density[particle_index];
+        particle_data[particle_index][1] = merged_radius[particle_index];
+
+        double relative_position =
+            (particle_data[particle_index][1] - disk_params->r_min) / radial_grid_spacing;
+
+        int grid_index = (int)floor(relative_position);
+        particle_data[particle_index][2] = (double)grid_index;
     }
+}
 
-    if (index >= disk_params->grid_number) { 
-        index = disk_params->grid_number - 1;
+
+void updateParticleGridIndices(const ParticleData *particle_data, double current_time,int particle_count,const DiskParameters *disk_params) {
+
+    int particle_index;
+    int grid_index;
+    double relative_grid_position;
+
+    for (particle_index = 0; particle_index < particle_count; particle_index++) {
+
+        relative_grid_position =
+            (particle_data->particle_distance_array[particle_index][0] -
+             disk_params->r_min) / disk_params->delta_r;
+
+        grid_index = (int)floor(relative_grid_position + 0.5);
+
+        if (relative_grid_position < 0 || isnan(relative_grid_position))
+            grid_index = 0;
+
+        if (particle_count == particle_number)
+            particle_data->dust_particle_mass_array[particle_index][0] =
+                particle_data->dust_particle_mass_grid[particle_index];
+
+        particle_data->dust_particle_mass_array[particle_index][1] = grid_index;
+
+        if (current_time == 0) {
+            particle_data->dust_particle_mass_array[particle_index][2] =
+                particle_data->dust_particle_mass_array[particle_index][0];
+            particle_data->dust_particle_mass_array[particle_index][3] = 0;
+        }
     }
-
-    hist[index]++;
 }
-
-void sortAnArrayarray(double rv[][3],int n) {
-
-	double temp, temp2, temp3;
-	int i, step;
-
-	for(step = 1; step <= (n-1); step++) {
-		for(i = 0; i <= (n-2); i++) {
-			if(rv[i][1] > rv[i + 1][1]) {
-				temp = rv[i][1];
-				rv[i][1] = rv[i + 1][1];
-				rv[i + 1][1] = temp;
-				temp2 = rv[i][0];
-				rv[i][0] = rv[i + 1][0];
-				rv[i + 1][0] = temp2;
-				temp3 = rv[i][2];
-				rv[i][2] = rv[i + 1][2];
-				rv[i + 1][2] = temp3;
-			}
-		}
-	}
-}
-
-
-void roundParticleRadii(double in[][3], int n, const DiskParameters *disk_params) {
-
-	double dd = (disk_params->r_max - disk_params->r_min) / (particle_number-1);
-	int dker = (int)(1./dd);//
-	dker = dker * ROUNDING_FACTOR;
-	double ddker = (double) dker;
-	int i;
-	int temp;
-
-	for(i = 0; i<n; i++) {
-		temp = (int)floor(in[i][1] * ddker+0.5);
-		in[i][1] = (double)temp / ddker;
-	}
-}
-
-
-
-
-void mergeParticlesByRadius(double in[][3], double dd, int n, const DiskParameters *disk_params) {
-
-	int i;
-	int j;
-	int k;
-	double sig = 0, radout[n], sigout[n];
-
-	for(i = 0; i < n; i++) {
-		radout[i] = 0;
-		sigout[i] = 0;
-		in[i][2] = 0;
-	}
-
-	i = 0;
-	j = 0;
-	k = 0;
-
-	roundParticleRadii(in,n,disk_params);
-	sortAnArrayarray(in,n);
-
-	do {
-		if(in[i][1] != in[i+1][1]) {
-			radout[j] = in[i][1];
-			sigout[j] = in[i][0];
-			sig = 0;
-			k = 0;
-			j++;
-			i++;
-		} else {
-			do {
-				radout[j] = in[i][1];
-				sig = sig + in[i+k][0];
-				sigout[j] = sig;
-				k++;
-			} while (in[i][1] == in[i+k][1]);
-			i = i+k;
-			k = 0;
-			j++;
-		}
-
-	} while (i < n);
-
-	for(i = 0; i < n; i++) {
-		in[i][0] = sigout[i];
-		in[i][1] = radout[i];
-  		double rmid = (in[i][1] - disk_params->r_min) / dd;     	
-		int rindex = (int) floor(rmid);	
-		in[i][2] = (double)rindex;
-	}
-}
-
-void updateParticleGridIndices(const ParticleData *particle_data, double t, int n, const DiskParameters *disk_params) {
-
-    int i, rindex;
-    double rmid;  
-
-    for (i = 0; i < n; i++) {   
-        rmid = (particle_data->particle_distance_array[i][0] - disk_params->r_min) / disk_params->delta_r; 
-        rindex = (int) floor(rmid+0.5);
-        if(rmid < 0) rindex = 0;
-        if(isnan(rmid)) rindex = 0;
-		if(n == particle_number) particle_data->dust_particle_mass_array[i][0] = particle_data->dust_particle_mass_grid[i];	
-		particle_data->dust_particle_mass_array[i][1] = rindex;		
-		if(t == 0) {
-			particle_data->dust_particle_mass_array[i][2] = particle_data->dust_particle_mass_array[i][0];					
-			particle_data->dust_particle_mass_array[i][3] = 0;
-		}
-	}
-}
-
 
 void computeParticleRadiusRange(const ParticleData *particle_data,int particle_number,int has_secondary_population,double *min_radius,double *max_radius) {
 
