@@ -140,4 +140,38 @@ typedef struct {
     int trap_id;                 /**< Unique identifier for the trap. */                     
 } PressureTrap;
 
+/**
+ * @enum OutputFormat
+ * @brief Supported output formats for simulation snapshots.
+ *
+ * This enumeration specifies the available output backends used when
+ * writing simulation data to disk. The selected format determines how
+ * gas and dust fields, particle properties, and metadata are stored.
+ *
+ * The naming follows the project's coding conventions
+ * (see Coding Standard).
+ */
+typedef enum {
+
+    /**
+     * @brief Plain-text ASCII output.
+     *
+     * Human-readable column-based text files.  
+     * Useful for quick inspection, debugging, and lightweight post-processing.
+     */
+    OUTPUT_ASCII,
+
+    /**
+     * @brief HDF5 output format.
+     *
+     * Binary, hierarchical, self-describing file format suitable for
+     * large datasets and high-performance workflows.  
+     * Enables structured storage of gas fields, dust populations,
+     * metadata, and multi-snapshot datasets.
+     */
+    OUTPUT_HDF5
+
+} OutputFormat;
+
+
 #endif // SIMULATION_TYPES_H

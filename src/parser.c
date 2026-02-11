@@ -43,6 +43,8 @@ void createDefaultOptions(ParserOptions *opt) {
     opt->mic_val                                    = 1e-4; 
     opt->onesize_val                                = 0.0; 
     opt->pdensity_val                               = 1.6; 
+    opt->output_format                              = OUTPUT_ASCII;
+
 
     fprintf(stderr, "Default options setting complete.\n");
 }
@@ -87,6 +89,11 @@ void printUsageToTerminal() {
     fprintf(stderr, "Other:\n");
     fprintf(stderr, "  -pdensity <val> Dust particle density (g/cm^3, default: 1.6)\n"); 
     fprintf(stderr, "  -h or --help   Display this help message\n");
+    fprintf(stderr, "Output format options:\n");
+    fprintf(stderr, "  --output-format <txt|hdf5>  Select output format (default: txt)\n");
+    fprintf(stderr, "  -txt                        Shortcut for --output-format txt\n");
+    fprintf(stderr, "  -hdf5                       Shortcut for --output-format hdf5\n");
+
 }
 
 int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
@@ -230,6 +237,31 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
 //            printUsageToTerminal();
             return 1;
         }
+
+        else if (strcmp(argv[i], "--output-format") == 0) {
+            i++;
+            if (i < argc) {
+                if (strcmp(argv[i], "txt") == 0)
+                    opt->output_format = OUTPUT_ASCII;
+                else if (strcmp(argv[i], "hdf5") == 0)
+                    opt->output_format = OUTPUT_HDF5;
+                else {
+                    fprintf(stderr, "Error: Unknown output format '%s'. Use txt or hdf5.\n", argv[i]);
+                    return 1;
+                }
+            } else {
+                fprintf(stderr, "Error: Missing value for --output-format.\n");
+                return 1;
+            }
+        }
+        else if (strcmp(argv[i], "-txt") == 0) {
+            opt->output_format = OUTPUT_ASCII;
+        }
+        else if (strcmp(argv[i], "-hdf5") == 0) {
+            opt->output_format = OUTPUT_HDF5;
+        }
+
+        
         else {
             fprintf(stderr, "ERROR [parseCLIOptions]: Invalid switch on command-line: %s!\n", argv[i]);
   //          printUsageToTerminal(); 

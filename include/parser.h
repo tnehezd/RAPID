@@ -56,6 +56,7 @@ typedef struct {
     double mic_val;                                     /**< Micron dust fraction. */
     double onesize_val;                                 /**< Single-size dust mode parameter. */
     double pdensity_val;                                /**< Dust particle density. */
+    int output_format;                                  /**< Output format selector (0 = ASCII, 1 = HDF5). */
 
 } ParserOptions;
 
