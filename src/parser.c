@@ -45,7 +45,6 @@ void createDefaultOptions(ParserOptions *opt) {
     opt->pdensity_val                               = 1.6; 
     opt->output_format                              = OUTPUT_ASCII;
 
-
     fprintf(stderr, "Default options setting complete.\n");
 }
 
@@ -261,7 +260,7 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
             opt->output_format = OUTPUT_HDF5;
         }
 
-        
+
         else {
             fprintf(stderr, "ERROR [parseCLIOptions]: Invalid switch on command-line: %s!\n", argv[i]);
   //          printUsageToTerminal(); 

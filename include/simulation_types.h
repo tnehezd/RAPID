@@ -8,7 +8,6 @@
  * dust‑accumulation regions in the disk.
  */
 
-
 #ifndef SIMULATION_TYPES_H
 #define SIMULATION_TYPES_H
 
@@ -52,6 +51,41 @@ typedef struct {
     double drift_factor;                  /**< Scaling factor for dust drift speed. */        
 } DiskParameters;
 
+
+/**
+ * @enum OutputFormat
+ * @brief Supported output formats for simulation snapshots.
+ *
+ * This enumeration specifies the available output backends used when
+ * writing simulation data to disk. The selected format determines how
+ * gas and dust fields, particle properties, and metadata are stored.
+ *
+ * The naming follows the project's coding conventions
+ * (see Coding Standard).
+ */
+typedef enum {
+
+    /**
+     * @brief Plain-text ASCII output.
+     *
+     * Human-readable column-based text files.  
+     * Useful for quick inspection, debugging, and lightweight post-processing.
+     */
+    OUTPUT_ASCII = 0,
+
+    /**
+     * @brief HDF5 output format.
+     *
+     * Binary, hierarchical, self-describing file format suitable for
+     * large datasets and high-performance workflows.  
+     * Enables structured storage of gas fields, dust populations,
+     * metadata, and multi-snapshot datasets.
+     */
+    OUTPUT_HDF5 = 1
+
+} OutputFormat;
+
+
 /**
  * @brief User‑defined simulation options and runtime configuration.
  *
@@ -72,6 +106,7 @@ typedef struct {
     char input_filename[MAX_PATH_LEN];        /**< Path to gas input file. */
     char output_dir_name[MAX_PATH_LEN];       /**< Output directory for results. */
     char dust_input_filename[MAX_PATH_LEN];   /**< Path to dust input file. */
+    OutputFormat output_format;               /**< Selects ASCII or HDF5 output backend. */
 } SimulationOptions;
 
 /**
@@ -140,38 +175,7 @@ typedef struct {
     int trap_id;                 /**< Unique identifier for the trap. */                     
 } PressureTrap;
 
-/**
- * @enum OutputFormat
- * @brief Supported output formats for simulation snapshots.
- *
- * This enumeration specifies the available output backends used when
- * writing simulation data to disk. The selected format determines how
- * gas and dust fields, particle properties, and metadata are stored.
- *
- * The naming follows the project's coding conventions
- * (see Coding Standard).
- */
-typedef enum {
 
-    /**
-     * @brief Plain-text ASCII output.
-     *
-     * Human-readable column-based text files.  
-     * Useful for quick inspection, debugging, and lightweight post-processing.
-     */
-    OUTPUT_ASCII,
-
-    /**
-     * @brief HDF5 output format.
-     *
-     * Binary, hierarchical, self-describing file format suitable for
-     * large datasets and high-performance workflows.  
-     * Enables structured storage of gas fields, dust populations,
-     * metadata, and multi-snapshot datasets.
-     */
-    OUTPUT_HDF5
-
-} OutputFormat;
 
 
 #endif // SIMULATION_TYPES_H

@@ -120,6 +120,43 @@ static int isSnapshotDue(double current_time_years, double snapshot, double delt
     return (periodic_snapshot || initial_snapshot) && snapshot_sync;
 }
 
+static void handleSnapshotASCII(double t, double current_time_years, double *snapshot, ParticleData *particle_data, int particle_number, DiskParameters *disk_params, const SimulationOptions *sim_opts,
+                                OutputFiles *output_files, char *dens_name, char *dust_name, char *dust_name2, char *size_name) {
+
+    handleSnapshot(t, current_time_years, snapshot, sim_opts, output_files,dens_name, dust_name, dust_name2, size_name);
+    snapshotInitAtT0(t, current_time_years,particle_data, disk_params, sim_opts,particle_number);
+    snapshotPrintGas(disk_params, output_files,sim_opts);
+    snapshotPrintDust((int)(*snapshot), particle_data, disk_params,sim_opts, output_files, size_name);
+    snapshotResetMasses(particle_data, particle_number, sim_opts);
+    snapshotDustSurfacedensity(*snapshot, particle_data, disk_params, sim_opts,output_files);
+    fprintf(stderr, "snapshot set to %lg\n", *snapshot);
+
+    PressureTrap current_traps[3];
+    int num_found = identifyPressureTraps(disk_params, current_traps, 3);
+
+    for (int k = 0; k < num_found; k++) {
+        if (current_traps[k].radial_position > 0) {
+            double local_H = calculatePressureScaleHeight(current_traps[k].radial_position, disk_params);
+            current_traps[k].inner_boundary = current_traps[k].radial_position - 1.0 * local_H;
+            current_traps[k].outer_boundary = current_traps[k].radial_position + 1.0 * local_H;
+            calculateMassInSpecificTrap(&current_traps[k], particle_data, particle_number, sim_opts);
+        }
+    }
+
+    printTrapMassEvolution(*snapshot, num_found, current_traps, output_files);
+    snapshotAdvance(snapshot, sim_opts);
+    closeSnapshotFiles(output_files, sim_opts);
+
+}
+
+static void handleSnapshotHDF5(double *t, double current_time_years, double *snapshot, const SimulationOptions *sim_opts,
+                               OutputFiles *output_files) {
+
+    printf("HDF");
+    exit(EXIT_SUCCESS);
+
+}
+
 static void simulateDustDriftStep(double *t, double deltat, double *snapshot, ParticleData *particle_data, int particle_number, DiskParameters *disk_params, const SimulationOptions *sim_opts,
                                   OutputFiles *output_files, char *dens_name, char *dust_name, char *dust_name2, char *size_name) {
 
@@ -131,29 +168,13 @@ static void simulateDustDriftStep(double *t, double deltat, double *snapshot, Pa
 
     if (isSnapshotDue(current_time_years, *snapshot, deltat, sim_opts)) {
 
-        handleSnapshot(*t, current_time_years, snapshot, sim_opts, output_files,dens_name, dust_name, dust_name2, size_name);
-        snapshotInitAtT0(*t, current_time_years,particle_data, disk_params, sim_opts,particle_number);
-        snapshotPrintGas(disk_params, output_files,sim_opts);
-        snapshotPrintDust((int)(*snapshot), particle_data, disk_params,sim_opts, output_files, size_name);
-        snapshotResetMasses(particle_data, particle_number, sim_opts);
-        snapshotDustSurfacedensity(*snapshot, particle_data, disk_params, sim_opts,output_files);
-        fprintf(stderr, "snapshot set to %lg\n", *snapshot);
-
-        PressureTrap current_traps[3];
-        int num_found = identifyPressureTraps(disk_params, current_traps, 3);
-
-        for (int k = 0; k < num_found; k++) {
-            if (current_traps[k].radial_position > 0) {
-                double local_H = calculatePressureScaleHeight(current_traps[k].radial_position, disk_params);
-                current_traps[k].inner_boundary = current_traps[k].radial_position - 1.0 * local_H;
-                current_traps[k].outer_boundary = current_traps[k].radial_position + 1.0 * local_H;
-                calculateMassInSpecificTrap(&current_traps[k], particle_data, particle_number, sim_opts);
-            }
+        if (sim_opts->output_format == OUTPUT_ASCII) {
+            handleSnapshotASCII(*t, current_time_years, snapshot,particle_data,particle_number,disk_params,sim_opts,
+                                output_files,dens_name,dust_name,dust_name2,size_name);
+        } else {
+            handleSnapshotHDF5(t, current_time_years, snapshot, sim_opts, output_files);
         }
 
-        printTrapMassEvolution(*snapshot, num_found, current_traps, output_files);
-        snapshotAdvance(snapshot, sim_opts);
-        closeSnapshotFiles(output_files, sim_opts);
     }
 
     if (sim_opts->option_for_evolution == 1.) {
@@ -186,27 +207,32 @@ static void simulateGasOnlyStep(double *t,double deltat,double *snapshot,DiskPar
     double current_time_years = *t / (2.0 * M_PI);
 
     if (isSnapshotDue(current_time_years, *snapshot, deltat, sim_opts)) {
-        asprintf(&dens_name, "%s/%s/%s_%08d%s",sim_opts->output_dir_name,kLogFilesDirectory,kGasDensityProfileFilePrefix,(int)(*snapshot),kFileNamesSuffix);
-        fprintf(stderr,
-                "\n--- Simulation Time: %.2e years (Internal time: %.2e, snapshot: %.2e) ---\n",
-                current_time_years, *t, *snapshot);
 
-        output_files->surface_file = fopen(dens_name, "w");
+        if (sim_opts->output_format == OUTPUT_ASCII) {
 
-        if (!output_files->surface_file) {
-            fprintf(stderr, "ERROR: Could not open %s for writing.\n", dens_name);
-        } else {
-            HeaderData gas_header_data = {.current_time = current_time_years,.is_initial_data = (current_time_years == 0.0)};
-            printFileHeader(output_files->surface_file,FILE_TYPE_GAS_DENSITY,&gas_header_data);
+            asprintf(&dens_name, "%s/%s/%s_%08d%s",sim_opts->output_dir_name,kLogFilesDirectory,kGasDensityProfileFilePrefix,(int)(*snapshot),kFileNamesSuffix);
+            fprintf(stderr,
+                    "\n--- Simulation Time: %.2e years (Internal time: %.2e, snapshot: %.2e) ---\n",
+                    current_time_years, *t, *snapshot);
+
+            output_files->surface_file = fopen(dens_name, "w");
+
+            if (!output_files->surface_file) {
+                fprintf(stderr, "ERROR: Could not open %s for writing.\n", dens_name);
+            } else {
+                HeaderData gas_header_data = {.current_time = current_time_years,.is_initial_data = (current_time_years == 0.0)};
+                printFileHeader(output_files->surface_file,FILE_TYPE_GAS_DENSITY,&gas_header_data);
+            }
+
+            printGasSurfaceDensityPressurePressureDerivateFile(disk_params, output_files);
+
+            if (output_files->surface_file) {
+                fclose(output_files->surface_file);
+                output_files->surface_file = NULL;
+            } else {
+            
+            /// HDF5 !!!!
         }
-
-        printGasSurfaceDensityPressurePressureDerivateFile(disk_params, output_files);
-
-        if (output_files->surface_file) {
-            fclose(output_files->surface_file);
-            output_files->surface_file = NULL;
-        }
-
         snapshotAdvance(snapshot, sim_opts);
         fprintf(stderr, "snapshot updated to %lg\n", *snapshot);
     }

@@ -68,7 +68,9 @@ int main(int argc, const char **argv) {
     sim_opts.user_defined_time_step = def.user_defined_time_step;
     sim_opts.maximum_simulation_time = def.maximum_simulation_time;
     sim_opts.output_frequency = def.output_frequency;
-    sim_opts.number_of_dust_particles = def.number_of_dust_particles; 
+    sim_opts.number_of_dust_particles = def.number_of_dust_particles;
+    sim_opts.output_format = def.output_format;
+ 
 
     fprintf(stderr, "DEBUG [main]: def.output_dir_name BEFORE sim_opts population: '%s'\n", def.output_dir_name);
     fprintf(stderr, "DEBUG [main]: Evolution (sim_opts.option_for_evolution=%.2f) or drift (sim_opts.option_for_dust_drift=%.2f) is ON. Starting main simulation loop.\n", sim_opts.option_for_evolution, sim_opts.option_for_dust_drift);
