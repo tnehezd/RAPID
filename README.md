@@ -4,9 +4,24 @@ This repository contains the source code for `RAPID` (Representative Approach fo
 
 The core of the code was originally written in C during my PhD between 2012 and 2015. It has since been restructured into a more modular form to improve its functionality and maintainability.
 
-#### ⚠️ 2.3.0 Version: This code is currently under active development!
+#### ✅ 2.3.1 Version: Stable Structure – Ongoing Feature Development
 
-While the fundamental physics and algorithms are robust, the codebase is still under active development! A significant number of the internal comments are currently in Hungarian, which I am in the process of translating and updating to English. Furthermore, the original code was written in the early years of my PhD with moderate programming knowledge and some of the part of the code is a bit messy. Currently, I may make some break-point frefractoring for readability and maintainability, so alwys make sure to git pull before using my code. Besides, I'm updating function names, variable names, etc to follow the a naming convention (see [Coding Standard](docs/CodingStandard.md)). After I made all the ncessary changes, I'll release the stable version.
+The core structure of the codebase has now been finalized, and no further refactoring is planned. The architecture, naming conventions, and overall organization are stable and consistent with the [Coding Standard](docs/CodingStandard.md).
+
+However, the project remains under active development in terms of features and capabilities. Please always make sure to `git pull` and stay up to date with the latest release before running simulations.
+
+Upcoming and ongoing extensions include:
+
+- New output format support (HDF5)
+- Additional numerical integrators
+- Extended boundary condition options
+- Photoevaporation module
+- Dust settling implementation  
+  (transition from 1D to 1+1D structure)
+- General validation and benchmark test problems  
+  (e.g. shock tube and other standard test cases)
+  
+Stay tuned for regular feature updates.
 
 ## Model Description
 
