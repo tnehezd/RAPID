@@ -1,3 +1,12 @@
+/**
+ * @file io_utils.h
+ * @brief Utility functions for reading and writing simulation data.
+ *
+ * Provides routines for loading input profiles, writing snapshot files,
+ * generating output filenames, printing standardized headers, and managing
+ * simulation output directories and file resources.
+ */
+
 #ifndef IO_UTILS_H
 #define IO_UTILS_H
 
@@ -97,39 +106,50 @@ void printTrapMassEvolution(double current_time_years, int num_found, const Pres
 
 /**
  * @brief Enumeration of supported file header types.
+ *
+ * This enum identifies the different kinds of output files produced
+ * during the simulation. Each value corresponds to a specific file
+ * format or data category, allowing the I/O system to write the
+ * appropriate header information.
  */
 typedef enum {
-    FILE_TYPE_MASS_ACCUMULATION,
-    FILE_TYPE_GAS_DENSITY,
-    FILE_TYPE_DUST_DENSITY,
-    FILE_TYPE_DUST_MICRON_DENSITY,
-    FILE_TYPE_INTIIAL_DUST_PROFILE,
-    FILE_TYPE_PARTICLE_SIZE,
-    FILE_TYPE_DISK_PARAM 
+    FILE_TYPE_MASS_ACCUMULATION,      /**< Mass accumulation output file. */
+    FILE_TYPE_GAS_DENSITY,            /**< Gas surface density file. */
+    FILE_TYPE_DUST_DENSITY,           /**< Dust surface density file. */
+    FILE_TYPE_DUST_MICRON_DENSITY,    /**< Micron-sized dust density file. */
+    FILE_TYPE_INTIIAL_DUST_PROFILE,   /**< Initial dust distribution profile. */
+    FILE_TYPE_PARTICLE_SIZE,          /**< Dust particle size distribution file. */
+    FILE_TYPE_DISK_PARAM              /**< Disk parameter summary file. */
 } FileType_e;
 
 /**
  * @brief Structure containing metadata for file headers.
+ *
+ * This structure stores all metadata written into the header section
+ * of simulation output files. These values describe the physical
+ * parameters of the disk model, numerical setup, and the simulation
+ * state at the time of writing.
  */
 typedef struct {
-    double current_time;  
-    int is_initial_data;  
-    double R_in;
-    double R_out;
-    double sigma_exponent; 
-    long double sigma0_gas_au;
-    double grav_const; 
-    double dz_r_inner; 
-    double dz_r_outer; 
-    double dz_dr_inner_calc;
-    double dz_dr_outer_calc;
-    double dz_alpha_mod; 
-    double dust_density_g_cm3;
-    double alpha_viscosity; 
-    double star_mass; 
-    double flaring_index;
-    int n_grid_points; 
+    double current_time;          /**< Current simulation time (in years or code units). */
+    int    is_initial_data;       /**< Flag indicating whether this is initial-condition output. */
+    double R_in;                  /**< Inner radius of the simulation domain. */
+    double R_out;                 /**< Outer radius of the simulation domain. */
+    double sigma_exponent;        /**< Power-law exponent of the gas surface density profile. */
+    long double sigma0_gas_au;    /**< Gas surface density normalization at 1 AU. */
+    double grav_const;            /**< Gravitational constant used in the simulation. */
+    double dz_r_inner;            /**< Inner dead-zone edge radius. */
+    double dz_r_outer;            /**< Outer dead-zone edge radius. */
+    double dz_dr_inner_calc;      /**< Calculated width of the inner dead-zone transition. */
+    double dz_dr_outer_calc;      /**< Calculated width of the outer dead-zone transition. */
+    double dz_alpha_mod;          /**< Alpha-viscosity modification factor inside the dead zone. */
+    double dust_density_g_cm3;    /**< Dust material density (g/cm³). */
+    double alpha_viscosity;       /**< Disk viscosity parameter α. */
+    double star_mass;             /**< Stellar mass (in solar masses). */
+    double flaring_index;         /**< Disk flaring index. */
+    int    n_grid_points;         /**< Number of radial grid points in the simulation. */
 } HeaderData;
+
 
 /**
  * @brief Prints a formatted header to a file based on file type and header data.

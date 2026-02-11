@@ -1,115 +1,143 @@
+/**
+ * @file simulation_types.h
+ * @brief Core data structures describing disk physics and simulation settings.
+ *
+ * Defines the fundamental types used across the simulation, including
+ * disk parameters, user‑configurable options, output file handles,
+ * snapshot modes, and the PressureTrap structure used to identify
+ * dust‑accumulation regions in the disk.
+ */
+
+
 #ifndef SIMULATION_TYPES_H
 #define SIMULATION_TYPES_H
 
 #include <stdio.h>
-
 #define MAX_PATH_LEN 16384 
 
+/**
+ * @brief Physical and numerical parameters describing the protoplanetary disk.
+ *
+ * This structure stores all disk‑related quantities used throughout the
+ * simulation, including radial grid information, gas surface density,
+ * pressure gradients, and viscosity parameters. Many of these values
+ * are initialized from user input or configuration files.
+ */
 typedef struct {
-    double r_min;
-    double r_max;
-    int grid_number;
-    double delta_r;
-    double sigma_0;
-    double sigma_power_law_index;
-    double alpha_parameter;
-    double stellar_mass;
-    double disk_mass;
-    double h_aspect_ratio; 
-    double flaring_index; 
-    double r_dze_i;
-    double r_dze_o;
-    double dr_dze_i;
-    double dr_dze_o;
-    double alpha_parameter_modification; 
-    double particle_density; 
-    double particle_density_dimensionless;
-    double *radial_grid;          
-    double *gas_surface_density_vector;
-    double *gas_pressure_vector;     
-    double *gas_pressure_gradient_vector; 
-    double *gas_velocity_vector;         
-    double fragmentation_factor;   
-    double fragmentation_velocity; 
-    double drift_factor;         
+    double r_min;                         /**< Inner radius of the simulation domain [AU]. */
+    double r_max;                         /**< Outer radius of the simulation domain [AU]. */
+    int    grid_number;                   /**< Number of radial grid points. */
+    double delta_r;                       /**< Radial grid spacing [AU]. */
+    double sigma_0;                       /**< Gas surface density normalization at 1 AU. */
+    double sigma_power_law_index;         /**< Exponent of the gas surface density power law. */
+    double alpha_parameter;               /**< Shakura–Sunyaev viscosity parameter α. */
+    double stellar_mass;                  /**< Stellar mass [M_sun]. */
+    double disk_mass;                     /**< Total disk mass [M_sun]. */
+    double h_aspect_ratio;                /**< Disk aspect ratio H/R at reference radius. */
+    double flaring_index;                 /**< Disk flaring index (temperature gradient). */
+    double r_dze_i;                       /**< Inner dead‑zone edge radius [AU]. */
+    double r_dze_o;                       /**< Outer dead‑zone edge radius [AU]. */
+    double dr_dze_i;                      /**< Width of inner dead‑zone transition [AU]. */
+    double dr_dze_o;                      /**< Width of outer dead‑zone transition [AU]. */
+    double alpha_parameter_modification;  /**< α‑viscosity reduction factor inside dead zones. */
+    double particle_density;              /**< Dust particle material density [g/cm³]. */
+    double particle_density_dimensionless;/**< Dimensionless dust density (code units). */
+    double *radial_grid;                  /**< Radial grid array [AU]. */
+    double *gas_surface_density_vector;   /**< Gas surface density at each grid point. */
+    double *gas_pressure_vector;          /**< Gas pressure at each grid point. */
+    double *gas_pressure_gradient_vector; /**< Radial pressure gradient dP/dr. */
+    double *gas_velocity_vector;          /**< Radial gas velocity profile. */
+    double fragmentation_factor;          /**< Mass reduction factor after fragmentation. */
+    double fragmentation_velocity;        /**< Fragmentation threshold velocity [m/s]. */
+    double drift_factor;                  /**< Scaling factor for dust drift speed. */        
 } DiskParameters;
 
+/**
+ * @brief User‑defined simulation options and runtime configuration.
+ *
+ * This structure contains all high‑level simulation settings, including
+ * which physical modules are enabled, time‑stepping parameters, and
+ * input/output file paths.
+ */
 typedef struct {
-    double option_for_evolution;  
-    double option_for_dust_drift;  
-    double option_for_dust_growth; 
-    double option_for_dust_secondary_population; 
-    double flag_for_deadzone;   
-    double user_defined_time_step;
-    double maximum_simulation_time; 
-    double output_frequency;      
-    int number_of_dust_particles;
-    char input_filename[MAX_PATH_LEN]; 
-    char output_dir_name[MAX_PATH_LEN];
-    char dust_input_filename[MAX_PATH_LEN]; 
+    double option_for_evolution;              /**< Enable/disable gas evolution. */
+    double option_for_dust_drift;             /**< Enable/disable dust drift module. */
+    double option_for_dust_growth;            /**< Enable/disable dust growth module. */
+    double option_for_dust_secondary_population; /**< Enable micron‑dust population. */
+    double flag_for_deadzone;                 /**< Enable/disable dead‑zone physics. */
+    double user_defined_time_step;            /**< Fixed time step (if > 0). */
+    double maximum_simulation_time;           /**< Maximum simulation time [years]. */
+    double output_frequency;                  /**< Snapshot output frequency. */
+    int number_of_dust_particles;             /**< Number of dust particles to simulate. */
+    char input_filename[MAX_PATH_LEN];        /**< Path to gas input file. */
+    char output_dir_name[MAX_PATH_LEN];       /**< Output directory for results. */
+    char dust_input_filename[MAX_PATH_LEN];   /**< Path to dust input file. */
 } SimulationOptions;
 
-
+/**
+ * @brief File handles for all simulation output streams.
+ *
+ * This structure groups all open file pointers used to write simulation
+ * results, allowing centralized management and cleanup.
+ */
 typedef struct {
-    FILE *dust_motion_file;      
-    FILE *micron_motion_file;   
-    FILE *mass_file;            
-    FILE *surface_file;         
-    FILE *dust_file;            
-    FILE *micron_dust_file;     
-    FILE *size_file; 
+    FILE *dust_motion_file;       /**< Drift velocities of dust particles. */
+    FILE *micron_motion_file;     /**< Drift velocities of micron‑sized dust. */
+    FILE *mass_file;              /**< Dust mass evolution output. */
+    FILE *surface_file;           /**< Gas surface density and pressure output. */
+    FILE *dust_file;              /**< Dust surface density output. */
+    FILE *micron_dust_file;       /**< Micron dust surface density output. */
+    FILE *size_file;              /**< Dust particle size distribution output. */
 } OutputFiles;
 
+/**
+ * @brief Enumeration of available snapshot output modes.
+ *
+ * These modes determine which physical modules produce output during
+ * the simulation (gas, drift, growth, two‑population models, etc.).
+ */
 typedef enum {
-    SnapshotNonevolving = 0,
-    SnapshotGas = 1,
-    SnapshotDrift = 2,
-    SnapshotGrowth = 3,
-    SnapshotDriftTwoPop = 4,
-    SnapshotGrowthTwoPop = 5
+    SnapshotNonevolving     = 0,    /**< No snapshots written. */
+    SnapshotGas             = 1,    /**< Gas‑only snapshots. */
+    SnapshotDrift           = 2,    /**< Dust drift snapshots. */
+    SnapshotGrowth          = 3,    /**< Dust growth snapshots. */
+    SnapshotDriftTwoPop     = 4,    /**< Drift snapshots for two dust populations. */
+    SnapshotGrowthTwoPop    = 5     /**< Growth snapshots for two dust populations. */
+
 } SnapshotMode;
 
+/**
+ * @brief Determines the snapshot mode based on simulation options.
+ *
+ * @param sim_opts Pointer to SimulationOptions.
+ * @return The selected SnapshotMode.
+ */
 SnapshotMode determineSnapshotMode(const SimulationOptions *sim_opts);
-const char* snapshotModeToString(SnapshotMode mode);
 
+/**
+ * @brief Converts a SnapshotMode value to a human‑readable string.
+ *
+ * @param mode Snapshot mode enumeration value.
+ * @return String representation of the mode.
+ */
+const char* snapshotModeToString(SnapshotMode mode);
 
 /**
  * @struct PressureTrap
- * @brief Data structure characterizing gas pressure maxima and the localized dust accumulation.
+ * @brief Data structure representing a gas pressure maximum and its dust accumulation.
  *
- * In protoplanetary disks, pressure maxima occur where the radial gas pressure gradient 
- * vanishes (transitioning from positive to negative values). These regions act as 
- * "dust traps" by halting the inward radial drift of solid particles, making them 
- * prime locations for planetesimal formation.
- * * This structure stores the precise location of the trap, its defined measurement 
- * boundaries, and the mass of various dust populations collected within.
+ * Pressure maxima in protoplanetary disks act as "dust traps" by halting
+ * inward drift of solids. This structure stores the trap location, its
+ * integration boundaries, and the mass of dust accumulated within it.
  */
 typedef struct {
-    /** @brief Radial position of the pressure maximum [AU].
-     * Determined by finding the root (zero-crossing) of the gas pressure gradient. */
-    double radial_position;             
-
-    /** @brief Inner boundary of the measurement annulus [AU].
-     * Defines the starting radius for integrating the dust mass around the trap. */
-    double inner_boundary;              
-
-    /** @brief Outer boundary of the measurement annulus [AU].
-     * Defines the ending radius for integrating the dust mass around the trap. */
-    double outer_boundary;              
-    
-    /** @brief Total mass of the primary (cm-sized) dust population [M_sun]. */
-    double primary_dust_mass;           
-    
-    /** @brief Total mass of the secondary (micron-sized) dust population [M_sun]. */
-    double secondary_dust_mass;         
-    
-    /** @brief Combined mass of all dust populations within the trap [M_sun].
-     * Calculated as primary_dust_mass + secondary_dust_mass. */
-    double total_dust_mass;             
-    
-    /** @brief Unique identifier for the trap within the current timestep. 
-     * Essential for tracking multiple features (e.g., DZE edges vs. planet-carved gaps). */
-    int trap_id;                        
+    double radial_position;      /**< Radial location of the pressure maximum [AU]. */
+    double inner_boundary;       /**< Inner integration boundary [AU]. */
+    double outer_boundary;       /**< Outer integration boundary [AU]. */
+    double primary_dust_mass;    /**< Mass of cm‑sized dust in the trap [M_sun]. */
+    double secondary_dust_mass;  /**< Mass of micron‑sized dust in the trap [M_sun]. */
+    double total_dust_mass;      /**< Total dust mass (primary + secondary) [M_sun]. */
+    int trap_id;                 /**< Unique identifier for the trap. */                     
 } PressureTrap;
 
 #endif // SIMULATION_TYPES_H

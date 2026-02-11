@@ -24,7 +24,9 @@
  * @param[in]  disk_params              Pointer to global disk parameters.
  * @return void
  */
-void parabolicExtrapolationToGhostCells(double *input_vector, int reference_index1, int reference_index2, int reference_index3, double *out_coefficient_quadratic, double *out_coefficient_linear, double *out_coefficient_constant, double grid_spacing, const DiskParameters *disk_params);
+void parabolicExtrapolationToGhostCells(double *input_vector, int reference_index1, int reference_index2, int reference_index3, 
+	                                    double *out_coefficient_quadratic, double *out_coefficient_linear, double *out_coefficient_constant, 
+	                                    double grid_spacing, const DiskParameters *disk_params);
 
 /**
  * @brief Applies physical and numerical boundary conditions to a given field.
