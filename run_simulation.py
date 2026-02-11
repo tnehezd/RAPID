@@ -136,65 +136,78 @@ def main():
         "mic_val": 1e-4,
         "onesize_val": 0.0,
         "pdensity_val": 1.6,
+        "output_format": "txt",
     }
 
     all_params = default_options.copy()
 
-    # Load parameters from YAML
-    if "simulation_parameters" in full_config:
-        yaml_params = full_config["simulation_parameters"]
+    # YAML nested sections
+    yaml_sections = [
+        "simulation_parameters",
+        "disk_parameters",
+        "deadzone_parameters",
+        "dust_parameters",
+        "output_parameters",
+        "time_parameters"
+    ]
 
-        # Map YAML keys to C's `options_t` struct members.
-        yaml_to_c_mapping = {
-            # Simulation Control Options (new names, mapped to C's internal names)
-            "enable_dust_drift": "drift",
-            "enable_dust_growth": "growth",
-            "enable_gas_evolution": "evol",
-            "enable_two_dust_populations": "twopop",
-            "fragmentation_velocity": "ufrag",
-            "fragmentation_factor": "ffrag",
+    # YAML → C mapping 
+    yaml_to_c_mapping = {
+        "enable_dust_drift": "drift",
+        "enable_dust_growth": "growth",
+        "enable_gas_evolution": "evol",
+        "enable_two_dust_populations": "twopop",
+        "fragmentation_velocity": "ufrag",
+        "fragmentation_factor": "ffrag",
 
-            # Grid and Disk Initial Parameters (new names)
-            "number_of_grid_points": "ngrid_val",
-            "number_of_dust_particles": "ndust_val", # <--- MODIFIED: Mapped to 'ndust_val'
-            "inner_radius_au": "rmin_val",
-            "outer_radius_au": "rmax_val",
-            "initial_gas_sigma0_msun_per_au2": "sigma0_val",
-            "sigma_profile_exponent": "sigmap_exp_val",
-            "alpha_viscosity": "alpha_visc_val",
-            "star_mass_msun": "star_val",
-            "aspect_ratio_at_1au": "hasp_val",
-            "flaring_index": "flind_val",
+        "number_of_grid_points": "ngrid_val",
+        "number_of_dust_particles": "ndust_val",
+        "inner_radius_au": "rmin_val",
+        "outer_radius_au": "rmax_val",
+        "initial_gas_sigma0_msun_per_au2": "sigma0_val",
+        "sigma_profile_exponent": "sigmap_exp_val",
+        "alpha_viscosity": "alpha_visc_val",
+        "star_mass_msun": "star_val",
+        "aspect_ratio_at_1au": "hasp_val",
+        "flaring_index": "flind_val",
 
-            # Dead Zone Parameters (new names)
-            "deadzone_inner_radius_au": "r_dze_i_val",
-            "deadzone_outer_radius_au": "r_dze_o_val",
-            "deadzone_inner_transition_width_mult": "dr_dze_i_val",
-            "deadzone_outer_transition_width_mult": "dr_dze_o_val",
-            "deadzone_alpha_reduction": "a_mod_val",
+        "deadzone_inner_radius_au": "r_dze_i_val",
+        "deadzone_outer_radius_au": "r_dze_o_val",
+        "deadzone_inner_transition_width_mult": "dr_dze_i_val",
+        "deadzone_outer_transition_width_mult": "dr_dze_o_val",
+        "deadzone_alpha_reduction": "a_mod_val",
 
-            # Dust Initialization Parameters (new names)
-            "initial_dust_to_gas_ratio": "eps_val",
-            "population_one_mass_ratio": "ratio_val",
-            "micro_particle_size_cm": "mic_val",
-            "one_size_particle_value_cm": "onesize_val",
-            "dust_particle_density_g_cm3": "pdensity_val",
+        "initial_dust_to_gas_ratio": "eps_val",
+        "population_one_mass_ratio": "ratio_val",
+        "micro_particle_size_cm": "mic_val",
+        "one_size_particle_value_cm": "onesize_val",
+        "dust_particle_density_g_cm3": "pdensity_val",
 
-            # File I/O Parameters (new names)
-            "input_file_path": "input_file",
-            "output_directory_name": "output_dir_name",
+        "input_file_path": "input_file",
+        "output_directory_name": "output_dir_name",
+        "output_format": "output_format",
 
-            # Time Parameters (new names)
-            "fixed_time_step": "tStep",
-            "total_simulation_time": "totalTime",
-            "output_write_frequency": "outputFrequency",
-        }
+        "fixed_time_step": "tStep",
+        "total_simulation_time": "totalTime",
+        "output_write_frequency": "outputFrequency",
+    }
 
-        for yaml_key, c_key in yaml_to_c_mapping.items():
-            if yaml_key in yaml_params:
-                all_params[c_key] = yaml_params[yaml_key]
-    else:
-        print("Warning: 'simulation_parameters' section missing from YAML. Using defaults.")
+    # Flag: does the file contain one even section
+    found_any_section = False
+
+    # Read all the sections
+    for section in yaml_sections:
+        if section in full_config:
+            found_any_section = True
+            yaml_params = full_config[section]
+            for yaml_key, c_key in yaml_to_c_mapping.items():
+                if yaml_key in yaml_params:
+                    all_params[c_key] = yaml_params[yaml_key]
+
+    # If none of the above sections found:
+    if not found_any_section:
+        print("Warning: No recognized parameter sections found in YAML. Using defaults.")
+
 
     # C program argument mapping
     # These keys are the keys in the Python `all_params` dictionary (now matching C struct member names),
@@ -222,6 +235,8 @@ def main():
 
         # File I/O Parameters
         "input_file": "-i", "output_dir_name": "-o",
+        "output_format": "--output-format",
+
 
         # Time Parameters
         "tStep": "-tStep", "totalTime": "-tmax", "outputFrequency": "-outfreq"
