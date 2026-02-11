@@ -77,3 +77,4 @@ VERBATIM_HEADERS       = NO
 
 # Other minor settings
 DOXYFILE_ENCODING      = UTF-8
+SHOW_INCLUDE_FILES = NO

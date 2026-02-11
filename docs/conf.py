@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.abspath('../xml')) # <--- CORRECTED: This adds 'docs/
 project = 'RAPID Simulation code'
 copyright = '2026, D. Tarczay-Nehez'
 author = 'D. Tarczay-Nehez'
-release = '2.2.0-beta'
+release = '2.3.0.'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -32,6 +32,10 @@ extensions = [
 
 templates_path = ['_templates']
 exclude_patterns = []
+
+breathe_default_members = ('members', 'undoc-members')
+breathe_show_include = False
+
 
 # If you chose separate source and build directories during sphinx-quickstart,
 # '_static' is usually created inside 'source/'.
