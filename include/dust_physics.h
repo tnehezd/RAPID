@@ -117,7 +117,7 @@ double calculateGrowthTimescale(double radial_distance, double dust_to_gas_ratio
  * @param disk_params           	Pointer to disk parameter structure.
  * @return Updated particle radius after growth.
  */
-double calculateDustParticleSize(double particle_radius, double pdens, double gas_surfacedensity, double dust_surfacedensity, double particle_distance, double gas_pressure, double gas_pressure_gradient, double actual_timestep, const DiskParameters *disk_params);
+double calculateDustParticleSize(double particle_radius, double particle_density, double gas_surfacedensity, double dust_surfacedensity, double particle_distance, double gas_pressure, double gas_pressure_gradient, double actual_timestep, const DiskParameters *disk_params);
 
 /**
  * @brief Computes the dust surface density profile from particle data.
