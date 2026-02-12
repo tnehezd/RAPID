@@ -27,7 +27,7 @@ void writeHDF5Snapshot(const SimulationOptions *sim_opts, OutputFiles *output_fi
 
 
 
-void writeHDF5SnapshotToFile(hid_t file_id, const SimulationOptions *sim_opts,
+void writeHDF5SnapshotToFile(double time, hid_t file_id, const SimulationOptions *sim_opts,
                              DiskParameters *disk_params, ParticleData *particle_data);
 
 /**

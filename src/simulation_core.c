@@ -153,7 +153,7 @@ static void handleSnapshotASCII(double t, double current_time_years, double *sna
 
 }
 
-static void handleSnapshotHDF5(double *t, double current_time_years, double *snapshot,
+static void handleSnapshotHDF5(double t, double current_time_years, double *snapshot,
                                const SimulationOptions *sim_opts, OutputFiles *output_files,
                                DiskParameters *disk_params, ParticleData *particle_data)
 {
@@ -170,7 +170,7 @@ static void handleSnapshotHDF5(double *t, double current_time_years, double *sna
     // Write datasets to the already opened file
     if (particle_data != NULL) {
         hid_t file_id = (hid_t)(intptr_t)output_files->hdf5_file;
-        writeHDF5SnapshotToFile(file_id, sim_opts, disk_params, particle_data);
+        writeHDF5SnapshotToFile(t,file_id, sim_opts, disk_params, particle_data);
     }
 
     // Close file
@@ -197,7 +197,7 @@ static void simulateDustDriftStep(double *t, double deltat, double *snapshot, Pa
             handleSnapshotASCII(*t, current_time_years, snapshot,particle_data,particle_number,disk_params,sim_opts,
                                 output_files,dens_name,dust_name,dust_name2,size_name);
         } else {
-            handleSnapshotHDF5(t, current_time_years, snapshot, sim_opts, output_files, disk_params, particle_data);
+            handleSnapshotHDF5(*snapshot, current_time_years, snapshot, sim_opts, output_files, disk_params, particle_data);
         }
 
     }
@@ -256,7 +256,7 @@ static void simulateGasOnlyStep(double *t,double deltat,double *snapshot,DiskPar
                 output_files->surface_file = NULL;
             } else {
             
-                handleSnapshotHDF5(t, current_time_years, snapshot, sim_opts, output_files, disk_params, NULL);
+                handleSnapshotHDF5(*snapshot, current_time_years, snapshot, sim_opts, output_files, disk_params, NULL);
             
             }
         }
