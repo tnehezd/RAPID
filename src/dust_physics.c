@@ -174,10 +174,13 @@ void calculateDustDistance(const char *file_name, ParticleData *particle_data, d
                 particle_data->particle_distance_array[i][1] = particle_radius_new;
                 particle_data->particle_distance_array[i][0] = particle_distance_new;
             } else {
-                particle_data->particle_distance_array[i][0] = particle_distance_new;
+//                particle_data->particle_distance_array[i][1] = particle_radius_new;
+//                particle_data->particle_distance_array[i][0] = particle_distance_new;
             }
         } else {
             particle_data->particle_distance_array[i][0] = 0.0;
+            particle_data->particle_distance_array[i][1] = 0.0;
+
         }
     }
 

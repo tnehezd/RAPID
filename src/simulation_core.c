@@ -157,22 +157,23 @@ static void handleSnapshotHDF5(double *t, double current_time_years, double *sna
                                const SimulationOptions *sim_opts, OutputFiles *output_files,
                                DiskParameters *disk_params, ParticleData *particle_data)
 {
-    char filename[MAX_PATH_LEN];
-    snprintf(filename, MAX_PATH_LEN, "%s/snapshot_%08d.h5", sim_opts->output_dir_name, (int)(*snapshot));
+    char *filename = NULL;
+    asprintf(&filename, "%s/%s/snapshot_%08d.h5",
+             sim_opts->output_dir_name, kLogFilesDirectory, (int)(*snapshot));
 
-    // 1️⃣ Init file
+    // Init file
     if (initHDF5File(filename, output_files) != 0) {
         fprintf(stderr, "ERROR: Could not initialize HDF5 file %s\n", filename);
         return;
     }
 
-    // 2️⃣ Write datasets to the already opened file
+    // Write datasets to the already opened file
     if (particle_data != NULL) {
         hid_t file_id = (hid_t)(intptr_t)output_files->hdf5_file;
-        writeHDF5SnapshotToFile(file_id, sim_opts, disk_params, particle_data); // új verzió, ami **nem csinál H5Fcreate-t**
+        writeHDF5SnapshotToFile(file_id, sim_opts, disk_params, particle_data);
     }
 
-    // 3️⃣ Close file
+    // Close file
     closeHDF5File(output_files);
 
     (*snapshot) += (double)(sim_opts->maximum_simulation_time / sim_opts->output_frequency);

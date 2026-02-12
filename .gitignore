@@ -8,6 +8,7 @@ plot_hdf5.py
 
 .ipynb_checkpoints
 
+snap*.csv
 *.o
 *.a
 *.so
