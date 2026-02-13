@@ -3,10 +3,115 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <hdf5.h>
+
 
 #include "particle_data.h"
 #include "config.h"
 #include "utils.h"
+
+#include "hdf5_output.h"
+
+#define MAX_TRAPS 5
+
+static hid_t ts_file;
+static hid_t ts_group;
+static hid_t dset_time, dset_m1, dset_m2, dset_mtot, dset_trap_pos;
+
+void initializeMassTimeSeries(const char *filename)
+{
+    ts_file = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+
+    ts_group = H5Gcreate(ts_file, "/trap_evolution",
+                         H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
+    hsize_t dims[2]    = {0, MAX_TRAPS};
+    hsize_t maxdims[2] = {H5S_UNLIMITED, MAX_TRAPS};
+
+    hid_t dataspace = H5Screate_simple(2, dims, maxdims);
+    hid_t plist = H5Pcreate(H5P_DATASET_CREATE);
+
+    hsize_t chunk_dims[2] = {128, MAX_TRAPS};
+    H5Pset_chunk(plist, 2, chunk_dims);
+
+    dset_time = H5Dcreate(ts_group, "time", H5T_NATIVE_DOUBLE,
+                          dataspace, H5P_DEFAULT, plist, H5P_DEFAULT);
+
+    dset_m1 = H5Dcreate(ts_group, "primary_mass", H5T_NATIVE_DOUBLE,
+                        dataspace, H5P_DEFAULT, plist, H5P_DEFAULT);
+
+    dset_m2 = H5Dcreate(ts_group, "secondary_mass", H5T_NATIVE_DOUBLE,
+                        dataspace, H5P_DEFAULT, plist, H5P_DEFAULT);
+
+    dset_mtot = H5Dcreate(ts_group, "total_mass", H5T_NATIVE_DOUBLE,
+                          dataspace, H5P_DEFAULT, plist, H5P_DEFAULT);
+
+    dset_trap_pos = H5Dcreate(ts_group, "trap_position", H5T_NATIVE_DOUBLE,
+                              dataspace, H5P_DEFAULT, plist, H5P_DEFAULT);
+
+    H5Sclose(dataspace);
+    H5Pclose(plist);
+}
+
+void appendMassTimeSeries(double snapshot,
+                          double m1[MAX_TRAPS],
+                          double m2[MAX_TRAPS],
+                          double mtot[MAX_TRAPS],
+                          double trap_pos[MAX_TRAPS])
+{
+    static size_t ts_row = 0;
+
+    hsize_t new_size[2] = { ts_row + 1, MAX_TRAPS };
+
+    H5Dset_extent(dset_time, new_size);
+    H5Dset_extent(dset_m1, new_size);
+    H5Dset_extent(dset_m2, new_size);
+    H5Dset_extent(dset_mtot, new_size);
+    H5Dset_extent(dset_trap_pos, new_size);
+
+    hid_t filespace = H5Dget_space(dset_time);
+
+    hsize_t start[2] = { ts_row, 0 };
+    hsize_t count[2] = { 1, MAX_TRAPS };
+
+    H5Sselect_hyperslab(filespace, H5S_SELECT_SET, start, NULL, count, NULL);
+
+    hid_t memspace = H5Screate_simple(2, count, NULL);
+
+    double time_row[MAX_TRAPS];
+    for (int i = 0; i < MAX_TRAPS; i++)
+        time_row[i] = snapshot;
+
+    H5Dwrite(dset_time, H5T_NATIVE_DOUBLE, memspace, filespace, H5P_DEFAULT, time_row);
+    H5Dwrite(dset_m1,   H5T_NATIVE_DOUBLE, memspace, filespace, H5P_DEFAULT, m1);
+    H5Dwrite(dset_m2,   H5T_NATIVE_DOUBLE, memspace, filespace, H5P_DEFAULT, m2);
+    H5Dwrite(dset_mtot, H5T_NATIVE_DOUBLE, memspace, filespace, H5P_DEFAULT, mtot);
+
+    hid_t filespace_trap = H5Dget_space(dset_trap_pos);
+    H5Sselect_hyperslab(filespace_trap, H5S_SELECT_SET, start, NULL, count, NULL);
+    H5Dwrite(dset_trap_pos, H5T_NATIVE_DOUBLE, memspace, filespace_trap, H5P_DEFAULT, trap_pos);
+
+    H5Sclose(memspace);
+    H5Sclose(filespace);
+    H5Sclose(filespace_trap);
+
+    H5Fflush(ts_file, H5F_SCOPE_GLOBAL);
+
+    ts_row++;
+}
+
+void closeMassTimeSeries()
+{
+    H5Dclose(dset_time);
+    H5Dclose(dset_m1);
+    H5Dclose(dset_m2);
+    H5Dclose(dset_mtot);
+    H5Dclose(dset_trap_pos);
+
+    H5Gclose(ts_group);
+    H5Fclose(ts_file);
+}
+
 
 int initHDF5File(const char *filename, OutputFiles *output_files) {
     if (!filename || !output_files) return 1;
