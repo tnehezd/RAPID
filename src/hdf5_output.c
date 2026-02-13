@@ -6,6 +6,7 @@
 
 #include "particle_data.h"
 #include "config.h"
+#include "utils.h"
 
 int initHDF5File(const char *filename, OutputFiles *output_files) {
     if (!filename || !output_files) return 1;
@@ -231,12 +232,7 @@ void writeHDF5SnapshotToFile(double time, hid_t file_id, const SimulationOptions
     H5Aclose(attr_time);
     H5Sclose(attr_space_time);
     H5Tclose(attr_type_time);
-
-
-
     H5Gclose(group_frame);
-
-
 
 }
 

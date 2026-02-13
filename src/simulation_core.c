@@ -20,6 +20,90 @@
 #include "hdf5_output.h"
 
 
+#include <hdf5.h>
+
+hid_t ts_file;
+hid_t ts_group;
+hid_t dset_time, dset_m1, dset_m2, dset_mtot;
+
+static void initializeMassTimeSeries(const char *filename) {
+
+    ts_file = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+
+    ts_group = H5Gcreate(ts_file, "/trap_evolution",
+                         H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
+    hsize_t dims[1]     = {0};
+    hsize_t maxdims[1]  = {H5S_UNLIMITED};
+
+    hid_t dataspace = H5Screate_simple(1, dims, maxdims);
+
+    hid_t plist = H5Pcreate(H5P_DATASET_CREATE);
+
+    hsize_t chunk_dims[1] = {128};   // chunk size
+    H5Pset_chunk(plist, 1, chunk_dims);
+
+    dset_time = H5Dcreate(ts_group, "time", H5T_NATIVE_DOUBLE,
+                          dataspace, H5P_DEFAULT, plist, H5P_DEFAULT);
+
+    dset_m1 = H5Dcreate(ts_group, "primary_mass", H5T_NATIVE_DOUBLE,
+                        dataspace, H5P_DEFAULT, plist, H5P_DEFAULT);
+
+    dset_m2 = H5Dcreate(ts_group, "secondary_mass", H5T_NATIVE_DOUBLE,
+                        dataspace, H5P_DEFAULT, plist, H5P_DEFAULT);
+
+    dset_mtot = H5Dcreate(ts_group, "total_mass", H5T_NATIVE_DOUBLE,
+                          dataspace, H5P_DEFAULT, plist, H5P_DEFAULT);
+
+    H5Sclose(dataspace);
+    H5Pclose(plist);
+}
+
+#include <hdf5.h>
+
+// Biztonságos append MassTimeSeries HDF5-be
+static void appendMassTimeSeries(double snapshot, double m1, double m2, double mtot) {
+    hsize_t new_size[1] = {snapshot + 1};
+
+    // Bővítés
+    H5Dset_extent(dset_time, new_size);
+    H5Dset_extent(dset_m1, new_size);
+    H5Dset_extent(dset_m2, new_size);
+    H5Dset_extent(dset_mtot, new_size);
+
+    hid_t filespace = H5Dget_space(dset_time);
+    hsize_t start[1] = {snapshot};
+    hsize_t count[1] = {1};
+    H5Sselect_hyperslab(filespace, H5S_SELECT_SET, start, NULL, count, NULL);
+
+    hid_t memspace = H5Screate_simple(1, count, NULL);
+
+    H5Dwrite(dset_time, H5T_NATIVE_DOUBLE, memspace, filespace, H5P_DEFAULT, &snapshot);
+    H5Dwrite(dset_m1, H5T_NATIVE_DOUBLE, memspace, filespace, H5P_DEFAULT, &m1);
+    H5Dwrite(dset_m2, H5T_NATIVE_DOUBLE, memspace, filespace, H5P_DEFAULT, &m2);
+    H5Dwrite(dset_mtot, H5T_NATIVE_DOUBLE, memspace, filespace, H5P_DEFAULT, &mtot);
+
+    // Fontos: flush minden írás után
+    H5Fflush(ts_file, H5F_SCOPE_GLOBAL);
+
+    H5Sclose(memspace);
+    H5Sclose(filespace);
+}
+
+
+static void closeMassTimeSeries(){
+    H5Dclose(dset_time);
+    H5Dclose(dset_m1);
+    H5Dclose(dset_m2);
+    H5Dclose(dset_mtot);
+
+    H5Gclose(ts_group);
+    H5Fclose(ts_file);
+}
+
+
+
+
 void calculate1DDustDrift(double particle_radius, double pressure_gradient, double gas_surface_density, double gas_velocity, double radial_distance, double *drift_velocity, const DiskParameters *disk_params) {
 
     double local_pressure, local_pressure_scaleheight, local_pressure_gradient, stokes_number, local_soundspeed;
@@ -198,6 +282,45 @@ static void simulateDustDriftStep(double *t, double deltat, double *snapshot, Pa
                                 output_files,dens_name,dust_name,dust_name2,size_name);
         } else {
             handleSnapshotHDF5(*snapshot, current_time_years, snapshot, sim_opts, output_files, disk_params, particle_data);
+            // ---- TRAP MASS EVOLUTION (HDF5 time series) ----
+
+            PressureTrap current_traps[3];
+            int num_found = identifyPressureTraps(disk_params, current_traps, 3);
+
+            double primary_mass = 0.0;
+            double secondary_mass = 0.0;
+            double total_mass = 0.0;
+
+            for (int k = 0; k < num_found; k++) {
+
+                if (current_traps[k].radial_position > 0.0) {
+
+                    double local_H = calculatePressureScaleHeight(
+                        current_traps[k].radial_position,
+                        disk_params);
+
+                    current_traps[k].inner_boundary =
+                        current_traps[k].radial_position - local_H;
+
+                    current_traps[k].outer_boundary =
+                        current_traps[k].radial_position + local_H;
+
+                    calculateMassInSpecificTrap(
+                        &current_traps[k],
+                        particle_data,
+                        particle_number,
+                        sim_opts);
+
+                        primary_mass   += current_traps[k].primary_dust_mass;
+                        secondary_mass += current_traps[k].secondary_dust_mass;
+                        total_mass     += current_traps[k].total_dust_mass;
+
+                }
+            }
+
+            total_mass = primary_mass + secondary_mass;
+
+            appendMassTimeSeries(*snapshot, primary_mass, secondary_mass, total_mass);
         }
 
     }
@@ -329,6 +452,26 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
         }
     }
 
+
+
+    // ---- Time series init ----
+
+    if (sim_opts->output_format == OUTPUT_HDF5) {
+        char *ts_filename = NULL;
+
+        if (asprintf(&ts_filename,
+                     "%s/%s/time_series.h5",
+                     sim_opts->output_dir_name,
+                     kLogFilesDirectory) == -1) {
+            fprintf(stderr, "ERROR: asprintf failed for time_series filename\n");
+            exit(EXIT_FAILURE);
+        }
+
+        initializeMassTimeSeries(ts_filename);
+        free(ts_filename);
+
+    }
+
     do {
         if (mode > 1) {
             simulateDustDriftStep(&t, deltat, &snapshot, &particle_data, particle_number, disk_params, sim_opts, output_files, dens_name, dust_name, dust_name2, size_name );
@@ -336,6 +479,11 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
             simulateGasOnlyStep(&t, deltat, &snapshot,disk_params, sim_opts, output_files,dens_name);
         }    
     } while (t <= t_integration_in_internal_units);
+
+    if (sim_opts->output_format == OUTPUT_HDF5) {
+   
+        closeMassTimeSeries();
+    }
 
     fprintf(stderr,"\n\nDEBUG [timeIntegrationForTheSystem]: Main simulation loop finished (t > t_integration_in_internal_units).\n");
     cleanupSimulationResources(&particle_data, output_files);
