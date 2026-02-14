@@ -281,13 +281,13 @@ void printCurrentInformationAboutRun(const char *directory_name, const DiskParam
     if (full_path) free(full_path);
 }
 
-void printTrapMassEvolution(double snapshot, int num_found, const PressureTrap *traps, OutputFiles *output_files) {
+void printTrapMassEvolution(double output_time, int num_found, const PressureTrap *traps, OutputFiles *output_files) {
     
     if (output_files->mass_file == NULL) return;
 
     // Idő (Év)
 
-    fprintf(output_files->mass_file, "%-10.0f", snapshot);
+    fprintf(output_files->mass_file, "%-10.0f", output_time);
 
     // Végigmegyünk az 5 lehetséges sloton
     for (int i = 0; i < 3; i++) {
@@ -528,33 +528,41 @@ void printFinalSimulationSummary(const char *directory_name, double elapsed_seco
 
 int setupInitialOutputFiles(OutputFiles *output_files, const SimulationOptions *sim_opts,
                                const DiskParameters *disk_params, HeaderData *header_data_for_files) {
-    char *mass_output = NULL;
 
-    header_data_for_files->current_time = 0.0;
-    header_data_for_files->is_initial_data = 1;
-    header_data_for_files->R_in = disk_params->r_min;
-    header_data_for_files->R_out = disk_params->r_max;
+    if(OUTPUT_HDF5){ 
+        return 0;
+    } else {
+        char *mass_output = NULL;
 
-    asprintf(&mass_output, "%s/%s/%s%s", sim_opts->output_dir_name, kLogFilesDirectory, kDustAccumulationFileName, kFileNamesSuffix);
-    fprintf(stderr, "DEBUG [setupInitialOutputFiles]: Paths:\n  Mass: %s\n", mass_output);
+        header_data_for_files->current_time = 0.0;
+        header_data_for_files->is_initial_data = 1;
+        header_data_for_files->R_in = disk_params->r_min;
+        header_data_for_files->R_out = disk_params->r_max;
 
-    output_files->mass_file = fopen(mass_output, "w");
-    if (output_files->mass_file == NULL) {
-        fprintf(stderr, "ERROR: Could not open %s\n", mass_output);
-        goto cleanup_error;
+        asprintf(&mass_output, "%s/%s/%s%s", sim_opts->output_dir_name, kLogFilesDirectory, kDustAccumulationFileName, kFileNamesSuffix);
+        fprintf(stderr, "DEBUG [setupInitialOutputFiles]: Paths:\n  Mass: %s\n", mass_output);
+
+        output_files->mass_file = fopen(mass_output, "w");
+        if (output_files->mass_file == NULL) {
+            fprintf(stderr, "ERROR: Could not open %s\n", mass_output);
+            goto cleanup_error;
+        }
+
+        printFileHeader(output_files->mass_file, FILE_TYPE_MASS_ACCUMULATION, header_data_for_files);
+        free(mass_output);
+
+        return 0;
+
+        
+
+    cleanup_error:
+        if (output_files->mass_file) fclose(output_files->mass_file);
+        
+        if (mass_output) free(mass_output);
+        
+        return 1;
+
     }
-
-    printFileHeader(output_files->mass_file, FILE_TYPE_MASS_ACCUMULATION, header_data_for_files);
-    free(mass_output);
-
-    return 0;
-
-cleanup_error:
-    if (output_files->mass_file) fclose(output_files->mass_file);
-    
-    if (mass_output) free(mass_output);
-    
-    return 1;
 }
 
 void cleanupSimulationResources(ParticleData *particle_data, OutputFiles *output_files) {

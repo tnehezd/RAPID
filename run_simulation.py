@@ -136,7 +136,7 @@ def main():
         "mic_val": 1e-4,
         "onesize_val": 0.0,
         "pdensity_val": 1.6,
-        "output_format": "txt",
+        "output_format": "ascii",
     }
 
     all_params = default_options.copy()

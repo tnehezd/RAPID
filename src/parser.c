@@ -89,8 +89,8 @@ void printUsageToTerminal() {
     fprintf(stderr, "  -pdensity <val> Dust particle density (g/cm^3, default: 1.6)\n"); 
     fprintf(stderr, "  -h or --help   Display this help message\n");
     fprintf(stderr, "Output format options:\n");
-    fprintf(stderr, "  --output-format <txt|hdf5>  Select output format (default: txt)\n");
-    fprintf(stderr, "  -txt                        Shortcut for --output-format txt\n");
+    fprintf(stderr, "  --output-format <ascii|hdf5>  Select output format (default: ascii)\n");
+    fprintf(stderr, "  -ascii                        Shortcut for --output-format ascii\n");
     fprintf(stderr, "  -hdf5                       Shortcut for --output-format hdf5\n");
 
 }
@@ -240,12 +240,12 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
         else if (strcmp(argv[i], "--output-format") == 0) {
             i++;
             if (i < argc) {
-                if (strcmp(argv[i], "txt") == 0)
+                if (strcmp(argv[i], "ascii") == 0)
                     opt->output_format = OUTPUT_ASCII;
                 else if (strcmp(argv[i], "hdf5") == 0)
                     opt->output_format = OUTPUT_HDF5;
                 else {
-                    fprintf(stderr, "Error: Unknown output format '%s'. Use txt or hdf5.\n", argv[i]);
+                    fprintf(stderr, "Error: Unknown output format '%s'. Use ascii or hdf5.\n", argv[i]);
                     return 1;
                 }
             } else {
@@ -253,7 +253,7 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
                 return 1;
             }
         }
-        else if (strcmp(argv[i], "-txt") == 0) {
+        else if (strcmp(argv[i], "-ascii") == 0) {
             opt->output_format = OUTPUT_ASCII;
         }
         else if (strcmp(argv[i], "-hdf5") == 0) {

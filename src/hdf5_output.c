@@ -53,7 +53,7 @@ void initializeMassTimeSeries(const char *filename)
     H5Pclose(plist);
 }
 
-void appendMassTimeSeries(double snapshot,
+void appendMassTimeSeries(double output_time,
                           double m1[MAX_TRAPS],
                           double m2[MAX_TRAPS],
                           double mtot[MAX_TRAPS],
@@ -80,7 +80,7 @@ void appendMassTimeSeries(double snapshot,
 
     double time_row[MAX_TRAPS];
     for (int i = 0; i < MAX_TRAPS; i++)
-        time_row[i] = snapshot;
+        time_row[i] = output_time;
 
     H5Dwrite(dset_time, H5T_NATIVE_DOUBLE, memspace, filespace, H5P_DEFAULT, time_row);
     H5Dwrite(dset_m1,   H5T_NATIVE_DOUBLE, memspace, filespace, H5P_DEFAULT, m1);
