@@ -53,12 +53,7 @@ void initializeMassTimeSeries(const char *filename)
     H5Pclose(plist);
 }
 
-void appendMassTimeSeries(double output_time,
-                          double m1[MAX_TRAPS],
-                          double m2[MAX_TRAPS],
-                          double mtot[MAX_TRAPS],
-                          double trap_pos[MAX_TRAPS])
-{
+void appendMassTimeSeries(double output_time, double m1[MAX_TRAPS], double m2[MAX_TRAPS], double mtot[MAX_TRAPS], double trap_pos[MAX_TRAPS]) {
     static size_t ts_row = 0;
 
     hsize_t new_size[2] = { ts_row + 1, MAX_TRAPS };
@@ -250,8 +245,7 @@ void writeHDF5SnapshotToFile(double time, hid_t file_id, const SimulationOptions
         return;
     }
 
-    hid_t dset_time = H5Dcreate2(group_frame, "time", H5T_NATIVE_DOUBLE, space_time,
-                                 H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    hid_t dset_time = H5Dcreate2(group_frame, "time", H5T_NATIVE_DOUBLE, space_time, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     if (dset_time < 0) {
         fprintf(stderr, "ERROR: Could not create /frame/time dataset\n");
         H5Sclose(space_time);
@@ -276,12 +270,7 @@ void writeHDF5SnapshotToFile(double time, hid_t file_id, const SimulationOptions
 
     hid_t attr_space = H5Screate(H5S_SCALAR);
 
-    hid_t attr = H5Acreate2(group_frame,
-                            "code_version",
-                            attr_type,
-                            attr_space,
-                            H5P_DEFAULT,
-                            H5P_DEFAULT);
+    hid_t attr = H5Acreate2(group_frame, "code_version", attr_type, attr_space, H5P_DEFAULT, H5P_DEFAULT);
 
     H5Awrite(attr, attr_type, SIM_VERSION);
 
@@ -301,19 +290,13 @@ void writeHDF5SnapshotToFile(double time, hid_t file_id, const SimulationOptions
 
     hid_t attr_space_date = H5Screate(H5S_SCALAR);
 
-    hid_t attr_date = H5Acreate2(group_frame,
-                                 "compile_date",
-                                 attr_type_date,
-                                 attr_space_date,
-                                 H5P_DEFAULT,
-                                 H5P_DEFAULT);
+    hid_t attr_date = H5Acreate2(group_frame, "compile_date", attr_type_date, attr_space_date, H5P_DEFAULT, H5P_DEFAULT);
 
     H5Awrite(attr_date, attr_type_date, __DATE__);
 
     H5Aclose(attr_date);
     H5Sclose(attr_space_date);
     H5Tclose(attr_type_date);
-
 
     // -------------------
     // FRAME ATTRIBUTE: compile_time
@@ -325,12 +308,7 @@ void writeHDF5SnapshotToFile(double time, hid_t file_id, const SimulationOptions
 
     hid_t attr_space_time = H5Screate(H5S_SCALAR);
 
-    hid_t attr_time = H5Acreate2(group_frame,
-                                 "compile_time",
-                                 attr_type_time,
-                                 attr_space_time,
-                                 H5P_DEFAULT,
-                                 H5P_DEFAULT);
+    hid_t attr_time = H5Acreate2(group_frame, "compile_time", attr_type_time, attr_space_time, H5P_DEFAULT, H5P_DEFAULT);
 
     H5Awrite(attr_time, attr_type_time, __TIME__);
 

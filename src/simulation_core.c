@@ -155,8 +155,8 @@ static void handleSnapshotASCII(double t, double current_time_years, double *out
 
 static void handleSnapshotHDF5(double output_time, const SimulationOptions *sim_opts, OutputFiles *output_files, DiskParameters *disk_params, ParticleData *particle_data) {
     char *filename = NULL;
-    asprintf(&filename, "%s/%s/snapshot_%08d.h5",
-             sim_opts->output_dir_name, kLogFilesDirectory, (int)(output_time));
+    asprintf(&filename, "%s/%s/%s_%08d%s",
+             sim_opts->output_dir_name, kLogFilesDirectory, kSnapshotOutputFileNamePrefix, (int)(output_time),kFileNamesHDF5Suffix);
 
     // Init file
     if (initHDF5File(filename, output_files) != 0) {
@@ -363,9 +363,9 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
         char *ts_filename = NULL;
 
         if (asprintf(&ts_filename,
-                     "%s/%s/time_series.h5",
+                     "%s/%s/%s%s",
                      sim_opts->output_dir_name,
-                     kLogFilesDirectory) == -1) {
+                     kLogFilesDirectory,kTimeSeriesForMassAccumulatinFileName,kFileNamesHDF5Suffix) == -1) {
             fprintf(stderr, "ERROR: asprintf failed for time_series filename\n");
             exit(EXIT_FAILURE);
         }

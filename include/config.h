@@ -56,22 +56,25 @@ extern FILE *load_dust_particles_file;  /**< Pointer to the input file used for 
  * Global string constants defining the naming convention for input/output files.
  */
 /**@{*/
-extern const char * const kInitialGasProfileFileName;   		/**< Filename for the initial gas profile. */
-extern const char * const kInitialDustProfileFileName;  		/**< Filename for the initial dust profile. */
-extern const char * const kGasDensityProfileFilePrefix; 		/**< Prefix for time-dependent gas density snapshots. */
-extern const char * const kDustAccumulationFileName;    		/**< Filename for tracking accumulated dust mass. */
-extern const char * const kDustParticleEvolutionFile;   		/**< Filename for Lagrangian particle trajectory data. */
-extern const char * const kDriftTimescaleFileName;      		/**< Filename for storing drift timescale analysis. */
-extern const char * const kDustDensityProfileFilePrefix; 		/**< Prefix for Eulerian dust density snapshots. */
-extern const char * const kMicronDustDensityProfileFilePrefix; 	/**< Prefix for small (micron) dust snapshots. */
-extern const char * const kDustMicronParticleEvolutionFile; 	/**< Evolution file for small dust populations. */
-extern const char * const kDiskConfigFile;              		/**< Filename for the primary disk configuration input. */
-extern const char * const kLogFilesDirectory;           		/**< Directory path where log files are stored. */
-extern const char * const kConfigFilesDirectory;        		/**< Directory path where configuration files reside. */
-extern const char * const kFileNamesSuffix;             		/**< Common suffix for output files (e.g., .dat or .txt). */
-extern const char * const kCurrentInfoFile;             		/**< Filename for general runtime info. */
-extern const char * const kDustParticleSizeFileName;    		/**< Filename for particle size distribution data. */
-extern const char * const kCurrentRuntimeInfoFile;      		/**< Filename for high-frequency runtime diagnostics. */
+extern const char * const kInitialGasProfileFileName;   			/**< Filename for the initial gas profile. */
+extern const char * const kInitialDustProfileFileName;  			/**< Filename for the initial dust profile. */
+extern const char * const kGasDensityProfileFilePrefix; 			/**< Prefix for time-dependent gas density snapshots. */
+extern const char * const kDustAccumulationFileName;    			/**< Filename for tracking accumulated dust mass. */
+extern const char * const kDustParticleEvolutionFile;   			/**< Filename for Lagrangian particle trajectory data. */
+extern const char * const kDriftTimescaleFileName;      			/**< Filename for storing drift timescale analysis. */
+extern const char * const kDustDensityProfileFilePrefix; 			/**< Prefix for Eulerian dust density snapshots. */
+extern const char * const kMicronDustDensityProfileFilePrefix; 		/**< Prefix for small (micron) dust snapshots. */
+extern const char * const kDustMicronParticleEvolutionFile; 		/**< Evolution file for small dust populations. */
+extern const char * const kDiskConfigFile;              			/**< Filename for the primary disk configuration input. */
+extern const char * const kLogFilesDirectory;           			/**< Directory path where log files are stored. */
+extern const char * const kConfigFilesDirectory;        			/**< Directory path where configuration files reside. */
+extern const char * const kFileNamesSuffix;             			/**< Common suffix for output files for ASCII files (e.g., .dat or .txt). */
+extern const char * const kCurrentInfoFile;             			/**< Filename for general runtime info. */
+extern const char * const kDustParticleSizeFileName;    			/**< Filename for particle size distribution data. */
+extern const char * const kCurrentRuntimeInfoFile;      			/**< Filename for high-frequency runtime diagnostics. */
+extern const char * const kSnapshotOutputFileNamePrefix;			/**< Filename for HDF5 snapshot output. */
+extern const char * const kTimeSeriesForMassAccumulatinFileName; 	/**< Filename for HDF mass accumulation file. */
+extern const char * const kFileNamesHDF5Suffix;						/**< Common suffix for output files for HDF5 files (e.g., .dat or .txt). */
 /**@}*/
 
 #endif // CONFIG_H
