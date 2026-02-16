@@ -185,6 +185,14 @@ int main(int argc, const char **argv) {
         asprintf(&current_inputsig_file, "%s/%s%s", initial_dir_path, kInitialGasProfileFileName,kFileNamesSuffix);
         fprintf(stderr, "DEBUG [main]: Generated GAS profile will be loaded from '%s'.\n", current_inputsig_file);
 
+
+        printf("=== Dust Scaleheight (H) teszt ===\n");
+        for(int i=0;i<init_tool_params.n_grid_points;i+=init_tool_params.n_grid_points/10){ // 10 mintát
+            double r = init_tool_params.r_inner + i*(init_tool_params.r_outer - init_tool_params.r_inner)/(init_tool_params.n_grid_points-1);
+            printf("r = %lg AU, H_dust = %lg AU\n", r, init_tool_params.dust_scaleheight[i]);
+        }
+
+
         disk_params.grid_number = calculateNumbersOfParticles(current_inputsig_file);
 
         if (disk_params.grid_number > 1) {

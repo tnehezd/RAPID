@@ -27,6 +27,16 @@ typedef struct {
     double r_max;                         /**< Outer radius of the simulation domain [AU]. */
     int    grid_number;                   /**< Number of radial grid points. */
     double delta_r;                       /**< Radial grid spacing [AU]. */
+
+    int    vertical_grid_number;          /**< Number of vertical grid points. */  
+    double vertical_grid_max;             /**< Maximum height of vertical grid [AU]. */
+    double delta_z;                       /**< Vertical grid spacing [AU]. */
+
+    double *radial_grid;                  /**< Radial grid array [AU]. */
+    double *vertical_grid;                /**< Vertical grid array [AU]. */
+    double **dust_density_2d;             /**< Dust density in r-z plane [r][z] */
+    double *Hd_array;                     /**< Dust scale height for each radial cell [AU] */
+
     double sigma_0;                       /**< Gas surface density normalization at 1 AU. */
     double sigma_power_law_index;         /**< Exponent of the gas surface density power law. */
     double alpha_parameter;               /**< Shakura–Sunyaev viscosity parameter α. */
@@ -41,7 +51,6 @@ typedef struct {
     double alpha_parameter_modification;  /**< α‑viscosity reduction factor inside dead zones. */
     double particle_density;              /**< Dust particle material density [g/cm³]. */
     double particle_density_dimensionless;/**< Dimensionless dust density (code units). */
-    double *radial_grid;                  /**< Radial grid array [AU]. */
     double *gas_surface_density_vector;   /**< Gas surface density at each grid point. */
     double *gas_pressure_vector;          /**< Gas pressure at each grid point. */
     double *gas_pressure_gradient_vector; /**< Radial pressure gradient dP/dr. */

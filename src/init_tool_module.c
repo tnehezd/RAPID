@@ -7,6 +7,7 @@
 #include "gas_physics.h"
 #include "boundary_conditions.h"
 #include "simulation_types.h"
+#include "vertical_settling.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h> 
@@ -42,6 +43,12 @@ void initializeDefaultOptions(InitializeDefaultOptions *def) {
 
     def->output_base_path[0]    = '\0';
     def->dust_density_g_cm3     = 1.6;
+
+    def->vertical_grid_number   = 50;     
+    def->vertical_grid_max      = 0.2;    
+    def->vertical_grid          = NULL;   
+    def->dust_scaleheight       = NULL;   
+
 }
 
 static long double calculateSigm0FromDiskMass(InitializeDefaultOptions *init_opts) {
@@ -276,6 +283,7 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
     disk_params->gas_pressure_gradient_vector = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
     disk_params->gas_velocity_vector = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
 
+
     if (!disk_params->radial_grid || !disk_params->gas_surface_density_vector || !disk_params->gas_pressure_vector || !disk_params->gas_pressure_gradient_vector || !disk_params->gas_velocity_vector) {
         fprintf(stderr, "ERROR [runInitialization]: Failed to allocate disk arrays. Exiting.\n");
         if (dust_ouputput_file) fclose(dust_ouputput_file);
@@ -315,6 +323,32 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
             dPdr_local_val);
     }
     fflush(gas_parameters_output_file); 
+
+    /* allocate vertical grid and dust scaleheight */
+    if (default_options->vertical_grid_number > 0) {
+        default_options->vertical_grid = (double *)malloc(default_options->vertical_grid_number * sizeof(double));
+        default_options->dust_scaleheight = (double *)malloc(default_options->n_grid_points * sizeof(double));
+        
+        if (!default_options->vertical_grid || !default_options->dust_scaleheight) {
+            fprintf(stderr, "ERROR [runInitialization]: Failed to allocate vertical grid arrays.\n");
+            if(default_options->vertical_grid) free(default_options->vertical_grid);
+            if(default_options->dust_scaleheight) free(default_options->dust_scaleheight);
+            return 1;
+        }
+
+        /* simple linear vertical grid example */
+        for(int i=0;i<default_options->vertical_grid_number;i++){
+            default_options->vertical_grid[i] = i * default_options->vertical_grid_max / (default_options->vertical_grid_number-1);
+        }
+
+        for(int i=0;i<default_options->n_grid_points;i++){
+            double r = default_options->r_inner + i*(default_options->r_outer - default_options->r_inner)/(default_options->n_grid_points-1);
+            double particle_radius = default_options->one_size_particle_cm / AU_IN_CM;
+            default_options->dust_scaleheight[i] = calculateDustScaleHeight(r, particle_radius, disk_params);
+        }
+
+    }
+
 
     for (int i_loop = 0; i_loop < default_options->n_dust_particles; i_loop++) {
 
