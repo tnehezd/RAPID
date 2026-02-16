@@ -86,6 +86,8 @@ int main(int argc, const char **argv) {
 
     disk_params.r_min = def.rmin_val;
     disk_params.r_max = def.rmax_val;
+    disk_params.r_max = def.rmax_val;
+    disk_params.vertical_grid_max = def.zmax_val;
     disk_params.grid_number = def.number_of_grid_points; 
     disk_params.vertical_grid_number = def.number_of_vertical_grid_points; 
     disk_params.sigma_0 = def.sigma0_val;
@@ -165,6 +167,7 @@ int main(int argc, const char **argv) {
         init_tool_params.n_grid_points = disk_params.grid_number; 
         init_tool_params.r_inner= disk_params.r_min;
         init_tool_params.r_outer = disk_params.r_max;
+        init_tool_params.vertical_grid_max_height = disk_params.vertical_grid_max;
         init_tool_params.sigma0_gas_au = disk_params.sigma_0;
         init_tool_params.sigma_exponent = disk_params.sigma_power_law_index;
         init_tool_params.deadzone_r_inner = disk_params.r_dze_i;

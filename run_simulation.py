@@ -107,9 +107,10 @@ def main():
         # Core Disk Parameters (also serve as init_tool defaults if no input file)
         "ngrid_val": 2000,
         "nz": 100,
-        "ndust_val": 5000, # <--- MODIFIED: Changed key to 'ndust_val' to match C struct
+        "ndust_val": 5000, 
         "rmin_val": 1.0,
         "rmax_val": 100.0,
+        "zmax_val": 4.0,
         "sigma0_val": 1.0,
         "sigmap_exp_val": 0.5,
         "alpha_visc_val": 0.01,
@@ -168,6 +169,7 @@ def main():
         "number_of_dust_particles": "ndust_val",
         "inner_radius_au": "rmin_val",
         "outer_radius_au": "rmax_val",
+        "vertical_outer_radius": "zmax_val",
         "initial_gas_sigma0_msun_per_au2": "sigma0_val",
         "sigma_profile_exponent": "sigmap_exp_val",
         "alpha_viscosity": "alpha_visc_val",
@@ -223,7 +225,7 @@ def main():
 
         # Grid and Disk Initial Parameters
         "ngrid_val": "-n", "nz": "-nz",  "ndust_val": "-ndust",
-        "rmin_val": "-ri", "rmax_val": "-ro",
+        "rmin_val": "-ri", "rmax_val": "-ro", "zmax_val": "-zmax",
         "sigma0_val": "-sigma0_init", "sigmap_exp_val": "-index_init",
         "alpha_visc_val": "-alpha_init", "star_val": "-m0_init",
         "hasp_val": "-h_init", "flind_val": "-flind_init",

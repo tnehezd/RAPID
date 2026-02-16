@@ -20,6 +20,7 @@ void createDefaultOptions(ParserOptions *opt) {
     opt->number_of_dust_particles                   = 5000;
     opt->rmin_val                                   = 1.0;
     opt->rmax_val                                   = 100.0;
+    opt->zmax_val                                   = 4.0;
     opt->sigma0_val                                 = 1.0; 
     opt->sigmap_exp_val                             = 0.5; 
     opt->alpha_visc_val                             = 0.01;
@@ -175,6 +176,10 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
         else if (strcmp(argv[i], "-ro") == 0) { 
             i++; 
             if (i < argc) opt->rmax_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -ro.\n"); return 1; }; 
+        } 
+        else if (strcmp(argv[i], "-zmax") == 0) { 
+            i++; 
+            if (i < argc) opt->zmax_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -zmax.\n"); return 1; }; 
         } 
         else if (strcmp(argv[i], "-sigma0_init") == 0) {
             i++; 

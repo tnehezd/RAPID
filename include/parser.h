@@ -36,6 +36,7 @@ typedef struct {
     int    number_of_dust_particles;                    /**< Number of dust particles to simulate. */
     double rmin_val;                                    /**< Inner disk radius. */
     double rmax_val;                                    /**< Outer disk radius. */
+    double zmax_val;                                    /**< Upper disk vertical radius in local pressure scaleheights. */
     double sigma0_val;                                  /**< Gas surface density normalization. */
     double sigmap_exp_val;                              /**< Power-law exponent of surface density. */
     double alpha_visc_val;                              /**< Disk viscosity parameter. */

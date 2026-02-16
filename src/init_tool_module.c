@@ -47,7 +47,7 @@ void initializeDefaultOptions(InitializeDefaultOptions *def) {
     def->dust_density_g_cm3         = 1.6;
 
     def->vertical_grid_number       = 100;     
-    def->vertical_grid_max_height   = 5.0;    
+    def->vertical_grid_max_height   = 4.0;    
     def->vertical_grid              = NULL;   
     def->dust_scaleheight           = NULL;   
 
@@ -216,6 +216,7 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
     fprintf(stderr,"Total dust disk mass (Solar Mass): %lg\n", default_options->disk_mass_dust);
     fprintf(stderr,"Inner disk edge (AU): %lg\n", default_options->r_inner);
     fprintf(stderr,"Outer disk edge (AU): %lg\n", default_options->r_outer);
+    fprintf(stderr,"Vertical disk edge (H): %lg\n", default_options->vertical_grid_max_height);
     fprintf(stderr,"Surface density profile exponent: %lg\n", -default_options->sigma_exponent);
     fprintf(stderr,"Gas surface density at 1 AU (Solar Mass/AU^2): %Lg\n", current_sigma0_gas);
     fprintf(stderr,"Dust to gas ratio: %lg\n", default_options->dust_to_gas_ratio);
