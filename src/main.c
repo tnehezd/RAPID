@@ -70,6 +70,16 @@ int main(int argc, const char **argv) {
     sim_opts.output_frequency = def.output_frequency;
     sim_opts.number_of_dust_particles = def.number_of_dust_particles;
     sim_opts.output_format = def.output_format;
+    sim_opts.dimension = (def.disk_dimension == 2) ? DIM_2D : DIM_1D;
+
+
+    if(sim_opts.dimension == DIM_1D)
+        printf("Running in 1D disk mode\n");
+    else
+        printf("Running in 2D disk mode (r-z structure enabled)\n");
+
+
+    exit(EXIT_SUCCESS);
  
 
     fprintf(stderr, "DEBUG [main]: def.output_dir_name BEFORE sim_opts population: '%s'\n", def.output_dir_name);

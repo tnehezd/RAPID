@@ -57,6 +57,7 @@ typedef struct {
     double onesize_val;                                 /**< Single-size dust mode parameter. */
     double pdensity_val;                                /**< Dust particle density. */
     int output_format;                                  /**< Output format selector (0 = ASCII, 1 = HDF5). */
+    int disk_dimension;                                 /**< Defines the dimension of the simulated disk (default = 1: radial, optional = 2: 1+1 dimensions: radial + vertical). */
 
 } ParserOptions;
 

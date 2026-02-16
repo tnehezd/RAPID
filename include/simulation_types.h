@@ -15,6 +15,14 @@
 #define MAX_PATH_LEN 16384 
 
 /**
+ * @brief Defines the dimensions of the simulated disk grid.
+ */
+typedef enum {
+    DIM_1D = 1,                 /**< One-dimensional grid */
+    DIM_2D = 2                  /**< 1+1 dimensional simulation (radial + vertical) */
+} DiskDimension;
+
+/**
  * @brief Physical and numerical parameters describing the protoplanetary disk.
  *
  * This structure stores all disk‑related quantities used throughout the
@@ -116,6 +124,8 @@ typedef struct {
     char output_dir_name[MAX_PATH_LEN];       /**< Output directory for results. */
     char dust_input_filename[MAX_PATH_LEN];   /**< Path to dust input file. */
     OutputFormat output_format;               /**< Selects ASCII or HDF5 output backend. */
+    DiskDimension dimension;                  /**< Defines 1D or 2D disk model */
+
 } SimulationOptions;
 
 
@@ -219,7 +229,6 @@ typedef struct {
     double total_dust_mass;      /**< Total dust mass (primary + secondary) [M_sun]. */
     int trap_id;                 /**< Unique identifier for the trap. */                     
 } PressureTrap;
-
 
 
 

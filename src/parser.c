@@ -44,6 +44,7 @@ void createDefaultOptions(ParserOptions *opt) {
     opt->onesize_val                                = 0.0; 
     opt->pdensity_val                               = 1.6; 
     opt->output_format                              = OUTPUT_ASCII;
+    opt->disk_dimension = 1;   // default = 1D
 
     fprintf(stderr, "Default options setting complete.\n");
 }
@@ -92,7 +93,8 @@ void printUsageToTerminal() {
     fprintf(stderr, "  --output-format <ascii|hdf5>  Select output format (default: ascii)\n");
     fprintf(stderr, "  -ascii                        Shortcut for --output-format ascii\n");
     fprintf(stderr, "  -hdf5                       Shortcut for --output-format hdf5\n");
-
+    fprintf(stderr, "Geometry:\n");
+    fprintf(stderr, "  -dim <1|2>    Disk dimensionality (1=radial, 2=radial+vertical, default: 1)\n");
 }
 
 int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
@@ -259,8 +261,19 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
         else if (strcmp(argv[i], "-hdf5") == 0) {
             opt->output_format = OUTPUT_HDF5;
         }
-
-
+        else if (strcmp(argv[i], "-dim") == 0) {
+            i++;
+            if (i < argc) {
+                opt->disk_dimension = atoi(argv[i]);
+                if (opt->disk_dimension != 1 && opt->disk_dimension != 2) {
+                    fprintf(stderr, "Error: -dim must be 1 or 2.\n");
+                    return 1;
+                }
+            } else {
+                fprintf(stderr, "Error: Missing value for -dim.\n");
+                return 1;
+            }
+        }
         else {
             fprintf(stderr, "ERROR [parseCLIOptions]: Invalid switch on command-line: %s!\n", argv[i]);
   //          printUsageToTerminal(); 
