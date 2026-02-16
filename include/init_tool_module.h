@@ -41,12 +41,13 @@ typedef struct {
     double  micro_size_cm;                  /**< Size of the small (micron) dust population in \f$cm\f$. */
     double  drift_factor;                   /**< Scaling factor for radial drift velocity. */
     double  fragmentation_factor;           /**< Efficiency factor for dust fragmentation. */
-    char output_base_path[MAX_PATH_LEN];    /**< Base directory path for simulation output. */
-    double dust_density_g_cm3;              /**< Intrinsic material density of dust grains (e.g., \f 1.6g/cm^3\f$). */
+    char    output_base_path[MAX_PATH_LEN];    /**< Base directory path for simulation output. */
+    double  dust_density_g_cm3;              /**< Intrinsic material density of dust grains (e.g., \f 1.6g/cm^3\f$). */
     int     vertical_grid_number;           /**< Number of vertical grid cells (z-direction). */
     double  vertical_grid_max_height;       /**< Maximum vertical height of the disk [in scale heights]. */
-    double *vertical_grid;                  /**< Vertical grid array [AU], size vertical_grid_number. */
-    double *dust_scaleheight;               /**< Dust scale height Hd for each radial point [AU]. */
+    double  *vertical_grid;                  /**< Vertical grid array [AU], size vertical_grid_number. */
+    double  *dust_scaleheight;               /**< Dust scale height Hd for each radial point [AU]. */
+    int dimension;   // 1 = radial, 2 = r+z
 } InitializeDefaultOptions;
 
 /**

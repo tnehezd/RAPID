@@ -16,6 +16,7 @@ void createDefaultOptions(ParserOptions *opt) {
     opt->fragmenatation_velocity                    = 1000.0;
     opt->fragmenatation_factor                      = 0.37;
     opt->number_of_grid_points                      = 2000;
+    opt->number_of_vertical_grid_points             = 100;
     opt->number_of_dust_particles                   = 5000;
     opt->rmin_val                                   = 1.0;
     opt->rmax_val                                   = 100.0;
@@ -67,7 +68,8 @@ void printUsageToTerminal() {
     fprintf(stderr, "  -i <file>      Input profile file (e.g., init_data.dat)\n");
     fprintf(stderr, "  -o <dir>       Output directory name (default: 'output')\n");
     fprintf(stderr, "Initial profile generation options (used if -i is not provided):\n");
-    fprintf(stderr, "  -n <val>       Number of grid points (default: 2000)\n"); // This is common for sim and init
+    fprintf(stderr, "  -n <val>       Number of radial grid points (default: 2000)\n");
+    fprintf(stderr, "  -nz <val>      Number of vertical grid points (default: 100)\n");
     fprintf(stderr, "  -ri <val>      Inner radius (AU, default: 1.0)\n");
     fprintf(stderr, "  -ro <val>      Outer radius (AU, default: 100.0)\n");
     fprintf(stderr, "  -sigma0_init <val> Initial gas surface density at 1 AU (M_sun/AU^2, default: 1.0)\n");
@@ -135,6 +137,10 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
             i++;
             if (i < argc) opt->number_of_grid_points = atoi(argv[i]); else { fprintf(stderr, "Error: Missing value for -n.\n"); return 1; }
         }
+        else if (strcmp(argv[i], "-nz") == 0) {
+            i++;
+            if (i < argc) opt->number_of_vertical_grid_points = atoi(argv[i]); else { fprintf(stderr, "Error: Missing value for -nz.\n"); return 1; }
+        }        
         else if (strcmp(argv[i], "-ndust") == 0) { 
             i++;
             if (i < argc) opt->number_of_dust_particles = atoi(argv[i]); else { fprintf(stderr, "Error: Missing value for -ndust.\n"); return 1; }

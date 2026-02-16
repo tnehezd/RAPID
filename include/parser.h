@@ -32,6 +32,7 @@ typedef struct {
     double fragmenatation_velocity;                     /**< Fragmentation velocity threshold. */
     double fragmenatation_factor;                       /**< Fragmentation mass reduction factor. */
     int    number_of_grid_points;                       /**< Number of radial grid points. */
+    int    number_of_vertical_grid_points;              /**< Number of vertical grid points. */
     int    number_of_dust_particles;                    /**< Number of dust particles to simulate. */
     double rmin_val;                                    /**< Inner disk radius. */
     double rmax_val;                                    /**< Outer disk radius. */

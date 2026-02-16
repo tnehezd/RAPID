@@ -106,6 +106,7 @@ def main():
 
         # Core Disk Parameters (also serve as init_tool defaults if no input file)
         "ngrid_val": 2000,
+        "nz": 100,
         "ndust_val": 5000, # <--- MODIFIED: Changed key to 'ndust_val' to match C struct
         "rmin_val": 1.0,
         "rmax_val": 100.0,
@@ -162,6 +163,7 @@ def main():
         "fragmentation_factor": "ffrag",
 
         "number_of_grid_points": "ngrid_val",
+        "number_of_vertical_grid_points": "nz",
         "dimension": "dim",
         "number_of_dust_particles": "ndust_val",
         "inner_radius_au": "rmin_val",
@@ -220,7 +222,7 @@ def main():
         "ufrag": "-ufrag", "ffrag": "-ffrag",
 
         # Grid and Disk Initial Parameters
-        "ngrid_val": "-n",  "ndust_val": "-ndust",
+        "ngrid_val": "-n", "nz": "-nz",  "ndust_val": "-ndust",
         "rmin_val": "-ri", "rmax_val": "-ro",
         "sigma0_val": "-sigma0_init", "sigmap_exp_val": "-index_init",
         "alpha_visc_val": "-alpha_init", "star_val": "-m0_init",

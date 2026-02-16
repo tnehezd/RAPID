@@ -87,6 +87,7 @@ int main(int argc, const char **argv) {
     disk_params.r_min = def.rmin_val;
     disk_params.r_max = def.rmax_val;
     disk_params.grid_number = def.number_of_grid_points; 
+    disk_params.vertical_grid_number = def.number_of_vertical_grid_points; 
     disk_params.sigma_0 = def.sigma0_val;
     disk_params.sigma_power_law_index = def.sigmap_exp_val;
     disk_params.alpha_parameter = def.alpha_visc_val;
@@ -181,6 +182,8 @@ int main(int argc, const char **argv) {
         init_tool_params.micro_size_cm = def.mic_val;
         init_tool_params.one_size_particle_cm = def.onesize_val;
         init_tool_params.dust_density_g_cm3 = def.pdensity_val;
+        init_tool_params.dimension = def.disk_dimension;
+        init_tool_params.vertical_grid_number = def.number_of_vertical_grid_points;
 
         fprintf(stderr, "DEBUG [main]: InitializeDefaultOptions (init_tool_params) structure populated for profile generation.\n");
         fprintf(stderr, "DEBUG [main]: Calling runInitialization(&init_tool_params, &disk_params)...\n");

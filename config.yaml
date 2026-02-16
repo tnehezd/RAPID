@@ -12,6 +12,7 @@ simulation_parameters:
   fragmentation_factor: 0.37         # Corresponds to 'ffrag' in C
   number_of_dust_particles: 1000
   dimension: 2
+  number_of_vertical_grid_points: 10
  
 disk_parameters:
   # Grid and Disk Initial Parameters (used if no input_file is provided)

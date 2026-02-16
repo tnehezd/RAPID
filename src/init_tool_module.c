@@ -18,38 +18,38 @@
 
 void initializeDefaultOptions(InitializeDefaultOptions *def) {
 
-    def->n_grid_points          = 1000; 
-    def->n_dust_particles       = 2000;
-    def->r_inner                = 0.1;
-    def->r_outer                = 5.0;
-    def->sigma0_gas_au          = 0.01; 
-    def->sigma_exponent         = 0.5; 
-    def->alpha_viscosity        = 1.0e-2;
-    def->star_mass              = 1.0; 
-    def->aspect_ratio           = 5.0e-2;
-    def->flaring_index          = 0.0;  
+    def->n_grid_points              = 1000; 
+    def->n_dust_particles           = 2000;
+    def->r_inner                    = 0.1;
+    def->r_outer                    = 5.0;
+    def->sigma0_gas_au              = 0.01; 
+    def->sigma_exponent             = 0.5; 
+    def->alpha_viscosity            = 1.0e-2;
+    def->star_mass                  = 1.0; 
+    def->aspect_ratio               = 5.0e-2;
+    def->flaring_index              = 0.0;  
 
-    def->deadzone_r_inner       = 0.0;
-    def->deadzone_r_outer       = 0.0;
-    def->deadzone_dr_inner      = 0.0;
-    def->deadzone_dr_outer      = 0.0;
-    def->deadzone_alpha_mod     = 0.01;
+    def->deadzone_r_inner           = 0.0;
+    def->deadzone_r_outer           = 0.0;
+    def->deadzone_dr_inner          = 0.0;
+    def->deadzone_dr_outer          = 0.0;
+    def->deadzone_alpha_mod         = 0.01;
 
-    def->dust_to_gas_ratio      = 0.01;
-    def->disk_mass_dust         = 0.0100000001; 
-    def->one_size_particle_cm   = 1.0;
-    def->two_pop_ratio          = 0.85; 
-    def->micro_size_cm          = 1e-4; 
-    def->drift_factor           = 1.0; 
-    def->fragmentation_factor   = 1.0;
+    def->dust_to_gas_ratio          = 0.01;
+    def->disk_mass_dust             = 0.0100000001; 
+    def->one_size_particle_cm       = 1.0;
+    def->two_pop_ratio              = 0.85; 
+    def->micro_size_cm              = 1e-4; 
+    def->drift_factor               = 1.0; 
+    def->fragmentation_factor       = 1.0;
 
-    def->output_base_path[0]    = '\0';
-    def->dust_density_g_cm3     = 1.6;
+    def->output_base_path[0]        = '\0';
+    def->dust_density_g_cm3         = 1.6;
 
-    def->vertical_grid_number   = 100;     
-    def->vertical_grid_max_height      = 5.0;    
-    def->vertical_grid          = NULL;   
-    def->dust_scaleheight       = NULL;   
+    def->vertical_grid_number       = 100;     
+    def->vertical_grid_max_height   = 5.0;    
+    def->vertical_grid              = NULL;   
+    def->dust_scaleheight           = NULL;   
 
 }
 
@@ -219,7 +219,8 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
     fprintf(stderr,"Surface density profile exponent: %lg\n", -default_options->sigma_exponent);
     fprintf(stderr,"Gas surface density at 1 AU (Solar Mass/AU^2): %Lg\n", current_sigma0_gas);
     fprintf(stderr,"Dust to gas ratio: %lg\n", default_options->dust_to_gas_ratio);
-    fprintf(stderr,"Number of gas grid points: %d\n", default_options->n_grid_points); 
+    fprintf(stderr,"Number of radial gas grid points: %d\n", default_options->n_grid_points); 
+    fprintf(stderr,"Number of vertical gas grid points: %d\n", default_options->vertical_grid_number); 
     fprintf(stderr,"Number of dust particles to generate: %d\n", default_options->n_dust_particles);
     fprintf(stderr,"Dust particle density (g/cm^3): %lg\n", default_options->dust_density_g_cm3);
     fprintf(stderr,"------------------------------\n\n");
