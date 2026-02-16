@@ -351,40 +351,36 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
         fprintf(stderr, "Error: cannot open output file\n");
     }
 
-    for(int i_particle=0; i_particle < default_options->n_dust_particles; i_particle++) {
+    /* --- write r positions --- */
+    for(int i_particle=0;i_particle<default_options->n_dust_particles;i_particle++){
+        double r = default_options->r_inner + i_particle*(default_options->r_outer - default_options->r_inner)/((double)default_options->n_dust_particles-1);
+        fprintf(fout, "%12.8f ", r);
+    }
+    fprintf(fout,"\n");
 
-        double r_particle = default_options->r_inner + 
-            i_particle * (default_options->r_outer - default_options->r_inner)/((double)default_options->n_dust_particles - 1.0);
+/* --- loop over z --- */
+for(int i_z=0;i_z<default_options->vertical_grid_number;i_z++){
+    for(int i_particle=0;i_particle<default_options->n_dust_particles;i_particle++){
+
+        double r_particle = default_options->r_inner + i_particle*(default_options->r_outer - default_options->r_inner)/((double)default_options->n_dust_particles-1);
         double particle_radius_au = default_options->one_size_particle_cm / AU_IN_CM;
-
         double Hd_particle = calculateDustScaleHeight(r_particle, particle_radius_au, disk_params);
 
         double *rho_z_particle = (double *)malloc(default_options->vertical_grid_number * sizeof(double));
-        if(!rho_z_particle) {
-            fprintf(stderr,"Error: cannot allocate rho_z for particle %d\n", i_particle);
-            continue;
-        }
+        if(!rho_z_particle){ fprintf(stderr,"malloc error\n"); continue; }
 
         long double sigma_dust_particle = calculateDustSurfaceDensityInitTool(r_particle, default_options, current_sigma0_gas);
 
-        // Calculate vertical distribution
         calculateVerticalDistribution(r_particle, particle_radius_au, sigma_dust_particle, disk_params,
-                                      &Hd_particle, rho_z_particle, default_options->vertical_grid_number, default_options->vertical_grid_max_height); 
+                                      &Hd_particle, rho_z_particle, default_options->vertical_grid_number, 4.0);
 
-        // Header a részecskére
-        fprintf(fout, "# Particle %d, r = %.5f AU, Hd = %.6e AU, sigma_dust = %.6Le g/cm^2\n",
-                i_particle, r_particle, Hd_particle, sigma_dust_particle);
-        fprintf(fout, "# z[AU]      rho[z][g/cm^2]\n");
-
-        for(int i=0; i<default_options->vertical_grid_number; i++){
-            double dz = 2.0 * default_options->vertical_grid_max_height*Hd_particle / (default_options->vertical_grid_number - 1);
-            double z = -default_options->vertical_grid_max_height*Hd_particle + i*dz;
-            fprintf(fout, "%12.8f  %12.8e\n", z, rho_z_particle[i]);
-        }
-        fprintf(fout, "\n"); // üres sor a következő részecskének
+        fprintf(fout,"%12.8e ", rho_z_particle[i_z]);
 
         free(rho_z_particle);
     }
+    fprintf(fout,"\n");
+}
+
 
     fclose(fout);
 
