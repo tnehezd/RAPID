@@ -100,7 +100,7 @@ void createInitialGasVelocity(DiskParameters *disk_params);
  * @param particle_number             		Number of representative dust particles.
  * @param disk_params                 		ßPointer to the DiskParameters structure.
  */
-void calculateDustSurfaceDensityFromRepresentativeMass(double input_dust_radii_array[][2], double *input_mass_array, double output_dust_surfacedensity_array[][3], 
+void calculateDustSurfaceDensityFromRepresentativeMass(double input_dust_radii_array[][3], double *input_mass_array, double output_dust_surfacedensity_array[][3], 
 	                                                   int particle_number, const DiskParameters *disk_params);
 
 #endif // DISK_MODEL_H

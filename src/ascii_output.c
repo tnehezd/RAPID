@@ -349,7 +349,7 @@ void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const 
     }
 }
 
-void printDustParticleSizeFile(char *size_name, int step, double (*rad)[2], double (*micron_particle_radius)[2], const DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files) {
+void printDustParticleSizeFile(char *size_name, int step, double (*rad)[3], double (*micron_particle_radius)[3], const DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files) {
 
     FILE *fout_size = NULL;
     int i;

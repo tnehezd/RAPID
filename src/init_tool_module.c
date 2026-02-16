@@ -348,46 +348,6 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
 
 
 
-    FILE *fout = fopen("all_particles_vertical_profiles.dat", "w");
-    if(!fout) {
-        fprintf(stderr, "Error: cannot open output file\n");
-    }
-
-    /* --- write r positions --- */
-    for(int i_particle=0;i_particle<default_options->n_dust_particles;i_particle++){
-        double r = default_options->r_inner + i_particle*(default_options->r_outer - default_options->r_inner)/((double)default_options->n_dust_particles-1);
-        fprintf(fout, "%12.8f ", r);
-    }
-    fprintf(fout,"\n");
-
-/* --- loop over z --- */
-for(int i_z=0;i_z<default_options->vertical_grid_number;i_z++){
-    for(int i_particle=0;i_particle<default_options->n_dust_particles;i_particle++){
-
-        double r_particle = default_options->r_inner + i_particle*(default_options->r_outer - default_options->r_inner)/((double)default_options->n_dust_particles-1);
-        double particle_radius_au = default_options->one_size_particle_cm / AU_IN_CM;
-        double Hd_particle = calculateDustScaleHeight(r_particle, particle_radius_au, disk_params);
-
-        double *rho_z_particle = (double *)malloc(default_options->vertical_grid_number * sizeof(double));
-        if(!rho_z_particle){ fprintf(stderr,"malloc error\n"); continue; }
-
-        long double sigma_dust_particle = calculateDustSurfaceDensityInitTool(r_particle, default_options, current_sigma0_gas);
-
-        calculateVerticalDistribution(r_particle, particle_radius_au, sigma_dust_particle, disk_params,
-                                      &Hd_particle, rho_z_particle, default_options->vertical_grid_number, 4.0);
-
-        fprintf(fout,"%12.8e ", rho_z_particle[i_z]);
-
-        free(rho_z_particle);
-    }
-    fprintf(fout,"\n");
-}
-
-
-    fclose(fout);
-
-
-    exit(EXIT_SUCCESS);
 
     for (int i_loop = 0; i_loop < default_options->n_dust_particles; i_loop++) {
 

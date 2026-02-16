@@ -12,6 +12,21 @@
 
 #include <stddef.h>
 
+
+/**
+ * @brief Represents a single dust particle in the protoplanetary disk.
+ *
+ * Each particle stores its unique index, radial and vertical positions,
+ * and its mass. Future extensions may include velocity, charge, or
+ * other physical properties.
+ */
+typedef struct {
+    size_t index;      /**< Unique identifier for the particle. */
+    double r_au;       /**< Radial distance from the star in AU. */
+    double z_au;       /**< Vertical height above the disk midplane in AU. */
+    double mass_g;     /**< Particle mass in grams. */
+} DustParticle;
+
 /**
  * @brief Container for all particle‑related arrays used in the simulation.
  *
@@ -23,8 +38,8 @@
  * the two‑population dust model is enabled.
  */
 typedef struct {
-    double (*particle_distance_array)[2];          /**< Radial positions of dust particles (2 columns: r and dr). */
-    double (*micron_particle_distance_array)[2];   /**< Radial positions of micron‑sized dust particles. */
+    double (*particle_distance_array)[3];          /**< Radial positions of dust particles (2 columns: r and dr). */
+    double (*micron_particle_distance_array)[3];   /**< Radial positions of micron‑sized dust particles. */
     double *dust_particle_mass_grid;               /**< Mass grid for dust particles. */
     double *massmicradial_grid;                    /**< Mass grid for micron‑sized dust particles. */
     double (*dust_particle_mass_array)[5];         /**< Dust particle mass evolution array (5 columns per particle). */
@@ -33,6 +48,7 @@ typedef struct {
     double *micron_dust_surfacedensity;            /**< Micron dust surface density profile. */
     double *particle_distance_grid;                /**< Radial grid for dust particles. */
     double *micron_particle_distance_grid;         /**< Radial grid for micron dust particles. */
+    double *particle_z_array;                      /**< NEW: Vertical z positions of each particle */
     size_t allocated_particle_number;              /**< Number of particles allocated in memory. */
 } ParticleData;
 
