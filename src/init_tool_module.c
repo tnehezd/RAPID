@@ -8,6 +8,8 @@
 #include "boundary_conditions.h"
 #include "simulation_types.h"
 #include "vertical_settling.h"
+#include "vertical_physics.h"
+#include "vertical_profile.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h> 
