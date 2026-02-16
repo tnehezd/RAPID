@@ -76,11 +76,7 @@ int main(int argc, const char **argv) {
     if(sim_opts.dimension == DIM_1D)
         printf("Running in 1D disk mode\n");
     else
-        printf("Running in 2D disk mode (r-z structure enabled)\n");
-
-
-    exit(EXIT_SUCCESS);
- 
+        printf("Running in 2D disk mode (r-z structure enabled)\n"); 
 
     fprintf(stderr, "DEBUG [main]: def.output_dir_name BEFORE sim_opts population: '%s'\n", def.output_dir_name);
     fprintf(stderr, "DEBUG [main]: Evolution (sim_opts.option_for_evolution=%.2f) or drift (sim_opts.option_for_dust_drift=%.2f) is ON. Starting main simulation loop.\n", sim_opts.option_for_evolution, sim_opts.option_for_dust_drift);

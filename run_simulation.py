@@ -120,6 +120,7 @@ def main():
         "dr_dze_i_val": 0.0,
         "dr_dze_o_val": 0.0,
         "a_mod_val": 0.0,
+        "dim": 1,  
 
         # File Input/Output
         "input_file": "",
@@ -161,6 +162,7 @@ def main():
         "fragmentation_factor": "ffrag",
 
         "number_of_grid_points": "ngrid_val",
+        "dimension": "dim",
         "number_of_dust_particles": "ndust_val",
         "inner_radius_au": "rmin_val",
         "outer_radius_au": "rmax_val",
@@ -214,11 +216,11 @@ def main():
     # and the values are the C program's command-line flags.
     c_arg_mapping = {
         # Simulation Control (C flags are unchanged)
-        "drift": "-drift", "growth": "-growth", "evol": "-evol", "twopop": "-twopop",
+        "drift": "-drift", "dim": "-dim", "growth": "-growth", "evol": "-evol", "twopop": "-twopop",
         "ufrag": "-ufrag", "ffrag": "-ffrag",
 
         # Grid and Disk Initial Parameters
-        "ngrid_val": "-n", "ndust_val": "-ndust", # <--- MODIFIED: Key is now 'ndust_val'
+        "ngrid_val": "-n",  "ndust_val": "-ndust",
         "rmin_val": "-ri", "rmax_val": "-ro",
         "sigma0_val": "-sigma0_init", "sigmap_exp_val": "-index_init",
         "alpha_visc_val": "-alpha_init", "star_val": "-m0_init",
