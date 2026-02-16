@@ -66,6 +66,8 @@ extern const char * const kDustDensityProfileFilePrefix; 			/**< Prefix for Eule
 extern const char * const kMicronDustDensityProfileFilePrefix; 		/**< Prefix for small (micron) dust snapshots. */
 extern const char * const kDustMicronParticleEvolutionFile; 		/**< Evolution file for small dust populations. */
 extern const char * const kDiskConfigFile;              			/**< Filename for the primary disk configuration input. */
+extern const char * const kMassFieldNameFile;						/**< Filename for mass field in two-dimensional run. */
+extern const char * const kGridFieldNameFile;						/**< Filename for grid field in two-dimensional run. */
 extern const char * const kLogFilesDirectory;           			/**< Directory path where log files are stored. */
 extern const char * const kConfigFilesDirectory;        			/**< Directory path where configuration files reside. */
 extern const char * const kFileNamesSuffix;             			/**< Common suffix for output files for ASCII files (e.g., .dat or .txt). */

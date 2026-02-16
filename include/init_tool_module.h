@@ -68,4 +68,43 @@ void initializeDefaultOptions(InitializeDefaultOptions *opt);
  */
 int runInitialization(InitializeDefaultOptions *opts, DiskParameters *output_disk_params);
 
+/**
+ * @brief Initialize the 1D dust particle distribution along the radial grid.
+ *
+ * This function generates a simple 1D dust particle list, computing the
+ * dust mass in each radial cell based on the local dust surface density.
+ * The mass is split between two populations according to the two_pop_ratio.
+ *
+ * @param[in] default_options Pointer to the structure containing initialization options.
+ * @param[in] disk_params Pointer to the structure containing disk parameters (radial grid, gas density, pressure, etc.).
+ * @param[in] current_sigma0_gas Gas surface density at 1 AU [M_sun/AU^2], used for dust density calculation.
+ * @param[in,out] dust_output_file File pointer to the output file where the 1D dust particle data will be written.
+ * 
+ * @return int Returns 0 on success, non-zero on failure.
+ *
+ * @note The function assumes that linearInterpolation and calculateDustSurfaceDensityInitTool are available.
+ * @note The output format per particle is: index, r [AU], mass_pop1 [g], mass_pop2 [g].
+ */
+int initializeOneDimensions(InitializeDefaultOptions *default_options, DiskParameters *disk_params, long double current_sigma0_gas, FILE *dust_output_file);
+
+/**
+ * @brief Initialize the 2D dust particle distribution with radial and vertical structure.
+ *
+ * This function generates a vertically resolved dust distribution for each radial cell.
+ * The vertical distribution follows a Gaussian profile based on the local dust scale height.
+ * Mass is normalized such that the sum over all vertical slices equals the total mass in the radial cell.
+ *
+ * @param[in] default_options Pointer to the structure containing initialization options, including vertical grid and dust scale heights.
+ * @param[in] disk_params Pointer to the structure containing disk parameters (radial grid, gas density, pressure, etc.).
+ * @param[in] current_sigma0_gas Gas surface density at 1 AU [M_sun/AU^2], used for dust density calculation.
+ * 
+ * @return int Returns 0 on success, non-zero on failure.
+ *
+ * @note Allocates a 2D array of DustParticle structures: n_r x n_z.
+ * @note Writes two output files: mass_matrix.dat (dust mass per cell) and z_matrix.dat (vertical positions).
+ * @note The vertical range is [-3H, +3H] for each radial cell.
+ * @note The mass in each z-slice is weighted by the normalized Gaussian profile.
+ */
+int initializeTwoDimensions(InitializeDefaultOptions *default_options, DiskParameters *disk_params, long double current_sigma0_gas);
+
 #endif // INIT_TOOL_MODULE_H

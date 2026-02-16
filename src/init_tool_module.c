@@ -145,6 +145,83 @@ static int validateInitializationInputs(const InitializeDefaultOptions *opts) {
     return 0; 
 }
 
+int initializeOneDimensions(InitializeDefaultOptions *default_options, DiskParameters *disk_params, long double current_sigma0_gas, FILE *dust_output_file){
+
+}
+
+
+int initializeTwoDimensions(InitializeDefaultOptions *default_options, DiskParameters *disk_params, long double current_sigma0_gas) {
+    StructuredParticleData structured_data;
+    structured_data.n_r = default_options->n_dust_particles;
+    structured_data.n_z = default_options->vertical_grid_number;
+
+    structured_data.particles = malloc(structured_data.n_r * sizeof(DustParticle*));
+    for (size_t i = 0; i < structured_data.n_r; i++)
+        structured_data.particles[i] = malloc(structured_data.n_z * sizeof(DustParticle));
+
+    char *mass_file_path = NULL;
+    char *z_file_path = NULL;
+    asprintf(&mass_file_path, "%s/%s%s", default_options->output_base_path, kMassFieldNameFile, kFileNamesSuffix);
+    asprintf(&z_file_path, "%s/%s%s", default_options->output_base_path, kGridFieldNameFile, kFileNamesSuffix);
+
+    FILE *mass_fp = fopen(mass_file_path, "w");
+    FILE *z_fp    = fopen(z_file_path, "w");
+    if (!mass_fp || !z_fp) {
+        perror("Error opening 2D dust output files");
+        return 1;
+    }
+
+    double *z_array = malloc(structured_data.n_z * sizeof(double));
+    if (!z_array) {
+        fprintf(stderr,"ERROR: Failed to allocate z_array\n");
+        return 1;
+    }
+
+    for (size_t i_r = 0; i_r < structured_data.n_r; i_r++) {
+        double r = default_options->r_inner +
+            (default_options->r_outer - default_options->r_inner) *
+            i_r / ((double)structured_data.n_r - 1.0);
+        double H = default_options->dust_scaleheight[i_r];
+        long double sigma_dust = calculateDustSurfaceDensityInitTool(r, default_options, current_sigma0_gas);
+        long double cell_mass = 2.0*M_PI*r*((default_options->r_outer-default_options->r_inner)/((double)structured_data.n_r-1.0))*sigma_dust;
+
+        long double weight_sum = 0.0;
+        for(size_t iz=0; iz<structured_data.n_z; iz++){
+            double z = -3*H + 6*H*iz/(structured_data.n_z-1);
+            z_array[iz]=z;
+            weight_sum += exp(-0.5*(z/H)*(z/H));
+        }
+
+        fprintf(z_fp,"%e ",r);
+
+        for(size_t iz=0; iz<structured_data.n_z; iz++){
+            double f = exp(-0.5*(z_array[iz]/H)*(z_array[iz]/H))/weight_sum;
+            double m = (double)(cell_mass*f);
+            structured_data.particles[i_r][iz].mass_g = m;
+            structured_data.particles[i_r][iz].r_au = r;
+            structured_data.particles[i_r][iz].z_au = z_array[iz];
+
+            fprintf(mass_fp,"%e ",m);
+            fprintf(z_fp,"%e ",z_array[iz]);
+        }
+        fprintf(mass_fp,"\n");
+        fprintf(z_fp,"\n");
+    }
+
+    fclose(mass_fp);
+    fclose(z_fp);
+    free(z_array);
+
+    for (size_t i = 0; i < structured_data.n_r; i++)
+        free(structured_data.particles[i]);
+    free(structured_data.particles);
+
+    fprintf(stderr,"2D vertical dust distribution written\n");
+    return 0;
+}
+
+
+
 int runInitialization(InitializeDefaultOptions *default_options, DiskParameters *disk_params) {
 
     FILE *dust_ouputput_file = NULL; 
@@ -458,100 +535,11 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
 
     fprintf(stderr,"Disk parameters file created (%s).\n\n", full_disk_param_path);
 
+    if (default_options->dimension == 2)
+        return initializeTwoDimensions(default_options, disk_params, current_sigma0_gas);
 
-/********************************************************/
-/********************************************************/
-/********************************************************/    
+    fprintf(stderr,"ERROR: Unknown dimension mode %d\n", default_options->dimension);
 
-  // allocate structured particle array
-    StructuredParticleData structured_data;
-    structured_data.n_r = default_options->n_dust_particles;
-    structured_data.n_z = 100;  // most 10 z-cell
-
-    // allocate 2D pointer array
-    structured_data.particles = malloc(structured_data.n_r * sizeof(DustParticle *));
-    if (!structured_data.particles) {
-        fprintf(stderr, "ERROR: Failed to allocate structured particles array!\n");
-        return 1;
-    }
-
-    // allocate each row (n_z z-cells per r)
-    for (size_t i = 0; i < structured_data.n_r; i++) {
-        structured_data.particles[i] = malloc(structured_data.n_z * sizeof(DustParticle));
-        if (!structured_data.particles[i]) {
-            fprintf(stderr, "ERROR: Failed to allocate particles row %zu!\n", i);
-            for (size_t j = 0; j < i; j++) free(structured_data.particles[j]);
-            free(structured_data.particles);
-            return 1;
-        }
-    }
-
-    // open output files
-    FILE *mass_file = fopen("mass_matrix.dat", "w");
-    FILE *z_file    = fopen("z_matrix.dat", "w");
-    if (!mass_file || !z_file) {
-        perror("ERROR opening output files");
-        for (size_t i = 0; i < structured_data.n_r; i++) free(structured_data.particles[i]);
-        free(structured_data.particles);
-        return 1;
-    }
-
-    // fill particles
-    for (size_t i_r = 0; i_r < structured_data.n_r; i_r++) {
-        double r_dust_particle_au;
-        if (structured_data.n_r > 1) {
-            r_dust_particle_au = default_options->r_inner + 
-                                 (default_options->r_outer - default_options->r_inner) * i_r / ((double)structured_data.n_r - 1.0);
-        } else { 
-            r_dust_particle_au = default_options->r_inner; 
-        }
-
-        long double sigma_dust_local = calculateDustSurfaceDensityInitTool(r_dust_particle_au, default_options, current_sigma0_gas);
-        long double representative_mass_total_in_cell = 2.0 * M_PI * r_dust_particle_au *
-                                                        ((default_options->r_outer - default_options->r_inner) / ((double)structured_data.n_r - 1.0)) *
-                                                        sigma_dust_local;
-        long double repr_mass_pop1 = representative_mass_total_in_cell * default_options->two_pop_ratio;
-
-        // compute scale height for this r
-        double H = default_options->dust_scaleheight[i_r]; // most már tömb
-
-        // sum of vertical weights
-        long double weight_sum = 0.0;
-        double z_array[structured_data.n_z];
-        for (size_t i_z = 0; i_z < structured_data.n_z; i_z++) {
-            double z = -3.0*H + 6.0*H * i_z / (structured_data.n_z - 1); // [-3H, +3H]
-            z_array[i_z] = z;
-            weight_sum += exp(-0.5*(z/H)*(z/H));
-        }
-
-        // fill each z-slice
-        for (size_t i_z = 0; i_z < structured_data.n_z; i_z++) {
-            double z = z_array[i_z];
-            double vertical_factor = exp(-0.5*(z/H)*(z/H)) / weight_sum; // normált tömeg
-            structured_data.particles[i_r][i_z].index  = i_r;
-            structured_data.particles[i_r][i_z].r_au   = r_dust_particle_au;
-            structured_data.particles[i_r][i_z].z_au   = z;
-            structured_data.particles[i_r][i_z].mass_g = (double)(repr_mass_pop1 * vertical_factor);
-        }
-
-        // write row for mass matrix
-        for (size_t i_z = 0; i_z < structured_data.n_z; i_z++) {
-            fprintf(mass_file, "%e ", structured_data.particles[i_r][i_z].mass_g);
-        }
-        fprintf(mass_file, "\n");
-
-        // write row for z matrix: first column = r, then z-slices
-        fprintf(z_file, "%e ", r_dust_particle_au);
-        for (size_t i_z = 0; i_z < structured_data.n_z; i_z++) {
-            fprintf(z_file, "%e ", structured_data.particles[i_r][i_z].z_au);
-        }
-        fprintf(z_file, "\n");
-    }
-
-    fflush(mass_file);  fclose(mass_file);
-    fflush(z_file);     fclose(z_file);
-
-    fprintf(stderr, "DEBUG: 2D structured particle array allocated and written to mass_matrix.dat + z_matrix.dat\n");
 
     return 0;
 }
