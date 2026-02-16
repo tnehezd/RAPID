@@ -52,6 +52,18 @@ typedef struct {
     size_t allocated_particle_number;              /**< Number of particles allocated in memory. */
 } ParticleData;
 
+
+/**
+ * @brief Container for dust particles on a 2D grid (radial x vertical).
+ *
+ * Stores particles as a dynamically allocated 2D array [n_r][n_z].
+ */
+typedef struct {
+    DustParticle **particles; /**< 2D array of DustParticle structs. */
+    size_t n_r;               /**< Number of radial grid points. */
+    size_t n_z;               /**< Number of vertical cells per radial point. */
+} StructuredParticleData;
+
 /**
  * @brief Allocates memory for particle‑related arrays.
  *

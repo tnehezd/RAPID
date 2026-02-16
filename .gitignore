@@ -4,9 +4,13 @@ output/
 output_*/
 run_*/
 
+plot_field.py
 plot_hdf5.py
 look_into_*.py
 plot_heatmap.py
+
+z_matrix.dat
+mass_matrix.dat
 
 .ipynb_checkpoints
 
