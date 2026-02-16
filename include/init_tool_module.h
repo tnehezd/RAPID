@@ -44,7 +44,7 @@ typedef struct {
     char output_base_path[MAX_PATH_LEN];    /**< Base directory path for simulation output. */
     double dust_density_g_cm3;              /**< Intrinsic material density of dust grains (e.g., \f 1.6g/cm^3\f$). */
     int     vertical_grid_number;           /**< Number of vertical grid cells (z-direction). */
-    double  vertical_grid_max;              /**< Maximum vertical height of the disk [AU]. */
+    double  vertical_grid_max_height;       /**< Maximum vertical height of the disk [in scale heights]. */
     double *vertical_grid;                  /**< Vertical grid array [AU], size vertical_grid_number. */
     double *dust_scaleheight;               /**< Dust scale height Hd for each radial point [AU]. */
 } InitializeDefaultOptions;
