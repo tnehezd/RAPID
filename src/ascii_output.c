@@ -645,3 +645,61 @@ void closeSnapshotFiles(OutputFiles *output_files, const SimulationOptions *sim_
         output_files->micron_dust_file = NULL;
     }
 }
+
+
+
+void writeDustField2D(const StructuredParticleData *sdata, const char *directory, int snapshot_index, const char *label) {
+    if (!sdata || !sdata->particles) {
+        fprintf(stderr,"ERROR [writeDustField2D]: No structured dust field allocated\n");
+        return;
+    }
+
+    char *mass_path = NULL;
+    char *grid_path = NULL;
+
+    if (snapshot_index >= 0) {
+        asprintf(&mass_path,"%s/dust2d_mass_%04d.dat",directory,snapshot_index);
+        asprintf(&grid_path,"%s/dust2d_grid_%04d.dat",directory,snapshot_index);
+    }
+    else {
+        if (label)
+        {
+            asprintf(&mass_path,"%s/%s_dust2d_mass.dat",directory,label);
+            asprintf(&grid_path,"%s/%s_dust2d_grid.dat",directory,label);
+        }
+        else
+        {
+            asprintf(&mass_path,"%s/dust2d_mass.dat",directory);
+            asprintf(&grid_path,"%s/dust2d_grid.dat",directory);
+        }
+    }
+
+    FILE *fm = fopen(mass_path,"w");
+    FILE *fg = fopen(grid_path,"w");
+
+    if(!fm || !fg){
+        fprintf(stderr,"ERROR [writeDustField2D]: cannot open output files\n");
+        free(mass_path); free(grid_path);
+        return;
+    }
+
+    for(size_t i=0;i<sdata->n_r;i++){
+        for(size_t j=0;j<sdata->n_z;j++){
+            const DustParticle *p = &sdata->particles[i][j];
+
+            fprintf(fm,"%e ",p->mass_g);
+            fprintf(fg,"%e ",p->z_au);
+        }
+        fprintf(fm,"\n");
+        fprintf(fg,"\n");
+    }
+
+    fclose(fm);
+    fclose(fg);
+
+    fprintf(stderr,"DEBUG: 2D dust field written (%s)\n",
+            snapshot_index>=0 ? "snapshot" : (label?label:"plain"));
+
+    free(mass_path);
+    free(grid_path);
+}
