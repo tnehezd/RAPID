@@ -223,7 +223,8 @@ static void simulateDustDriftStep(double *t, double deltat, double *output_time,
                 }
             }
 
-            writeParticleFieldSnapshot2D(structured_particle_data, sim_opts->output_dir_name, *output_time);
+            writeDustField2D(structured_particle_data, sim_opts->output_dir_name, *output_time, NULL);
+
 
 
             fprintf(stderr,
@@ -301,33 +302,6 @@ static void simulateGasOnlyStep(double *t,double deltat,double *output_time,Disk
 
     *t += deltat;
 }
-
-
-void writeParticleFieldSnapshot2D(const StructuredParticleData *sdata, const char *base_path, double snapshot_index) {
-    if (!sdata || !base_path) return;
-
-    char filename[512];
-    snprintf(filename, sizeof(filename), "%s/particle_field_%08d.dat", base_path, (int)snapshot_index);
-
-    FILE *fp = fopen(filename, "w");
-    if (!fp) {
-        perror("Error opening particle field file");
-        return;
-    }
-
-    fprintf(fp, "# Radial (AU)   Vertical (AU)   Mass (g)\n");
-
-    for (size_t i_r = 0; i_r < sdata->n_r; i_r++) {
-        for (size_t i_z = 0; i_z < sdata->n_z; i_z++) {
-            const DustParticle *p = &sdata->particles[i_r][i_z];
-            fprintf(fp, "%e %e %e\n", p->r_au, p->z_au, p->mass_g);
-        }
-    }
-
-    fclose(fp);
-    fprintf(stderr, "DEBUG: Snapshot %07d written to %s\n", (int)snapshot_index, filename);
-}
-
 
 void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files, StructuredParticleData *structured_particle_data) {
 

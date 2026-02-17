@@ -658,19 +658,19 @@ void writeDustField2D(const StructuredParticleData *sdata, const char *directory
     char *grid_path = NULL;
 
     if (snapshot_index >= 0) {
-        asprintf(&mass_path,"%s/dust2d_mass_%04d.dat",directory,snapshot_index);
-        asprintf(&grid_path,"%s/dust2d_grid_%04d.dat",directory,snapshot_index);
+        asprintf(&mass_path,"%s/%s/%s_%08d%s",directory,kLogFilesDirectory,kMassFieldNameFile,snapshot_index,kFileNamesSuffix);
+        asprintf(&grid_path,"%s/%s/%s_%08d.%s",directory,kLogFilesDirectory,kGridFieldNameFile,snapshot_index,kFileNamesSuffix);
     }
     else {
         if (label)
         {
-            asprintf(&mass_path,"%s/%s_dust2d_mass.dat",directory,label);
-            asprintf(&grid_path,"%s/%s_dust2d_grid.dat",directory,label);
+            asprintf(&mass_path,"%s/%s_%s%s",directory,label,kMassFieldNameFile,kFileNamesSuffix);
+            asprintf(&grid_path,"%s/%s_%s%s",directory,label,kGridFieldNameFile,kFileNamesSuffix);
         }
         else
         {
-            asprintf(&mass_path,"%s/dust2d_mass.dat",directory);
-            asprintf(&grid_path,"%s/dust2d_grid.dat",directory);
+            asprintf(&mass_path,"%s/%s%s",directory,kMassFieldNameFile,kFileNamesSuffix);
+            asprintf(&grid_path,"%s/%s%s",directory,kGridFieldNameFile,kFileNamesSuffix);
         }
     }
 

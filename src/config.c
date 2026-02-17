@@ -31,5 +31,5 @@ const char * const kCurrentRuntimeInfoFile = "current_runtime_performance_info";
 const char * const kSnapshotOutputFileNamePrefix = "snapshot";
 const char * const kTimeSeriesForMassAccumulatinFileName = "mass_accumulation_dze_edge";
 const char * const kFileNamesHDF5Suffix = ".h5";
-const char * const kMassFieldNameFile = "mass_field";					
-const char * const kGridFieldNameFile = "grid_field";					
+const char * const kMassFieldNameFile = "dust2d_mass";					
+const char * const kGridFieldNameFile = "dust2d_grid";					
