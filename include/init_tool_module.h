@@ -85,7 +85,8 @@ int runInitialization(InitializeDefaultOptions *opts, DiskParameters *output_dis
  * @note The function assumes that linearInterpolation and calculateDustSurfaceDensityInitTool are available.
  * @note The output format per particle is: index, r [AU], mass_pop1 [g], mass_pop2 [g].
  */
-int initializeOneDimensions(InitializeDefaultOptions *default_options, DiskParameters *disk_params, long double current_sigma0_gas, FILE *dust_output_file);
+int initializeOneDimensions(InitializeDefaultOptions *default_options, DiskParameters *disk_params, long double current_sigma0_gas, FILE *dust_output_file, FILE *gas_output_file);
+
 
 /**
  * @brief Initialize the 2D dust particle distribution with radial and vertical structure.

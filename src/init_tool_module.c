@@ -145,9 +145,54 @@ static int validateInitializationInputs(const InitializeDefaultOptions *opts) {
     return 0; 
 }
 
-int initializeOneDimensions(InitializeDefaultOptions *default_options, DiskParameters *disk_params, long double current_sigma0_gas, FILE *dust_output_file){
+int initializeOneDimensions(InitializeDefaultOptions *default_options, DiskParameters *disk_params, long double current_sigma0_gas, FILE *dust_output_file, FILE *gas_output_file) {
 
+    const double DEFAULT_ONE_SIZE = 1.0;
+
+    for (int i = 0; i < default_options->n_dust_particles; i++) {
+        double r_dust = default_options->r_inner +
+                        (default_options->r_outer - default_options->r_inner) * i / ((double)default_options->n_dust_particles - 1.0);
+
+        double temp_sigma, temp_pressure, temp_dPdr;
+        linearInterpolation(disk_params->gas_surface_density_vector, disk_params->radial_grid, r_dust, &temp_sigma, disk_params->delta_r, disk_params);
+        linearInterpolation(disk_params->gas_pressure_vector, disk_params->radial_grid, r_dust, &temp_pressure, disk_params->delta_r, disk_params);
+        linearInterpolation(disk_params->gas_pressure_gradient_vector, disk_params->radial_grid, r_dust, &temp_dPdr, disk_params->delta_r, disk_params);
+
+        long double sigma_dust_local = calculateDustSurfaceDensityInitTool(r_dust, default_options, current_sigma0_gas);
+        long double representative_mass_total_in_cell = 2.0 * M_PI * r_dust *
+                                                       ((default_options->r_outer - default_options->r_inner) / ((double)default_options->n_dust_particles - 1.0)) *
+                                                       sigma_dust_local;
+
+        long double repr_mass_pop1 = representative_mass_total_in_cell * default_options->two_pop_ratio;
+        long double repr_mass_pop2 = representative_mass_total_in_cell * (1.0 - default_options->two_pop_ratio);
+
+        double s_max_cm = DEFAULT_ONE_SIZE; // vagy a régi logika, amit számoltál
+
+        fprintf(dust_output_file, "%-5d %-15.6e %-20.12Lg %-20.12Lg %-15.6e %-15.6e\n",
+                i, r_dust, repr_mass_pop1, repr_mass_pop2, s_max_cm, default_options->micro_size_cm);
+    }
+
+    fprintf(stderr, "1D dust particle distribution written\n");
+
+    // --- Gas 1D profil ---
+    for (int i = 0; i < disk_params->grid_number; i++) {
+        double r_gas = disk_params->radial_grid[i + 1];
+        fprintf(gas_output_file, "%-5d %-15.6e %-15.6e %-15.6e %15.6e\n",
+                i, r_gas,
+                disk_params->gas_surface_density_vector[i + 1],
+                disk_params->gas_pressure_vector[i + 1],
+                disk_params->gas_pressure_gradient_vector[i + 1]);
+
+    }
+
+    fprintf(stderr, "1D gas profiles written\n");
+    fflush(dust_output_file);
+    fflush(gas_output_file);
+
+    return 0;
 }
+
+
 
 
 int initializeTwoDimensions(InitializeDefaultOptions *default_options, DiskParameters *disk_params, long double current_sigma0_gas) {
@@ -224,28 +269,19 @@ int initializeTwoDimensions(InitializeDefaultOptions *default_options, DiskParam
 
 int runInitialization(InitializeDefaultOptions *default_options, DiskParameters *disk_params) {
 
-    FILE *dust_ouputput_file = NULL; 
+    FILE *dust_output_file = NULL; 
     FILE *disk_parameters_output_file = NULL; 
     FILE *gas_parameters_output_file = NULL; 
 
     long double current_sigma0_gas;
 
+    // 1️⃣ Input validáció
     if (validateInitializationInputs(default_options) != 0) { 
         return 1; 
     }
 
-    double drdze_inner_calculated =
-        pow(default_options->deadzone_r_inner, 1.0 + default_options->flaring_index)
-        * default_options->aspect_ratio
-        * default_options->deadzone_dr_inner;
-
-    double drdze_outer_calculated =
-        pow(default_options->deadzone_r_outer, 1.0 + default_options->flaring_index)
-        * default_options->aspect_ratio
-        * default_options->deadzone_dr_outer;
-
+    // 2️⃣ Sigma0 beállítása
     const double DEFAULT_disk_mass_DUST = 0.01;
-
     if (fabs(default_options->disk_mass_dust - DEFAULT_disk_mass_DUST) > 1e-9) {
         current_sigma0_gas = calculateSigm0FromDiskMass(default_options);
         fprintf(stderr,"Sigma0 calculated from total dust disk mass (Md): %Lg M_Sun/AU^2\n", current_sigma0_gas);
@@ -254,56 +290,38 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
         fprintf(stderr,"Using explicit Sigma0 (gas surface density at 1 AU): %Lg M_Sun/AU^2\n", current_sigma0_gas);
     }
 
+    // 3️⃣ Two-pop ratio beállítása, ha one-size
     const double DEFAULT_ONE_SIZE = 1.0;
-
     if (fabs(default_options->one_size_particle_cm - DEFAULT_ONE_SIZE) > 1e-9 && default_options->one_size_particle_cm > 0) {
         default_options->two_pop_ratio = 1.0;
     }
 
+    // 4️⃣ Fájlok elérési útjainak összeállítása
     char *full_init_dust_profile_path = NULL;
     char *full_disk_param_path = NULL;
     char *full_init_density_path = NULL;
 
-    asprintf(&full_init_dust_profile_path, "%s/%s%s",default_options->output_base_path,kInitialDustProfileFileName,kFileNamesSuffix);
-    asprintf(&full_disk_param_path, "%s/%s%s",default_options->output_base_path,kDiskConfigFile,kFileNamesSuffix);
-    asprintf(&full_init_density_path, "%s/%s%s",default_options->output_base_path,kInitialGasProfileFileName,kFileNamesSuffix);
+    asprintf(&full_init_dust_profile_path, "%s/%s%s",
+             default_options->output_base_path, kInitialDustProfileFileName, kFileNamesSuffix);
+    asprintf(&full_disk_param_path, "%s/%s%s",
+             default_options->output_base_path, kDiskConfigFile, kFileNamesSuffix);
+    asprintf(&full_init_density_path, "%s/%s%s",
+             default_options->output_base_path, kInitialGasProfileFileName, kFileNamesSuffix);
 
-    dust_ouputput_file = fopen(full_init_dust_profile_path, "w");
-    if (dust_ouputput_file == NULL) {
-        perror("Error opening initial dust profile file in init_tool_module");
-        return 1;
-    }
-
+    dust_output_file = fopen(full_init_dust_profile_path, "w");
     disk_parameters_output_file = fopen(full_disk_param_path, "w");
-    if (disk_parameters_output_file == NULL) {
-        perror("Error opening disk parameters file in init_tool_module");
-        fclose(dust_ouputput_file);
-        return 1;
-    }
-
     gas_parameters_output_file = fopen(full_init_density_path, "w");
-    if (gas_parameters_output_file == NULL) {
-        perror("Error opening initial density profile file in init_tool_module");
-        fclose(dust_ouputput_file);
-        fclose(disk_parameters_output_file);
+
+    if (!dust_output_file || !disk_parameters_output_file || !gas_parameters_output_file) {
+        perror("Error opening initialization files");
+        if(dust_output_file) fclose(dust_output_file);
+        if(disk_parameters_output_file) fclose(disk_parameters_output_file);
+        if(gas_parameters_output_file) fclose(gas_parameters_output_file);
         return 1;
     }
 
-    fprintf(stderr,"\n--- Simulation Parameters ---\n");
-    fprintf(stderr,"Total dust disk mass (Solar Mass): %lg\n", default_options->disk_mass_dust);
-    fprintf(stderr,"Inner disk edge (AU): %lg\n", default_options->r_inner);
-    fprintf(stderr,"Outer disk edge (AU): %lg\n", default_options->r_outer);
-    fprintf(stderr,"Vertical disk edge (H): %lg\n", default_options->vertical_grid_max_height);
-    fprintf(stderr,"Surface density profile exponent: %lg\n", -default_options->sigma_exponent);
-    fprintf(stderr,"Gas surface density at 1 AU (Solar Mass/AU^2): %Lg\n", current_sigma0_gas);
-    fprintf(stderr,"Dust to gas ratio: %lg\n", default_options->dust_to_gas_ratio);
-    fprintf(stderr,"Number of radial gas grid points: %d\n", default_options->n_grid_points); 
-    fprintf(stderr,"Number of vertical gas grid points: %d\n", default_options->vertical_grid_number); 
-    fprintf(stderr,"Number of dust particles to generate: %d\n", default_options->n_dust_particles);
-    fprintf(stderr,"Dust particle density (g/cm^3): %lg\n", default_options->dust_density_g_cm3);
-    fprintf(stderr,"------------------------------\n\n");
-
-    HeaderData initial_header_data;
+    // 5️⃣ Header előkészítése és kiírása
+    HeaderData initial_header_data = {0};
     initial_header_data.current_time = 0.0;
     initial_header_data.is_initial_data = 1;
     initial_header_data.R_in = default_options->r_inner;
@@ -313,8 +331,6 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
     initial_header_data.grav_const = G_DIMENSIONLESS;
     initial_header_data.dz_r_inner = default_options->deadzone_r_inner;
     initial_header_data.dz_r_outer = default_options->deadzone_r_outer;
-    initial_header_data.dz_dr_inner_calc = drdze_inner_calculated;
-    initial_header_data.dz_dr_outer_calc = drdze_outer_calculated;
     initial_header_data.dz_alpha_mod = default_options->deadzone_alpha_mod;
     initial_header_data.dust_density_g_cm3 = default_options->dust_density_g_cm3;
     initial_header_data.alpha_viscosity = default_options->alpha_viscosity;
@@ -322,29 +338,18 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
     initial_header_data.flaring_index = default_options->flaring_index;
     initial_header_data.n_grid_points = default_options->n_grid_points;
 
-    if (dust_ouputput_file != NULL) {
-        printFileHeader(dust_ouputput_file, FILE_TYPE_INTIIAL_DUST_PROFILE, &initial_header_data);
-    }
-    if (gas_parameters_output_file != NULL) {
-        printFileHeader(gas_parameters_output_file, FILE_TYPE_GAS_DENSITY, &initial_header_data);
-    }
-    if (disk_parameters_output_file != NULL) {
-        printFileHeader(disk_parameters_output_file, FILE_TYPE_DISK_PARAM, &initial_header_data);
-    }
+    printFileHeader(dust_output_file, FILE_TYPE_INTIIAL_DUST_PROFILE, &initial_header_data);
+    printFileHeader(gas_parameters_output_file, FILE_TYPE_GAS_DENSITY, &initial_header_data);
+    printFileHeader(disk_parameters_output_file, FILE_TYPE_DISK_PARAM, &initial_header_data);
 
-    double fragmentation_velocity_cm_s = 1000.0;
-    double fragmentation_velocity_au_yr2pi = fragmentation_velocity_cm_s * CM_PER_SEC_TO_AU_PER_YEAR_2PI;
-    double fragmentation_velocity_sq_au_yr2pi_sq = fragmentation_velocity_au_yr2pi * fragmentation_velocity_au_yr2pi;
-
-    disk_params->grid_number = default_options->n_grid_points; // Gas grid resolution
+    // 6️⃣ Disk paraméterek feltöltése
+    disk_params->grid_number = default_options->n_grid_points;
     disk_params->r_min = default_options->r_inner;
     disk_params->r_max = default_options->r_outer;
     disk_params->sigma_0 = current_sigma0_gas;
     disk_params->sigma_power_law_index = default_options->sigma_exponent;
     disk_params->r_dze_i = default_options->deadzone_r_inner;
     disk_params->r_dze_o = default_options->deadzone_r_outer;
-    disk_params->dr_dze_i = default_options->deadzone_dr_inner;
-    disk_params->dr_dze_o = default_options->deadzone_dr_outer;
     disk_params->alpha_parameter = default_options->alpha_viscosity;
     disk_params->alpha_parameter_modification = default_options->deadzone_alpha_mod;
     disk_params->h_aspect_ratio = default_options->aspect_ratio;
@@ -358,23 +363,18 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
         disk_params->delta_r = 0.0;
     }
 
+    // 7️⃣ Disk arrays létrehozása és feltöltése
     disk_params->radial_grid = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
     disk_params->gas_surface_density_vector = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
     disk_params->gas_pressure_vector = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
     disk_params->gas_pressure_gradient_vector = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
     disk_params->gas_velocity_vector = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
 
-
-    if (!disk_params->radial_grid || !disk_params->gas_surface_density_vector || !disk_params->gas_pressure_vector || !disk_params->gas_pressure_gradient_vector || !disk_params->gas_velocity_vector) {
-        fprintf(stderr, "ERROR [runInitialization]: Failed to allocate disk arrays. Exiting.\n");
-        if (dust_ouputput_file) fclose(dust_ouputput_file);
-        if (disk_parameters_output_file) fclose(disk_parameters_output_file);
-        if (gas_parameters_output_file) fclose(gas_parameters_output_file);
-        if (disk_params->radial_grid) free(disk_params->radial_grid);
-        if (disk_params->gas_surface_density_vector) free(disk_params->gas_surface_density_vector);
-        if (disk_params->gas_pressure_vector) free(disk_params->gas_pressure_vector);
-        if (disk_params->gas_pressure_gradient_vector) free(disk_params->gas_pressure_gradient_vector);
-        if (disk_params->gas_velocity_vector) free(disk_params->gas_velocity_vector);
+    if (!disk_params->radial_grid || !disk_params->gas_surface_density_vector ||
+        !disk_params->gas_pressure_vector || !disk_params->gas_pressure_gradient_vector ||
+        !disk_params->gas_velocity_vector) 
+    {
+        fprintf(stderr, "ERROR: Failed to allocate disk arrays.\n");
         return 1;
     }
 
@@ -385,161 +385,35 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
     createInitialGasPressureGradient(disk_params);
     createInitialGasVelocity(disk_params);
 
-    for (int i_loop = 0; i_loop < default_options->n_grid_points; i_loop++) {
-        double r_gas_grid_au = disk_params->radial_grid[i_loop + 1];
-
-        if (r_gas_grid_au <= 0) {
-            fprintf(stderr, "ERROR: Calculated gas grid radial position is non-positive at index %d (%lg AU). Skipping this point.\n", i_loop, r_gas_grid_au);
-            continue;
-        }
-
-        long double sigma_gas_local_val = disk_params->gas_surface_density_vector[i_loop + 1];
-        double pressure_local_val = disk_params->gas_pressure_vector[i_loop + 1];
-        double dPdr_local_val = disk_params->gas_pressure_gradient_vector[i_loop + 1];
-
-        fprintf(gas_parameters_output_file, "%-5d %-15.6e %-15.6Le %-15.6e %15.6e\n",
-            i_loop, r_gas_grid_au,
-            sigma_gas_local_val,
-            pressure_local_val,
-            dPdr_local_val);
-    }
-    fflush(gas_parameters_output_file); 
-
-    /* allocate vertical grid and dust scaleheight */
+    // 8️⃣ Vertikális grid (opcionális)
     if (default_options->vertical_grid_number > 0) {
         default_options->vertical_grid = (double *)malloc(default_options->vertical_grid_number * sizeof(double));
         default_options->dust_scaleheight = (double *)malloc(default_options->n_grid_points * sizeof(double));
-        
-        if (!default_options->vertical_grid || !default_options->dust_scaleheight) {
-            fprintf(stderr, "ERROR [runInitialization]: Failed to allocate vertical grid arrays.\n");
-            if(default_options->vertical_grid) free(default_options->vertical_grid);
-            if(default_options->dust_scaleheight) free(default_options->dust_scaleheight);
-            return 1;
-        }
-
         for(int i=0;i<default_options->n_grid_points;i++){
             double r = default_options->r_inner + i*(default_options->r_outer - default_options->r_inner)/(default_options->n_grid_points-1);
             double particle_radius = default_options->one_size_particle_cm / AU_IN_CM;
             default_options->dust_scaleheight[i] = calculateDustScaleHeight(r, particle_radius, disk_params);
         }
-
     }
 
-
-
-    for (int i_loop = 0; i_loop < default_options->n_dust_particles; i_loop++) {
-
-        double r_dust_particle_au;
-
-        if (default_options->n_dust_particles > 1) {
-            r_dust_particle_au = default_options->r_inner + (default_options->r_outer - default_options->r_inner) * i_loop / ((double)default_options->n_dust_particles - 1.0);
-        } else { 
-            r_dust_particle_au = default_options->r_inner; 
-        }
-
-        if (r_dust_particle_au <= 0) {
-            fprintf(stderr, "ERROR: Calculated radial position is non-positive at dust particle index %d (%lg AU). Skipping this point.\n", i_loop, r_dust_particle_au);
-            continue;
-        }
-
-        double temp_sigma, temp_pressure, temp_dPdr;
-        
-        linearInterpolation(disk_params->gas_surface_density_vector, disk_params->radial_grid, r_dust_particle_au, &temp_sigma, disk_params->delta_r,disk_params);
-        
-        long double sigma_gas_local = temp_sigma;
-        
-        linearInterpolation(disk_params->gas_pressure_vector, disk_params->radial_grid, r_dust_particle_au, &temp_pressure, disk_params->delta_r, disk_params);
-        
-        double pressure_local = temp_pressure;
-        
-        linearInterpolation(disk_params->gas_pressure_gradient_vector, disk_params->radial_grid, r_dust_particle_au, &temp_dPdr, disk_params->delta_r, disk_params);
-        
-        double dPdr_local = temp_dPdr;
-        double s_max_cm;
-
-        if (fabs(default_options->one_size_particle_cm - DEFAULT_ONE_SIZE) > 1e-9 && default_options->one_size_particle_cm > 0) {
-            s_max_cm = default_options->one_size_particle_cm;
-        } else {
-
-            double calculateKeplerianVelocity_au_yr2pi = calculateKeplerianVelocity(r_dust_particle_au, disk_params);
-            double sound_speed_au_yr2pi = calculateLocalSoundSpeed(r_dust_particle_au, disk_params);
-            double sound_speed_sq = sound_speed_au_yr2pi * sound_speed_au_yr2pi;
-            long double sigma_dust_local = calculateDustSurfaceDensityInitTool(r_dust_particle_au, default_options, current_sigma0_gas);
-            long double sigma_dust_local_cgs = sigma_dust_local / SURFACE_DENSITY_CONVERSION_FACTOR;
-            double sigma_gas_local_cgs = (double)sigma_gas_local / SURFACE_DENSITY_CONVERSION_FACTOR;
-            double dlnPdlnr_local;
-
-            if (fabs(pressure_local) < 1e-12) {
-                fprintf(stderr, "Error: Pressure is near zero in dlnPdlnr calculation at r = %lg. Check input parameters. Setting dlnPdlnr = 0.\n", r_dust_particle_au);
-                dlnPdlnr_local = 0.0;
-            } else {
-                dlnPdlnr_local = r_dust_particle_au / pressure_local * dPdr_local;
-            }
-
-            double s_drift = default_options->drift_factor * 2.0 / M_PI * sigma_dust_local_cgs / default_options->dust_density_g_cm3 *
-                             (calculateKeplerianVelocity_au_yr2pi * calculateKeplerianVelocity_au_yr2pi) / sound_speed_sq * fabs(1.0 / dlnPdlnr_local);
-
-            double s_frag = default_options->fragmentation_factor * 2.0 / (3.0 * M_PI) * sigma_gas_local_cgs /
-                            (default_options->dust_density_g_cm3 * calculateTurbulentAlpha(r_dust_particle_au, disk_params)) *
-                            fragmentation_velocity_sq_au_yr2pi_sq / sound_speed_sq;
-
-            double dlnPdlnr_abs_cs2_half = fabs(dlnPdlnr_local * sound_speed_sq * 0.5);
-            double s_df;
-
-            if (dlnPdlnr_abs_cs2_half < 1e-12) {
-                fprintf(stderr, "Error: Denominator is near zero in s_df calculation at r = %lg. Check dlnPdlnr value. Setting s_df to a large value.\n", r_dust_particle_au);
-                s_df = 1e99;
-            } else {
-                s_df = fragmentation_velocity_au_yr2pi * calculateKeplerianVelocity_au_yr2pi / dlnPdlnr_abs_cs2_half * 2.0 * sigma_gas_local_cgs / (M_PI * default_options->dust_density_g_cm3);
-            }
-
-            s_max_cm = findMinimumForThreeNumbersInitTool(s_drift, s_frag, s_df);
-        }
-
-        if (s_max_cm <= 0) {
-            fprintf(stderr, "Warning: s_max_cm <= 0 at r = %lg. This might indicate problematic physical parameters. Setting to a small positive value.\n", r_dust_particle_au);
-            s_max_cm = 1e-10;
-        }
-
-        long double representative_mass_total_in_cell = 2.0 * M_PI * r_dust_particle_au *
-                                                        ((default_options->r_outer - default_options->r_inner) / ((double)default_options->n_dust_particles - 1.0)) *
-                                                        calculateDustSurfaceDensityInitTool(r_dust_particle_au, default_options, current_sigma0_gas);
-
-        long double repr_mass_pop1 = representative_mass_total_in_cell * default_options->two_pop_ratio;
-        long double repr_mass_pop2 = representative_mass_total_in_cell * (1.0 - default_options->two_pop_ratio);
-
-        fprintf(dust_ouputput_file, "%-5d %-15.6e %-20.12Lg %-20.12Lg %-15.6e %-15.6e\n",
-                i_loop, r_dust_particle_au, 
-                repr_mass_pop1,
-                repr_mass_pop2,
-                s_max_cm, default_options->micro_size_cm);
-    }
-
-    fflush(dust_ouputput_file);
-    fclose(dust_ouputput_file);
-    dust_ouputput_file = NULL;
-    fclose(gas_parameters_output_file);
-    gas_parameters_output_file = NULL;
-
-    fprintf(stderr,"Particle data file created (%s). Writing disk parameters file!\n\n", full_init_dust_profile_path);
+    initializeOneDimensions(default_options, disk_params, current_sigma0_gas,
+                            dust_output_file, gas_parameters_output_file);
 
     fprintf(disk_parameters_output_file, "%-15.6e %-15.6e %-10d %-15.6e %-20.12Lg %-15.6e %-15.6e %-15.6e %-20.12e %-20.12e %-15.6e %-15.6e %-15.6e %-15.6e %-15.6e\n",
-            default_options->r_inner, default_options->r_outer, default_options->n_grid_points, -default_options->sigma_exponent, current_sigma0_gas,
+            default_options->r_inner, default_options->r_outer, default_options->n_grid_points, 
+            -default_options->sigma_exponent, current_sigma0_gas,
             G_DIMENSIONLESS, default_options->deadzone_r_inner, default_options->deadzone_r_outer,
-            drdze_inner_calculated, drdze_outer_calculated,
-            default_options->deadzone_alpha_mod, default_options->dust_density_g_cm3, default_options->alpha_viscosity, default_options->star_mass, default_options->flaring_index);
+            0.0, 0.0,  // dr_dze_inner/outer helyett itt csak placeholder
+            default_options->deadzone_alpha_mod, default_options->dust_density_g_cm3, default_options->alpha_viscosity, 
+            default_options->star_mass, default_options->flaring_index);
 
-    fflush(disk_parameters_output_file);
+    fclose(dust_output_file);
+    fclose(gas_parameters_output_file);
     fclose(disk_parameters_output_file);
-    disk_parameters_output_file = NULL;
 
-    fprintf(stderr,"Disk parameters file created (%s).\n\n", full_disk_param_path);
-
-    if (default_options->dimension == 2)
+    if (default_options->dimension == 2) {
         return initializeTwoDimensions(default_options, disk_params, current_sigma0_gas);
-
-    fprintf(stderr,"ERROR: Unknown dimension mode %d\n", default_options->dimension);
-
+    }
 
     return 0;
 }
