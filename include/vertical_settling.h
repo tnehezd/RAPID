@@ -46,7 +46,9 @@ void calculateVerticalDistribution(double radial_distance,
  *  dt              : timestep [internal units]
  *  alpha_turb      : turbulence parameter (dimensionless)
  */
-void applyVerticalSettling(StructuredParticleData *sdata, const DiskParameters *disk_params, double dt);
+void applyVerticalSettlingStochastic(StructuredParticleData *sdata, const DiskParameters *disk_params, double dt);
 
+
+void applyVerticalSettlingDeterministic(StructuredParticleData *sdata, const DiskParameters *disk_params, double dt);
 
 #endif

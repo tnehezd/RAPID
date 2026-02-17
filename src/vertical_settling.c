@@ -37,12 +37,13 @@ void calculateVerticalDistribution(double radial_distance,
  *
  * Updates the z-coordinate of each particle in StructuredParticleData according to
  * local settling velocity, Keplerian frequency, and turbulent diffusion.
+ * This is for a fluid model, not for individual particles!
  *
  * @param sdata Pointer to the 2D structured particle data.
  * @param disk_params Pointer to disk parameters.
  * @param dt Timestep in internal units.
  */
-void applyVerticalSettling(StructuredParticleData *sdata, const DiskParameters *disk_params, double dt) {
+void applyVerticalSettlingStochastic(StructuredParticleData *sdata, const DiskParameters *disk_params, double dt) {
     if (!sdata || !disk_params) return;
 
     for (size_t i_r = 0; i_r < sdata->n_r; i_r++) {
@@ -81,6 +82,42 @@ void applyVerticalSettling(StructuredParticleData *sdata, const DiskParameters *
             // optional vertical clipping, e.g., ±5 scale heights
             if (p->z_au > 5.0*Hd) p->z_au = 5.0*Hd;
             if (p->z_au < -5.0*Hd) p->z_au = -5.0*Hd;
+        }
+    }
+}
+
+
+
+
+
+void applyVerticalSettlingDeterministic(StructuredParticleData *sdata, const DiskParameters *disk_params, double dt) {
+    if (!sdata || !disk_params) return;
+
+    for (size_t i_r = 0; i_r < sdata->n_r; i_r++) {
+
+        // radial location of this grid column
+        double r = sdata->particles[i_r][0].r_au;
+
+        for (size_t i_z = 0; i_z < sdata->n_z; i_z++) {
+
+            DustParticle *p = &sdata->particles[i_r][i_z];
+            double z = p->z_au;
+            double a = p->radius;
+
+            // local Stokes number
+            double St = calculateLocalStokesNumber(r, z, a, disk_params);
+
+            // vertical settling velocity: v_settle = - St * Omega_k * z
+            double omega_k = calculateKeplerianFrequency(r, disk_params);
+            double v_settle = - St * omega_k * z;
+
+            // Update z-position deterministically
+            p->z_au = z + v_settle * dt;
+
+            // optional vertical clipping, e.g., ±5 scale heights
+            double Hd = calculateDustScaleHeight(r, a, disk_params);
+            if (p->z_au > 5.0 * Hd) p->z_au = 5.0 * Hd;
+            if (p->z_au < -5.0 * Hd) p->z_au = -5.0 * Hd;
         }
     }
 }

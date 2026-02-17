@@ -279,11 +279,7 @@ int initializeTwoDimensions(InitializeDefaultOptions *default_options, long doub
     fclose(z_fp);
     free(z_array);
 
-    // Felszabadítás
-    for (size_t i = 0; i < structured_data->n_r; i++)
-        free(structured_data->particles[i]);
-    free(structured_data->particles);
-
+    
     fprintf(stderr,"2D vertical dust distribution written\n");
 
     return 0;

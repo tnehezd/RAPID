@@ -243,7 +243,7 @@ static void simulateDustDriftStep(double *t, double deltat, double *output_time,
 
 
     // somewhere in simulateDustDriftStep(), after particle update:
-    applyVerticalSettling(structured_particle_data, disk_params, deltat); 
+    applyVerticalSettlingDeterministic(structured_particle_data, disk_params, deltat); 
 
     if (sim_opts->option_for_dust_secondary_population == 1) {
         updateParticleGridIndices(particle_data,*t, particle_number, disk_params);
@@ -329,13 +329,12 @@ void writeParticleFieldSnapshot2D(const StructuredParticleData *sdata, const cha
 }
 
 
-
 void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files, StructuredParticleData *structured_particle_data) {
 
     ParticleData particle_data;
     HeaderData header_data_for_files; 
-
-    double output_time = 0.; 
+    double output_time = 0.0;
+    int particle_number = 0;
 
     if (disk_params == NULL) {
         fprintf(stderr, "ERROR [timeIntegrationForTheSystem]: disk_params_ptr is NULL!\n");
@@ -344,10 +343,11 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
 
     memset(&particle_data, 0, sizeof(ParticleData));
 
+    // --- Particle number calculation ---
     if (mode > 2) {
         particle_number = calculateNumbersOfParticles(sim_opts->dust_input_filename);
     } else {
-        fprintf(stderr, "ERROR [timeIntegrationForTheSystem]: Particle drift is OFF. particle_number set to 0.\n");
+        fprintf(stderr, "DEBUG [timeIntegrationForTheSystem]: Particle drift is OFF. particle_number set to 0.\n");
         particle_number = 0;
     }
 
@@ -356,7 +356,8 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
         exit(EXIT_FAILURE);
     }
 
-    if (mode>2) {
+    // --- Output files setup ---
+    if (mode > 2) {
         if (setupInitialOutputFiles(output_files, sim_opts, disk_params, &header_data_for_files) != 0) {
             fprintf(stderr, "ERROR: Failed to set up initial output files. Exiting.\n");
             exit(EXIT_FAILURE);
@@ -379,6 +380,7 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
         ((SimulationOptions *)sim_opts)->user_defined_time_step = deltat; 
     }
 
+    // --- Particle data initialization ---
     if (sim_opts->option_for_dust_secondary_population == 0 && particle_number > 0) {
         for (i = 0; i < particle_number; i++) {
             particle_data.micron_particle_distance_array[i][0] = 0;
@@ -389,69 +391,50 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
         }
     }
 
-
-
-
-
-    structured_particle_data->n_r = disk_params->grid_number;
-    structured_particle_data->n_z = disk_params->vertical_grid_number;
-    structured_particle_data->particles = malloc(structured_particle_data->n_r * sizeof(DustParticle*));
-
-    for (size_t i = 0; i < structured_particle_data->n_r; i++) {
-        structured_particle_data->particles[i] = malloc(structured_particle_data->n_z * sizeof(DustParticle));
-        for (size_t j = 0; j < structured_particle_data->n_z; j++) {
-            structured_particle_data->particles[i][j].r_au = disk_params->radial_grid[i];
-            structured_particle_data->particles[i][j].z_au = 0.0;
-            structured_particle_data->particles[i][j].mass_g = 0.0;
-            structured_particle_data->particles[i][j].radius = 1e-4; // pl. alapértelmezett
-        }
+    // --- StructuredParticleData: át kell venni az init_tool-ból, nem malloc-olni újra ---
+    if (structured_particle_data == NULL || structured_particle_data->particles == NULL) {
+        fprintf(stderr, "ERROR [timeIntegrationForTheSystem]: StructuredParticleData not initialized! Exiting.\n");
+        exit(EXIT_FAILURE);
     }
 
-
-
-    // ---- Time series init ----
-
+    // ---- Time series init (HDF5) ----
     if (sim_opts->output_format == OUTPUT_HDF5) {
         char *ts_filename = NULL;
 
         if (asprintf(&ts_filename,
                      "%s/%s/%s%s",
                      sim_opts->output_dir_name,
-                     kLogFilesDirectory,kTimeSeriesForMassAccumulatinFileName,kFileNamesHDF5Suffix) == -1) {
+                     kLogFilesDirectory, kTimeSeriesForMassAccumulatinFileName, kFileNamesHDF5Suffix) == -1) {
             fprintf(stderr, "ERROR: asprintf failed for time_series filename\n");
             exit(EXIT_FAILURE);
         }
 
         initializeMassTimeSeries(ts_filename);
         free(ts_filename);
-
     }
 
+    // ---- Main integration loop ----
     do {
         if (mode > 1) {
-            simulateDustDriftStep(&t, deltat, &output_time, &particle_data, particle_number, disk_params, sim_opts, output_files, dens_name, dust_name, dust_name2, size_name, structured_particle_data);
+            simulateDustDriftStep(&t, deltat, &output_time,
+                                  &particle_data, particle_number,
+                                  disk_params, sim_opts, output_files,
+                                  dens_name, dust_name, dust_name2, size_name,
+                                  structured_particle_data);
         } else { 
-            simulateGasOnlyStep(&t, deltat, &output_time,disk_params, sim_opts, output_files,dens_name);
+            simulateGasOnlyStep(&t, deltat, &output_time,
+                                disk_params, sim_opts, output_files,
+                                dens_name);
         }    
     } while (t <= t_integration_in_internal_units);
 
     if (sim_opts->output_format == OUTPUT_HDF5) {
-   
         closeMassTimeSeries();
     }
 
-
-        // ---- At the end of timeIntegrationForTheSystem, free the memory ----
-    for (size_t i = 0; i < structured_particle_data->n_r; i++) {
-        free(structured_particle_data->particles[i]);
-    }
-    free(structured_particle_data->particles);
-    structured_particle_data->particles = NULL;
-
-
-    fprintf(stderr,"\n\nDEBUG [timeIntegrationForTheSystem]: Main simulation loop finished (t > t_integration_in_internal_units).\n");
+    // ---- Cleanup ----
     cleanupSimulationResources(&particle_data, output_files);
-    fprintf(stderr,"DEBUG [timeIntegrationForTheSystem]: Cleanup completed.\n");
+
+    fprintf(stderr, "\n\nDEBUG [timeIntegrationForTheSystem]: Main simulation loop finished (t > t_integration_in_internal_units).\n");
+    fprintf(stderr, "DEBUG [timeIntegrationForTheSystem]: Cleanup completed.\n");
 }
-
-
