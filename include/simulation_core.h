@@ -55,7 +55,7 @@ double calculateTimeStep(const DiskParameters *disk_params);
  * @param sim_opts Pointer to the SimulationOptions structure.
  * @param output_files Pointer to the OutputFiles structure for writing results.
  */
-void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files);
+void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files, StructuredParticleData *structured_data);
 
 
 /**

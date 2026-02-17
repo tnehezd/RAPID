@@ -4,6 +4,7 @@
 #include "dust_physics.h" 
 #include "utils.h" 
 #include "ascii_output.h" 
+#include "particle_data.h"
 #include "gas_physics.h"
 #include "boundary_conditions.h"
 #include "simulation_types.h"
@@ -187,22 +188,21 @@ int initializeOneDimensions(InitializeDefaultOptions *default_options, DiskParam
 }
 
 
-int initializeTwoDimensions(InitializeDefaultOptions *default_options, long double current_sigma0_gas) {
+int initializeTwoDimensions(InitializeDefaultOptions *default_options, long double current_sigma0_gas,  StructuredParticleData *structured_data) {
 
-    StructuredParticleData structured_data;
-    structured_data.n_r = default_options->n_dust_particles;
-    structured_data.n_z = default_options->vertical_grid_number;
+    structured_data->n_r = default_options->n_dust_particles;
+    structured_data->n_z = default_options->vertical_grid_number;
 
     // Dinamikus tömb allokálása
-    structured_data.particles = malloc(structured_data.n_r * sizeof(DustParticle*));
-    if (!structured_data.particles) {
-        fprintf(stderr,"ERROR: Failed to allocate structured_data.particles\n");
+    structured_data->particles = malloc(structured_data->n_r * sizeof(DustParticle*));
+    if (!structured_data->particles) {
+        fprintf(stderr,"ERROR: Failed to allocate structured_data->particles\n");
         return 1;
     }
-    for (size_t i = 0; i < structured_data.n_r; i++) {
-        structured_data.particles[i] = malloc(structured_data.n_z * sizeof(DustParticle));
-        if (!structured_data.particles[i]) {
-            fprintf(stderr,"ERROR: Failed to allocate structured_data.particles[%zu]\n", i);
+    for (size_t i = 0; i < structured_data->n_r; i++) {
+        structured_data->particles[i] = malloc(structured_data->n_z * sizeof(DustParticle));
+        if (!structured_data->particles[i]) {
+            fprintf(stderr,"ERROR: Failed to allocate structured_data->particles[%zu]\n", i);
             return 1;
         }
     }
@@ -224,7 +224,7 @@ int initializeTwoDimensions(InitializeDefaultOptions *default_options, long doub
     free(z_file_path);
 
     // Vertikális rács ideiglenes tömb
-    double *z_array = malloc(structured_data.n_z * sizeof(double));
+    double *z_array = malloc(structured_data->n_z * sizeof(double));
     if (!z_array) {
         fprintf(stderr,"ERROR: Failed to allocate z_array\n");
         return 1;
@@ -234,17 +234,17 @@ int initializeTwoDimensions(InitializeDefaultOptions *default_options, long doub
     double n_sigma = default_options->vertical_grid_max_height; // pl 4.0 → ±4H
 
     // Feltöltés
-    for (size_t i_r = 0; i_r < structured_data.n_r; i_r++) {
+    for (size_t i_r = 0; i_r < structured_data->n_r; i_r++) {
         double r = default_options->r_inner +
                    (default_options->r_outer - default_options->r_inner) *
-                   i_r / ((double)structured_data.n_r - 1.0);
+                   i_r / ((double)structured_data->n_r - 1.0);
 
         double H = default_options->dust_scaleheight[i_r];
         long double sigma_dust = calculateDustSurfaceDensityInitTool(r, default_options, current_sigma0_gas);
 
         // Teljes cella tömeg
         long double cell_mass = 2.0 * M_PI * r *
-                                ((default_options->r_outer - default_options->r_inner) / (double)(structured_data.n_r - 1)) *
+                                ((default_options->r_outer - default_options->r_inner) / (double)(structured_data->n_r - 1)) *
                                 sigma_dust;
 
         // Vertikális Gauss normalizálás
@@ -252,21 +252,21 @@ int initializeTwoDimensions(InitializeDefaultOptions *default_options, long doub
         double z_min = -n_sigma * H;
         double z_max = +n_sigma * H;
 
-        for (size_t iz = 0; iz < structured_data.n_z; iz++) {
-            double z = z_min + (z_max - z_min) * iz / (structured_data.n_z - 1);
+        for (size_t iz = 0; iz < structured_data->n_z; iz++) {
+            double z = z_min + (z_max - z_min) * iz / (structured_data->n_z - 1);
             z_array[iz] = z;
             weight_sum += exp(-0.5 * (z/H) * (z/H));
         }
 
         fprintf(z_fp, "%e ", r);
 
-        for (size_t iz = 0; iz < structured_data.n_z; iz++) {
+        for (size_t iz = 0; iz < structured_data->n_z; iz++) {
             double f = exp(-0.5 * (z_array[iz]/H) * (z_array[iz]/H)) / weight_sum;
             double m = (double)(cell_mass * f);
 
-            structured_data.particles[i_r][iz].mass_g = m;
-            structured_data.particles[i_r][iz].r_au   = r;
-            structured_data.particles[i_r][iz].z_au   = z_array[iz];
+            structured_data->particles[i_r][iz].mass_g = m;
+            structured_data->particles[i_r][iz].r_au   = r;
+            structured_data->particles[i_r][iz].z_au   = z_array[iz];
 
             fprintf(mass_fp, "%e ", m);
             fprintf(z_fp, "%e ", z_array[iz]);
@@ -280,9 +280,9 @@ int initializeTwoDimensions(InitializeDefaultOptions *default_options, long doub
     free(z_array);
 
     // Felszabadítás
-    for (size_t i = 0; i < structured_data.n_r; i++)
-        free(structured_data.particles[i]);
-    free(structured_data.particles);
+    for (size_t i = 0; i < structured_data->n_r; i++)
+        free(structured_data->particles[i]);
+    free(structured_data->particles);
 
     fprintf(stderr,"2D vertical dust distribution written\n");
 
@@ -290,7 +290,7 @@ int initializeTwoDimensions(InitializeDefaultOptions *default_options, long doub
 }
 
 
-int runInitialization(InitializeDefaultOptions *default_options, DiskParameters *disk_params) {
+int runInitialization(InitializeDefaultOptions *default_options, DiskParameters *disk_params, StructuredParticleData *structured_data) {
 
     FILE *dust_output_file = NULL; 
     FILE *disk_parameters_output_file = NULL; 
@@ -434,7 +434,7 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
     fclose(disk_parameters_output_file);
 
     if (default_options->dimension == 2) {
-        return initializeTwoDimensions(default_options, current_sigma0_gas);
+        return initializeTwoDimensions(default_options, current_sigma0_gas, structured_data);
     }
 
     return 0;

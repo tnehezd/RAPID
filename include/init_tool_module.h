@@ -11,6 +11,7 @@
 
 #include <stdbool.h>
 #include "simulation_types.h"
+#include "particle_data.h"
 
 /**
  * @struct InitializeDefaultOptions
@@ -66,7 +67,7 @@ void initializeDefaultOptions(InitializeDefaultOptions *opt);
  * @param[out] output_disk_params  Pointer to the disk parameters structure to be populated.
  * @return                     Returns 0 on success, non-zero on failure.
  */
-int runInitialization(InitializeDefaultOptions *opts, DiskParameters *output_disk_params);
+int runInitialization(InitializeDefaultOptions *opts, DiskParameters *output_disk_params, StructuredParticleData *structured_data);
 
 /**
  * @brief Initialize the 1D dust particle distribution along the radial grid.
@@ -105,6 +106,6 @@ int initializeOneDimensions(InitializeDefaultOptions *default_options, DiskParam
  * @note The vertical range is [-3H, +3H] for each radial cell.
  * @note The mass in each z-slice is weighted by the normalized Gaussian profile.
  */
-int initializeTwoDimensions(InitializeDefaultOptions *default_options, long double current_sigma0_gas);
+int initializeTwoDimensions(InitializeDefaultOptions *default_options, long double current_sigma0_gas,  StructuredParticleData *structured_data);
 
 #endif // INIT_TOOL_MODULE_H

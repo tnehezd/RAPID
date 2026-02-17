@@ -33,6 +33,9 @@ int main(int argc, const char **argv) {
     ParserOptions def;
     createDefaultOptions(&def);
 
+    StructuredParticleData structured_particle_data;
+
+
     InitializeDefaultOptions init_tool_params;
     initializeDefaultOptions(&init_tool_params);
 
@@ -85,7 +88,6 @@ int main(int argc, const char **argv) {
     fprintf(stderr, "DEBUG [main]: SnapshotMode = %s\n", snapshotModeToString(mode));
 
     disk_params.r_min = def.rmin_val;
-    disk_params.r_max = def.rmax_val;
     disk_params.r_max = def.rmax_val;
     disk_params.vertical_grid_max = def.zmax_val;
     disk_params.grid_number = def.number_of_grid_points; 
@@ -192,7 +194,7 @@ int main(int argc, const char **argv) {
         fprintf(stderr, "DEBUG [main]: Calling runInitialization(&init_tool_params, &disk_params)...\n");
         strncpy(init_tool_params.output_base_path, initial_dir_path, MAX_PATH_LEN - 1);
         init_tool_params.output_base_path[MAX_PATH_LEN - 1] = '\0';
-        runInitialization(&init_tool_params, &disk_params);
+        runInitialization(&init_tool_params, &disk_params, &structured_particle_data);
         fprintf(stderr, "DEBUG [main]: runInitialization completed. disk_params allocated and populated.\n");
         asprintf(&current_inputsig_file, "%s/%s%s", initial_dir_path, kInitialGasProfileFileName,kFileNamesSuffix);
         fprintf(stderr, "DEBUG [main]: Generated GAS profile will be loaded from '%s'.\n", current_inputsig_file);
@@ -262,7 +264,7 @@ int main(int argc, const char **argv) {
 
         fprintf(stderr, "\n\nDEBUG [main]: Disk evolution is ON (mode: %s). Starting main simulation loop.\n\n",snapshotModeToString(mode));
         fprintf(stderr, "DEBUG [main]: Calling timeIntegrationForTheSystem...\n");
-        timeIntegrationForTheSystem(mode,&disk_params, &sim_opts, &output_files);
+        timeIntegrationForTheSystem(mode,&disk_params, &sim_opts, &output_files, &structured_particle_data);
         fprintf(stderr, "DEBUG [main]: timeIntegrationForTheSystem completed. Program finished normally.\n");
     }
 

@@ -2,6 +2,8 @@
 #define VERTICAL_SETTLING_H
 
 #include "simulation_types.h"
+#include "particle_data.h"
+
 
 /**
  * @brief Computes the vertical dust distribution for a given radius and particle size.
@@ -31,5 +33,20 @@ void calculateVerticalDistribution(double radial_distance,
                                    double *rho_z_array,
                                    int z_points,
                                    double N_Hd);
+
+
+/*
+ * Apply vertical settling + diffusion for all radial and vertical points.
+ * Updates the existing StructuredParticleData in place.
+ *
+ * Parameters:
+ *  sdata           : pointer to structured particle data
+ *  disk_params     : disk structure (contains gas density, scale height, etc.)
+ *  particle_radius : radius of the dust particles [AU or cm consistent with Stokes calc]
+ *  dt              : timestep [internal units]
+ *  alpha_turb      : turbulence parameter (dimensionless)
+ */
+void applyVerticalSettling(StructuredParticleData *sdata, const DiskParameters *disk_params, double dt);
+
 
 #endif

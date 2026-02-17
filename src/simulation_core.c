@@ -18,6 +18,7 @@
 #include "boundary_conditions.h"
 #include "integrator.h"
 #include "hdf5_output.h"
+#include "vertical_settling.h"
 
 
 
@@ -240,6 +241,10 @@ static void simulateDustDriftStep(double *t, double deltat, double *output_time,
 
     updateParticleGridIndices(particle_data,*t, particle_number, disk_params);
 
+
+    // somewhere in simulateDustDriftStep(), after particle update:
+    applyVerticalSettling(structured_particle_data, disk_params, deltat); 
+
     if (sim_opts->option_for_dust_secondary_population == 1) {
         updateParticleGridIndices(particle_data,*t, particle_number, disk_params);
     }
@@ -325,10 +330,9 @@ void writeParticleFieldSnapshot2D(const StructuredParticleData *sdata, const cha
 
 
 
-void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files) {
+void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files, StructuredParticleData *structured_particle_data) {
 
     ParticleData particle_data;
-    StructuredParticleData structured_particle_data;
     HeaderData header_data_for_files; 
 
     double output_time = 0.; 
@@ -389,30 +393,17 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
 
 
 
+    structured_particle_data->n_r = disk_params->grid_number;
+    structured_particle_data->n_z = disk_params->vertical_grid_number;
+    structured_particle_data->particles = malloc(structured_particle_data->n_r * sizeof(DustParticle*));
 
-
-
-    // ---- Initialize structured particle data ----
-    structured_particle_data.n_r = disk_params->grid_number;      // radial grid size
-    structured_particle_data.n_z = disk_params->vertical_grid_number;                  // vertical grid size
-
-    structured_particle_data.particles = malloc(sizeof(DustParticle*) * structured_particle_data.n_r);
-    if (!structured_particle_data.particles) {
-        fprintf(stderr, "ERROR: Failed to allocate structured_particle_data.particles\n");
-        exit(EXIT_FAILURE);
-    }
-
-    for (size_t i = 0; i < structured_particle_data.n_r; i++) {
-        structured_particle_data.particles[i] = malloc(sizeof(DustParticle) * structured_particle_data.n_z);
-        if (!structured_particle_data.particles[i]) {
-            fprintf(stderr, "ERROR: Failed to allocate structured_particle_data.particles[%zu]\n", i);
-            exit(EXIT_FAILURE);
-        }
-        // Initialize to zero
-        for (size_t j = 0; j < structured_particle_data.n_z; j++) {
-            structured_particle_data.particles[i][j].r_au = 0.0;
-            structured_particle_data.particles[i][j].z_au = 0.0;
-            structured_particle_data.particles[i][j].mass_g = 0.0;
+    for (size_t i = 0; i < structured_particle_data->n_r; i++) {
+        structured_particle_data->particles[i] = malloc(structured_particle_data->n_z * sizeof(DustParticle));
+        for (size_t j = 0; j < structured_particle_data->n_z; j++) {
+            structured_particle_data->particles[i][j].r_au = disk_params->radial_grid[i];
+            structured_particle_data->particles[i][j].z_au = 0.0;
+            structured_particle_data->particles[i][j].mass_g = 0.0;
+            structured_particle_data->particles[i][j].radius = 1e-4; // pl. alapértelmezett
         }
     }
 
@@ -438,7 +429,7 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
 
     do {
         if (mode > 1) {
-            simulateDustDriftStep(&t, deltat, &output_time, &particle_data, particle_number, disk_params, sim_opts, output_files, dens_name, dust_name, dust_name2, size_name, &structured_particle_data);
+            simulateDustDriftStep(&t, deltat, &output_time, &particle_data, particle_number, disk_params, sim_opts, output_files, dens_name, dust_name, dust_name2, size_name, structured_particle_data);
         } else { 
             simulateGasOnlyStep(&t, deltat, &output_time,disk_params, sim_opts, output_files,dens_name);
         }    
@@ -451,11 +442,11 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
 
 
         // ---- At the end of timeIntegrationForTheSystem, free the memory ----
-    for (size_t i = 0; i < structured_particle_data.n_r; i++) {
-        free(structured_particle_data.particles[i]);
+    for (size_t i = 0; i < structured_particle_data->n_r; i++) {
+        free(structured_particle_data->particles[i]);
     }
-    free(structured_particle_data.particles);
-    structured_particle_data.particles = NULL;
+    free(structured_particle_data->particles);
+    structured_particle_data->particles = NULL;
 
 
     fprintf(stderr,"\n\nDEBUG [timeIntegrationForTheSystem]: Main simulation loop finished (t > t_integration_in_internal_units).\n");
