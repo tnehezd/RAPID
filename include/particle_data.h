@@ -25,6 +25,7 @@ typedef struct {
     double r_au;       /**< Radial distance from the star in AU. */
     double z_au;       /**< Vertical height above the disk midplane in AU. */
     double mass_g;     /**< Particle mass in grams. */
+    double radius;     /**< Particle radius in cm. */
 } DustParticle;
 
 /**

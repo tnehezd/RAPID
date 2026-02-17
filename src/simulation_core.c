@@ -177,7 +177,7 @@ static void handleSnapshotHDF5(double output_time, const SimulationOptions *sim_
 
 
 static void simulateDustDriftStep(double *t, double deltat, double *output_time, ParticleData *particle_data, int particle_number, DiskParameters *disk_params, const SimulationOptions *sim_opts,
-                                  OutputFiles *output_files, char *dens_name, char *dust_name, char *dust_name2, char *size_name) {
+                                  OutputFiles *output_files, char *dens_name, char *dust_name, char *dust_name2, char *size_name, StructuredParticleData *structured_particle_data) {
 
     double min_radius, max_radius;
     double current_time_years = *t / (2.0 * M_PI);
@@ -221,6 +221,8 @@ static void simulateDustDriftStep(double *t, double deltat, double *output_time,
                     total_mass[k]     = primary_mass[k] + secondary_mass[k];
                 }
             }
+
+            writeParticleFieldSnapshot2D(structured_particle_data, sim_opts->output_dir_name, *output_time);
 
 
             fprintf(stderr,
@@ -296,9 +298,37 @@ static void simulateGasOnlyStep(double *t,double deltat,double *output_time,Disk
 }
 
 
+void writeParticleFieldSnapshot2D(const StructuredParticleData *sdata, const char *base_path, double snapshot_index) {
+    if (!sdata || !base_path) return;
+
+    char filename[512];
+    snprintf(filename, sizeof(filename), "%s/particle_field_%08d.dat", base_path, (int)snapshot_index);
+
+    FILE *fp = fopen(filename, "w");
+    if (!fp) {
+        perror("Error opening particle field file");
+        return;
+    }
+
+    fprintf(fp, "# Radial (AU)   Vertical (AU)   Mass (g)\n");
+
+    for (size_t i_r = 0; i_r < sdata->n_r; i_r++) {
+        for (size_t i_z = 0; i_z < sdata->n_z; i_z++) {
+            const DustParticle *p = &sdata->particles[i_r][i_z];
+            fprintf(fp, "%e %e %e\n", p->r_au, p->z_au, p->mass_g);
+        }
+    }
+
+    fclose(fp);
+    fprintf(stderr, "DEBUG: Snapshot %07d written to %s\n", (int)snapshot_index, filename);
+}
+
+
+
 void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files) {
 
     ParticleData particle_data;
+    StructuredParticleData structured_particle_data;
     HeaderData header_data_for_files; 
 
     double output_time = 0.; 
@@ -357,6 +387,37 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
 
 
 
+
+
+
+
+
+    // ---- Initialize structured particle data ----
+    structured_particle_data.n_r = disk_params->grid_number;      // radial grid size
+    structured_particle_data.n_z = disk_params->vertical_grid_number;                  // vertical grid size
+
+    structured_particle_data.particles = malloc(sizeof(DustParticle*) * structured_particle_data.n_r);
+    if (!structured_particle_data.particles) {
+        fprintf(stderr, "ERROR: Failed to allocate structured_particle_data.particles\n");
+        exit(EXIT_FAILURE);
+    }
+
+    for (size_t i = 0; i < structured_particle_data.n_r; i++) {
+        structured_particle_data.particles[i] = malloc(sizeof(DustParticle) * structured_particle_data.n_z);
+        if (!structured_particle_data.particles[i]) {
+            fprintf(stderr, "ERROR: Failed to allocate structured_particle_data.particles[%zu]\n", i);
+            exit(EXIT_FAILURE);
+        }
+        // Initialize to zero
+        for (size_t j = 0; j < structured_particle_data.n_z; j++) {
+            structured_particle_data.particles[i][j].r_au = 0.0;
+            structured_particle_data.particles[i][j].z_au = 0.0;
+            structured_particle_data.particles[i][j].mass_g = 0.0;
+        }
+    }
+
+
+
     // ---- Time series init ----
 
     if (sim_opts->output_format == OUTPUT_HDF5) {
@@ -377,7 +438,7 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
 
     do {
         if (mode > 1) {
-            simulateDustDriftStep(&t, deltat, &output_time, &particle_data, particle_number, disk_params, sim_opts, output_files, dens_name, dust_name, dust_name2, size_name );
+            simulateDustDriftStep(&t, deltat, &output_time, &particle_data, particle_number, disk_params, sim_opts, output_files, dens_name, dust_name, dust_name2, size_name, &structured_particle_data);
         } else { 
             simulateGasOnlyStep(&t, deltat, &output_time,disk_params, sim_opts, output_files,dens_name);
         }    
@@ -387,6 +448,15 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
    
         closeMassTimeSeries();
     }
+
+
+        // ---- At the end of timeIntegrationForTheSystem, free the memory ----
+    for (size_t i = 0; i < structured_particle_data.n_r; i++) {
+        free(structured_particle_data.particles[i]);
+    }
+    free(structured_particle_data.particles);
+    structured_particle_data.particles = NULL;
+
 
     fprintf(stderr,"\n\nDEBUG [timeIntegrationForTheSystem]: Main simulation loop finished (t > t_integration_in_internal_units).\n");
     cleanupSimulationResources(&particle_data, output_files);

@@ -96,7 +96,6 @@ int initializeOneDimensions(InitializeDefaultOptions *default_options, DiskParam
  * Mass is normalized such that the sum over all vertical slices equals the total mass in the radial cell.
  *
  * @param[in] default_options Pointer to the structure containing initialization options, including vertical grid and dust scale heights.
- * @param[in] disk_params Pointer to the structure containing disk parameters (radial grid, gas density, pressure, etc.).
  * @param[in] current_sigma0_gas Gas surface density at 1 AU [M_sun/AU^2], used for dust density calculation.
  * 
  * @return int Returns 0 on success, non-zero on failure.
@@ -106,6 +105,6 @@ int initializeOneDimensions(InitializeDefaultOptions *default_options, DiskParam
  * @note The vertical range is [-3H, +3H] for each radial cell.
  * @note The mass in each z-slice is weighted by the normalized Gaussian profile.
  */
-int initializeTwoDimensions(InitializeDefaultOptions *default_options, DiskParameters *disk_params, long double current_sigma0_gas);
+int initializeTwoDimensions(InitializeDefaultOptions *default_options, long double current_sigma0_gas);
 
 #endif // INIT_TOOL_MODULE_H

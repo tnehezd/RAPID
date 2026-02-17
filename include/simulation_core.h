@@ -13,6 +13,7 @@
 
 #include "disk_model.h"        
 #include "simulation_types.h"  
+#include "particle_data.h"
 
 /**
  * @brief Computes the radial drift velocity of dust particles in 1D.
@@ -55,5 +56,21 @@ double calculateTimeStep(const DiskParameters *disk_params);
  * @param output_files Pointer to the OutputFiles structure for writing results.
  */
 void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files);
+
+
+/**
+ * @brief Writes a 2D snapshot of the particle field to an ASCII file.
+ *
+ * This function iterates over the radial and vertical grid of the structured
+ * particle data and outputs the particle positions and masses to a file.
+ * The output file contains columns for radial distance (AU), vertical
+ * height (AU), and particle mass (g), suitable for post-processing or
+ * visualization.
+ *
+ * @param sdata Pointer to the StructuredParticleData containing particle positions and masses.
+ * @param base_path Base directory path where the snapshot file will be written.
+ * @param snapshot_index Integer index identifying the snapshot (used in the filename).
+ */
+void writeParticleFieldSnapshot2D(const StructuredParticleData *sdata, const char *base_path, double snapshot_index);
 
 #endif // SIMULATION_CORE_H

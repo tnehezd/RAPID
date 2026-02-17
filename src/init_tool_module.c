@@ -86,12 +86,6 @@ static long double calculateDustSurfaceDensityInitTool(double r_au, InitializeDe
     return sigma_dust;
 }
 
-static double findMinimumForThreeNumbersInitTool(double value1, double value2, double value3) {
-
-        return fmin(value1, fmin(value2, value3));
-}
-
-
 static int validateInitializationInputs(const InitializeDefaultOptions *opts) {
 
     if (opts->r_inner <= 0.0) {
@@ -193,17 +187,27 @@ int initializeOneDimensions(InitializeDefaultOptions *default_options, DiskParam
 }
 
 
+int initializeTwoDimensions(InitializeDefaultOptions *default_options, long double current_sigma0_gas) {
 
-
-int initializeTwoDimensions(InitializeDefaultOptions *default_options, DiskParameters *disk_params, long double current_sigma0_gas) {
     StructuredParticleData structured_data;
     structured_data.n_r = default_options->n_dust_particles;
     structured_data.n_z = default_options->vertical_grid_number;
 
+    // Dinamikus tömb allokálása
     structured_data.particles = malloc(structured_data.n_r * sizeof(DustParticle*));
-    for (size_t i = 0; i < structured_data.n_r; i++)
+    if (!structured_data.particles) {
+        fprintf(stderr,"ERROR: Failed to allocate structured_data.particles\n");
+        return 1;
+    }
+    for (size_t i = 0; i < structured_data.n_r; i++) {
         structured_data.particles[i] = malloc(structured_data.n_z * sizeof(DustParticle));
+        if (!structured_data.particles[i]) {
+            fprintf(stderr,"ERROR: Failed to allocate structured_data.particles[%zu]\n", i);
+            return 1;
+        }
+    }
 
+    // Fájlok előkészítése
     char *mass_file_path = NULL;
     char *z_file_path = NULL;
     asprintf(&mass_file_path, "%s/%s%s", default_options->output_base_path, kMassFieldNameFile, kFileNamesSuffix);
@@ -216,55 +220,74 @@ int initializeTwoDimensions(InitializeDefaultOptions *default_options, DiskParam
         return 1;
     }
 
+    free(mass_file_path);
+    free(z_file_path);
+
+    // Vertikális rács ideiglenes tömb
     double *z_array = malloc(structured_data.n_z * sizeof(double));
     if (!z_array) {
         fprintf(stderr,"ERROR: Failed to allocate z_array\n");
         return 1;
     }
 
+    // Vertikális lefedettség H-egységben
+    double n_sigma = default_options->vertical_grid_max_height; // pl 4.0 → ±4H
+
+    // Feltöltés
     for (size_t i_r = 0; i_r < structured_data.n_r; i_r++) {
         double r = default_options->r_inner +
-            (default_options->r_outer - default_options->r_inner) *
-            i_r / ((double)structured_data.n_r - 1.0);
+                   (default_options->r_outer - default_options->r_inner) *
+                   i_r / ((double)structured_data.n_r - 1.0);
+
         double H = default_options->dust_scaleheight[i_r];
         long double sigma_dust = calculateDustSurfaceDensityInitTool(r, default_options, current_sigma0_gas);
-        long double cell_mass = 2.0*M_PI*r*((default_options->r_outer-default_options->r_inner)/((double)structured_data.n_r-1.0))*sigma_dust;
 
+        // Teljes cella tömeg
+        long double cell_mass = 2.0 * M_PI * r *
+                                ((default_options->r_outer - default_options->r_inner) / (double)(structured_data.n_r - 1)) *
+                                sigma_dust;
+
+        // Vertikális Gauss normalizálás
         long double weight_sum = 0.0;
-        for(size_t iz=0; iz<structured_data.n_z; iz++){
-            double z = -3*H + 6*H*iz/(structured_data.n_z-1);
-            z_array[iz]=z;
-            weight_sum += exp(-0.5*(z/H)*(z/H));
+        double z_min = -n_sigma * H;
+        double z_max = +n_sigma * H;
+
+        for (size_t iz = 0; iz < structured_data.n_z; iz++) {
+            double z = z_min + (z_max - z_min) * iz / (structured_data.n_z - 1);
+            z_array[iz] = z;
+            weight_sum += exp(-0.5 * (z/H) * (z/H));
         }
 
-        fprintf(z_fp,"%e ",r);
+        fprintf(z_fp, "%e ", r);
 
-        for(size_t iz=0; iz<structured_data.n_z; iz++){
-            double f = exp(-0.5*(z_array[iz]/H)*(z_array[iz]/H))/weight_sum;
-            double m = (double)(cell_mass*f);
+        for (size_t iz = 0; iz < structured_data.n_z; iz++) {
+            double f = exp(-0.5 * (z_array[iz]/H) * (z_array[iz]/H)) / weight_sum;
+            double m = (double)(cell_mass * f);
+
             structured_data.particles[i_r][iz].mass_g = m;
-            structured_data.particles[i_r][iz].r_au = r;
-            structured_data.particles[i_r][iz].z_au = z_array[iz];
+            structured_data.particles[i_r][iz].r_au   = r;
+            structured_data.particles[i_r][iz].z_au   = z_array[iz];
 
-            fprintf(mass_fp,"%e ",m);
-            fprintf(z_fp,"%e ",z_array[iz]);
+            fprintf(mass_fp, "%e ", m);
+            fprintf(z_fp, "%e ", z_array[iz]);
         }
-        fprintf(mass_fp,"\n");
-        fprintf(z_fp,"\n");
+        fprintf(mass_fp, "\n");
+        fprintf(z_fp, "\n");
     }
 
     fclose(mass_fp);
     fclose(z_fp);
     free(z_array);
 
+    // Felszabadítás
     for (size_t i = 0; i < structured_data.n_r; i++)
         free(structured_data.particles[i]);
     free(structured_data.particles);
 
     fprintf(stderr,"2D vertical dust distribution written\n");
+
     return 0;
 }
-
 
 
 int runInitialization(InitializeDefaultOptions *default_options, DiskParameters *disk_params) {
@@ -385,7 +408,6 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
     createInitialGasPressureGradient(disk_params);
     createInitialGasVelocity(disk_params);
 
-    // 8️⃣ Vertikális grid (opcionális)
     if (default_options->vertical_grid_number > 0) {
         default_options->vertical_grid = (double *)malloc(default_options->vertical_grid_number * sizeof(double));
         default_options->dust_scaleheight = (double *)malloc(default_options->n_grid_points * sizeof(double));
@@ -403,7 +425,7 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
             default_options->r_inner, default_options->r_outer, default_options->n_grid_points, 
             -default_options->sigma_exponent, current_sigma0_gas,
             G_DIMENSIONLESS, default_options->deadzone_r_inner, default_options->deadzone_r_outer,
-            0.0, 0.0,  // dr_dze_inner/outer helyett itt csak placeholder
+            default_options->deadzone_dr_inner, default_options->deadzone_dr_outer,
             default_options->deadzone_alpha_mod, default_options->dust_density_g_cm3, default_options->alpha_viscosity, 
             default_options->star_mass, default_options->flaring_index);
 
@@ -412,7 +434,7 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
     fclose(disk_parameters_output_file);
 
     if (default_options->dimension == 2) {
-        return initializeTwoDimensions(default_options, disk_params, current_sigma0_gas);
+        return initializeTwoDimensions(default_options, current_sigma0_gas);
     }
 
     return 0;
