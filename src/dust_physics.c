@@ -196,3 +196,91 @@ void calculateDustDistance(const char *file_name, ParticleData *particle_data, d
 
     #pragma omp barrier
 }
+
+
+void calculateDustDistanceStructured(const char *file_name, StructuredParticleData *data, double *sigma_dust_euler, double actual_timestep, double actual_time, const SimulationOptions *simulation_options, const DiskParameters *disk_params) {
+    char file_path[1024];
+    size_t n_r = data->n_r;
+    size_t n_z = data->n_z;
+
+    // --- 1. Timescale fájl megnyitása (Csak t=0-nál és csak a master szálon) ---
+    #pragma omp master
+    {
+        if (actual_time == 0) {
+            sprintf(file_path, "%s/%s%s", file_name, kDriftTimescaleFileName, kFileNamesSuffix);
+            drift_timescale_file = fopen(file_path, "w");
+            if (drift_timescale_file == NULL) {
+                fprintf(stderr, "ERROR: Could not open drift timescale file: %s\n", file_path);
+            }
+        }
+    }
+    // Megvárjuk, amíg a master végez a fájlművelettel
+    #pragma omp barrier
+
+    // --- 2. Párhuzamosított Lagrange-i léptetés ---
+    #pragma omp parallel
+    {
+        double r_new, radius_new;
+
+        #pragma omp for collapse(2) schedule(static)
+        for (size_t i = 0; i < n_r; i++) {
+            for (size_t j = 0; j < n_z; j++) {
+                DustParticle *p = &data->particles[i][j];
+
+                // Csak a korong határain belüli részecskéket számoljuk
+                if (p->r_au > disk_params->r_min && p->r_au < disk_params->r_max) {
+
+                    // RK4 integráció a fix Euler-rács (disk_params->radial_grid) használatával
+                    // A sigma_dust_euler tartalmazza a por felhalmozódását!
+                    integrateParticleRungeKutta4(
+                        actual_time,
+                        p->radius,
+                        sigma_dust_euler,
+                        disk_params->radial_grid, // Fix hivatkozási rács
+                        actual_timestep,
+                        p->r_au,
+                        &r_new,
+                        &radius_new,
+                        disk_params,
+                        simulation_options
+                    );
+
+                    // --- Timescale írás: Csak t=0-nál, a midplane rétegből (j=n_z/2) ---
+                    if (actual_time == 0 && j == n_z / 2 && simulation_options->option_for_dust_secondary_population == 0) {
+                        double v_drift = fabs(r_new - p->r_au) / actual_timestep;
+                        if (v_drift > 0) {
+                            #pragma omp critical(drift_timescale_file_write)
+                            {
+                                if (drift_timescale_file != NULL) {
+                                    // Drift időskála években kifejezve
+                                    fprintf(drift_timescale_file, "%lg %lg\n", p->r_au, (p->r_au / v_drift) / (2.0 * M_PI));
+                                }
+                            }
+                        }
+                    }
+
+                    // Fizikai állapot frissítése (Lagrange-i követés)
+                    p->r_au = r_new;
+                    p->radius = radius_new;
+
+                } else {
+                    // Ha elhagyta a tartományt, deaktiváljuk
+                    p->r_au = 0.0;
+                    p->radius = 0.0;
+                    p->mass_g = 0.0;
+                }
+            }
+        }
+    } // Parallel régió vége
+
+    // --- 3. Fájl lezárása (Csak t=0-nál a master szálon) ---
+    #pragma omp master
+    {
+        if (actual_time == 0 && drift_timescale_file != NULL) {
+            fclose(drift_timescale_file);
+            drift_timescale_file = NULL;
+        }
+    }
+    // Biztosítjuk, hogy a fájl lezáruljon, mielőtt visszatérünk a fő ciklusba
+    #pragma omp barrier
+}

@@ -339,3 +339,81 @@ void computeParticleRadiusRange(const ParticleData *particle_data,int particle_n
     *min_radius = has_secondary_population ? fmin(min_primary, min_secondary) : min_primary;
     *max_radius = has_secondary_population ? fmax(max_primary, max_secondary) : max_primary;
 }
+
+
+void updateDustSurfaceDensityEulerian(StructuredParticleData *data, double *sigma_dust_euler, const DiskParameters *disk_params) {
+    size_t n_r = disk_params->grid_number; // Fix gáz-rács mérete
+    size_t n_z = data->n_z;
+
+    // 1. Nullázás
+    for (size_t i = 0; i < n_r; i++) sigma_dust_euler[i] = 0.0;
+
+    // 2. Binning: A részecskék tömegét a fix gáz-rácshoz adjuk
+    for (size_t i = 0; i < data->n_r; i++) { // Végig az összes Lagrange-i oszlopon
+        for (size_t j = 0; j < n_z; j++) {
+            DustParticle *p = &data->particles[i][j];
+            
+            if (p->r_au > disk_params->r_min && p->r_au < disk_params->r_max) {
+                // Megkeressük a fix Euler-cella indexét
+                int idx = (int)((p->r_au - disk_params->r_min) / disk_params->delta_r);
+                
+                if (idx >= 0 && idx < (int)n_r) {
+                    sigma_dust_euler[idx] += p->mass_g;
+                }
+            }
+        }
+    }
+
+    // 3. Normalizálás a fix cellák területével
+    for (size_t i = 0; i < n_r; i++) {
+        double r_cell = disk_params->radial_grid[i];
+        double area_cgs = 2.0 * M_PI * r_cell * disk_params->delta_r * (AU_IN_CM * AU_IN_CM);
+        if (area_cgs > 0) sigma_dust_euler[i] /= area_cgs;
+    }
+}
+
+
+
+void updateDustSurfaceDensityEulerianCIC(StructuredParticleData *data, double *sigma_dust_euler, const DiskParameters *disk_params) {
+    size_t n_r_euler = disk_params->grid_number;
+    size_t n_r_lagrange = data->n_r;
+    size_t n_z = data->n_z;
+    double dr = disk_params->delta_r;
+    double r_min = disk_params->r_min;
+
+    // 1. Nullázás
+    for (size_t i = 0; i < n_r_euler; i++) sigma_dust_euler[i] = 0.0;
+
+    // 2. CIC (Cloud-In-Cell) Binning
+    for (size_t i = 0; i < n_r_lagrange; i++) {
+        for (size_t j = 0; j < n_z; j++) {
+            DustParticle *p = &data->particles[i][j];
+            
+            if (p->r_au > r_min && p->r_au < disk_params->r_max) {
+                // Kiszámoljuk a lebegőpontos indexet (pl. 10.35)
+                double float_idx = (p->r_au - r_min) / dr;
+                int i_left = (int)floor(float_idx);
+                int i_right = i_left + 1;
+                
+                // Mennyire van távol a bal oldali rácsponttól (0.0 és 1.0 között)
+                double weight_right = float_idx - (double)i_left;
+                double weight_left = 1.0 - weight_right;
+
+                // Tömeg szétosztása a két szomszédos rácspont között
+                if (i_left >= 0 && i_left < (int)n_r_euler) {
+                    sigma_dust_euler[i_left] += p->mass_g * weight_left;
+                }
+                if (i_right >= 0 && i_right < (int)n_r_euler) {
+                    sigma_dust_euler[i_right] += p->mass_g * weight_right;
+                }
+            }
+        }
+    }
+
+    // 3. Normalizálás (Változatlan)
+    for (size_t i = 0; i < n_r_euler; i++) {
+        double r_cell = disk_params->radial_grid[i];
+        double area_cgs = 2.0 * M_PI * r_cell * dr * (AU_IN_CM * AU_IN_CM);
+        if (area_cgs > 0) sigma_dust_euler[i] /= area_cgs;
+    }
+}

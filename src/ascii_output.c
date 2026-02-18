@@ -683,19 +683,29 @@ void writeDustField2D(const StructuredParticleData *sdata, const char *directory
         return;
     }
 
-    for(size_t i=0;i<sdata->n_r;i++){
-        for(size_t j=0;j<sdata->n_z;j++){
-            const DustParticle *p = &sdata->particles[i][j];
+    for (size_t i = 0; i < sdata->n_r; i++) {
+//        const DustParticle *p0 = &sdata->particles[i][0];
 
-            fprintf(fm,"%e ",p->mass_g);
-            fprintf(fg,"%e ",p->z_au);
+        // fg fájl: első oszlopban r_au, utána a z_au értékek sorban
+//        fprintf(fg, "%e", p0->r_au);
+        for (size_t j = 0; j < sdata->n_z; j++) {
+            const DustParticle *p = &sdata->particles[i][j];
+            fprintf(fg, " %e %e", p->r_au, p->z_au);
         }
-        fprintf(fm,"\n");
-        fprintf(fg,"\n");
+        fprintf(fg, "\n");
+
+        // fm fájl: első oszlopban r_au, utána a mass_g értékek sorban
+//        fprintf(fm, "%e", p0->r_au);
+        for (size_t j = 0; j < sdata->n_z; j++) {
+            const DustParticle *p = &sdata->particles[i][j];
+            fprintf(fm, " %e", p->mass_g);
+        }
+        fprintf(fm, "\n");
     }
 
     fclose(fm);
     fclose(fg);
+
 
     fprintf(stderr,"DEBUG: 2D dust field written (%s)\n",
             snapshot_index>=0 ? "snapshot" : (label?label:"plain"));

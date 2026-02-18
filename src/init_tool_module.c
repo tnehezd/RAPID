@@ -244,6 +244,7 @@ int initializeTwoDimensions(InitializeDefaultOptions *default_options, long doub
             double m = (double)(cell_mass * f);
 
             structured_data->particles[i_r][iz].mass_g = m;
+            structured_data->particles[i_r][iz].radius   = default_options->one_size_particle_cm / AU_IN_CM;
             structured_data->particles[i_r][iz].r_au   = r;
             structured_data->particles[i_r][iz].z_au   = z_array[iz];
 
