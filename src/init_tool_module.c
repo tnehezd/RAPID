@@ -145,8 +145,10 @@ int initializeOneDimensions(InitializeDefaultOptions *default_options, DiskParam
     const double DEFAULT_ONE_SIZE = 1.0;
 
     for (int i = 0; i < default_options->n_dust_particles; i++) {
-        double r_dust = default_options->r_inner +
-                        (default_options->r_outer - default_options->r_inner) * i / ((double)default_options->n_dust_particles - 1.0);
+        double dr = (default_options->r_outer - default_options->r_inner) /
+                    (double)(default_options->n_dust_particles);
+
+        double r_dust = default_options->r_inner + (i + 0.5) * dr;
 
         double temp_sigma, temp_pressure, temp_dPdr;
         linearInterpolation(disk_params->gas_surface_density_vector, disk_params->radial_grid, r_dust, &temp_sigma, disk_params->delta_r, disk_params);
@@ -188,76 +190,84 @@ int initializeOneDimensions(InitializeDefaultOptions *default_options, DiskParam
 }
 
 
-int initializeTwoDimensions(InitializeDefaultOptions *default_options, long double current_sigma0_gas,  StructuredParticleData *structured_data) {
-
+int initializeTwoDimensions(InitializeDefaultOptions *default_options, long double current_sigma0_gas, StructuredParticleData *structured_data) {
+    // 1. Memória foglalása a 2D struktúrának
     structured_data->n_r = default_options->n_dust_particles;
     structured_data->n_z = default_options->vertical_grid_number;
 
     structured_data->particles = malloc(structured_data->n_r * sizeof(DustParticle*));
     if (!structured_data->particles) {
-        fprintf(stderr,"ERROR: Failed to allocate structured_data->particles\n");
+        fprintf(stderr, "ERROR: Failed to allocate structured_data->particles\n");
         return 1;
     }
     for (size_t i = 0; i < structured_data->n_r; i++) {
         structured_data->particles[i] = malloc(structured_data->n_z * sizeof(DustParticle));
         if (!structured_data->particles[i]) {
-            fprintf(stderr,"ERROR: Failed to allocate structured_data->particles[%zu]\n", i);
+            fprintf(stderr, "ERROR: Failed to allocate structured_data->particles[%zu]\n", i);
             return 1;
         }
     }
 
-
-
     double *z_array = malloc(structured_data->n_z * sizeof(double));
     if (!z_array) {
-        fprintf(stderr,"ERROR: Failed to allocate z_array\n");
+        fprintf(stderr, "ERROR: Failed to allocate z_array\n");
         return 1;
     }
 
-    double n_sigma = default_options->vertical_grid_max_height; // e.g. 4.0 → ±4H
+    double n_sigma = default_options->vertical_grid_max_height; 
+    double dr_particles = (default_options->r_outer - default_options->r_inner) 
+                          / (double)(structured_data->n_r);
 
-    // Feltöltés
+    // 2. Feltöltés radiális irányban
     for (size_t i_r = 0; i_r < structured_data->n_r; i_r++) {
-        double r = default_options->r_inner +
-                   (default_options->r_outer - default_options->r_inner) *
-                   i_r / ((double)structured_data->n_r - 1.0);
+        // Részecske sugara (szabályos kiosztás, jitter nélkül a tiszta profilért)
+        double r = default_options->r_inner + (i_r + 0.5) * dr_particles;
 
+        // --- PRECÍZ BIN-INTEGRÁLT TÖMEGSZÁMÍTÁS ---
+        // Kiszámoljuk a részecske "saját" gyűrűjének határait (fél úton a szomszédokig)
+        double r_bin_in  = r - 0.5 * dr_particles;
+        double r_bin_out = r + 0.5 * dr_particles;
+
+        // Határkorrekciók
+        if (r_bin_in < default_options->r_inner) r_bin_in = default_options->r_inner;
+        if (r_bin_out > default_options->r_outer) r_bin_out = default_options->r_outer;
+
+        // Lokális skálamagasság és felületi sűrűség
         double H = default_options->dust_scaleheight[i_r];
         long double sigma_dust = calculateDustSurfaceDensityInitTool(r, default_options, current_sigma0_gas);
 
-        long double cell_mass = 2.0 * M_PI * r *
-                                ((default_options->r_outer - default_options->r_inner) / (double)(structured_data->n_r - 1)) *
-                                sigma_dust;
+        // A teljes gyűrű tömege: Area * Sigma_dust
+        // Ez a pontos geometriai integrál, ami illeszkedik a CIC-hez
+        long double cell_mass = M_PI * (r_bin_out * r_bin_out - r_bin_in * r_bin_in) * sigma_dust;
 
+        // 3. Vertikális eloszlás (Gauss) előkészítése
         long double weight_sum = 0.0;
         double z_min = -n_sigma * H;
         double z_max = +n_sigma * H;
 
+        // Súlyok kiszámítása a normalizáláshoz
         for (size_t iz = 0; iz < structured_data->n_z; iz++) {
-            double z = z_min + (z_max - z_min) * iz / (structured_data->n_z - 1);
+            double z = (structured_data->n_z > 1) ? z_min + (z_max - z_min) * iz / (structured_data->n_z - 1) : 0.0;
             z_array[iz] = z;
-            weight_sum += exp(-0.5 * (z/H) * (z/H));
+            weight_sum += exp(-0.5 * (z / H) * (z / H));
         }
 
+        // 4. Részecskék adatainak mentése
         for (size_t iz = 0; iz < structured_data->n_z; iz++) {
-            double f = exp(-0.5 * (z_array[iz]/H) * (z_array[iz]/H)) / weight_sum;
+            // Gauss-súly (tömegmegmaradással)
+            double f = exp(-0.5 * (z_array[iz] / H) * (z_array[iz] / H)) / weight_sum;
             double m = (double)(cell_mass * f);
 
             structured_data->particles[i_r][iz].mass_g = m;
-            structured_data->particles[i_r][iz].radius   = default_options->one_size_particle_cm / AU_IN_CM;
+            structured_data->particles[i_r][iz].radius = default_options->one_size_particle_cm / AU_IN_CM;
             structured_data->particles[i_r][iz].r_au   = r;
             structured_data->particles[i_r][iz].z_au   = z_array[iz];
-
         }
     }
 
     free(z_array);
-
-    
-
     return 0;
-}
-
+}   
 
 int runInitialization(InitializeDefaultOptions *default_options, DiskParameters *disk_params, StructuredParticleData *structured_data) {
 

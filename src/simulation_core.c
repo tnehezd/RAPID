@@ -227,7 +227,7 @@ static void simulateDustDriftStep(double *t, double deltat, double *output_time,
 
     // 1. Sűrűség-visszacsatolás Euler-rácsra (ez látja a feltorlódást)
     double *sigma_dust_euler = malloc(disk_params->grid_number * sizeof(double));
-    updateDustSurfaceDensityEulerian(structured_particle_data, sigma_dust_euler, disk_params);
+    updateDustSurfaceDensityEulerianCIC(structured_particle_data, sigma_dust_euler, disk_params);
 
     // 2. Vertikális ülepedés
     applyVerticalSettlingDeterministic(structured_particle_data, disk_params, deltat); 

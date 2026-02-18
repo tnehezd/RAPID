@@ -376,44 +376,53 @@ void updateDustSurfaceDensityEulerian(StructuredParticleData *data, double *sigm
 
 void updateDustSurfaceDensityEulerianCIC(StructuredParticleData *data, double *sigma_dust_euler, const DiskParameters *disk_params) {
     size_t n_r_euler = disk_params->grid_number;
-    size_t n_r_lagrange = data->n_r;
-    size_t n_z = data->n_z;
-    double dr = disk_params->delta_r;
+    size_t n_r_lag = data->n_r;
+    double dr_e = disk_params->delta_r;
     double r_min = disk_params->r_min;
 
     // 1. Nullázás
     for (size_t i = 0; i < n_r_euler; i++) sigma_dust_euler[i] = 0.0;
 
-    // 2. CIC (Cloud-In-Cell) Binning
-    for (size_t i = 0; i < n_r_lagrange; i++) {
-        for (size_t j = 0; j < n_z; j++) {
+    // 2. Tömeggyűjtés (CSAK a tömeget adjuk össze, nem osztunk semmivel a ciklusban!)
+    for (size_t i = 0; i < n_r_lag; i++) {
+        for (size_t j = 0; j < data->n_z; j++) {
             DustParticle *p = &data->particles[i][j];
             
-            if (p->r_au > r_min && p->r_au < disk_params->r_max) {
-                // Kiszámoljuk a lebegőpontos indexet (pl. 10.35)
-                double float_idx = (p->r_au - r_min) / dr;
-                int i_left = (int)floor(float_idx);
-                int i_right = i_left + 1;
-                
-                // Mennyire van távol a bal oldali rácsponttól (0.0 és 1.0 között)
-                double weight_right = float_idx - (double)i_left;
-                double weight_left = 1.0 - weight_right;
+            // Hol van a részecske az Euler-rácshoz képest?
+            double float_idx = (p->r_au - r_min) / dr_e-0.5;
+            int i_low = (int)floor(float_idx);
+            int i_high = i_low + 1;
+            
+            double weight_high = float_idx - (double)i_low;
+            double weight_low = 1.0 - weight_high;
 
-                // Tömeg szétosztása a két szomszédos rácspont között
-                if (i_left >= 0 && i_left < (int)n_r_euler) {
-                    sigma_dust_euler[i_left] += p->mass_g * weight_left;
-                }
-                if (i_right >= 0 && i_right < (int)n_r_euler) {
-                    sigma_dust_euler[i_right] += p->mass_g * weight_right;
-                }
+            // Alacsonyabb indexű cella
+            if (i_low >= 0 && i_low < (int)n_r_euler) {
+                sigma_dust_euler[i_low] += (double)(p->mass_g * weight_low);
+            }
+            // Magasabb indexű cella
+            if (i_high >= 0 && i_high < (int)n_r_euler) {
+                sigma_dust_euler[i_high] += (double)(p->mass_g * weight_high);
             }
         }
     }
 
-    // 3. Normalizálás (Változatlan)
+    // 3. Normalizálás: Sigma = Össztömeg_a_cellában / Cella_Területe
     for (size_t i = 0; i < n_r_euler; i++) {
-        double r_cell = disk_params->radial_grid[i];
-        double area_cgs = 2.0 * M_PI * r_cell * dr * (AU_IN_CM * AU_IN_CM);
-        if (area_cgs > 0) sigma_dust_euler[i] /= area_cgs;
+        double r_center = r_min + (i+0.5) * dr_e;
+        
+        // A cella határai (fél rácsközre a középponttól)
+        double r_in = r_center - 0.5 * dr_e;
+        double r_out = r_center + 0.5 * dr_e;
+        
+        // Határvédelem
+        if (r_in < r_min) r_in = r_min;
+        
+        // Terület cm2-ben
+        double area_cm2 = M_PI * (r_out * r_out - r_in * r_in) * (AU_IN_CM * AU_IN_CM);
+        
+        if (area_cm2 > 0) {
+            sigma_dust_euler[i] /= area_cm2;
+        }
     }
 }

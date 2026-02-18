@@ -10,13 +10,13 @@ simulation_parameters:
   enable_two_dust_populations: false  # Corresponds to 'twopop' (1.0 for true, 0.0 for false)
   fragmentation_velocity: 500.0       # Corresponds to 'ufrag'  (1.0 for true, 0.0 for false)
   fragmentation_factor: 0.37          # Corresponds to 'ffrag'  (1.0 for true, 0.0 for false)
-  number_of_dust_particles: 1000
+  number_of_dust_particles: 100000
   dimension: 2
  
 disk_parameters:
   # Grid and Disk Initial Parameters (used if no input_file is provided)
   number_of_grid_points: 1000         # Corresponds to 'ngrid_val' (-n)
-  number_of_vertical_grid_points: 3  # Corresponds to 'nz' (-nz)
+  number_of_vertical_grid_points: 2  # Corresponds to 'nz' (-nz)
   inner_radius_au: 1.0                # Corresponds to 'rmin_val' (-ri)
   outer_radius_au: 50.0               # Corresponds to 'rmax_val' (-ro)
   vertical_outer_radius: 3.0         # Corresponds to 'zmax_val' (-zmax)
