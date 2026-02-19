@@ -1,5 +1,6 @@
 #include "utils.h"
 #include "config.h"
+#include <string.h>
 #include <math.h>
 #include <stdlib.h>
 #include "particle_data.h"
@@ -425,4 +426,107 @@ void updateDustSurfaceDensityEulerianCIC(StructuredParticleData *data, const Dis
             disk_params->dust_surface_density_euler[i] /= area;
         }
     }
+}
+
+
+
+void updateDustSurfaceDensityEulerianTSC(StructuredParticleData *data, const DiskParameters *disk_params) {
+    size_t n_r_euler = disk_params->grid_number;
+    size_t n_r_lag = data->n_r;
+    double dr_e = disk_params->delta_r;
+    double r_min = disk_params->r_min;
+
+    // 1. Nullázás
+    for (size_t i = 0; i < n_r_euler; i++) disk_params->dust_surface_density_euler[i] = 0.0;
+
+    // 2. Tömeggyűjtés TSC-vel
+    for (size_t i = 0; i < n_r_lag; i++) {
+        for (size_t j = 0; j < data->n_z; j++) {
+            DustParticle *p = &data->particles[i][j];
+            
+            // Relatív pozíció a rácson (távolság r_min-től egységnyi dr-ben mérve)
+            double u = (p->r_au - r_min) / dr_e;
+            int i_nearest = (int)round(u); // A legközelebbi rácspont indexe
+
+            // Távolság a legközelebbi rácsponttól (-0.5 és 0.5 között)
+            double d = u - (double)i_nearest;
+
+            // TSC Súlyfüggvények (3 pontra)
+            double w_mid  = 0.75 - d * d;
+            double w_left  = 0.5 * (0.5 - d) * (0.5 - d);
+            double w_right = 0.5 * (0.5 + d) * (0.5 + d);
+
+            int indices[3] = {i_nearest - 1, i_nearest, i_nearest + 1};
+            double weights[3] = {w_left, w_mid, w_right};
+
+            for (int k = 0; k < 3; k++) {
+                int idx = indices[k];
+                if (idx >= 0 && idx < (int)n_r_euler) {
+                    disk_params->dust_surface_density_euler[idx] += p->mass_g * weights[k];
+                }
+            }
+        }
+    }
+
+    // 3. Normalizálás a pontos körgyűrű területtel
+    for (size_t i = 0; i < n_r_euler; i++) {
+        double r_in  = r_min + (double)i * dr_e;
+        double r_out = r_in + dr_e;
+        
+        double area = M_PI * (r_out * r_out - r_in * r_in);
+        
+        if (area > 0) {
+            disk_params->dust_surface_density_euler[i] /= area;
+        }
+    }
+}
+
+
+void updateDustSurfaceDensitySmart(StructuredParticleData *data, const DiskParameters *disk_params) {
+    size_t n_r_euler = disk_params->grid_number;
+    size_t n_r_lag = data->n_r;
+    double dr_e = disk_params->delta_r;
+    double r_min = disk_params->r_min;
+
+    // 1. Tömeggyűjtés TSC-vel (ez védi legjobban a csúcsokat)
+    for (size_t i = 0; i < n_r_euler; i++) disk_params->dust_surface_density_euler[i] = 0.0;
+
+    for (size_t i = 0; i < n_r_lag; i++) {
+        for (size_t j = 0; j < data->n_z; j++) {
+            DustParticle *p = &data->particles[i][j];
+            double u = (p->r_au - r_min) / dr_e;
+            int i_nearest = (int)round(u);
+            double d = u - (double)i_nearest;
+
+            double weights[3] = {0.5*(0.5-d)*(0.5-d), 0.75-d*d, 0.5*(0.5+d)*(0.5+d)};
+            for (int k = -1; k <= 1; k++) {
+                int idx = i_nearest + k;
+                if (idx >= 0 && idx < (int)n_r_euler) {
+                    disk_params->dust_surface_density_euler[idx] += p->mass_g * weights[k+1];
+                }
+            }
+        }
+    }
+
+    // 2. Normalizálás
+    for (size_t i = 0; i < n_r_euler; i++) {
+        double r_in = r_min + i * dr_e;
+        double r_out = r_in + dr_e;
+        double area = M_PI * (r_out * r_out - r_in * r_in);
+        disk_params->dust_surface_density_euler[i] /= area;
+    }
+
+    // 3. "Lyukkitöltés" (Gap filling) - Csak ott avatkozik be, ahol üres cellák vannak
+    // Egy másolatot készítünk, hogy ne gerjesszünk instabilitást
+    double *temp = malloc(n_r_euler * sizeof(double));
+    memcpy(temp, disk_params->dust_surface_density_euler, n_r_euler * sizeof(double));
+
+    for (int i = 1; i < (int)n_r_euler - 1; i++) {
+        // Ha a cella értéke gyanúsan alacsony a szomszédokhoz képest (zaj)
+        if (temp[i] < 1e-15) { // Vagy egy ésszerű küszöbérték
+            // Lineáris interpoláció a szomszédokból, hogy ne legyen nulla
+            disk_params->dust_surface_density_euler[i] = 0.5 * (temp[i-1] + temp[i+1]);
+        }
+    }
+    free(temp);
 }

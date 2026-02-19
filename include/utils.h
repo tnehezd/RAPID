@@ -148,4 +148,9 @@ void updateDustSurfaceDensityEulerianCIC(StructuredParticleData *data, const Dis
 
 void updateDustSurfaceDensityEulerian(StructuredParticleData *data, const DiskParameters *disk_params);
 
+void updateDustSurfaceDensityEulerianTSC(StructuredParticleData *data, const DiskParameters *disk_params);
+
+void updateDustSurfaceDensitySmart(StructuredParticleData *data, const DiskParameters *disk_params);
+
+
 #endif // UTILS_H

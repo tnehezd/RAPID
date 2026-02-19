@@ -225,7 +225,7 @@ static void simulateDustDriftStep(double *t, double deltat, double *output_time,
         refreshGasSurfaceDensityPressurePressureGradient(sim_opts, disk_params);
     }
 
-    updateDustSurfaceDensityEulerianCIC(structured_particle_data, disk_params);
+    updateDustSurfaceDensitySmart(structured_particle_data, disk_params);
 
     // 2. Vertikális ülepedés
     applyVerticalSettlingDeterministic(structured_particle_data, disk_params, deltat); 
