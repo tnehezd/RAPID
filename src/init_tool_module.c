@@ -140,38 +140,56 @@ static int validateInitializationInputs(const InitializeDefaultOptions *opts) {
     return 0; 
 }
 
-int initializeOneDimensions(InitializeDefaultOptions *default_options, DiskParameters *disk_params, long double current_sigma0_gas, FILE *dust_output_file, FILE *gas_output_file) {
+int initializeOneDimensions(InitializeDefaultOptions *default_options, DiskParameters *disk_params, long double current_sigma0_gas, StructuredParticleData *structured_data, FILE *dust_output_file, FILE *gas_output_file) {
+    
+    // 1. Struktúra alapadatok beállítása (n_z = 1 az 1D-hez)
+    structured_data->n_r = default_options->n_dust_particles;
+    structured_data->n_z = 1; 
 
-    const double DEFAULT_ONE_SIZE = 1.0;
-
-    for (int i = 0; i < default_options->n_dust_particles; i++) {
-        double dr = (default_options->r_outer - default_options->r_inner) /
-                    (double)(default_options->n_dust_particles);
-
-        double r_dust = default_options->r_inner + (i + 0.5) * dr;
-
-        double temp_sigma, temp_pressure, temp_dPdr;
-        linearInterpolation(disk_params->gas_surface_density_vector, disk_params->radial_grid, r_dust, &temp_sigma, disk_params->delta_r, disk_params);
-        linearInterpolation(disk_params->gas_pressure_vector, disk_params->radial_grid, r_dust, &temp_pressure, disk_params->delta_r, disk_params);
-        linearInterpolation(disk_params->gas_pressure_gradient_vector, disk_params->radial_grid, r_dust, &temp_dPdr, disk_params->delta_r, disk_params);
-
-        long double sigma_dust_local = calculateDustSurfaceDensityInitTool(r_dust, default_options, current_sigma0_gas);
-        long double representative_mass_total_in_cell = 2.0 * M_PI * r_dust *
-                                                       ((default_options->r_outer - default_options->r_inner) / ((double)default_options->n_dust_particles - 1.0)) *
-                                                       sigma_dust_local;
-
-        long double repr_mass_pop1 = representative_mass_total_in_cell * default_options->two_pop_ratio;
-        long double repr_mass_pop2 = representative_mass_total_in_cell * (1.0 - default_options->two_pop_ratio);
-
-        double s_max_cm = DEFAULT_ONE_SIZE; // vagy a régi logika, amit számoltál
-
-        fprintf(dust_output_file, "%-5d %-15.6e %-20.12Lg %-20.12Lg %-15.6e %-15.6e\n",
-                i, r_dust, repr_mass_pop1, repr_mass_pop2, s_max_cm, default_options->micro_size_cm);
+    // 2. Memória foglalása
+    structured_data->particles = (DustParticle**)malloc(structured_data->n_r * sizeof(DustParticle*));
+    if (!structured_data->particles) return 1;
+    for (size_t i = 0; i < structured_data->n_r; i++) {
+        structured_data->particles[i] = (DustParticle*)malloc(structured_data->n_z * sizeof(DustParticle));
+        if (!structured_data->particles[i]) return 1;
     }
 
-    fprintf(stderr, "1D dust particle distribution written\n");
+    double dr_particles = (default_options->r_outer - default_options->r_inner) / (double)structured_data->n_r;
 
-    // --- Gas 1D profil ---
+    // 3. Feltöltés és kiírás
+    for (size_t i = 0; i < structured_data->n_r; i++) {
+        double r = default_options->r_inner + (i + 0.5) * dr_particles;
+
+        // Tömegszámítás (precíz bin-integrál)
+        double r_bin_in  = r - 0.5 * dr_particles;
+        double r_bin_out = r + 0.5 * dr_particles;
+        if (r_bin_in < default_options->r_inner) r_bin_in = default_options->r_inner;
+        if (r_bin_out > default_options->r_outer) r_bin_out = default_options->r_outer;
+
+        long double sigma_dust = calculateDustSurfaceDensityInitTool(r, default_options, current_sigma0_gas);
+        long double cell_mass = M_PI * (r_bin_out * r_bin_out - r_bin_in * r_bin_in) * sigma_dust;
+
+        // Két populációs tömegbontás az eredeti fájlformátumhoz
+        long double repr_mass_pop1 = cell_mass * default_options->two_pop_ratio;
+        long double repr_mass_pop2 = cell_mass * (1.0 - default_options->two_pop_ratio);
+
+        // --- Memória feltöltése (AoS) ---
+        structured_data->particles[i][0].index   = i;
+        structured_data->particles[i][0].r_au    = r;
+        structured_data->particles[i][0].z_au    = 0.0;
+        structured_data->particles[i][0].mass_g  = (double)cell_mass;
+        structured_data->particles[i][0].radius  = default_options->one_size_particle_cm;
+
+        // --- Eredeti fájlba írás (Dust) ---
+        // Megtartva a pontos formázást: index, r, mass_pop1, mass_pop2, s_max, s_mic
+        fprintf(dust_output_file, "%-5zu %-15.6e %-20.12Lg %-20.12Lg %-15.6e %-15.6e\n",
+                i, r, repr_mass_pop1, repr_mass_pop2, 
+                default_options->one_size_particle_cm, default_options->micro_size_cm);
+    }
+
+    fprintf(stderr, "1D dust particle distribution written to file and memory.\n");
+
+    // --- Eredeti gáz profil kiírása ---
     for (int i = 0; i < disk_params->grid_number; i++) {
         double r_gas = disk_params->radial_grid[i + 1];
         fprintf(gas_output_file, "%-5d %-15.6e %-15.6e %-15.6e %15.6e\n",
@@ -179,16 +197,14 @@ int initializeOneDimensions(InitializeDefaultOptions *default_options, DiskParam
                 disk_params->gas_surface_density_vector[i + 1],
                 disk_params->gas_pressure_vector[i + 1],
                 disk_params->gas_pressure_gradient_vector[i + 1]);
-
     }
 
-    fprintf(stderr, "1D gas profiles written\n");
+    fprintf(stderr, "1D gas profiles written to file.\n");
     fflush(dust_output_file);
     fflush(gas_output_file);
 
     return 0;
 }
-
 
 int initializeTwoDimensions(InitializeDefaultOptions *default_options, long double current_sigma0_gas, StructuredParticleData *structured_data) {
     // 1. Memória foglalása a 2D struktúrának
@@ -398,8 +414,6 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
         }
     }
 
-    initializeOneDimensions(default_options, disk_params, current_sigma0_gas,
-                            dust_output_file, gas_parameters_output_file);
 
     fprintf(disk_parameters_output_file, "%-15.6e %-15.6e %-10d %-15.6e %-20.12Lg %-15.6e %-15.6e %-15.6e %-20.12e %-20.12e %-15.6e %-15.6e %-15.6e %-15.6e %-15.6e\n",
             default_options->r_inner, default_options->r_outer, default_options->n_grid_points, 
@@ -409,11 +423,11 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
             default_options->deadzone_alpha_mod, default_options->dust_density_g_cm3, default_options->alpha_viscosity, 
             default_options->star_mass, default_options->flaring_index);
 
-    fclose(dust_output_file);
-    fclose(gas_parameters_output_file);
-    fclose(disk_parameters_output_file);
 
-    if (default_options->dimension == 2) {
+
+    if (default_options->dimension == 1) {
+        initializeOneDimensions(default_options, disk_params, current_sigma0_gas, structured_data, dust_output_file, gas_parameters_output_file);
+    } else if (default_options->dimension == 2) {
         initializeTwoDimensions(default_options, current_sigma0_gas, structured_data);
         writeDustField2D(structured_data, default_options->output_base_path, -1, "initial");
 
@@ -434,6 +448,11 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
         }
         fprintf(stderr, "Initial Euler dust surface density set analytically.\n");
     }
+
+
+    fclose(dust_output_file);
+    fclose(gas_parameters_output_file);
+    fclose(disk_parameters_output_file);
 
     return 0;
 }

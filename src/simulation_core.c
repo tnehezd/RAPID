@@ -129,6 +129,7 @@ static int isSnapshotDue(double current_time_years, double output_time, double d
 static void handleSnapshotASCII(double t, double current_time_years, double *output_time, ParticleData *particle_data, StructuredParticleData *structured_particle_data, int particle_number, DiskParameters *disk_params, const SimulationOptions *sim_opts,
                                 OutputFiles *output_files, char *dens_name, char *dust_name, char *dust_name2, char *size_name) {
 
+
     handleSnapshot(t, current_time_years, output_time, sim_opts, output_files,dens_name, dust_name, dust_name2, size_name);
     snapshotInitAtT0(t, current_time_years,particle_data, disk_params, sim_opts,particle_number);
     snapshotPrintGas(disk_params, output_files,sim_opts);
@@ -136,8 +137,9 @@ static void handleSnapshotASCII(double t, double current_time_years, double *out
     snapshotResetMasses(particle_data, particle_number, sim_opts);
     snapshotDustSurfacedensity(*output_time, particle_data, disk_params, sim_opts,output_files);
 
-    writeDustField2D(structured_particle_data, sim_opts->output_dir_name, *output_time, NULL);
-
+    if(sim_opts->dimension == 2) {
+        writeDustField2D(structured_particle_data, sim_opts->output_dir_name, *output_time, NULL);
+    }
 
     PressureTrap current_traps[3];
     int num_found = identifyPressureTraps(disk_params, current_traps, 3);

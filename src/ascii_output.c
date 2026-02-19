@@ -283,7 +283,10 @@ void printCurrentInformationAboutRun(const char *directory_name, const DiskParam
 
 void printTrapMassEvolution(double output_time, int num_found, const PressureTrap *traps, OutputFiles *output_files) {
     
-    if (output_files->mass_file == NULL) return;
+    if (output_files->mass_file == NULL) {
+        fprintf(stderr, "NO MASS FILE WRITTEN\n");
+        return;
+    }
 
     // Idő (Év)
 
@@ -529,8 +532,9 @@ void printFinalSimulationSummary(const char *directory_name, double elapsed_seco
 int setupInitialOutputFiles(OutputFiles *output_files, const SimulationOptions *sim_opts,
                                const DiskParameters *disk_params, HeaderData *header_data_for_files) {
 
-    if(OUTPUT_HDF5){ 
-        return 0;
+    if (sim_opts->output_format == OUTPUT_HDF5) { 
+            return 0; // Ha HDF5-öt kért a júzer, akkor nem kell ASCII fájlokat nyitni
+        
     } else {
         char *mass_output = NULL;
 

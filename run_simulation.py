@@ -106,11 +106,9 @@ def main():
 
         # Core Disk Parameters (also serve as init_tool defaults if no input file)
         "ngrid_val": 2000,
-        "nz": 100,
         "ndust_val": 5000, 
         "rmin_val": 1.0,
         "rmax_val": 100.0,
-        "zmax_val": 4.0,
         "sigma0_val": 1.0,
         "sigmap_exp_val": 0.5,
         "alpha_visc_val": 0.01,
@@ -209,6 +207,22 @@ def main():
             for yaml_key, c_key in yaml_to_c_mapping.items():
                 if yaml_key in yaml_params:
                     all_params[c_key] = yaml_params[yaml_key]
+
+# 3. ELLENŐRZÉS: Ha dim == 2, kötelező az NZ és ZMAX
+    if all_params.get("dim") == 2:
+        missing = []
+        if "nz" not in all_params: missing.append("number_of_vertical_grid_points (nz)")
+        if "zmax_val" not in all_params: missing.append("vertical_outer_radius (zmax_val)")
+        
+        if missing:
+            print(f"\nERROR: Simulation set to 2D (-dim 2), but missing mandatory vertical parameters: {', '.join(missing)}")
+            print("Please define them in your YAML file under 'disk_parameters'.")
+            return # Leállítjuk a futást
+
+    # 4. TISZTÍTÁS: Ha dim == 1, töröljük az NZ-t és ZMAX-ot, ha véletlen benne maradtak
+    if all_params.get("dim") == 1:
+        all_params.pop("nz", None)
+        all_params.pop("zmax_val", None)                    
 
     # If none of the above sections found:
     if not found_any_section:
