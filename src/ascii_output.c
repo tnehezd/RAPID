@@ -659,7 +659,7 @@ void writeDustField2D(const StructuredParticleData *sdata, const char *directory
 
     if (snapshot_index >= 0) {
         asprintf(&mass_path,"%s/%s/%s_%08d%s",directory,kLogFilesDirectory,kMassFieldNameFile,snapshot_index,kFileNamesSuffix);
-        asprintf(&grid_path,"%s/%s/%s_%08d.%s",directory,kLogFilesDirectory,kGridFieldNameFile,snapshot_index,kFileNamesSuffix);
+        asprintf(&grid_path,"%s/%s/%s_%08d%s",directory,kLogFilesDirectory,kGridFieldNameFile,snapshot_index,kFileNamesSuffix);
     }
     else {
         if (label)
