@@ -10,7 +10,7 @@ simulation_parameters:
   enable_two_dust_populations: false  # Corresponds to 'twopop' (1.0 for true, 0.0 for false)
   fragmentation_velocity: 500.0       # Corresponds to 'ufrag'  (1.0 for true, 0.0 for false)
   fragmentation_factor: 0.37          # Corresponds to 'ffrag'  (1.0 for true, 0.0 for false)
-  number_of_dust_particles: 100000
+  number_of_dust_particles: 1000
   dimension: 2
  
 disk_parameters:

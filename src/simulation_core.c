@@ -107,7 +107,7 @@ static void snapshotResetMasses(ParticleData *particle_data, int particle_number
 static void snapshotDustSurfacedensity(double output_time, ParticleData *particle_data, DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files) {
 
     if (sim_opts->option_for_dust_growth == 1.) {
-        printDustSurfaceDensityPressurePressureDerivateFile(particle_data->particle_distance_grid, particle_data->micron_particle_distance_grid, particle_data->dust_surfacedensity, particle_data->micron_dust_surfacedensity, disk_params, sim_opts, output_files, (int)output_time);
+        printDustSurfaceDensityPressurePressureDerivateFile(disk_params->radial_grid, particle_data->micron_particle_distance_grid, disk_params->dust_surface_density_euler, particle_data->micron_dust_surfacedensity, disk_params, sim_opts, output_files, (int)output_time);
     }
 }
 
@@ -225,15 +225,13 @@ static void simulateDustDriftStep(double *t, double deltat, double *output_time,
         refreshGasSurfaceDensityPressurePressureGradient(sim_opts, disk_params);
     }
 
-    // 1. Sűrűség-visszacsatolás Euler-rácsra (ez látja a feltorlódást)
-    double *sigma_dust_euler = malloc(disk_params->grid_number * sizeof(double));
-    updateDustSurfaceDensityEulerianCIC(structured_particle_data, sigma_dust_euler, disk_params);
+    updateDustSurfaceDensityEulerianCIC(structured_particle_data, disk_params);
 
     // 2. Vertikális ülepedés
     applyVerticalSettlingDeterministic(structured_particle_data, disk_params, deltat); 
 
     // 3. Radiális drift és növekedés (A timescale fájlt ez kezeli t=0-nál!)
-    calculateDustDistanceStructured(sim_opts->output_dir_name, structured_particle_data, sigma_dust_euler, deltat, *t, sim_opts, disk_params);
+    calculateDustDistanceStructured(sim_opts->output_dir_name, structured_particle_data, deltat, *t, sim_opts, disk_params);
 
     // 4. SZINKRONIZÁCIÓ: A strukturált eredményt átmásoljuk a régibe (hogy az outputok jók legyenek)
     for (int i = 0; i < sim_opts->number_of_dust_particles; i++) {
@@ -250,7 +248,6 @@ static void simulateDustDriftStep(double *t, double deltat, double *output_time,
     // 5. Régi indexek frissítése a snapshotokhoz (a szinkronizált adatokból)
     updateParticleGridIndices(particle_data, *t, particle_number, disk_params);
 
-    free(sigma_dust_euler);
     *t += deltat;
 }
 

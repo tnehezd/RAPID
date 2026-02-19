@@ -365,6 +365,14 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
     disk_params->gas_pressure_gradient_vector = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
     disk_params->gas_velocity_vector = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
 
+    disk_params->dust_surface_density_euler = (double *)malloc(disk_params->grid_number * sizeof(double));
+
+    if (!disk_params->dust_surface_density_euler) {
+        fprintf(stderr, "ERROR: Failed to allocate Eulerian dust surface density array.\n");
+        return 1;
+    }
+
+
     if (!disk_params->radial_grid || !disk_params->gas_surface_density_vector ||
         !disk_params->gas_pressure_vector || !disk_params->gas_pressure_gradient_vector ||
         !disk_params->gas_velocity_vector) 
@@ -409,6 +417,22 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
         initializeTwoDimensions(default_options, current_sigma0_gas, structured_data);
         writeDustField2D(structured_data, default_options->output_base_path, -1, "initial");
 
+        int N = disk_params->grid_number;
+
+        // 1) nullázás
+        for (int i = 0; i < N; i++) {
+            disk_params->dust_surface_density_euler[i] = 0.0;
+        }
+
+        // 2) részecskék tömegének összegzése radiális cellákba
+        // --- ANALYTIKUS KEZDETI PORFELÜLETISŰRŰSÉG (Euler) ---
+        for (int i = 0; i < disk_params->grid_number; i++) {
+            double r = disk_params->radial_grid[i];
+
+            // analitikus porfelületisűrűség
+            disk_params->dust_surface_density_euler[i] = (double) calculateDustSurfaceDensityInitTool(r, default_options, current_sigma0_gas);
+        }
+        fprintf(stderr, "Initial Euler dust surface density set analytically.\n");
     }
 
     return 0;

@@ -147,7 +147,6 @@ void calculateDustSurfaceDensity(const ParticleData *particle_data, const Simula
 void calculateDustDistance(const char *file_name, ParticleData *particle_data, double actual_timestep, double actual_time, int number_of_particles, const SimulationOptions *simulation_options, const DiskParameters *disk_params);
 
 
-void calculateDustDistanceStructured(const char *file_name, StructuredParticleData *data, double *sigma_dust_euler, double actual_timestep, double actual_time, const SimulationOptions *simulation_options, const DiskParameters *disk_params);
+void calculateDustDistanceStructured(const char *file_name, StructuredParticleData *data, double actual_timestep, double actual_time, const SimulationOptions *simulation_options, const DiskParameters *disk_params);
 
-void updateDustSurfaceDensityEulerian(StructuredParticleData *data, double *sigma_dust_euler, const DiskParameters *disk_params);
 #endif // DUST_PHYSICS_H

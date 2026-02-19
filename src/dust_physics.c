@@ -131,74 +131,9 @@ void calculateDustSurfaceDensity(const ParticleData *particle_data, const Simula
 }
 
 
-void calculateDustDistance(const char *file_name, ParticleData *particle_data, double actual_timestep, double actual_time, int number_of_particles, const SimulationOptions *simulation_options, const DiskParameters *disk_params){
 
-    int i;
-    double particle_distance, particle_distance_new, particle_radius_new, particle_radius;
-    char file_path[1024];
+void calculateDustDistanceStructured(const char *file_name, StructuredParticleData *data, double actual_timestep, double actual_time, const SimulationOptions *simulation_options, const DiskParameters *disk_params) {
 
-    #pragma omp master
-    {
-        if (actual_time == 0) {
-            sprintf(file_path, "%s/%s%s", file_name, kDriftTimescaleFileName, kFileNamesSuffix);
-            drift_timescale_file = fopen(file_path, "w");
-        }
-    }
-
-    #pragma omp barrier
-
-    #pragma omp parallel for private(particle_distance, particle_distance_new, particle_radius_new, particle_radius)
-    for (i = 0; i < number_of_particles; i++) {
-
-        if (particle_data->particle_distance_array[i][0] > disk_params->r_min && particle_data->particle_distance_array[i][0] < disk_params->r_max) {
-            particle_distance = particle_data->particle_distance_array[i][0];
-            particle_radius = particle_data->particle_distance_array[i][1];
-
-			integrateParticleRungeKutta4(actual_time, particle_radius, particle_data->dust_surfacedensity, particle_data->particle_distance_grid, actual_timestep, particle_distance, &particle_distance_new, &particle_radius_new, disk_params, simulation_options);
-            if (actual_time == 0) {
-                if (simulation_options->option_for_dust_secondary_population == 0) {
-                    double current_timestep_value = (fabs(particle_distance_new - particle_distance) / (actual_timestep));
-
-                    #pragma omp critical(drift_timescale_file_write)
-                    {
-                        if (drift_timescale_file != NULL) {
-                            fprintf(drift_timescale_file, "%lg %lg\n", particle_data->particle_distance_array[i][0], (particle_data->particle_distance_array[i][0] / current_timestep_value) / (2.0 * M_PI));
-                        } else {
-                            fprintf(stderr, "ERROR: drift_timescale_file is NULL during write in calculateDustDistance (t=0 block).\n");
-                        }
-                    }
-                }
-            }
-
-            if (simulation_options->option_for_dust_secondary_population != 1) { 
-                particle_data->particle_distance_array[i][1] = particle_radius_new;
-                particle_data->particle_distance_array[i][0] = particle_distance_new;
-            } else {
-//                particle_data->particle_distance_array[i][1] = particle_radius_new;
-//                particle_data->particle_distance_array[i][0] = particle_distance_new;
-            }
-        } else {
-            particle_data->particle_distance_array[i][0] = 0.0;
-            particle_data->particle_distance_array[i][1] = 0.0;
-
-        }
-    }
-
-    #pragma omp master
-    {
-        if (actual_time == 0) { 
-            if (drift_timescale_file != NULL) {
-                fclose(drift_timescale_file);
-                drift_timescale_file = NULL; 
-            }
-        }
-    }
-
-    #pragma omp barrier
-}
-
-
-void calculateDustDistanceStructured(const char *file_name, StructuredParticleData *data, double *sigma_dust_euler, double actual_timestep, double actual_time, const SimulationOptions *simulation_options, const DiskParameters *disk_params) {
     char file_path[1024];
     size_t n_r = data->n_r;
     size_t n_z = data->n_z;
@@ -231,11 +166,10 @@ void calculateDustDistanceStructured(const char *file_name, StructuredParticleDa
                 if (p->r_au > disk_params->r_min && p->r_au < disk_params->r_max) {
 
                     // RK4 integráció a fix Euler-rács (disk_params->radial_grid) használatával
-                    // A sigma_dust_euler tartalmazza a por felhalmozódását!
                     integrateParticleRungeKutta4(
                         actual_time,
                         p->radius,
-                        sigma_dust_euler,
+                        disk_params->dust_surface_density_euler,
                         disk_params->radial_grid, // Fix hivatkozási rács
                         actual_timestep,
                         p->r_au,

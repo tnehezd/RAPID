@@ -142,8 +142,10 @@ void computeParticleRadiusRange(
 );
 
 
-void updateDustSurfaceDensityStructured(StructuredParticleData *data, double *dust_surfacedensity_1d, const DiskParameters *disk_params);
+void updateDustSurfaceDensityStructured(StructuredParticleData *data, const DiskParameters *disk_params);
 
-void updateDustSurfaceDensityEulerianCIC(StructuredParticleData *data, double *sigma_dust_euler, const DiskParameters *disk_params);
+void updateDustSurfaceDensityEulerianCIC(StructuredParticleData *data, const DiskParameters *disk_params);
+
+void updateDustSurfaceDensityEulerian(StructuredParticleData *data, const DiskParameters *disk_params);
 
 #endif // UTILS_H

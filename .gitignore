@@ -4,6 +4,7 @@ output/
 output_*/
 run_*/
 
+look_into_sdens.py
 new_plot_field.py
 plot_field.py
 plot_hdf5.py

@@ -341,12 +341,12 @@ void computeParticleRadiusRange(const ParticleData *particle_data,int particle_n
 }
 
 
-void updateDustSurfaceDensityEulerian(StructuredParticleData *data, double *sigma_dust_euler, const DiskParameters *disk_params) {
+void updateDustSurfaceDensityEulerian(StructuredParticleData *data, const DiskParameters *disk_params) {
     size_t n_r = disk_params->grid_number; // Fix gáz-rács mérete
     size_t n_z = data->n_z;
 
     // 1. Nullázás
-    for (size_t i = 0; i < n_r; i++) sigma_dust_euler[i] = 0.0;
+    for (size_t i = 0; i < n_r; i++) disk_params->dust_surface_density_euler[i] = 0.0;
 
     // 2. Binning: A részecskék tömegét a fix gáz-rácshoz adjuk
     for (size_t i = 0; i < data->n_r; i++) { // Végig az összes Lagrange-i oszlopon
@@ -358,7 +358,7 @@ void updateDustSurfaceDensityEulerian(StructuredParticleData *data, double *sigm
                 int idx = (int)((p->r_au - disk_params->r_min) / disk_params->delta_r);
                 
                 if (idx >= 0 && idx < (int)n_r) {
-                    sigma_dust_euler[idx] += p->mass_g;
+                    disk_params->dust_surface_density_euler[idx] += p->mass_g;
                 }
             }
         }
@@ -368,20 +368,20 @@ void updateDustSurfaceDensityEulerian(StructuredParticleData *data, double *sigm
     for (size_t i = 0; i < n_r; i++) {
         double r_cell = disk_params->radial_grid[i];
         double area_cgs = 2.0 * M_PI * r_cell * disk_params->delta_r * (AU_IN_CM * AU_IN_CM);
-        if (area_cgs > 0) sigma_dust_euler[i] /= area_cgs;
+        if (area_cgs > 0) disk_params->dust_surface_density_euler[i] /= area_cgs;
     }
 }
 
 
 
-void updateDustSurfaceDensityEulerianCIC(StructuredParticleData *data, double *sigma_dust_euler, const DiskParameters *disk_params) {
+void updateDustSurfaceDensityEulerianCIC(StructuredParticleData *data, const DiskParameters *disk_params) {
     size_t n_r_euler = disk_params->grid_number;
     size_t n_r_lag = data->n_r;
     double dr_e = disk_params->delta_r;
     double r_min = disk_params->r_min;
 
     // 1. Nullázás
-    for (size_t i = 0; i < n_r_euler; i++) sigma_dust_euler[i] = 0.0;
+    for (size_t i = 0; i < n_r_euler; i++) disk_params->dust_surface_density_euler[i] = 0.0;
 
     // 2. Tömeggyűjtés (CSAK a tömeget adjuk össze, nem osztunk semmivel a ciklusban!)
     for (size_t i = 0; i < n_r_lag; i++) {
@@ -398,11 +398,11 @@ void updateDustSurfaceDensityEulerianCIC(StructuredParticleData *data, double *s
 
             // Alacsonyabb indexű cella
             if (i_low >= 0 && i_low < (int)n_r_euler) {
-                sigma_dust_euler[i_low] += (double)(p->mass_g * weight_low);
+                disk_params->dust_surface_density_euler[i_low] += (double)(p->mass_g * weight_low);
             }
             // Magasabb indexű cella
             if (i_high >= 0 && i_high < (int)n_r_euler) {
-                sigma_dust_euler[i_high] += (double)(p->mass_g * weight_high);
+                disk_params->dust_surface_density_euler[i_high] += (double)(p->mass_g * weight_high);
             }
         }
     }
@@ -419,10 +419,10 @@ void updateDustSurfaceDensityEulerianCIC(StructuredParticleData *data, double *s
         if (r_in < r_min) r_in = r_min;
         
         // Terület cm2-ben
-        double area_cm2 = M_PI * (r_out * r_out - r_in * r_in) * (AU_IN_CM * AU_IN_CM);
+        double area = M_PI * (r_out * r_out - r_in * r_in);
         
-        if (area_cm2 > 0) {
-            sigma_dust_euler[i] /= area_cm2;
+        if (area > 0) {
+            disk_params->dust_surface_density_euler[i] /= area;
         }
     }
 }

@@ -65,7 +65,8 @@ typedef struct {
     double *gas_velocity_vector;          /**< Radial gas velocity profile. */
     double fragmentation_factor;          /**< Mass reduction factor after fragmentation. */
     double fragmentation_velocity;        /**< Fragmentation threshold velocity [m/s]. */
-    double drift_factor;                  /**< Scaling factor for dust drift speed. */        
+    double drift_factor;                  /**< Scaling factor for dust drift speed. */      
+    double *dust_surface_density_euler;   /**< Dust surface density on Eulerian grid */  
 } DiskParameters;
 
 

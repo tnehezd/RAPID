@@ -48,7 +48,7 @@ typedef struct {
     double  vertical_grid_max_height;       /**< Maximum vertical height of the disk [in scale heights]. */
     double  *vertical_grid;                 /**< Vertical grid array [AU], size vertical_grid_number. */
     double  *dust_scaleheight;              /**< Dust scale height Hd for each radial point [AU]. */
-    int dimension;   // 1 = radial, 2 = r+z
+    int dimension;                          // 1 = radial, 2 = r+z
 } InitializeDefaultOptions;
 
 /**
