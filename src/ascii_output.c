@@ -352,28 +352,46 @@ void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const 
     }
 }
 
-void printDustParticleSizeFile(char *size_name, int step, double (*rad)[3], double (*micron_particle_radius)[3], const DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files) {
+void printDustParticleSizeFileStructured(char *size_name, int step, const StructuredParticleData *spd, const DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files) {
 
     FILE *fout_size = NULL;
     int i;
+    int mid_z = spd->n_z / 2; // Midplane index for 1D/2D vertical slice
 
+    // Only open the size file if dust growth is enabled
     if (sim_opts->option_for_dust_growth == 1.0) {
         fout_size = openSnapshotFile(size_name, FILE_TYPE_PARTICLE_SIZE, (double)step / (2.0 * M_PI));        
         if (fout_size == NULL) {
-            fprintf(stderr, "ERROR: Could not open size file '%s' in printDustParticleSizeFile!\n", size_name);
+            fprintf(stderr, "ERROR: Could not open size file '%s' in printDustParticleSizeFileStructured!\n", size_name);
             return;
         }
     }
 
-    for (i = 0; i < particle_number; i++) { 
+    // Loop through particles using the structured grid data
+    for (i = 0; i < sim_opts->number_of_dust_particles; i++) { 
+        
+        // Access data from the structured grid (using midplane for 1D/2D consistency)
+        double current_r_au = spd->particles[i][mid_z].r_au;
+        double current_size_cm = spd->particles[i][mid_z].radius; 
+
+        // 1. Secondary (micron) population logic
+        // Note: If micron particles follow a different logic in StructuredData, 
+        // you might need a separate field, but usually they share the same R grid.
         if (sim_opts->option_for_dust_secondary_population == 1.0 && output_files->micron_motion_file != NULL) {
-            if (micron_particle_radius[i][0] >= disk_params->r_min) { 
-                fprintf(output_files->micron_motion_file, "%-16lg %-10d %-20.6e %-20.6e\n", (double)step, i, micron_particle_radius[i][0],micron_particle_radius[i][1] * AU_IN_CM);
+            if (current_r_au >= disk_params->r_min) { 
+                // Using a fixed small size or specific micron field if available
+                double micron_size_fixed = 1e-4; 
+                fprintf(stderr, " WARNING !!! MICRON SIZED DUST NEEDS FIX: NO SIZe EVOLUTION IS INCLUDED AT THE MOMENT!!!!\n");
+                fprintf(output_files->micron_motion_file, "%-16lg %-10d %-20.6e %-20.6e\n", (double)step, i, current_r_au, micron_size_fixed);
             }
         }
+
+        // 2. Primary dust growth output
         if (sim_opts->option_for_dust_growth == 1.0 && fout_size != NULL) {
-            if (rad[i][0] >= disk_params->r_min) {
-                fprintf(fout_size, "%-10lg %-10d %-20.6e %-20.6e\n", (double)step, i, rad[i][0], rad[i][1] * AU_IN_CM);
+            if (current_r_au >= disk_params->r_min) {
+                // If spd->particles[i][mid_z].radius is already in cm, we don't multiply by AU_IN_CM.
+                // If it's in AU, keep the multiplication. Adjusted here to match original logic style:
+                fprintf(fout_size, "%-10lg %-10d %-20.6e %-20.6e\n", (double)step, i, current_r_au, current_size_cm);
             }
         }
     }

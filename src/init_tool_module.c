@@ -447,8 +447,39 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
             disk_params->dust_surface_density_euler[i] = (double) calculateDustSurfaceDensityInitTool(r, default_options, current_sigma0_gas);
         }
         fprintf(stderr, "Initial Euler dust surface density set analytically.\n");
-    }
 
+        // --- JAVÍTÁS: Poros fájl kiírása 2D módban is ---
+                for (size_t i = 0; i < structured_data->n_r; i++) {
+                    double r = structured_data->particles[i][0].r_au;
+                    
+                    // 2D-ben az oszlop teljes tömegét kell összegeznünk a por-fájlhoz
+                    long double total_column_mass = 0.0;
+                    for (size_t iz = 0; iz < structured_data->n_z; iz++) {
+                        total_column_mass += structured_data->particles[i][iz].mass_g;
+                    }
+
+                    // Kiszámoljuk a Pop1/Pop2 arányt (mint az 1D-nél)
+                    long double repr_mass_pop1 = total_column_mass * default_options->two_pop_ratio;
+                    long double repr_mass_pop2 = total_column_mass * (1.0 - default_options->two_pop_ratio);
+
+                    fprintf(dust_output_file, "%-5zu %-15.6e %-20.12Lg %-20.12Lg %-15.6e %-15.6e\n",
+                            i, r, repr_mass_pop1, repr_mass_pop2, 
+                            default_options->one_size_particle_cm, default_options->micro_size_cm);
+                }
+                fprintf(stderr, "2D dust distribution (column-integrated) written to file.\n");
+
+                // --- Gáz profil kiírása (az előző javításunk) ---
+                for (int i = 0; i < disk_params->grid_number; i++) {
+                    double r_gas = disk_params->radial_grid[i + 1];
+                    fprintf(gas_parameters_output_file, "%-5d %-15.6e %-15.6e %-15.6e %15.6e\n",
+                            i, r_gas,
+                            disk_params->gas_surface_density_vector[i + 1],
+                            disk_params->gas_pressure_vector[i + 1],
+                            disk_params->gas_pressure_gradient_vector[i + 1]);
+                }
+            
+
+    }
 
     fclose(dust_output_file);
     fclose(gas_parameters_output_file);

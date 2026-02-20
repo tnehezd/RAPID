@@ -87,10 +87,11 @@ static void snapshotPrintGas(DiskParameters *disk_params, OutputFiles *output_fi
     
 }
 
-static void snapshotPrintDust(int output_time, ParticleData *particle_data, DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files, char *size_name) {
+static void snapshotPrintDust(int output_time, StructuredParticleData *structured_particle_data, DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files, char *size_name) {
 
     if (sim_opts->option_for_dust_drift == 1) {
-        printDustParticleSizeFile(size_name, output_time, particle_data->particle_distance_array, particle_data->micron_particle_distance_array, disk_params, sim_opts, output_files);
+        // handleSnapshotASCII belsejében:
+        printDustParticleSizeFileStructured(size_name, output_time, structured_particle_data, disk_params, sim_opts, output_files);
     }
 }
 
@@ -133,7 +134,7 @@ static void handleSnapshotASCII(double t, double current_time_years, double *out
     handleSnapshot(t, current_time_years, output_time, sim_opts, output_files,dens_name, dust_name, dust_name2, size_name);
     snapshotInitAtT0(t, current_time_years,particle_data, disk_params, sim_opts,particle_number);
     snapshotPrintGas(disk_params, output_files,sim_opts);
-    snapshotPrintDust((int)(*output_time), particle_data, disk_params,sim_opts, output_files, size_name);
+    snapshotPrintDust((int)(*output_time), structured_particle_data, disk_params,sim_opts, output_files, size_name);
     snapshotResetMasses(particle_data, particle_number, sim_opts);
     snapshotDustSurfacedensity(*output_time, particle_data, disk_params, sim_opts,output_files);
 

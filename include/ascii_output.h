@@ -80,21 +80,6 @@ void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const 
                   OutputFiles *output_files, double step);
 
 /**
- * @brief Writes dust particle size distribution to file.
- *
- * @param size_name Output filename.
- * @param step Current simulation step.
- * @param rad 2D array of particle radii.
- * @param radmicr 2D array of micron-sized particle radii.
- * @param disk_params Pointer to DiskParameters.
- * @param sim_opts Pointer to SimulationOptions.
- * @param output_files Pointer to OutputFiles.
- */
-void printDustParticleSizeFile(char *size_name, int step, double (*rad)[3], double (*radmicr)[3],
-                        const DiskParameters *disk_params, const SimulationOptions *sim_opts,
-                        OutputFiles *output_files);
-
-/**
  * @brief Writes the evolution of trap mass over time to file.
  *
  * @param current_time_years Current simulation time in years.
@@ -220,7 +205,12 @@ void printFinalSimulationSummary(const char *directory_name, double elapsed_seco
 void buildSnapshotFilenames(char *dens_name, char *dust_name, char *dust_name2, char *size_name, const SimulationOptions *sim_opts, int snapshot_id);
 
 
+
+
 void writeDustField2D(const StructuredParticleData *sdata, const char *directory, int snapshot_index, const char *label);
+
+
+void printDustParticleSizeFileStructured(char *size_name, int step, const StructuredParticleData *spd, const DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files);
 
 #endif // ASCII_OUTPUT_H
 
