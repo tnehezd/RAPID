@@ -311,37 +311,6 @@ void updateParticleGridIndices(const ParticleData *particle_data, double current
     }
 }
 
-void computeParticleRadiusRange(const ParticleData *particle_data,int particle_number,int has_secondary_population,double *min_radius,double *max_radius) {
-
-    double min_primary = HUGE_VAL;
-    double max_primary = -HUGE_VAL;
-
-    for (int i = 0; i < particle_number; i++) {
-        double particle_radius = particle_data->particle_distance_array[i][0];
-        if (particle_radius > 0.0) {
-            if (particle_radius < min_primary) min_primary = particle_radius;
-            if (particle_radius > max_primary) max_primary = particle_radius;
-        }
-    }
-
-    double min_secondary = HUGE_VAL;
-    double max_secondary = -HUGE_VAL;
-
-    if (has_secondary_population) {
-        for (int i = 0; i < particle_number; i++) {
-            double particle_radius = particle_data->micron_particle_distance_array[i][0];
-            if (particle_radius > 0.0) {
-                if (particle_radius < min_secondary) min_secondary = particle_radius;
-                if (particle_radius > max_secondary) max_secondary = particle_radius;
-            }
-        }
-    }
-
-    *min_radius = has_secondary_population ? fmin(min_primary, min_secondary) : min_primary;
-    *max_radius = has_secondary_population ? fmax(max_primary, max_secondary) : max_primary;
-}
-
-
 void updateDustSurfaceDensityEulerian(StructuredParticleData *data, const DiskParameters *disk_params) {
     size_t n_r = disk_params->grid_number; // Fix gáz-rács mérete
     size_t n_z = data->n_z;

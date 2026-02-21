@@ -122,24 +122,7 @@ void mergeParticlesByRadius(double particle_data[][3], double grid_step, int par
  */
 void updateParticleGridIndices(const ParticleData *particle_data, double actual_time, int particle_number, const DiskParameters *disk_params);
 
-/**
- * @brief Computes the minimum and maximum particle radii in the system.
- *
- * Optionally includes micron‑sized particles if enabled.
- *
- * @param particle_data Pointer to particle data.
- * @param particle_number Number of particles.
- * @param has_secondary_population Non‑zero if micron dust is included.
- * @param min_radius Output: minimum radius.
- * @param max_radius Output: maximum radius.
- */
-void computeParticleRadiusRange(
-    const ParticleData *particle_data,
-    int particle_number,
-    int has_secondary_population,
-    double *min_radius,
-    double *max_radius
-);
+
 
 
 void updateDustSurfaceDensityStructured(StructuredParticleData *data, const DiskParameters *disk_params);
