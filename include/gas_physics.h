@@ -155,16 +155,9 @@ void calculateGasPressureGradient(DiskParameters *disk_params);
  */
  void calculateGasRadialVelocity(DiskParameters *disk_params);
 
-/**
- * @brief Updates gas surface density, pressure, and pressure gradient.
- *
- * This function recomputes \f$\Sigma(r)\f$, \f$P(r)\f$, and \f$dP/dr\f$ after the gas surface density
- * has been evolved by the simulation. It ensures that all dependent quantities
- * remain consistent.
- *
- * @param sim_opts     Pointer to simulation options.
- * @param disk_params  Pointer to disk parameter structure.
- */
-void refreshGasSurfaceDensityPressurePressureGradient(double delta_t, const SimulationOptions *sim_opts, DiskParameters *disk_params);
+
+void initializeGas2D(DiskParameters *disk_params);
+
+void refreshGasSurfaceDensityPressurePressureGradient(double delta_t, DiskParameters *disk_params);
 
 #endif // GAS_PHYSICS_H

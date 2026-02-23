@@ -11,15 +11,15 @@ simulation_parameters:
   fragmentation_velocity: 500.0       # Corresponds to 'ufrag'  (1.0 for true, 0.0 for false)
   fragmentation_factor: 0.37          # Corresponds to 'ffrag'  (1.0 for true, 0.0 for false)
   number_of_dust_particles: 1000
-  dimension: 1
+  dimension: 2
  
 disk_parameters:
   # Grid and Disk Initial Parameters (used if no input_file is provided)
   number_of_grid_points: 1000         # Corresponds to 'ngrid_val' (-n)
-#  number_of_vertical_grid_points: 100  # Corresponds to 'nz' (-nz) --- ONLY IN 2 DIMENSIONS!
+  number_of_vertical_grid_points: 100  # Corresponds to 'nz' (-nz) --- ONLY IN 2 DIMENSIONS!
   inner_radius_au: 1.0                # Corresponds to 'rmin_val' (-ri)
   outer_radius_au: 50.0               # Corresponds to 'rmax_val' (-ro)
-#  vertical_outer_radius: 3.0         # Corresponds to 'zmax_val' (-zmax) --- ONLY IN 2 DIMENSIONS!
+  vertical_outer_radius: 3.0         # Corresponds to 'zmax_val' (-zmax) --- ONLY IN 2 DIMENSIONS!
   initial_gas_sigma0_msun_per_au2: 3.33e-06  # Corresponds to 'sigma0_val' (-sigma0_init)
   sigma_profile_exponent: -0.5        # Corresponds to 'sigmap_exp_val' (-index_init)
   alpha_viscosity: 0.0001             # Corresponds to 'alpha_visc_val' (-alpha_init)
@@ -31,8 +31,8 @@ deadzone_parameters:
   # Dead Zone Parameters
   deadzone_inner_radius_au: 2.7       # Corresponds to 'r_dze_i_val' (-rdzei)
   deadzone_outer_radius_au: 24.0      # Corresponds to 'r_dze_o_val' (-rdzeo)
-  deadzone_inner_transition_width_mult: 1.5 # Corresponds to 'dr_dze_i_val' (-drdzei)
-  deadzone_outer_transition_width_mult: 1.5 # Corresponds to 'dr_dze_o_val' (-drdzeo)
+  deadzone_inner_transition_width_mult: 0.5 # Corresponds to 'dr_dze_i_val' (-drdzei)
+  deadzone_outer_transition_width_mult: 0.5 # Corresponds to 'dr_dze_o_val' (-drdzeo)
   deadzone_alpha_reduction: 0.001     # Corresponds to 'a_mod_val' (-amod)
 
 dust_parameters:

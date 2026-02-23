@@ -180,7 +180,7 @@ void printFinalSimulationSummary(const char *directory_name, double elapsed_seco
 void buildSnapshotFilenames(char *dens_name, char *dust_name, char *dust_name2, char *size_name, const SimulationOptions *sim_opts, int snapshot_id);
 
 
-
+void writeGasField2D(const DiskParameters *disk_params, const char *directory, int snapshot_index, const char *label);
 
 void writeDustField2D(const StructuredParticleData *sdata, const char *directory, int snapshot_index, const char *label);
 

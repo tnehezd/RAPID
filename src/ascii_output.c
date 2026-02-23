@@ -8,7 +8,6 @@
 #include <unistd.h> 
 #include <pwd.h>    
 
-
 #ifdef _OPENMP
     #include <omp.h>
 #endif
@@ -27,6 +26,7 @@
 #include "ascii_output.h"
 #include "config.h"         
 #include "dust_physics.h"  
+#include "gas_physics.h"
 #include "utils.h"         
 #include "simulation_types.h" 
 #include "boundary_conditions.h"
@@ -594,5 +594,81 @@ void writeDustField2D(const StructuredParticleData *sdata, const char *directory
             snapshot_index>=0 ? "snapshot" : (label?label:"plain"));
 
     free(mass_path);
+    free(grid_path);
+}
+
+
+
+void writeGasField2D(const DiskParameters *disk_params, const char *directory, int snapshot_index, const char *label) {
+    if (!disk_params || !disk_params->gas_density_2d) {
+        fprintf(stderr, "ERROR [writeGasField2D]: No gas field allocated\n");
+        return;
+    }
+
+    char *dens_path = NULL;
+    char *grid_path = NULL;
+
+    // Fájlnevek generálása (Sűrűség és Rács külön)
+    if (snapshot_index >= 0) {
+        asprintf(&dens_path, "%s/%s/gas_density_2d_%08d%s", directory, kLogFilesDirectory, snapshot_index, kFileNamesSuffix);
+        asprintf(&grid_path, "%s/%s/gas_grid_2d_%08d%s", directory, kLogFilesDirectory, snapshot_index, kFileNamesSuffix);
+    } else {
+        const char *l = label ? label : "plain";
+        asprintf(&dens_path, "%s/%s_gas_density_2d%s", directory, l, kFileNamesSuffix);
+        asprintf(&grid_path, "%s/%s_gas_grid_2d%s", directory, l, kFileNamesSuffix);
+    }
+
+    FILE *fd = fopen(dens_path, "w");
+    FILE *fg = fopen(grid_path, "w");
+
+    // GCC-barát hibakezelés (nincs misleading indentation)
+    if (!fd || !fg) {
+        fprintf(stderr, "ERROR [writeGasField2D]: cannot open output files\n");
+        if (fd) {
+            fclose(fd);
+        }
+        if (fg) {
+            fclose(fg);
+        }
+        if (dens_path) free(dens_path);
+        if (grid_path) free(grid_path);
+        return;
+    }
+
+    int n_r = disk_params->grid_number;
+    int n_z = disk_params->vertical_grid_number;
+
+    for (int i = 0; i < n_r; i++) {
+        // A radial_grid i+1 indexe a belső tartomány (szellemcellák nélkül)
+        double r = disk_params->radial_grid[i+1];
+        
+        // Kiszámoljuk a helyi skálamagasságot a táguló rácshoz
+        double Hg = calculatePressureScaleHeight(r, disk_params);
+        double z_limit = disk_params->vertical_grid_max * Hg; 
+        double dz = 2.0 * z_limit / (double)(n_z - 1);
+
+        // Első oszlop a sűrűség fájlba: r koordináta
+        fprintf(fd, "%e", r);
+
+        for (int j = 0; j < n_z; j++) {
+            double z = -z_limit + j * dz;
+
+            // RÁCS fájl: r1 z1 r1 z2 r1 z3 ... (mint a por rácsa)
+            fprintf(fg, " %e %e", r, z);
+
+            // SŰRŰSÉG fájl: csak a sűrűség értékek az adott r mentén
+            fprintf(fd, " %e", disk_params->gas_density_2d[i][j]);
+        }
+        fprintf(fg, "\n");
+        fprintf(fd, "\n");
+    }
+
+    // Lezárás és felszabadítás
+    fclose(fd);
+    fclose(fg);
+    
+    fprintf(stderr, "DEBUG: 2D gas density and grid written to %s and %s\n", dens_path, grid_path);
+    
+    free(dens_path);
     free(grid_path);
 }

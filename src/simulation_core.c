@@ -247,7 +247,7 @@
         // --- FIZIKAI SZÁMÍTÁSOK (STRUKTURÁLT MOTOR) ---
 
         if (sim_opts->option_for_evolution == 1.) {
-            refreshGasSurfaceDensityPressurePressureGradient(deltat, sim_opts, disk_params);
+            refreshGasSurfaceDensityPressurePressureGradient(deltat, disk_params);
         }
 
         updateDustSurfaceDensitySmart(structured_particle_data, disk_params);
@@ -299,7 +299,7 @@
             snapshotAdvance(output_time, sim_opts);
         }
 
-        refreshGasSurfaceDensityPressurePressureGradient(deltat, sim_opts, disk_params);
+        refreshGasSurfaceDensityPressurePressureGradient(deltat, disk_params);
 
         *t += deltat;
     }

@@ -385,6 +385,21 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
 
     disk_params->dust_surface_density_euler = (double *)malloc(disk_params->grid_number * sizeof(double));
 
+
+
+    // 2D gas arrays allocation
+    disk_params->gas_density_2d = malloc(disk_params->grid_number * sizeof(double*));
+    disk_params->gas_pressure_2d = malloc(disk_params->grid_number * sizeof(double*));
+    disk_params->gas_dpdr_2d = malloc(disk_params->grid_number * sizeof(double*));
+    disk_params->gas_velocity_2d = malloc(disk_params->grid_number * sizeof(double*));
+
+    for (int i = 0; i < disk_params->grid_number; i++) {
+        disk_params->gas_density_2d[i] = malloc(default_options->vertical_grid_number * sizeof(double));
+        disk_params->gas_pressure_2d[i] = malloc(default_options->vertical_grid_number * sizeof(double));
+        disk_params->gas_dpdr_2d[i] = malloc(default_options->vertical_grid_number * sizeof(double));
+        disk_params->gas_velocity_2d[i] = malloc(default_options->vertical_grid_number * sizeof(double));
+    }
+
     if (!disk_params->dust_surface_density_euler) {
         fprintf(stderr, "ERROR: Failed to allocate Eulerian dust surface density array.\n");
         return 1;
@@ -406,15 +421,33 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
     createInitialGasPressureGradient(disk_params);
     createInitialGasVelocity(disk_params);
 
+// 1. Foglalás és skálamagasság számítás (ezt tedd az initializeGas2D hívása elé!)
     if (default_options->vertical_grid_number > 0) {
+        // Átmásoljuk a paramétereket a disk_params-ba, mert a gáz-függvények onnan olvassák!
+        disk_params->vertical_grid_number = default_options->vertical_grid_number;
+        disk_params->vertical_grid_max = default_options->vertical_grid_max_height;
+
+        // FOGLALÁS: mindkét helyre érdemes, vagy legalább a disk_params-ba!
+        disk_params->vertical_grid = (double *)malloc(disk_params->vertical_grid_number * sizeof(double));
         default_options->vertical_grid = (double *)malloc(default_options->vertical_grid_number * sizeof(double));
+        
         default_options->dust_scaleheight = (double *)malloc(default_options->n_grid_points * sizeof(double));
-        for(int i=0;i<default_options->n_grid_points;i++){
-            double r = default_options->r_inner + i*(default_options->r_outer - default_options->r_inner)/(default_options->n_grid_points-1);
+
+        if (!disk_params->vertical_grid || !default_options->dust_scaleheight) {
+            fprintf(stderr, "ERROR [runInitialization]: Memory allocation failed for vertical grids.\n");
+            return 1;
+        }
+
+        // Skálamagasság előszámítása
+        for(int i = 0; i < default_options->n_grid_points; i++){
+            double r = default_options->r_inner + i * (default_options->r_outer - default_options->r_inner) / (default_options->n_grid_points - 1);
             double particle_radius = default_options->one_size_particle_cm / AU_IN_CM;
             default_options->dust_scaleheight[i] = calculateDustScaleHeight(r, particle_radius, disk_params);
         }
     }
+
+    // 2. Most már biztonságos a hívás, mert a disk_params->vertical_grid már nem NULL
+    initializeGas2D(disk_params);
 
 
     fprintf(disk_parameters_output_file, "%-15.6e %-15.6e %-10d %-15.6e %-20.12Lg %-15.6e %-15.6e %-15.6e %-20.12e %-20.12e %-15.6e %-15.6e %-15.6e %-15.6e %-15.6e\n",
@@ -449,7 +482,7 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
             disk_params->dust_surface_density_euler[i] = (double) calculateDustSurfaceDensityInitTool(r, default_options, current_sigma0_gas);
         }
         fprintf(stderr, "Initial Euler dust surface density set analytically.\n");
-
+        writeGasField2D(disk_params, default_options->output_base_path, -1, "initial");
         // --- JAVÍTÁS: Poros fájl kiírása 2D módban is ---
                 for (size_t i = 0; i < structured_data->n_r; i++) {
                     double r = structured_data->particles[i][0].r_au;
@@ -479,9 +512,9 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
                             disk_params->gas_pressure_vector[i + 1],
                             disk_params->gas_pressure_gradient_vector[i + 1]);
                 }
-            
-
     }
+
+
 
     fclose(dust_output_file);
     fclose(gas_parameters_output_file);

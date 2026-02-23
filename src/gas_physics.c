@@ -104,42 +104,49 @@ void calculateGasRadialVelocity(DiskParameters *disk_params) {
     }
 }
 
-void refreshGasSurfaceDensityPressurePressureGradient(double delta_t, const SimulationOptions *sim_opts, DiskParameters *disk_params) { 
+
+void initializeGas2D(DiskParameters *disk_params) {
+    int n_r = disk_params->grid_number;
+    int n_z = disk_params->vertical_grid_number;
+
+    for (int i_r = 0; i_r < n_r; i_r++) {
+        double r = disk_params->radial_grid[i_r];
+        double sigma_r = disk_params->gas_surface_density_vector[i_r];
+        
+        // FIZIKAI SKÁLAMAGASSÁG KISZÁMÍTÁSA (Hg)
+        double Hg = calculatePressureScaleHeight(r, disk_params);
+        
+        // A gáz rácsának határa is legyen a Hg függvénye (pl. 4 * Hg)
+        double z_limit = disk_params->vertical_grid_max * Hg; 
+        double dz = 2.0 * z_limit / (double)(n_z - 1);
+
+        long double weight_sum = 0.0;
+        // 1. menet: Súlyok és koordináták
+        for (int iz = 0; iz < n_z; iz++) {
+            double z = -z_limit + iz * dz;
+            disk_params->vertical_grid[iz] = z;
+            // Itt Hg-vel kell osztani!
+            weight_sum += exp(-0.5 * (z / Hg) * (z / Hg));
+        }
+
+        // 2. menet: Sűrűség és nyomás
+        for (int iz = 0; iz < n_z; iz++) {
+            double z = -z_limit + iz * dz;
+            double f = exp(-0.5 * (z / Hg) * (z / Hg)) / weight_sum;
+            
+            disk_params->gas_density_2d[i_r][iz] = sigma_r * f;
+            disk_params->gas_pressure_2d[i_r][iz] = calculateGasPressure(disk_params->gas_density_2d[i_r][iz], r, disk_params);
+        }
+    }
+}
+
+void refreshGasSurfaceDensityPressurePressureGradient(double delta_t, DiskParameters *disk_params) { 
 
     double gas_sigma_dot_viscosity, gas_sigma_dot_viscosity_backwards, gas_sigma_dot_viscosity_forward;
     double gas_surface_density_temp[disk_params->grid_number + 2]; 
     double gas_velocity_array[disk_params->grid_number + 2]; 
 
     int i;
-
-
-static int first_call = 1;
-
-if(first_call) {
-    fprintf(stderr,"\n===== GAS EVOLUTION DEBUG START =====\n");
-    first_call = 0;
-}
-
-double minSigma=1e99,maxSigma=-1e99;
-double minNuSigma=1e99,maxNuSigma=-1e99;
-
-for(int k=1;k<=disk_params->grid_number;k++){
-    double r = disk_params->radial_grid[k];
-    double sigma = disk_params->gas_surface_density_vector[k];
-    double nu = calculateKinematicViscosity(r,disk_params);
-    double nusigma = nu*sigma;
-
-    if(sigma<minSigma)minSigma=sigma;
-    if(sigma>maxSigma)maxSigma=sigma;
-
-    if(nusigma<minNuSigma)minNuSigma=nusigma;
-    if(nusigma>maxNuSigma)maxNuSigma=nusigma;
-}
-
-fprintf(stderr,
-"INPUT: Sigma[min,max]=[%.3e %.3e]  nuSigma[min,max]=[%.3e %.3e]\n",
-minSigma,maxSigma,minNuSigma,maxNuSigma);
-
 
     gas_surface_density_temp[0] = disk_params->gas_surface_density_vector[0];
     gas_surface_density_temp[disk_params->grid_number + 1] = disk_params->gas_surface_density_vector[disk_params->grid_number + 1];
@@ -173,29 +180,5 @@ minSigma,maxSigma,minNuSigma,maxNuSigma);
     applyBoundaryConditions(disk_params->gas_surface_density_vector, disk_params); 
     applyBoundaryConditions(disk_params->gas_pressure_vector, disk_params);
     applyBoundaryConditions(disk_params->gas_pressure_gradient_vector, disk_params);
-
-
-
-
-
-double minSigma2=1e99,maxSigma2=-1e99;
-double totalChange=0.0;
-
-for(int k=1;k<=disk_params->grid_number;k++){
-    double old = gas_surface_density_temp[k] /
-                 calculateKinematicViscosity(disk_params->radial_grid[k],disk_params);
-    double new = disk_params->gas_surface_density_vector[k];
-
-    double diff=fabs(new-old);
-    totalChange+=diff;
-
-    if(new<minSigma2)minSigma2=new;
-    if(new>maxSigma2)maxSigma2=new;
-}
-
-fprintf(stderr,
-"OUTPUT: Sigma[min,max]=[%.3e %.3e]  totalChange=%.15e  dt=%.3e\n",
-minSigma2,maxSigma2,totalChange,delta_t);
-
 
 }

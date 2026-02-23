@@ -43,7 +43,11 @@ typedef struct {
     double *radial_grid;                  /**< Radial grid array [AU]. */
     double *vertical_grid;                /**< Vertical grid array [AU]. */
     double **dust_density_2d;             /**< Dust density in r-z plane [r][z] */
-    double *Hd_array;                     /**< Dust scale height for each radial cell [AU] */
+    double **gas_density_2d;              /**< Gas density in r-z plane [r][z] */
+    double **gas_pressure_2d;             /**< Gas pressure in r-z plane [r][z] */
+    double **gas_dpdr_2d;                 /**< Gas pressure gradient in r-z plane [r][z] */
+    double **gas_velocity_2d;             /**< Gas velocity in r-z plane [r][z] */
+//    double *Hd_array;                     /**< Dust scale height for each radial cell [AU] */
 
     double sigma_0;                       /**< Gas surface density normalization at 1 AU. */
     double sigma_power_law_index;         /**< Exponent of the gas surface density power law. */
