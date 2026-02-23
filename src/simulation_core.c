@@ -207,39 +207,6 @@
         if (isSnapshotDue(current_time_years, *output_time, deltat, sim_opts)) {
 
 
-
-            // --- INDEX ÉS TÖMEG ÖSSZEHASONLÍTÁS (Old vs New) ---
-            fprintf(stderr, "\n[DEBUG] Index Sync Check - Time: %e\n", *t);
-            fprintf(stderr, "-------|--------------|--------------|--------------|--------------\n");
-
-            for (size_t i = 0; i < structured_particle_data->n_r; i++) {
-
-                // 2. Adatok az ÚJ (Structured) struktúrából
-                // A rácsindexnek az egész oszlopban azonosnak kell lennie
-                int new_grid_idx = structured_particle_data->particles[i][0].grid_index;
-
-                // Kiszámoljuk az új oszlop teljes tömegét az ellenőrzéshez
-                double new_column_mass_sum = 0.0;
-                for (size_t j = 0; j < structured_particle_data->n_z; j++) {
-                    new_column_mass_sum += structured_particle_data->particles[i][j].mass_g;
-                }
-
-                // 3. Kiírás (pl. minden 10. oszlopnál)
-                if (i % 10 == 0 || i == structured_particle_data->n_r - 1) {
-                    // A távolságot a particles[i][0].r_au mezőből vesszük ki
-                    double r_distance = structured_particle_data->particles[i][0].r_au;
-
-                    fprintf(stderr, "%-6zu | %-12.4f | %-12d | %-12.4e\n", 
-                            i, r_distance, new_grid_idx, new_column_mass_sum);
-                }
-
-
-            }
-            fprintf(stderr, "-------------------------------------------------------------------\n\n");
-
-            getchar();
-
-
             if (sim_opts->output_format == OUTPUT_ASCII) {
                 handleSnapshotASCII(*t, current_time_years, output_time, structured_particle_data, disk_params, sim_opts,
                                     output_files, dens_name, dust_name, dust_name2, size_name);

@@ -98,6 +98,11 @@ void calculateDustDistanceStructured(const char *file_name, StructuredParticleDa
                                      double actual_timestep, double actual_time, 
                                      const SimulationOptions *simulation_options, 
                                      DiskParameters *disk_params) {
+
+
+
+
+    
     char file_path[1024];
     size_t n_r = data->n_r;
     size_t n_z = data->n_z;
@@ -149,11 +154,9 @@ void calculateDustDistanceStructured(const char *file_name, StructuredParticleDa
                 if (p->r_au > disk_params->r_min && p->r_au < disk_params->r_max) {
 
                     // RK4 integráció: Az előbb frissített porsűrűség rácsot használjuk
-                    integrateParticleRungeKutta4(
+                    integrateParticleRungeKutta4Structured(
                         actual_time, 
                         p->radius, 
-                        disk_params->dust_surface_density_euler, 
-                        disk_params->radial_grid, 
                         actual_timestep, 
                         p->r_au, 
                         &r_new, 
@@ -161,6 +164,7 @@ void calculateDustDistanceStructured(const char *file_name, StructuredParticleDa
                         disk_params, 
                         simulation_options
                     );
+
 
                     // --- Timescale írás (t=0, midplane, primer populáció) ---
                     if (actual_time == 0 && j == n_z / 2 && simulation_options->option_for_dust_secondary_population == 0) {

@@ -180,7 +180,7 @@ int initializeOneDimensions(InitializeDefaultOptions *default_options, DiskParam
         structured_data->particles[i][0].r_au    = r;
         structured_data->particles[i][0].z_au    = 0.0;
         structured_data->particles[i][0].mass_g  = (double)cell_mass;
-        structured_data->particles[i][0].radius  = default_options->one_size_particle_cm;
+        structured_data->particles[i][0].radius  = default_options->one_size_particle_cm / AU_IN_CM;
 
         // --- Eredeti fájlba írás (Dust) ---
         // Megtartva a pontos formázást: index, r, mass_pop1, mass_pop2, s_max, s_mic

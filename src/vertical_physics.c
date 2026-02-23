@@ -3,10 +3,7 @@
 #include "dust_physics.h"
 #include <math.h>
 
-double calculateDustScaleHeight(double radial_distance,
-                                double particle_radius,
-                                const DiskParameters *disk_params)
-{
+double calculateDustScaleHeight(double radial_distance, double particle_radius, const DiskParameters *disk_params) {
     double H_gas = calculatePressureScaleHeight(radial_distance, disk_params);
     double alpha_turb = calculateTurbulentAlpha(radial_distance, disk_params);
 
@@ -20,8 +17,7 @@ double calculateDustScaleHeight(double radial_distance,
 }
 
 
-double calculateLocalStokesNumber(double r, double z, double particle_radius, const DiskParameters *disk_params)
-{
+double calculateLocalStokesNumber(double r, double z, double particle_radius, const DiskParameters *disk_params) {
     double Hg = calculatePressureScaleHeight(r, disk_params);
 
     int i_r = (int)((r - disk_params->r_min)/disk_params->delta_r);
