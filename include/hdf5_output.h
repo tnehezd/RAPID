@@ -54,12 +54,8 @@ int initHDF5File(const char *filename, OutputFiles *output_files);
  * @param disk_params Disk model parameters.
  * @param particle_data Particle data arrays.
  */
-void writeHDF5SnapshotToFile(double time,
-                             hid_t file_id,
-                             const SimulationOptions *sim_opts,
-                             DiskParameters *disk_params,
-                             ParticleData *particle_data);
-
+void writeHDF5SnapshotToFile(double time, hid_t file_id, const SimulationOptions *sim_opts,
+                             DiskParameters *disk_params, StructuredParticleData *data);
 /**
  * @brief Close the currently open snapshot HDF5 file.
  *

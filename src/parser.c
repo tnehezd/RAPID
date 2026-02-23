@@ -46,7 +46,8 @@ void createDefaultOptions(ParserOptions *opt) {
     opt->onesize_val                                = 0.0; 
     opt->pdensity_val                               = 1.6; 
     opt->output_format                              = OUTPUT_ASCII;
-    opt->disk_dimension = 1;   // default = 1D
+    opt->disk_dimension                             = 1;   // default = 1D
+    opt->dust_mapping_mode                          = 3;  // Default: TSC mapping with gap filling
 
     fprintf(stderr, "Default options setting complete.\n");
 }
@@ -285,6 +286,23 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
                 return 1;
             }
         }
+
+        else if (strcmp(argv[i], "-mapping") == 0) {
+            i++;
+            if (i < argc) {
+                if (strcmp(argv[i], "ngp") == 0) {
+                    opt->dust_mapping_mode = 1;
+                } else if (strcmp(argv[i], "cic") == 0) {
+                    opt->dust_mapping_mode = 2;
+                } else if (strcmp(argv[i], "tsc") == 0) {
+                    opt->dust_mapping_mode = 3;
+                } else {
+                    fprintf(stderr, "Error: Unknown mapping mode '%s'. Use ngp, cic, or tsc.\n", argv[i]);
+                    return 1;
+                }
+            } else return 1;
+        }
+
         else {
             fprintf(stderr, "ERROR [parseCLIOptions]: Invalid switch on command-line: %s!\n", argv[i]);
   //          printUsageToTerminal(); 

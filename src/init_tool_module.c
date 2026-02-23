@@ -52,6 +52,8 @@ void initializeDefaultOptions(InitializeDefaultOptions *def) {
     def->vertical_grid              = NULL;   
     def->dust_scaleheight           = NULL;   
 
+    def->dust_mapping_mode          = 3; 
+
 }
 
 static long double calculateSigm0FromDiskMass(InitializeDefaultOptions *init_opts) {

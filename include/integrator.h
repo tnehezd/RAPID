@@ -38,5 +38,9 @@ void integrateParticleRungeKutta4(double actual_time, double particle_radius, co
 								  double actual_timestep, double particle_distance, double *particle_distance_new, double *particle_radius_new, 
 								  const DiskParameters *disk_params, const SimulationOptions *simulation_options);
 
+void integrateParticleRungeKutta4Structured(double actual_time, double particle_radius, const double *dust_surfacedensity, const double *particle_distance_grid, 
+                                  double actual_timestep, double particle_distance, double *particle_distance_new, double *particle_radius_new, 
+                                  const DiskParameters *disk_params, const SimulationOptions *simulation_options);
+
 #endif // INTEGRATOR_H
 

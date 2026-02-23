@@ -74,6 +74,7 @@ int main(int argc, const char **argv) {
     sim_opts.number_of_dust_particles = def.number_of_dust_particles;
     sim_opts.output_format = def.output_format;
     sim_opts.dimension = (def.disk_dimension == 2) ? DIM_2D : DIM_1D;
+    sim_opts.dust_mapping_mode = def.dust_mapping_mode;
 
 
     if(sim_opts.dimension == DIM_1D)
@@ -189,6 +190,7 @@ int main(int argc, const char **argv) {
         init_tool_params.dust_density_g_cm3 = def.pdensity_val;
         init_tool_params.dimension = def.disk_dimension;
         init_tool_params.vertical_grid_number = def.number_of_vertical_grid_points;
+        init_tool_params.dust_mapping_mode = def.dust_mapping_mode; 
 
         fprintf(stderr, "DEBUG [main]: InitializeDefaultOptions (init_tool_params) structure populated for profile generation.\n");
         fprintf(stderr, "DEBUG [main]: Calling runInitialization(&init_tool_params, &disk_params)...\n");

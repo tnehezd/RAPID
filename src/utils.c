@@ -126,26 +126,39 @@ int identifyPressureTraps(const DiskParameters *disk_params, PressureTrap *traps
 }
 
 
-/**
- * @brief Calculates dust mass for a specific trap based on Lagrangian particle positions.
- */
-void calculateMassInSpecificTrap(PressureTrap *trap, const ParticleData *particle_data, int particle_number, const SimulationOptions *sim_opts) {
 
+/**
+ * @brief Kiszámítja a pormasszát egy adott csapdában a strukturált (2D) adatok alapján.
+ */
+void calculateMassInSpecificTrapStructured(PressureTrap *trap, const StructuredParticleData *data, const SimulationOptions *sim_opts) {
     double primary_mass = 0.0;
     double secondary_mass = 0.0;
 
-    for (int i = 0; i < particle_number; i++) {
-        // Elsődleges (cm) por
-        double radial_distance = particle_data->particle_distance_array[i][0];
-        if (radial_distance >= trap->inner_boundary && radial_distance <= trap->outer_boundary) {
-            primary_mass += particle_data->dust_particle_mass_array[i][0];
-        }
+    // Végigiterálunk a radiális oszlopokon
+    for (size_t i = 0; i < data->n_r; i++) {
+        // Mivel minden oszlopban (j) azonos a sugárirányú pozíció, 
+        // elég a legalsó (j=0) részecske r_au értékét megnézni.
+        double r = data->particles[i][0].r_au;
 
-        // Másodlagos (mikron) por
-        if (sim_opts->option_for_dust_secondary_population == 1.0) {
-            double radial_distance_micron = particle_data->micron_particle_distance_array[i][0];
-            if (radial_distance_micron >= trap->inner_boundary && radial_distance_micron <= trap->outer_boundary) {
-                secondary_mass += particle_data->micron_dust_particle_mass_array[i][0];
+        // Ellenőrizzük, hogy ez a radiális sáv a csapda határain belül van-e
+        if (r >= trap->inner_boundary && r <= trap->outer_boundary) {
+            
+            // Összeadjuk a teljes vertikális oszlop tömegét (ez a "NewSum")
+            double column_mass = 0.0;
+            for (size_t j = 0; j < data->n_z; j++) {
+                column_mass += data->particles[i][j].mass_g;
+            }
+
+            // Pop1 (elsődleges, növekvő por)
+            primary_mass += column_mass;
+
+            // Pop2 (szekunder, mikronos por)
+            // Megjegyzés: Ha a mikronos port is a Structured-ben tárolod egy másik mezőben, 
+            // ide jön az összeadása. Ha külön Structured tömbje van, akkor azt is be kell vonni.
+            if (sim_opts->option_for_dust_secondary_population == 1.0) {
+                // Példa, ha a DustParticle struktúrában van külön mass_micron_g:
+                // secondary_mass += data->particles[i][j].mass_micron_g;
+                // Jelenleg feltételezzük, hogy a Pop2-t még fejlesztened kell az új struktúrához.
             }
         }
     }
@@ -280,33 +293,30 @@ void mergeParticlesByRadius(double particle_data[][3], double radial_grid_spacin
 }
 
 
-void updateParticleGridIndices(const ParticleData *particle_data, double current_time,int particle_count,const DiskParameters *disk_params) {
 
-    int particle_index;
-    int grid_index;
-    double relative_grid_position;
+/**
+ * @brief Frissíti a részecskék rácsindexeit.
+ * Nincs szükség current_time-ra, mert a mass_g már tartalmazza a fix tömeget.
+ */
+void updateStructuredParticleGridIndices(StructuredParticleData *sd,  const DiskParameters *disk_params) {
+    if (!sd || !sd->particles) return;
 
-    for (particle_index = 0; particle_index < particle_count; particle_index++) {
+    for (size_t i = 0; i < sd->n_r; i++) {
+        for (size_t j = 0; j < sd->n_z; j++) {
+            DustParticle *p = &sd->particles[i][j];
 
-        relative_grid_position =
-            (particle_data->particle_distance_array[particle_index][0] -
-             disk_params->r_min) / disk_params->delta_r;
+            // Rácsindex számítása a sugár alapján
+            double relative_pos = (p->r_au - disk_params->r_min) / disk_params->delta_r;
+            int g_idx = (int)floor(relative_pos + 0.5);
 
-        grid_index = (int)floor(relative_grid_position + 0.5);
-
-        if (relative_grid_position < 0 || isnan(relative_grid_position))
-            grid_index = 0;
-
-        if (particle_count == particle_number)
-            particle_data->dust_particle_mass_array[particle_index][0] =
-                particle_data->dust_particle_mass_grid[particle_index];
-
-        particle_data->dust_particle_mass_array[particle_index][1] = grid_index;
-
-        if (current_time == 0) {
-            particle_data->dust_particle_mass_array[particle_index][2] =
-                particle_data->dust_particle_mass_array[particle_index][0];
-            particle_data->dust_particle_mass_array[particle_index][3] = 0;
+            // Biztonsági korlátok
+            if (relative_pos < 0 || isnan(relative_pos)) {
+                g_idx = 0;
+            } else if (g_idx >= (int)disk_params->grid_number) {
+                g_idx = (int)disk_params->grid_number - 1;
+            }
+            
+            p->grid_index = g_idx;
         }
     }
 }

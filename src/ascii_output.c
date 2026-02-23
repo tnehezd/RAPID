@@ -587,29 +587,33 @@ int setupInitialOutputFiles(OutputFiles *output_files, const SimulationOptions *
     }
 }
 
-void cleanupSimulationResources(ParticleData *particle_data, OutputFiles *output_files) {
+void cleanupSimulationResources(StructuredParticleData *data, OutputFiles *output_files) {
 
-    if (particle_number > 0) {
-        free(particle_data->particle_distance_array); particle_data->particle_distance_array = NULL;
-        free(particle_data->micron_particle_distance_array); particle_data->micron_particle_distance_array = NULL;
-        free(particle_data->dust_particle_mass_grid); particle_data->dust_particle_mass_grid = NULL;
-        free(particle_data->massmicradial_grid); particle_data->massmicradial_grid = NULL;
-        free(particle_data->dust_particle_mass_array); particle_data->dust_particle_mass_array = NULL;
-        free(particle_data->micron_dust_particle_mass_array); particle_data->micron_dust_particle_mass_array = NULL;
-        free(particle_data->dust_surfacedensity); particle_data->dust_surfacedensity = NULL;
-        free(particle_data->micron_dust_surfacedensity); particle_data->micron_dust_surfacedensity = NULL;
-        free(particle_data->particle_distance_grid); particle_data->particle_distance_grid = NULL;
-        free(particle_data->micron_particle_distance_grid); particle_data->micron_particle_distance_grid = NULL;
-        fprintf(stderr, "DEBUG [cleanupSimulationResources]: All dynamically allocated particle arrays freed.\n");
+    if (data != NULL && data->particles != NULL) {
+        // 1. Felszabadítjuk az összes radiális oszlopot (a belső tömböket)
+        for (size_t i = 0; i < data->n_r; i++) {
+            if (data->particles[i] != NULL) {
+                free(data->particles[i]);
+                data->particles[i] = NULL;
+            }
+        }
+
+        // 2. Felszabadítjuk a fő pointer-táblát
+        free(data->particles);
+        data->particles = NULL;
+
+        fprintf(stderr, "DEBUG [cleanupSimulationResources]: Structured 2D particle grid [%zu x %zu] freed.\n", 
+                data->n_r, data->n_z);
     }
 
+    // Fájlok lezárása (marad a régi logika szerint)
     if (output_files->mass_file != NULL) {
         fclose(output_files->mass_file);
         output_files->mass_file = NULL;
-        fprintf(stderr, "DEBUG [cleanupSimulationResources]: Closed %s%s\n", kDustAccumulationFileName,kFileNamesSuffix);
+        fprintf(stderr, "DEBUG [cleanupSimulationResources]: Closed %s%s\n", 
+                kDustAccumulationFileName, kFileNamesSuffix);
     }
 }
-
 
 FILE *openSnapshotFile(const char *file_name, FileType_e file_type, double current_time_years){
 

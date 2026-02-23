@@ -132,13 +132,39 @@ void calculateDustSurfaceDensity(const ParticleData *particle_data, const Simula
 
 
 
-void calculateDustDistanceStructured(const char *file_name, StructuredParticleData *data, double actual_timestep, double actual_time, const SimulationOptions *simulation_options, const DiskParameters *disk_params) {
-
+/**
+ * @brief Kiszámítja a porszemcsék új pozícióját és méretét strukturált rácson.
+ * Ez a függvény összefogja a sűrűség-leképezést, a driftet és a növekedést.
+ */
+void calculateDustDistanceStructured(const char *file_name, StructuredParticleData *data, 
+                                     double actual_timestep, double actual_time, 
+                                     const SimulationOptions *simulation_options, 
+                                     DiskParameters *disk_params) {
     char file_path[1024];
     size_t n_r = data->n_r;
     size_t n_z = data->n_z;
 
-    // --- 1. Timescale fájl megnyitása (Csak t=0-nál és csak a master szálon) ---
+    // --- 1. LEKÉPEZÉS (MAPPING): Részecskék tömegének vetítése az Euler-rácsra ---
+    // Kiválasztjuk, melyik algoritmus frissítse a disk_params->dust_surface_density_euler tömböt.
+    // Ezt soros módban futtatjuk, mert a belső függvényeid már tartalmazzák a logikát.
+    switch(simulation_options->dust_mapping_mode) {
+        case 0: 
+            updateDustSurfaceDensityEulerian(data, disk_params); 
+            break;
+        case 1: 
+            updateDustSurfaceDensityEulerianCIC(data, disk_params); 
+            break;
+        case 2: 
+            updateDustSurfaceDensityEulerianTSC(data, disk_params); 
+            break;
+        case 3: 
+            updateDustSurfaceDensitySmart(data, disk_params); // TSC + Lyukkitöltés
+            break;
+        default:
+            updateDustSurfaceDensitySmart(data, disk_params);
+    }
+
+    // --- 2. Timescale fájl megnyitása (Csak t=0-nál és csak a master szálon) ---
     #pragma omp master
     {
         if (actual_time == 0) {
@@ -149,10 +175,9 @@ void calculateDustDistanceStructured(const char *file_name, StructuredParticleDa
             }
         }
     }
-    // Megvárjuk, amíg a master végez a fájlművelettel
     #pragma omp barrier
 
-    // --- 2. Párhuzamosított Lagrange-i léptetés ---
+    // --- 3. MOZGATÁS ÉS NÖVEKEDÉS (Párhuzamosított Lagrange-i léptetés) ---
     #pragma omp parallel
     {
         double r_new, radius_new;
@@ -162,43 +187,43 @@ void calculateDustDistanceStructured(const char *file_name, StructuredParticleDa
             for (size_t j = 0; j < n_z; j++) {
                 DustParticle *p = &data->particles[i][j];
 
-                // Csak a korong határain belüli részecskéket számoljuk
+                // Csak a korong határain belüli aktív részecskéket számoljuk
                 if (p->r_au > disk_params->r_min && p->r_au < disk_params->r_max) {
 
-                    // RK4 integráció a fix Euler-rács (disk_params->radial_grid) használatával
+                    // RK4 integráció: Az előbb frissített porsűrűség rácsot használjuk
                     integrateParticleRungeKutta4(
-                        actual_time,
-                        p->radius,
-                        disk_params->dust_surface_density_euler,
-                        disk_params->radial_grid, // Fix hivatkozási rács
-                        actual_timestep,
-                        p->r_au,
-                        &r_new,
-                        &radius_new,
-                        disk_params,
+                        actual_time, 
+                        p->radius, 
+                        disk_params->dust_surface_density_euler, 
+                        disk_params->radial_grid, 
+                        actual_timestep, 
+                        p->r_au, 
+                        &r_new, 
+                        &radius_new, 
+                        disk_params, 
                         simulation_options
                     );
 
-                    // --- Timescale írás: Csak t=0-nál, a midplane rétegből (j=n_z/2) ---
+                    // --- Timescale írás (t=0, midplane, primer populáció) ---
                     if (actual_time == 0 && j == n_z / 2 && simulation_options->option_for_dust_secondary_population == 0) {
                         double v_drift = fabs(r_new - p->r_au) / actual_timestep;
                         if (v_drift > 0) {
                             #pragma omp critical(drift_timescale_file_write)
                             {
                                 if (drift_timescale_file != NULL) {
-                                    // Drift időskála években kifejezve
+                                    // Sugár [AU] és Drift időskála [év]
                                     fprintf(drift_timescale_file, "%lg %lg\n", p->r_au, (p->r_au / v_drift) / (2.0 * M_PI));
                                 }
                             }
                         }
                     }
 
-                    // Fizikai állapot frissítése (Lagrange-i követés)
+                    // Lagrange-i frissítés
                     p->r_au = r_new;
                     p->radius = radius_new;
 
                 } else {
-                    // Ha elhagyta a tartományt, deaktiváljuk
+                    // Határon kívül: deaktiválás és tömegvesztés
                     p->r_au = 0.0;
                     p->radius = 0.0;
                     p->mass_g = 0.0;
@@ -207,7 +232,7 @@ void calculateDustDistanceStructured(const char *file_name, StructuredParticleDa
         }
     } // Parallel régió vége
 
-    // --- 3. Fájl lezárása (Csak t=0-nál a master szálon) ---
+    // --- 4. Fájl lezárása (Csak t=0-nál a master szálon) ---
     #pragma omp master
     {
         if (actual_time == 0 && drift_timescale_file != NULL) {
@@ -215,6 +240,5 @@ void calculateDustDistanceStructured(const char *file_name, StructuredParticleDa
             drift_timescale_file = NULL;
         }
     }
-    // Biztosítjuk, hogy a fájl lezáruljon, mielőtt visszatérünk a fő ciklusba
     #pragma omp barrier
 }

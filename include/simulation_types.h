@@ -126,7 +126,7 @@ typedef struct {
     char dust_input_filename[MAX_PATH_LEN];   /**< Path to dust input file. */
     OutputFormat output_format;               /**< Selects ASCII or HDF5 output backend. */
     DiskDimension dimension;                  /**< Defines 1D or 2D disk model */
-
+    int dust_mapping_mode;                    /**< Define dust surface density binning mode: 0: Binning, 1: CIC, 2: TSC, 3: Smart */
 } SimulationOptions;
 
 

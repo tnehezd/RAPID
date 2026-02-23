@@ -163,7 +163,7 @@ int setupInitialOutputFiles(OutputFiles *output_files, const SimulationOptions *
  * @param particle_data Pointer to ParticleData to free.
  * @param output_files Pointer to OutputFiles to close.
  */
-void cleanupSimulationResources(ParticleData *particle_data, OutputFiles *output_files);
+void cleanupSimulationResources(StructuredParticleData *data, OutputFiles *output_files);
 
 /**
  * @brief Opens a snapshot file for writing simulation data.

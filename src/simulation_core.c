@@ -67,15 +67,17 @@
         output_files->size_file = openSnapshotFile(size_name, FILE_TYPE_PARTICLE_SIZE, current_time_years);
     }
 
-    static void snapshotInitAtT0(double t, double current_time_years, ParticleData *particle_data, DiskParameters *disk_params, const SimulationOptions *sim_opts, int particle_number) {
+    static void snapshotInitAtT0(double current_time_years, StructuredParticleData *structured_particle_data, DiskParameters *disk_params, const SimulationOptions *sim_opts) {
 
         if (current_time_years == 0) {
-            updateParticleGridIndices(particle_data, t, particle_number, disk_params);
-            if (sim_opts->option_for_dust_secondary_population == 1) updateParticleGridIndices(particle_data, t, particle_number, disk_params);
+            updateStructuredParticleGridIndices(structured_particle_data, disk_params);
+            if (sim_opts->option_for_dust_secondary_population == 1) {
+                updateStructuredParticleGridIndices(structured_particle_data, disk_params);
                 if (sim_opts->option_for_dust_growth == 1.) {
-                    calculateDustSurfaceDensity(particle_data, sim_opts, disk_params);
+                    updateDustSurfaceDensitySmart(structured_particle_data, disk_params);
                 }
             }
+        }
     }
 
     static void snapshotPrintGas(DiskParameters *disk_params, OutputFiles *output_files,const SimulationOptions *sim_opts) {
@@ -90,25 +92,36 @@
     static void snapshotPrintDust(int output_time, StructuredParticleData *structured_particle_data, DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files, char *size_name) {
 
         if (sim_opts->option_for_dust_drift == 1) {
-            // handleSnapshotASCII belsejében:
             printDustParticleSizeFileStructured(size_name, output_time, structured_particle_data, disk_params, sim_opts, output_files);
         }
     }
 
-    static void snapshotResetMasses(ParticleData *particle_data, int particle_number, const SimulationOptions *sim_opts) {
+    static void snapshotDustSurfacedensity(double output_time, StructuredParticleData *data, DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files) {
 
-        if (sim_opts->flag_for_deadzone == 1.0 && particle_number > 0) {
-            for (int k = 0; k < particle_number; k++) {
-                particle_data->dust_particle_mass_array[k][3] = 0.0;
-                particle_data->dust_particle_mass_array[k][4] = 0.0;
+        if (sim_opts->option_for_dust_growth == 1.0) {
+            
+            // --- 1. LEKÉPEZÉS (MAPPING) ---
+            // Frissítjük a disk_params->dust_surface_density_euler-t az új struktúrából
+            switch(sim_opts->dust_mapping_mode) {
+                case 0:  updateDustSurfaceDensityEulerian(data, disk_params);    break;
+                case 1:  updateDustSurfaceDensityEulerianCIC(data, disk_params); break;
+                case 2:  updateDustSurfaceDensityEulerianTSC(data, disk_params); break;
+                case 3:  updateDustSurfaceDensitySmart(data, disk_params);       break;
+                default: updateDustSurfaceDensitySmart(data, disk_params);       break;
             }
-        }
-    }
 
-    static void snapshotDustSurfacedensity(double output_time, ParticleData *particle_data, DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files) {
-
-        if (sim_opts->option_for_dust_growth == 1.) {
-            printDustSurfaceDensityPressurePressureDerivateFile(disk_params->radial_grid, particle_data->micron_particle_distance_grid, disk_params->dust_surface_density_euler, particle_data->micron_dust_surfacedensity, disk_params, sim_opts, output_files, (int)output_time);
+            // --- 2. KIÍRÁS ---
+            // A leképezett (már integrált és normalizált) adatokat küldjük a fájlba
+            printDustSurfaceDensityPressurePressureDerivateFile(
+                disk_params->radial_grid,               // X-tengely rácsa
+                disk_params->radial_grid,               // Koordináták
+                disk_params->dust_surface_density_euler, // Gáz/Por sűrűség (opcionális)
+                disk_params->dust_surface_density_euler, // Az imént kiszámolt por felületi sűrűség
+                disk_params, 
+                sim_opts, 
+                output_files, 
+                (int)output_time
+            );
         }
     }
 
@@ -127,16 +140,16 @@
         return (periodic_output_time || initial_output_time) && output_time_sync;
     }
 
-    static void handleSnapshotASCII(double t, double current_time_years, double *output_time, ParticleData *particle_data, StructuredParticleData *structured_particle_data, int particle_number, DiskParameters *disk_params, const SimulationOptions *sim_opts,
+    static void handleSnapshotASCII(double t, double current_time_years, double *output_time, StructuredParticleData *structured_particle_data, DiskParameters *disk_params, const SimulationOptions *sim_opts,
                                     OutputFiles *output_files, char *dens_name, char *dust_name, char *dust_name2, char *size_name) {
 
 
         handleSnapshot(t, current_time_years, output_time, sim_opts, output_files,dens_name, dust_name, dust_name2, size_name);
-        snapshotInitAtT0(t, current_time_years,particle_data, disk_params, sim_opts,particle_number);
+        snapshotInitAtT0(current_time_years,structured_particle_data,disk_params, sim_opts);
         snapshotPrintGas(disk_params, output_files,sim_opts);
         snapshotPrintDust((int)(*output_time), structured_particle_data, disk_params,sim_opts, output_files, size_name);
-        snapshotResetMasses(particle_data, particle_number, sim_opts);
-        snapshotDustSurfacedensity(*output_time, particle_data, disk_params, sim_opts,output_files);
+        snapshotDustSurfacedensity(*output_time, structured_particle_data, disk_params, sim_opts, output_files);
+
 
         if(sim_opts->dimension == 2) {
             writeDustField2D(structured_particle_data, sim_opts->output_dir_name, *output_time, NULL);
@@ -150,7 +163,7 @@
                 double local_H = calculatePressureScaleHeight(current_traps[k].radial_position, disk_params);
                 current_traps[k].inner_boundary = current_traps[k].radial_position - 1.0 * local_H;
                 current_traps[k].outer_boundary = current_traps[k].radial_position + 1.0 * local_H;
-                calculateMassInSpecificTrap(&current_traps[k], particle_data, particle_number, sim_opts);
+                calculateMassInSpecificTrapStructured(&current_traps[k], structured_particle_data, sim_opts);
             }
         }
 
@@ -160,41 +173,80 @@
 
     }
 
-    static void handleSnapshotHDF5(double output_time, const SimulationOptions *sim_opts, OutputFiles *output_files, DiskParameters *disk_params, ParticleData *particle_data) {
+    static void handleSnapshotHDF5(double output_time, const SimulationOptions *sim_opts, OutputFiles *output_files, DiskParameters *disk_params, StructuredParticleData *structured_particle_data) {
         char *filename = NULL;
         asprintf(&filename, "%s/%s/%s_%08d%s",
-                 sim_opts->output_dir_name, kLogFilesDirectory, kSnapshotOutputFileNamePrefix, (int)(output_time),kFileNamesHDF5Suffix);
+                 sim_opts->output_dir_name, kLogFilesDirectory, kSnapshotOutputFileNamePrefix, (int)(output_time), kFileNamesHDF5Suffix);
 
         // Init file
         if (initHDF5File(filename, output_files) != 0) {
             fprintf(stderr, "ERROR: Could not initialize HDF5 file %s\n", filename);
+            free(filename); // Ne felejtsd el felszabadítani az asprintf által foglalt memóriát!
             return;
         }
 
         // Write datasets to the already opened file
-        if (particle_data != NULL) {
+        if (structured_particle_data != NULL) {
             hid_t file_id = (hid_t)(intptr_t)output_files->hdf5_file;
-            writeHDF5SnapshotToFile(output_time,file_id, sim_opts, disk_params, particle_data);
+            
+            // Itt hívjuk meg az új verziót!
+            writeHDF5SnapshotToFile(output_time, file_id, sim_opts, disk_params, structured_particle_data);
         }
 
         // Close file
         closeHDF5File(output_files);
-
+        free(filename);
     }
 
-
-    static void simulateDustDriftStep(double *t, double deltat, double *output_time, ParticleData *particle_data, int particle_number, DiskParameters *disk_params, const SimulationOptions *sim_opts,
+    static void simulateDustDriftStep(double *t, double deltat, double *output_time, DiskParameters *disk_params, const SimulationOptions *sim_opts,
                                       OutputFiles *output_files, char *dens_name, char *dust_name, char *dust_name2, char *size_name, StructuredParticleData *structured_particle_data) {
 
         double current_time_years = *t / (2.0 * M_PI);
 
 
         if (isSnapshotDue(current_time_years, *output_time, deltat, sim_opts)) {
+
+
+
+            // --- INDEX ÉS TÖMEG ÖSSZEHASONLÍTÁS (Old vs New) ---
+            fprintf(stderr, "\n[DEBUG] Index Sync Check - Time: %e\n", *t);
+            fprintf(stderr, "%-6s | %-12s| %-12s\n", 
+                    "i", "Radius", "New_GIdx", "New_ColSum");
+            fprintf(stderr, "-------|--------------|--------------|--------------|--------------\n");
+
+            for (size_t i = 0; i < structured_particle_data->n_r; i++) {
+
+                // 2. Adatok az ÚJ (Structured) struktúrából
+                // A rácsindexnek az egész oszlopban azonosnak kell lennie
+                int new_grid_idx = structured_particle_data->particles[i][0].grid_index;
+
+                // Kiszámoljuk az új oszlop teljes tömegét az ellenőrzéshez
+                double new_column_mass_sum = 0.0;
+                for (size_t j = 0; j < structured_particle_data->n_z; j++) {
+                    new_column_mass_sum += structured_particle_data->particles[i][j].mass_g;
+                }
+
+                // 3. Kiírás (pl. minden 10. oszlopnál)
+                if (i % 10 == 0 || i == structured_particle_data->n_r - 1) {
+                    // A távolságot a particles[i][0].r_au mezőből vesszük ki
+                    double r_distance = structured_particle_data->particles[i][0].r_au;
+
+                    fprintf(stderr, "%-6zu | %-12.4f | %-12d | %-12.4e\n", 
+                            i, r_distance, new_grid_idx, new_column_mass_sum);
+                }
+
+
+            }
+            fprintf(stderr, "-------------------------------------------------------------------\n\n");
+
+            getchar();
+
+
             if (sim_opts->output_format == OUTPUT_ASCII) {
-                handleSnapshotASCII(*t, current_time_years, output_time, particle_data, structured_particle_data, particle_number, disk_params, sim_opts,
+                handleSnapshotASCII(*t, current_time_years, output_time, structured_particle_data, disk_params, sim_opts,
                                     output_files, dens_name, dust_name, dust_name2, size_name);
             } else {
-                handleSnapshotHDF5(*output_time, sim_opts, output_files, disk_params, particle_data);
+                handleSnapshotHDF5(*output_time, sim_opts, output_files, disk_params, structured_particle_data);
                 
                 PressureTrap current_traps[MAX_TRAPS];
                 int num_found = identifyPressureTraps(disk_params, current_traps, MAX_TRAPS);
@@ -208,7 +260,7 @@
                         double local_H = calculatePressureScaleHeight(current_traps[k].radial_position, disk_params);
                         current_traps[k].inner_boundary = current_traps[k].radial_position - local_H;
                         current_traps[k].outer_boundary = current_traps[k].radial_position + local_H;
-                        calculateMassInSpecificTrap(&current_traps[k], particle_data, particle_number, sim_opts);
+                        calculateMassInSpecificTrapStructured(&current_traps[k], structured_particle_data, sim_opts);
                         primary_mass[k]   = current_traps[k].primary_dust_mass;
                         secondary_mass[k] = current_traps[k].secondary_dust_mass;
                         total_mass[k]     = primary_mass[k] + secondary_mass[k];
@@ -233,20 +285,9 @@
         // 3. Radiális drift és növekedés (A timescale fájlt ez kezeli t=0-nál!)
         calculateDustDistanceStructured(sim_opts->output_dir_name, structured_particle_data, deltat, *t, sim_opts, disk_params);
 
-        // 4. SZINKRONIZÁCIÓ: A strukturált eredményt átmásoljuk a régibe (hogy az outputok jók legyenek)
-/*        for (int i = 0; i < sim_opts->number_of_dust_particles; i++) {
-            int mid = structured_particle_data->n_z / 2;
-            particle_data->particle_distance_array[i][0] = structured_particle_data->particles[i][mid].r_au;
-            particle_data->particle_distance_array[i][1] = structured_particle_data->particles[i][mid].radius;
-            
-            if (particle_data->particle_distance_array[i][0] <= disk_params->r_min) {
-                particle_data->particle_distance_array[i][0] = 0.0;
-                particle_data->particle_distance_array[i][1] = 0.0;
-            }
-        }
-*/
+
         // 5. Régi indexek frissítése a snapshotokhoz (a szinkronizált adatokból)
-        updateParticleGridIndices(particle_data, *t, particle_number, disk_params);
+        updateStructuredParticleGridIndices(structured_particle_data, disk_params);
 
         *t += deltat;
     }
@@ -292,7 +333,6 @@
 
     void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files, StructuredParticleData *structured_particle_data) {
 
-        ParticleData particle_data;
         HeaderData header_data_for_files; 
         double output_time = 0.0;
         int particle_number = 0;
@@ -302,19 +342,12 @@
             exit(1);
         }
 
-        memset(&particle_data, 0, sizeof(ParticleData));
-
         // --- Particle number calculation ---
         if (mode > 2) {
             particle_number = calculateNumbersOfParticles(sim_opts->dust_input_filename);
         } else {
             fprintf(stderr, "DEBUG [timeIntegrationForTheSystem]: Particle drift is OFF. particle_number set to 0.\n");
             particle_number = 0;
-        }
-
-        if (particle_number > 0 && allocateParticleData(&particle_data, particle_number, (int)sim_opts->option_for_dust_secondary_population) != 0) {
-            fprintf(stderr, "ERROR: Failed to allocate particle data. Exiting.\n");
-            exit(EXIT_FAILURE);
         }
 
         // --- Output files setup ---
@@ -325,7 +358,6 @@
             }
         }
 
-        int i;
         char dens_name[MAX_PATH_LEN] = "";
         char dust_name[MAX_PATH_LEN] = "";
         char dust_name2[MAX_PATH_LEN] = "";
@@ -338,17 +370,6 @@
             ((SimulationOptions *)sim_opts)->user_defined_time_step = deltat;
         } else {
             ((SimulationOptions *)sim_opts)->user_defined_time_step = deltat; 
-        }
-
-        // --- Particle data initialization ---
-        if (sim_opts->option_for_dust_secondary_population == 0 && particle_number > 0) {
-            for (i = 0; i < particle_number; i++) {
-                particle_data.micron_particle_distance_array[i][0] = 0;
-                particle_data.micron_particle_distance_array[i][1] = 0;
-                particle_data.micron_dust_particle_mass_array[i][0] = 0;
-                particle_data.micron_dust_particle_mass_array[i][1] = 0;
-                particle_data.massmicradial_grid[i] = 0;
-            }
         }
 
         // --- StructuredParticleData: át kell venni az init_tool-ból, nem malloc-olni újra ---
@@ -376,7 +397,7 @@
         // ---- Main integration loop ----
         do {
             if (mode > 1) {
-                simulateDustDriftStep(&t, deltat, &output_time, &particle_data, particle_number, disk_params, sim_opts, output_files, dens_name, dust_name, dust_name2, size_name, structured_particle_data);
+                simulateDustDriftStep(&t, deltat, &output_time, disk_params, sim_opts, output_files, dens_name, dust_name, dust_name2, size_name, structured_particle_data);
             } else { 
                 simulateGasOnlyStep(&t, deltat, &output_time, disk_params, sim_opts, output_files, dens_name);
             }    
@@ -389,7 +410,7 @@
 
 
         // ---- Cleanup ----
-        cleanupSimulationResources(&particle_data, output_files);
+        cleanupSimulationResources(&structured_particle_data, output_files);
 
         fprintf(stderr, "\n\nDEBUG [timeIntegrationForTheSystem]: Main simulation loop finished (t > t_integration_in_internal_units).\n");
         fprintf(stderr, "DEBUG [timeIntegrationForTheSystem]: Cleanup completed.\n");

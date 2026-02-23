@@ -18,8 +18,7 @@ static hid_t ts_file;
 static hid_t ts_group;
 static hid_t dset_time, dset_m1, dset_m2, dset_mtot, dset_trap_pos;
 
-void initializeMassTimeSeries(const char *filename)
-{
+void initializeMassTimeSeries(const char *filename) {
     ts_file = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
     ts_group = H5Gcreate(ts_file, "/trap_evolution",
@@ -95,8 +94,7 @@ void appendMassTimeSeries(double output_time, double m1[MAX_TRAPS], double m2[MA
     ts_row++;
 }
 
-void closeMassTimeSeries()
-{
+void closeMassTimeSeries() {
     H5Dclose(dset_time);
     H5Dclose(dset_m1);
     H5Dclose(dset_m2);
@@ -124,7 +122,7 @@ int initHDF5File(const char *filename, OutputFiles *output_files) {
 }
 
 void writeHDF5SnapshotToFile(double time, hid_t file_id, const SimulationOptions *sim_opts,
-                             DiskParameters *disk_params, ParticleData *particle_data) {
+                             DiskParameters *disk_params, StructuredParticleData *data) {
 
     (void)sim_opts; // unused
 
@@ -161,8 +159,8 @@ void writeHDF5SnapshotToFile(double time, hid_t file_id, const SimulationOptions
     H5Dclose(dset_gas_vel);
     H5Sclose(space_gas);
 
-    // -------------------
-    // DUST EULER
+// -------------------
+    // DUST EULER (Az integrált 1D profil)
     // -------------------
     hid_t group_dust = H5Gcreate2(file_id, "/dust_grid", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     H5Gclose(group_dust);
@@ -172,58 +170,55 @@ void writeHDF5SnapshotToFile(double time, hid_t file_id, const SimulationOptions
 
     hid_t dset_surface = H5Dcreate2(file_id, "/dust_grid/surface_density", H5T_NATIVE_DOUBLE,
                                     space_grid, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    hid_t dset_dust_grid = H5Dcreate2(file_id, "/dust_grid/radial_grid", H5T_NATIVE_DOUBLE,
-                                      space_grid, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
+    // Itt a disk_params->dust_surface_density_euler-t írjuk ki, amit a mapping frissített
     H5Dwrite(dset_surface, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-             particle_data->dust_surfacedensity);
-    H5Dwrite(dset_dust_grid, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-             disk_params->radial_grid);
+             disk_params->dust_surface_density_euler);
 
     H5Dclose(dset_surface);
-    H5Dclose(dset_dust_grid);
     H5Sclose(space_grid);
 
-
     // --------------------
-    // PARTICLE LAGRANGIAN
+    // PARTICLE LAGRANGIAN (2D rácsból 1D listává lapítva)
     // --------------------
-
     hid_t group_particles = H5Gcreate2(file_id, "/particles", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     H5Gclose(group_particles);
 
-    hsize_t dims_particles[1] = { particle_data->allocated_particle_number };
+    // Az összes részecske száma: n_r * n_z
+    size_t total_p = data->n_r * data->n_z;
+    hsize_t dims_particles[1] = { total_p };
     hid_t space_particles = H5Screate_simple(1, dims_particles, NULL);
 
-    hid_t dset_positions = H5Dcreate2(file_id, "/particles/position", H5T_NATIVE_DOUBLE, space_particles,
-                                      H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    double *positions = malloc(dims_particles[0] * sizeof(double));
-    for (size_t i = 0; i < dims_particles[0]; i++) {
-        positions[i] = particle_data->particle_distance_array[i][1] * AU_IN_CM;
+    // Ideiglenes tömbök a kiíráshoz
+    double *pos_r = malloc(total_p * sizeof(double));
+    double *pos_z = malloc(total_p * sizeof(double));
+    double *masses = malloc(total_p * sizeof(double));
+    double *radii  = malloc(total_p * sizeof(double));
+
+    size_t k = 0;
+    for (size_t i = 0; i < data->n_r; i++) {
+        for (size_t j = 0; j < data->n_z; j++) {
+            pos_r[k]  = data->particles[i][j].r_au;
+            pos_z[k]  = data->particles[i][j].z_au;
+            masses[k] = data->particles[i][j].mass_g;
+            radii[k]  = data->particles[i][j].radius;
+            k++;
+        }
     }
-    H5Dwrite(dset_positions, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, positions);
-    H5Dclose(dset_positions);
-    free(positions);
 
-    hid_t dset_size = H5Dcreate2(file_id, "/particles/size", H5T_NATIVE_DOUBLE, space_particles,
-                                 H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    double *sizes = malloc(dims_particles[0] * sizeof(double));
-    for (size_t i = 0; i < dims_particles[0]; i++) {
-        sizes[i] = particle_data->dust_particle_mass_array[i][1];
-    }
-    H5Dwrite(dset_size, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, sizes);
-    H5Dclose(dset_size);
-    free(sizes);
+    // Datasetek létrehozása és írása
+    hid_t dset_r = H5Dcreate2(file_id, "/particles/r_au", H5T_NATIVE_DOUBLE, space_particles, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    H5Dwrite(dset_r, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, pos_r);
+    
+    hid_t dset_z = H5Dcreate2(file_id, "/particles/z_au", H5T_NATIVE_DOUBLE, space_particles, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    H5Dwrite(dset_z, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, pos_z);
 
-    // -- original index 0..N-1
-    hid_t dset_index = H5Dcreate2(file_id, "/particles/index", H5T_NATIVE_INT, space_particles,
-                                  H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    int *indices = malloc(dims_particles[0] * sizeof(int));
-    for (size_t i = 0; i < dims_particles[0]; i++) indices[i] = (int)i;
-    H5Dwrite(dset_index, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, indices);
-    H5Dclose(dset_index);
-    free(indices);
+    hid_t dset_m = H5Dcreate2(file_id, "/particles/mass", H5T_NATIVE_DOUBLE, space_particles, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    H5Dwrite(dset_m, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, masses);
 
+    // Takarítás
+    H5Dclose(dset_r); H5Dclose(dset_z); H5Dclose(dset_m);
+    free(pos_r); free(pos_z); free(masses); free(radii);
     H5Sclose(space_particles);
 
 

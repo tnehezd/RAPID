@@ -71,17 +71,6 @@ double ftcsFirstDerivativeCoefficient(double radial_distance, const DiskParamete
  */
 int identifyPressureTraps(const DiskParameters *disk_params, PressureTrap *traps, int max_traps);
 
-/**
- * @brief Computes the dust mass contained within a specific pressure trap.
- *
- * Integrates the dust mass inside the trap boundaries using particle data.
- *
- * @param trap Pointer to the trap structure to update.
- * @param particle_data Pointer to particle data.
- * @param particle_number Number of particles.
- * @param sim_opts Pointer to simulation options.
- */
-void calculateMassInSpecificTrap(PressureTrap *trap, const ParticleData *particle_data, int particle_number, const SimulationOptions *sim_opts);
 
 /**
  * @brief Sorts a 2D array with 3 columns by the first column.
@@ -112,17 +101,11 @@ void roundParticleRadii(double particle_data[][3], int particle_number, const Di
  */
 void mergeParticlesByRadius(double particle_data[][3], double grid_step, int particle_number, const DiskParameters *disk_params); 
 
-/**
- * @brief Updates the grid index of each particle based on its radial position.
- *
- * @param particle_data Pointer to particle data.
- * @param actual_time Current simulation time.
- * @param particle_number Number of particles.
- * @param disk_params Pointer to disk parameters.
- */
-void updateParticleGridIndices(const ParticleData *particle_data, double actual_time, int particle_number, const DiskParameters *disk_params);
+
+void calculateMassInSpecificTrapStructured(PressureTrap *trap, const StructuredParticleData *data, const SimulationOptions *sim_opts);
 
 
+void updateStructuredParticleGridIndices(StructuredParticleData *sd,  const DiskParameters *disk_params);
 
 
 void updateDustSurfaceDensityStructured(StructuredParticleData *data, const DiskParameters *disk_params);
