@@ -45,7 +45,7 @@ char *createRunDirectory(const char *dir_path) {
         free(temporary_path);
         asprintf(&temporary_path, "%s_%04d", dir_path, ++counter);
 
-        if (counter > 99) {
+        if (counter > 9999) {
             fprintf(stderr, "ERROR: Too many directories.\n");
             exit(1);
         }
