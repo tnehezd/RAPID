@@ -121,6 +121,9 @@ int identifyPressureTraps(const DiskParameters *disk_params, PressureTrap *traps
         }
     }
 
+    fprintf(stderr,"DEBUG: Total traps identified = %d\n", max_reached_idx + 1);
+
+
     // A legnagyobb használt index + 1-et adjuk vissza, hogy a ciklus mindent lásson
     return (max_reached_idx + 1);
 }
@@ -166,6 +169,15 @@ void calculateMassInSpecificTrapStructured(PressureTrap *trap, const StructuredP
     trap->primary_dust_mass = primary_mass;
     trap->secondary_dust_mass = secondary_mass;
     trap->total_dust_mass = primary_mass + secondary_mass;
+
+
+
+  // DEBUG KIÍRÁS
+    fprintf(stderr,"DEBUG: Trap [%.3f - %.3f] AU: primary_mass = %.6e, secondary_mass = %.6e, total_mass = %.6e\n",
+           trap->inner_boundary, trap->outer_boundary,
+           trap->primary_dust_mass, trap->secondary_dust_mass, trap->total_dust_mass);
+
+
 }
 
 

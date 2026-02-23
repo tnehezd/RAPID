@@ -239,7 +239,7 @@ void printDustParticleSizeFileStructured(char *size_name, int step, const Struct
         
         // Access data from the structured grid (using midplane for 1D/2D consistency)
         double current_r_au = spd->particles[i][mid_z].r_au;
-        double current_size_cm = spd->particles[i][mid_z].radius; 
+        double current_size_cm = spd->particles[i][mid_z].radius * AU_IN_CM; 
 
         // 1. Secondary (micron) population logic
         // Note: If micron particles follow a different logic in StructuredData, 
@@ -284,16 +284,6 @@ void printFileHeader(FILE *file, FileType_e file_type, const HeaderData *header_
     fprintf(file, "#############################################################################\n");
 
     switch (file_type) {
-
-/*        case FILE_TYPE_MASS_ACCUMULATION:
-            fprintf(file, "# This file contains the time evolution of dust mass within specified disk regions.\n");
-            fprintf(file, "#--------------------------------------------------------------------------\n");
-            fprintf(file, "# %-5s %-15s %-15s %-15s %-15s\n",
-                    "Time", "Inner_DZE_AU", "Accum._mass_inner_MSun", "Outer_DZE_AU", "Accum._mass_outer_MSun");
-            fprintf(file, "#--------------------------------------------------------------------------\n");            
-            break;
-*/
-
 
         case FILE_TYPE_MASS_ACCUMULATION:
             fprintf(file, "# Instantaneous dust mass inventory in identified pressure traps (0.5H width)\n");

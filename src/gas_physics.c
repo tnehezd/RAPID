@@ -104,13 +104,42 @@ void calculateGasRadialVelocity(DiskParameters *disk_params) {
     }
 }
 
-void refreshGasSurfaceDensityPressurePressureGradient(const SimulationOptions *sim_opts, DiskParameters *disk_params) { 
+void refreshGasSurfaceDensityPressurePressureGradient(double delta_t, const SimulationOptions *sim_opts, DiskParameters *disk_params) { 
 
     double gas_sigma_dot_viscosity, gas_sigma_dot_viscosity_backwards, gas_sigma_dot_viscosity_forward;
     double gas_surface_density_temp[disk_params->grid_number + 2]; 
     double gas_velocity_array[disk_params->grid_number + 2]; 
 
     int i;
+
+
+static int first_call = 1;
+
+if(first_call) {
+    fprintf(stderr,"\n===== GAS EVOLUTION DEBUG START =====\n");
+    first_call = 0;
+}
+
+double minSigma=1e99,maxSigma=-1e99;
+double minNuSigma=1e99,maxNuSigma=-1e99;
+
+for(int k=1;k<=disk_params->grid_number;k++){
+    double r = disk_params->radial_grid[k];
+    double sigma = disk_params->gas_surface_density_vector[k];
+    double nu = calculateKinematicViscosity(r,disk_params);
+    double nusigma = nu*sigma;
+
+    if(sigma<minSigma)minSigma=sigma;
+    if(sigma>maxSigma)maxSigma=sigma;
+
+    if(nusigma<minNuSigma)minNuSigma=nusigma;
+    if(nusigma>maxNuSigma)maxNuSigma=nusigma;
+}
+
+fprintf(stderr,
+"INPUT: Sigma[min,max]=[%.3e %.3e]  nuSigma[min,max]=[%.3e %.3e]\n",
+minSigma,maxSigma,minNuSigma,maxNuSigma);
+
 
     gas_surface_density_temp[0] = disk_params->gas_surface_density_vector[0];
     gas_surface_density_temp[disk_params->grid_number + 1] = disk_params->gas_surface_density_vector[disk_params->grid_number + 1];
@@ -131,7 +160,7 @@ void refreshGasSurfaceDensityPressurePressureGradient(const SimulationOptions *s
         double gas_sigma_dot_viscosity_temporary = ftcsSecondDerivativeCoefficient(disk_params->radial_grid[i], disk_params) * (gas_sigma_dot_viscosity_forward - 2.0 * gas_sigma_dot_viscosity + gas_sigma_dot_viscosity_backwards) / (disk_params->delta_r * disk_params->delta_r) +
                       ftcsFirstDerivativeCoefficient(disk_params->radial_grid[i], disk_params) * (gas_sigma_dot_viscosity_forward - gas_sigma_dot_viscosity_backwards) / (2.0 * disk_params->delta_r);
         
-        gas_surface_density_temp[i] = gas_velocity_array[i] + sim_opts->user_defined_time_step * gas_sigma_dot_viscosity_temporary; 
+        gas_surface_density_temp[i] = gas_velocity_array[i] + delta_t * gas_sigma_dot_viscosity_temporary; 
     }
 
     #pragma omp parallel for
@@ -144,4 +173,29 @@ void refreshGasSurfaceDensityPressurePressureGradient(const SimulationOptions *s
     applyBoundaryConditions(disk_params->gas_surface_density_vector, disk_params); 
     applyBoundaryConditions(disk_params->gas_pressure_vector, disk_params);
     applyBoundaryConditions(disk_params->gas_pressure_gradient_vector, disk_params);
+
+
+
+
+
+double minSigma2=1e99,maxSigma2=-1e99;
+double totalChange=0.0;
+
+for(int k=1;k<=disk_params->grid_number;k++){
+    double old = gas_surface_density_temp[k] /
+                 calculateKinematicViscosity(disk_params->radial_grid[k],disk_params);
+    double new = disk_params->gas_surface_density_vector[k];
+
+    double diff=fabs(new-old);
+    totalChange+=diff;
+
+    if(new<minSigma2)minSigma2=new;
+    if(new>maxSigma2)maxSigma2=new;
+}
+
+fprintf(stderr,
+"OUTPUT: Sigma[min,max]=[%.3e %.3e]  totalChange=%.15e  dt=%.3e\n",
+minSigma2,maxSigma2,totalChange,delta_t);
+
+
 }

@@ -158,6 +158,14 @@
         PressureTrap current_traps[3];
         int num_found = identifyPressureTraps(disk_params, current_traps, 3);
 
+
+        for (int i=0;i<disk_params->grid_number;i++) {
+            if(disk_params->gas_pressure_gradient_vector[i]>0)
+            fprintf(stderr,"DEBUG: gradient[%d] = %.6e\n", i, disk_params->gas_pressure_gradient_vector[i]);
+        }
+
+
+
         for (int k = 0; k < num_found; k++) {
             if (current_traps[k].radial_position > 0) {
                 double local_H = calculatePressureScaleHeight(current_traps[k].radial_position, disk_params);
@@ -239,7 +247,7 @@
         // --- FIZIKAI SZÁMÍTÁSOK (STRUKTURÁLT MOTOR) ---
 
         if (sim_opts->option_for_evolution == 1.) {
-            refreshGasSurfaceDensityPressurePressureGradient(sim_opts, disk_params);
+            refreshGasSurfaceDensityPressurePressureGradient(deltat, sim_opts, disk_params);
         }
 
         updateDustSurfaceDensitySmart(structured_particle_data, disk_params);
@@ -291,7 +299,7 @@
             snapshotAdvance(output_time, sim_opts);
         }
 
-        refreshGasSurfaceDensityPressurePressureGradient(sim_opts, disk_params);
+        refreshGasSurfaceDensityPressurePressureGradient(deltat, sim_opts, disk_params);
 
         *t += deltat;
     }
@@ -328,11 +336,31 @@
         char size_name[MAX_PATH_LEN] = "";
         double t = 0.0;
         double t_integration_in_internal_units = sim_opts->maximum_simulation_time * 2.0 * M_PI;
-        double deltat = calculateTimeStep(disk_params) / 5.0;
 
-        if (deltat < sim_opts->user_defined_time_step) {
-            ((SimulationOptions *)sim_opts)->user_defined_time_step = deltat;
+
+
+
+        double dt_cfl = calculateTimeStep(disk_params) / 5.0;
+        double dt_user = sim_opts->user_defined_time_step;
+
+        double deltat;
+
+        /* user nem adott meg dt-t → használjuk a stabilat */
+        if (dt_user <= 0.0) {
+            deltat = dt_cfl;
         }
+        /* user adott meg → limitáljuk */
+        else {
+            deltat = fmin(dt_cfl, dt_user);
+        }
+
+        /* opcionálisan logoljuk */
+        fprintf(stderr,
+        "TIMESTEP: dt_cfl=%.3e  dt_user=%.3e  dt_used=%.3e\n",
+        dt_cfl, dt_user, deltat);
+
+
+
 
         // --- StructuredParticleData: át kell venni az init_tool-ból, nem malloc-olni újra ---
         if (structured_particle_data == NULL || structured_particle_data->particles == NULL) {
