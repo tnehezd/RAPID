@@ -87,20 +87,4 @@ void createInitialGasPressureGradient(DiskParameters *disk_params);
  */
 void createInitialGasVelocity(DiskParameters *disk_params);
 
-/**
- * @brief Maps representative dust particle masses onto the gas grid.
- *
- * This function reconstructs the dust surface density profile from a set of
- * representative particle radii and masses. It distributes particle mass onto
- * the gas grid to produce a grid‑based dust surface density array.
- *
- * @param input_dust_radii_array     		2D array of particle radii and positions.
- * @param input_mass_array            		Array of particle masses.
- * @param output_dust_surfacedensity_array 	2D array to store the resulting dust Σ(r).
- * @param particle_number             		Number of representative dust particles.
- * @param disk_params                 		ßPointer to the DiskParameters structure.
- */
-void calculateDustSurfaceDensityFromRepresentativeMass(double input_dust_radii_array[][3], double *input_mass_array, double output_dust_surfacedensity_array[][3], 
-	                                                   int particle_number, const DiskParameters *disk_params);
-
 #endif // DISK_MODEL_H

@@ -72,36 +72,6 @@ double ftcsFirstDerivativeCoefficient(double radial_distance, const DiskParamete
 int identifyPressureTraps(const DiskParameters *disk_params, PressureTrap *traps, int max_traps);
 
 
-/**
- * @brief Sorts a 2D array with 3 columns by the first column.
- *
- * @param array 2D array of size n×3.
- * @param number_of_rows Number of rows.
- */
-void sortAnArray(double array[][3],int number_of_rows);
-
-/**
- * @brief Rounds particle radii to the nearest grid cell.
- *
- * @param particle_data 2D array containing particle radii and metadata.
- * @param particle_number Number of particles.
- * @param disk_params Pointer to disk parameters.
- */
-void roundParticleRadii(double particle_data[][3], int particle_number, const DiskParameters *disk_params);
-
-/**
- * @brief Merges particles that fall within the same radial bin.
- *
- * Used to reduce particle count by combining nearby particles.
- *
- * @param particle_data 2D array of particle data.
- * @param grid_step Radial bin width.
- * @param particle_number Number of particles.
- * @param disk_params Pointer to disk parameters.
- */
-void mergeParticlesByRadius(double particle_data[][3], double grid_step, int particle_number, const DiskParameters *disk_params); 
-
-
 void calculateMassInSpecificTrapStructured(PressureTrap *trap, const StructuredParticleData *data, const SimulationOptions *sim_opts);
 
 

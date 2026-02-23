@@ -46,7 +46,6 @@ dust_parameters:
 
 output_parameters:
   # File I/O Parameters
-  input_file_path: ""                 # Path to the input profile file (e.g., "init_data.dat"), leave empty "" for generation (-i)
   output_directory_name: "output"     # Output directory name (-o)
   output_format: "ascii"               # Format of the outputfile (can set to hdf5)
 

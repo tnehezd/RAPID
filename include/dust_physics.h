@@ -119,33 +119,6 @@ double calculateGrowthTimescale(double radial_distance, double dust_to_gas_ratio
  */
 double calculateDustParticleSize(double particle_radius, double particle_density, double gas_surfacedensity, double dust_surfacedensity, double particle_distance, double gas_pressure, double gas_pressure_gradient, double actual_timestep, const DiskParameters *disk_params);
 
-/**
- * @brief Computes the dust surface density profile from particle data.
- *
- * This function reconstructs the dust surface density on the gas grid
- * based on the positions and masses of dust particles.
- * @param particle_data           Pointer to particle data structure.
- * @param simulation_options      Pointer to simulation options.
- * @param disk_params             Pointer to disk parameter structure.
- */
-void calculateDustSurfaceDensity(const ParticleData *particle_data, const SimulationOptions *simulation_options, const DiskParameters *disk_params);
-
-/**
- * @brief Updates and stores the new radial positions of dust particles.
- *
- * This function integrates the dust particle motion and writes the updated
- * positions to the particle data structure.
- *
- * @param file_name             Output filename or identifier.
- * @param particle_data         Pointer to particle data structure.
- * @param actual_timestep       Time step.
- * @param actual_time           Current simulation time.
- * @param number_of_particles   Number of particles.
- * @param simulation_options    Pointer to simulation options.
- * @param disk_params Pointer to disk parameter structure.
- */
-void calculateDustDistance(const char *file_name, ParticleData *particle_data, double actual_timestep, double actual_time, int number_of_particles, const SimulationOptions *simulation_options, const DiskParameters *disk_params);
-
 
 void calculateDustDistanceStructured(const char *file_name, StructuredParticleData *data, double actual_timestep, double actual_time, const SimulationOptions *simulation_options, DiskParameters *disk_params);
 

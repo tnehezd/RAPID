@@ -16,30 +16,6 @@
 #include "particle_data.h"
 
 /**
- * @brief Calculates the number of particles stored in a particle data file.
- *
- * @param particle_data_file_name Path to the particle data file.
- * @return The number of particles found in the file.
- */
-int calculateNumbersOfParticles(const char *particle_data_file_name);
-
-/**
- * @brief Loads dust particle information from a file into a ParticleData structure.
- *
- * @param particle_data Pointer to the ParticleData structure to fill.
- * @param particle_data_file_name Path to the particle data file.
- */
-void loadDustParticlesFromFile(ParticleData *particle_data, const char *particle_data_file_name);
-
-/**
- * @brief Loads gas surface density values from a file into DiskParameters.
- *
- * @param disk_params Pointer to the DiskParameters structure to fill.
- * @param disk_file_name Path to the disk parameter file.
- */
-void loadGasSurfaceDensityFromFile(DiskParameters *disk_params, const char *disk_file_name);
-
-/**
  * @brief Creates a new run directory based on a base path.
  *
  * @param base_path Base directory path.
@@ -154,8 +130,7 @@ void printFileHeader(FILE *file, FileType_e file_type, const HeaderData *header_
  * @param header_data_for_files Pointer to HeaderData structure to populate.
  * @return 0 on success, non-zero on failure.
  */
-int setupInitialOutputFiles(OutputFiles *output_files, const SimulationOptions *sim_opts,
-                               const DiskParameters *disk_params, HeaderData *header_data_for_files);
+int setupInitialOutputFiles(OutputFiles *output_files, const SimulationOptions *sim_opts, const DiskParameters *disk_params, HeaderData *header_data_for_files);
 
 /**
  * @brief Frees memory and closes files associated with the simulation.

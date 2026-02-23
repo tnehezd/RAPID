@@ -36,8 +36,6 @@ typedef struct {
  */
 typedef struct {
     DustParticle **particles; /**< 2D array of DustParticle structs. */
-    size_t number_of_particles;  // ténylegesen létező részecskék száma
-
     size_t n_r;               /**< Number of radial grid points. */
     size_t n_z;               /**< Number of vertical cells per radial point. */
 } StructuredParticleData;

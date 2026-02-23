@@ -32,7 +32,6 @@ void createDefaultOptions(ParserOptions *opt) {
     opt->dr_dze_i_val                               = 0.0;
     opt->dr_dze_o_val                               = 0.0;
     opt->a_mod_val                                  = 0.0;
-    opt->input_file                                 = NULL;
 
     strncpy(opt->output_dir_name, "output", sizeof(opt->output_dir_name) - 1);
     opt->output_dir_name[sizeof(opt->output_dir_name) - 1] = '\0'; 
@@ -67,9 +66,7 @@ void printUsageToTerminal() {
     fprintf(stderr, "  -tmax <val>    Total simulation time (default: 1.0e6)\n");
     fprintf(stderr, "  -outfreq <val> Output frequency (default: 1000.0)\n");
     fprintf(stderr, "File I/O:\n");
-    fprintf(stderr, "  -i <file>      Input profile file (e.g., init_data.dat)\n");
     fprintf(stderr, "  -o <dir>       Output directory name (default: 'output')\n");
-    fprintf(stderr, "Initial profile generation options (used if -i is not provided):\n");
     fprintf(stderr, "  -n <val>       Number of radial grid points (default: 2000)\n");
     fprintf(stderr, "  -nz <val>      Number of vertical grid points (default: 100)\n");
     fprintf(stderr, "  -ri <val>      Inner radius (AU, default: 1.0)\n");
@@ -146,10 +143,6 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
         else if (strcmp(argv[i], "-ndust") == 0) { 
             i++;
             if (i < argc) opt->number_of_dust_particles = atoi(argv[i]); else { fprintf(stderr, "Error: Missing value for -ndust.\n"); return 1; }
-        }
-        else if (strcmp(argv[i], "-i") == 0) {
-            i++;
-            if (i < argc) opt->input_file = argv[i]; else { fprintf(stderr, "Error: Missing value for -i.\n"); return 1; }
         }
         else if (strcmp(argv[i], "-o") == 0) { // Output directory name
             i++;

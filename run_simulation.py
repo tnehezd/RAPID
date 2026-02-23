@@ -19,10 +19,6 @@ def run_c_program(executable_path, params, arg_mapping, program_name="C Program"
             # Handle boolean values: convert to "1.0" or "0.0" for C
             if isinstance(value, bool):
                 cmd_args.extend([c_arg_name, "1.0" if value else "0.0"])
-            # Handle input_file_path specifically: only pass if not empty
-            elif c_arg_name == "-i":
-                if value is not None and str(value).strip() != "":
-                    cmd_args.extend([c_arg_name, str(value)])
             # Handle output_directory_name: ensure it's always passed
             elif c_arg_name == "-o":
                 if value is not None and str(value).strip() != "":
@@ -123,7 +119,6 @@ def main():
         "dim": 1,  
 
         # File Input/Output
-        "input_file": "",
         "output_dir_name": "output",
 
         # Time Parameters
@@ -187,7 +182,6 @@ def main():
         "one_size_particle_value_cm": "onesize_val",
         "dust_particle_density_g_cm3": "pdensity_val",
 
-        "input_file_path": "input_file",
         "output_directory_name": "output_dir_name",
         "output_format": "output_format",
 
@@ -254,7 +248,7 @@ def main():
         "pdensity_val": "-pdensity",
 
         # File I/O Parameters
-        "input_file": "-i", "output_dir_name": "-o",
+        "output_dir_name": "-o",
         "output_format": "--output-format",
 
 

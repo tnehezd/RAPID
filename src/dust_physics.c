@@ -90,48 +90,6 @@ double calculateDustParticleSize(double particle_radius, double particle_density
     return particle_size;
 }
 
-
-void calculateDustSurfaceDensity(const ParticleData *particle_data, const SimulationOptions *simulation_options, const DiskParameters *disk_params) {
-
-        
-    double grid_step = (disk_params->r_max - disk_params->r_min) / (particle_number - 1);
-    int i;
-    double temporary_dust_surfacedensity[particle_number][3];
-    double temporary_micron_dust_surfacedensity[particle_number][3];
-
-    for(i=0; i<particle_number; i++){
-        temporary_dust_surfacedensity[i][0] = 0.0; temporary_dust_surfacedensity[i][1] = 0.0; temporary_dust_surfacedensity[i][2] = 0.0;
-        temporary_micron_dust_surfacedensity[i][0] = 0.0; temporary_micron_dust_surfacedensity[i][1] = 0.0; temporary_micron_dust_surfacedensity[i][2] = 0.0;
-        particle_data->particle_distance_grid[i] = 0.0;
-        particle_data->micron_particle_distance_grid[i] = 0.0;
-        particle_data->dust_surfacedensity[i] = 0.0;
-        particle_data->micron_dust_surfacedensity[i] = 0.0;
-    }
-
-    calculateDustSurfaceDensityFromRepresentativeMass(particle_data->particle_distance_array, particle_data->dust_particle_mass_grid, temporary_dust_surfacedensity, particle_number,disk_params);
-    if (simulation_options->option_for_dust_secondary_population == 1.0) { 
-        calculateDustSurfaceDensityFromRepresentativeMass(particle_data->micron_particle_distance_array, particle_data->massmicradial_grid, temporary_micron_dust_surfacedensity, particle_number,disk_params);
-    }
-
-    mergeParticlesByRadius(temporary_dust_surfacedensity, grid_step, particle_number,disk_params);
-    if (simulation_options->option_for_dust_secondary_population == 1.0) { 
-        mergeParticlesByRadius(temporary_micron_dust_surfacedensity, grid_step, particle_number,disk_params);
-    }
-
-    #pragma omp parallel for private(i)
-    for (i = 0; i < particle_number; i++) {
-        particle_data->particle_distance_grid[i] = temporary_dust_surfacedensity[i][1];
-        particle_data->dust_surfacedensity[i] = temporary_dust_surfacedensity[i][0];
-
-        if (simulation_options->option_for_dust_secondary_population == 1.0) { 
-            particle_data->micron_particle_distance_grid[i] = temporary_micron_dust_surfacedensity[i][1];
-            particle_data->micron_dust_surfacedensity[i] = temporary_micron_dust_surfacedensity[i][0];
-        }
-    }
-}
-
-
-
 /**
  * @brief Kiszámítja a porszemcsék új pozícióját és méretét strukturált rácson.
  * Ez a függvény összefogja a sűrűség-leképezést, a driftet és a növekedést.

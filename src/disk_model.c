@@ -73,23 +73,3 @@ void createInitialGasVelocity(DiskParameters *disk_params){
   	applyBoundaryConditions(disk_params->gas_velocity_vector,disk_params);
 }
 
-
-
-void calculateDustSurfaceDensityFromRepresentativeMass(double input_dust_radii_array[][3], double *input_mass_array, double output_dust_surfacedensity_array[][3], int particle_number, const DiskParameters *disk_params) {
-
-	int i;
-
-	for(i=0;i<particle_number;i++){
-
-		if((input_dust_radii_array[i][0] >= disk_params->r_min)) {
-			output_dust_surfacedensity_array[i][0] = input_mass_array[i] / (2. * (input_dust_radii_array[i][0]-disk_params->delta_r/2.) * M_PI * disk_params->delta_r);	// sigma = m /(2 * r * pi * dr) --> dr is the original grid step
-			output_dust_surfacedensity_array[i][1] = input_dust_radii_array[i][0];																	
-
-  			double radial_cell_position = (input_dust_radii_array[i][0] - disk_params->r_min) / disk_params->delta_r;     				
-			int radial_index = (int) floor(radial_cell_position);														
-			output_dust_surfacedensity_array[i][2] = (double) radial_index;
-		} else {
-			memset(output_dust_surfacedensity_array[i], 0, 3 * sizeof(double));
-		}
-	}
-}

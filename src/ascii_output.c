@@ -31,140 +31,7 @@
 #include "simulation_types.h" 
 #include "boundary_conditions.h"
 
-#define INIT_DATA_HEADER_LINES 8
 #define HEADER_WIDTH 75 
-
-int calculateNumbersOfParticles(const char *particle_data_file_name) {
-    FILE *particle_file = NULL;
-    char line_buffer[1024];
-    int line_count = 0; 
-
-    particle_file = fopen(particle_data_file_name, "r");
-    if (particle_file == NULL) {
-        fprintf(stderr, "ERROR [calculateNumbersOfParticles]: Could not open file '%s'.\n", particle_data_file_name);
-        perror("Reason"); 
-        exit(EXIT_FAILURE);
-    }
-
-    for (int i = 0; i < INIT_DATA_HEADER_LINES; i++) {
-        if (fgets(line_buffer, sizeof(line_buffer), particle_file) == NULL) {
-            fprintf(stderr, "ERROR [calculateNumbersOfParticles]: Unexpected end of file while skipping %d header lines in '%s'.\n", INIT_DATA_HEADER_LINES, particle_data_file_name);
-            fclose(particle_file);
-            exit(EXIT_FAILURE);
-        }
-    }
-
-    while (fgets(line_buffer, sizeof(line_buffer), particle_file) != NULL) {
-        if (line_buffer[0] != '#' && line_buffer[0] != '\n' && line_buffer[0] != '\r') {
-             line_count++;
-        }
-    }
-
-    fclose(particle_file); 
-    return line_count;
-}
-
-void loadDustParticlesFromFile(ParticleData *particle_data, const char *particle_data_file_name) {
-
-    int i, particle_index;
-    double distance, particle_radius, micron_particle_radius;
-    long double representative_mass;
-    long double micron_representative_mass;
-
-    load_dust_particles_file = fopen(particle_data_file_name,"r");
-
-    if (load_dust_particles_file == NULL) {
-        fprintf(stderr, "ERROR [loadDustParticlesFromFile]: Could not open file '%s'.\n", particle_data_file_name);
-        perror("Reason");
-        exit(EXIT_FAILURE);
-    }
-
-
-    char line_buffer[1024];
-    for (int k = 0; k < INIT_DATA_HEADER_LINES; k++) {
-        if (fgets(line_buffer, sizeof(line_buffer), load_dust_particles_file) == NULL) {
-            fprintf(stderr, "ERROR [loadDustParticlesFromFile]: Unexpected end of file while skipping headers in '%s'.\n", particle_data_file_name);
-            fclose(load_dust_particles_file);
-            exit(EXIT_FAILURE);
-        }
-    }
-
-
-    for (i = 0; i < particle_number; i++) {
-        if(fscanf(load_dust_particles_file,"%d %lg %Lg %Lg %lg %lg",&particle_index,&distance,&representative_mass,&micron_representative_mass,&particle_radius,&micron_particle_radius) == 6) {
-            particle_data->particle_distance_array[i][0] = distance;
-            particle_data->particle_distance_array[i][1] = particle_radius / AU_IN_CM; 
-            particle_data->dust_particle_mass_grid[i] = representative_mass;
-
-            particle_data->micron_particle_distance_array[i][0] = distance;
-            particle_data->micron_particle_distance_array[i][1] = micron_particle_radius / AU_IN_CM; 
-            particle_data->massmicradial_grid[i] = micron_representative_mass;
-        } else {
-            fprintf(stderr, "\n\n******************* ERROR!      *********************\n\n");
-            fprintf(stderr, "   Failed to read line %d from particle data file '%s'!\n", i, particle_data_file_name);
-            fprintf(stderr, "   Expected 6 values, but fscanf failed. Program will exit.\n");
-            fclose(load_dust_particles_file);
-            exit(EXIT_FAILURE);
-        }
-    }
-
-    fclose(load_dust_particles_file);
-}
-
-
-void loadGasSurfaceDensityFromFile(DiskParameters *disk_params, const char *disk_file_name) {
-    const char *input_disk_file_name = disk_file_name;
-
-    FILE *input_file = fopen(input_disk_file_name, "r");
-    if (input_file == NULL) {
-        fprintf(stderr, "ERROR [loadGasSurfaceDensityFromFile]: Could not open input file '%s'.\n", input_disk_file_name);
-        perror("Reason");
-        exit(EXIT_FAILURE);
-    }
-
-    char line[512];
-
-    while (fgets(line, sizeof(line), input_file) != NULL) {
-        if (line[0] == '#' || strncmp(line, "---", 3) == 0) {
-            continue;
-        } else {
-            fseek(input_file, -strlen(line), SEEK_CUR); 
-            break;
-        }
-    }
-
-    if (feof(input_file) && (line[0] == '#' || strncmp(line, "---", 3) == 0)) {
-        fprintf(stderr, "ERROR [loadGasSurfaceDensityFromFile]: File '%s' is empty or only contains comments/headers.\n", input_disk_file_name);
-        fclose(input_file);
-        exit(EXIT_FAILURE);
-    }
-
-    int index;
-    double r_value;
-    double surfacedensity_gas_value;
-    double gas_pressure_value;
-    double gas_pressure_gradient_value;
-
-    for (int i = 0; i < disk_params->grid_number; i++) {
-        if (fscanf(input_file, "%d %lf %lf %lf %lf",
-                         &index, &r_value, &surfacedensity_gas_value, &gas_pressure_value, &gas_pressure_gradient_value) != 5) {
-            fprintf(stderr, "ERROR [loadGasSurfaceDensityFromFile]: Failed to read 4 values for row %d from file '%s'. File may be malformed or ended unexpectedly.\n", i, input_disk_file_name);
-            fclose(input_file);
-            exit(EXIT_FAILURE);
-        }
-
-        if ((i + 1) >= 0 && (i + 1) <= disk_params->grid_number + 1) { 
-            disk_params->radial_grid[i + 1] = r_value;
-            disk_params->gas_surface_density_vector[i + 1] = surfacedensity_gas_value;
-            disk_params->gas_pressure_vector[i + 1] = gas_pressure_value;
-            disk_params->gas_pressure_gradient_vector[i + 1] = gas_pressure_gradient_value;
-        } else {
-            fprintf(stderr, "WARNING [loadGasSurfaceDensityFromFile]: Attempted to write to out-of-bounds index %d. Max allowed index: %d (grid_number+1).\n", i + 1, disk_params->grid_number + 1);
-        }
-    }
-
-    fclose(input_file);
-}
 
 
 char *createRunDirectory(const char *dir_path) {
@@ -355,50 +222,49 @@ void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const 
 void printDustParticleSizeFileStructured(char *size_name, int step, const StructuredParticleData *spd, const DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files) {
 
     FILE *fout_size = NULL;
-    int i;
-    int mid_z = spd->n_z / 2; // Midplane index for 1D/2D vertical slice
+    // HASZNÁLJUNK size_t-t az indexekhez a strukturált rácsnál
+    size_t i; 
+    int mid_z = spd->n_z / 2; 
 
-    // Only open the size file if dust growth is enabled
     if (sim_opts->option_for_dust_growth == 1.0) {
         fout_size = openSnapshotFile(size_name, FILE_TYPE_PARTICLE_SIZE, (double)step / (2.0 * M_PI));        
-        if (fout_size == NULL) {
-            fprintf(stderr, "ERROR: Could not open size file '%s' in printDustParticleSizeFileStructured!\n", size_name);
-            return;
-        }
+        if (fout_size == NULL) return;
     }
 
-    // Loop through particles using the structured grid data
-    for (i = 0; i < sim_opts->number_of_dust_particles; i++) { 
+    // JAVÍTÁS: spd->n_r-ig menjünk, ne a részecskeszámig!
+    for (i = 0; i < spd->n_r; i++) { 
         
-        // Access data from the structured grid (using midplane for 1D/2D consistency)
+        // Ellenőrizzük, hogy a pointer nem NULL
+        if (spd->particles[i] == NULL) continue;
+
         double current_r_au = spd->particles[i][mid_z].r_au;
         double current_size_cm = spd->particles[i][mid_z].radius; 
 
-        // 1. Secondary (micron) population logic
-        // Note: If micron particles follow a different logic in StructuredData, 
-        // you might need a separate field, but usually they share the same R grid.
+        // DEBUG: Ha még mindig 0, nézzük meg a tömeget is
+        // Ha a radius 0, de a tömeg nem, akkor a növekedési rutinban nem számolod vissza a sugarat!
+        if (current_size_cm <= 0.0) {
+            // Például: r = (3m / 4*PI*rho)^(1/3)
+            // Itt most csak egy figyelmeztetést hagyok:
+            // fprintf(stderr, "DEBUG: Row %zu radius is 0! Mass is: %e\n", i, spd->particles[i][mid_z].mass_g);
+        }
+
+        // 1. Micron (ha kell)
         if (sim_opts->option_for_dust_secondary_population == 1.0 && output_files->micron_motion_file != NULL) {
-            if (current_r_au >= disk_params->r_min) { 
-                // Using a fixed small size or specific micron field if available
+            if (current_r_au >= disk_params->r_min) {
                 double micron_size_fixed = 1e-4; 
-                fprintf(stderr, " WARNING !!! MICRON SIZED DUST NEEDS FIX: NO SIZe EVOLUTION IS INCLUDED AT THE MOMENT!!!!\n");
-                fprintf(output_files->micron_motion_file, "%-16lg %-10d %-20.6e %-20.6e\n", (double)step, i, current_r_au, micron_size_fixed);
+                fprintf(output_files->micron_motion_file, "%-16lg %-10zu %-20.6e %-20.6e\n", (double)step, i, current_r_au, micron_size_fixed);
             }
         }
 
-        // 2. Primary dust growth output
+        // 2. Primary dust output
         if (sim_opts->option_for_dust_growth == 1.0 && fout_size != NULL) {
             if (current_r_au >= disk_params->r_min) {
-                // If spd->particles[i][mid_z].radius is already in cm, we don't multiply by AU_IN_CM.
-                // If it's in AU, keep the multiplication. Adjusted here to match original logic style:
-                fprintf(fout_size, "%-10lg %-10d %-20.6e %-20.6e\n", (double)step, i, current_r_au, current_size_cm);
+                fprintf(fout_size, "%-10lg %-10zu %-20.6e %-20.6e\n", (double)step, i, current_r_au, current_size_cm);
             }
         }
     }
 
-    if (sim_opts->option_for_dust_growth == 1.0 && fout_size != NULL) {
-        fclose(fout_size);
-    }
+    if (fout_size != NULL) fclose(fout_size);
 }
 
 void printFileHeader(FILE *file, FileType_e file_type, const HeaderData *header_data) {

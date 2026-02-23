@@ -210,8 +210,6 @@
 
             // --- INDEX ÉS TÖMEG ÖSSZEHASONLÍTÁS (Old vs New) ---
             fprintf(stderr, "\n[DEBUG] Index Sync Check - Time: %e\n", *t);
-            fprintf(stderr, "%-6s | %-12s| %-12s\n", 
-                    "i", "Radius", "New_GIdx", "New_ColSum");
             fprintf(stderr, "-------|--------------|--------------|--------------|--------------\n");
 
             for (size_t i = 0; i < structured_particle_data->n_r; i++) {
@@ -335,7 +333,6 @@
 
         HeaderData header_data_for_files; 
         double output_time = 0.0;
-        int particle_number = 0;
 
         if (disk_params == NULL) {
             fprintf(stderr, "ERROR [timeIntegrationForTheSystem]: disk_params_ptr is NULL!\n");
@@ -344,7 +341,7 @@
 
         // --- Particle number calculation ---
         if (mode > 2) {
-            particle_number = calculateNumbersOfParticles(sim_opts->dust_input_filename);
+            particle_number = sim_opts->number_of_dust_particles;
         } else {
             fprintf(stderr, "DEBUG [timeIntegrationForTheSystem]: Particle drift is OFF. particle_number set to 0.\n");
             particle_number = 0;
@@ -366,10 +363,8 @@
         double t_integration_in_internal_units = sim_opts->maximum_simulation_time * 2.0 * M_PI;
         double deltat = calculateTimeStep(disk_params) / 5.0;
 
-        if (sim_opts->user_defined_time_step > 0.0 && sim_opts->user_defined_time_step < deltat) {
+        if (deltat < sim_opts->user_defined_time_step) {
             ((SimulationOptions *)sim_opts)->user_defined_time_step = deltat;
-        } else {
-            ((SimulationOptions *)sim_opts)->user_defined_time_step = deltat; 
         }
 
         // --- StructuredParticleData: át kell venni az init_tool-ból, nem malloc-olni újra ---
@@ -382,10 +377,7 @@
         if (sim_opts->output_format == OUTPUT_HDF5) {
             char *ts_filename = NULL;
 
-            if (asprintf(&ts_filename,
-                         "%s/%s/%s%s",
-                         sim_opts->output_dir_name,
-                         kLogFilesDirectory, kTimeSeriesForMassAccumulatinFileName, kFileNamesHDF5Suffix) == -1) {
+            if (asprintf(&ts_filename,"%s/%s/%s%s", sim_opts->output_dir_name, kLogFilesDirectory, kTimeSeriesForMassAccumulatinFileName, kFileNamesHDF5Suffix) == -1) {
                 fprintf(stderr, "ERROR: asprintf failed for time_series filename\n");
                 exit(EXIT_FAILURE);
             }
@@ -410,7 +402,7 @@
 
 
         // ---- Cleanup ----
-        cleanupSimulationResources(&structured_particle_data, output_files);
+        cleanupSimulationResources(structured_particle_data, output_files);
 
         fprintf(stderr, "\n\nDEBUG [timeIntegrationForTheSystem]: Main simulation loop finished (t > t_integration_in_internal_units).\n");
         fprintf(stderr, "DEBUG [timeIntegrationForTheSystem]: Cleanup completed.\n");
