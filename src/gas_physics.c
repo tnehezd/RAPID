@@ -140,6 +140,45 @@ void initializeGas2D(DiskParameters *disk_params) {
     }
 }
 
+void initializeGas2DASinh(DiskParameters *disk_params) {
+    int n_r = disk_params->grid_number;
+    int n_z = disk_params->vertical_grid_number;
+    double s_factor = 3.0; // Ugyanaz a faktor, mint a kiírásnál!
+
+    for (int i_r = 0; i_r < n_r; i_r++) {
+        double r = disk_params->radial_grid[i_r + 1];
+        double sigma_r = disk_params->gas_surface_density_vector[i_r + 1];
+        double Hg = calculatePressureScaleHeight(r, disk_params);
+        double z_limit = disk_params->vertical_grid_max * Hg; 
+
+        long double weight_sum = 0.0;
+        double temp_z[n_z];
+
+        // 1. menet: Koordináták generálása ASINH sűrítéssel
+        for (int iz = 0; iz < n_z; iz++) {
+            double xi = 2.0 * (double)iz / (double)(n_z - 1) - 1.0;
+            
+            // Itt is ASINH a sűrítéshez
+            double z = z_limit * (asinh(s_factor * xi) / asinh(s_factor));
+            
+            temp_z[iz] = z;
+            // Ha snapshotnál kiírod a globális rácsot, ez fontos:
+            disk_params->vertical_grid[iz] = z; 
+
+            weight_sum += exp(-0.5 * (z / Hg) * (z / Hg));
+        }
+
+        // 2. menet: Sűrűség feltöltése (marad a fizikai Gauss-eloszlás)
+        for (int iz = 0; iz < n_z; iz++) {
+            double z = temp_z[iz];
+            double f = exp(-0.5 * (z / Hg) * (z / Hg)) / weight_sum;
+            
+            disk_params->gas_density_2d[i_r][iz] = sigma_r * f;
+            disk_params->gas_pressure_2d[i_r][iz] = calculateGasPressure(disk_params->gas_density_2d[i_r][iz], r, disk_params);
+        }
+    }
+}
+
 void refreshGasSurfaceDensityPressurePressureGradient(double delta_t, DiskParameters *disk_params) { 
 
     double gas_sigma_dot_viscosity, gas_sigma_dot_viscosity_backwards, gas_sigma_dot_viscosity_forward;

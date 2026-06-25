@@ -35,6 +35,7 @@ typedef struct {
     double r_max;                         /**< Outer radius of the simulation domain [AU]. */
     int    grid_number;                   /**< Number of radial grid points. */
     double delta_r;                       /**< Radial grid spacing [AU]. */
+    double grid_stretching_s;             /**< Vertical stetching factor for 
 
     int    vertical_grid_number;          /**< Number of vertical grid points. */  
     double vertical_grid_max;             /**< Maximum height of vertical grid [AU]. */

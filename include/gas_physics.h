@@ -157,6 +157,7 @@ void calculateGasPressureGradient(DiskParameters *disk_params);
 
 
 void initializeGas2D(DiskParameters *disk_params);
+void initializeGas2DASinh(DiskParameters *disk_params);
 
 void refreshGasSurfaceDensityPressurePressureGradient(double delta_t, DiskParameters *disk_params);
 

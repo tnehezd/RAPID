@@ -637,32 +637,29 @@ void writeGasField2D(const DiskParameters *disk_params, const char *directory, i
 
     int n_r = disk_params->grid_number;
     int n_z = disk_params->vertical_grid_number;
+    
+    // Vedd ki a struktúrából, ha már beletetted, vagy használd ezt fixen:
+    double s = 3.0; 
 
     for (int i = 0; i < n_r; i++) {
-        // A radial_grid i+1 indexe a belső tartomány (szellemcellák nélkül)
         double r = disk_params->radial_grid[i+1];
-        
-        // Kiszámoljuk a helyi skálamagasságot a táguló rácshoz
         double Hg = calculatePressureScaleHeight(r, disk_params);
         double z_limit = disk_params->vertical_grid_max * Hg; 
-        double dz = 2.0 * z_limit / (double)(n_z - 1);
 
-        // Első oszlop a sűrűség fájlba: r koordináta
-        fprintf(fd, "%e", r);
-
+        fprintf(fd, "%e", r); 
         for (int j = 0; j < n_z; j++) {
-            double z = -z_limit + j * dz;
+            // xi: -1-től +1-ig tart, a 0 pontja pontosan a rács közepe lesz
+            double xi = 2.0 * (double)j / (double)(n_z - 1) - 1.0;
+            
+            // ASINH: Ez sűrít a 0 környékén (a midplane-ben)
+            double z = z_limit * (asinh(s * xi) / asinh(s));
 
-            // RÁCS fájl: r1 z1 r1 z2 r1 z3 ... (mint a por rácsa)
             fprintf(fg, " %e %e", r, z);
-
-            // SŰRŰSÉG fájl: csak a sűrűség értékek az adott r mentén
             fprintf(fd, " %e", disk_params->gas_density_2d[i][j]);
         }
-        fprintf(fg, "\n");
+        fprintf(fg, "\n"); 
         fprintf(fd, "\n");
     }
-
     // Lezárás és felszabadítás
     fclose(fd);
     fclose(fg);

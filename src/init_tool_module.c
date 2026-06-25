@@ -447,7 +447,8 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
     }
 
     // 2. Most már biztonságos a hívás, mert a disk_params->vertical_grid már nem NULL
-    initializeGas2D(disk_params);
+//    initializeGas2D(disk_params);
+    initializeGas2DASinh(disk_params);    
 
 
     fprintf(disk_parameters_output_file, "%-15.6e %-15.6e %-10d %-15.6e %-20.12Lg %-15.6e %-15.6e %-15.6e %-20.12e %-20.12e %-15.6e %-15.6e %-15.6e %-15.6e %-15.6e\n",
