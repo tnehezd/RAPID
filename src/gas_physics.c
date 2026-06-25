@@ -8,7 +8,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <omp.h>          
+#include <omp.h>       
+
+#include "photoevaporation_wrapper.h"
+
+
 
 double calculateTurbulentAlpha(double radial_distance, const DiskParameters *disk_params) {
     
@@ -118,10 +122,22 @@ void refreshGasSurfaceDensityPressurePressureGradient(const SimulationOptions *s
     gas_velocity_array[0] = disk_params->gas_surface_density_vector[0] * calculateKinematicViscosity(disk_params->radial_grid[0], disk_params); 
     gas_velocity_array[disk_params->grid_number + 1] = disk_params->gas_surface_density_vector[disk_params->grid_number + 1] * calculateKinematicViscosity(disk_params->radial_grid[disk_params->grid_number + 1], disk_params); 
 
+    
     #pragma omp parallel for
     for(i = 1; i <= disk_params->grid_number; i++) { 
         gas_velocity_array[i] = disk_params->gas_surface_density_vector[i] * calculateKinematicViscosity(disk_params->radial_grid[i], disk_params); 
     }
+
+    // ===============================
+    // PHOTOEVAPORATION SINK TERM
+    // ===============================
+    computePhotoevaporationSink(disk_params);
+
+    for (i = 1; i <= disk_params->grid_number; i++) {
+        disk_params->gas_surface_density_vector[i] -= 
+            sim_opts->user_defined_time_step * disk_params->sigma_dot_photoevap[i];
+    }
+    
 
     for (i = 1; i <= disk_params->grid_number; i++) {
         gas_sigma_dot_viscosity = gas_velocity_array[i];

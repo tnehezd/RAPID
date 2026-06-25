@@ -49,6 +49,12 @@ typedef struct {
     double fragmentation_factor;          /**< Mass reduction factor after fragmentation. */
     double fragmentation_velocity;        /**< Fragmentation threshold velocity [m/s]. */
     double drift_factor;                  /**< Scaling factor for dust drift speed. */        
+    double *sigma_dot_photoevap;           /**< Sink term for photoevaporation */
+    double *photoevap_sink;
+    double *dr_array;
+    int    hole_flag;
+    double r_hole;
+    double *sink_photoevap;
 } DiskParameters;
 
 

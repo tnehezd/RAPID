@@ -4,7 +4,7 @@ from matplotlib.colors import LogNorm
 import os
 
 # 1. Elérési utak
-path = "output_0078/config"
+path = "output/config"
 output_dir = "plots"
 os.makedirs(output_dir, exist_ok=True)
 

@@ -275,8 +275,9 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
     disk_params->gas_pressure_vector = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
     disk_params->gas_pressure_gradient_vector = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
     disk_params->gas_velocity_vector = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
+    disk_params->sigma_dot_photoevap = (double *)malloc((disk_params->grid_number + 2) * sizeof(double)); 
 
-    if (!disk_params->radial_grid || !disk_params->gas_surface_density_vector || !disk_params->gas_pressure_vector || !disk_params->gas_pressure_gradient_vector || !disk_params->gas_velocity_vector) {
+    if (!disk_params->radial_grid || !disk_params->gas_surface_density_vector || !disk_params->gas_pressure_vector || !disk_params->gas_pressure_gradient_vector || !disk_params->gas_velocity_vector || !disk_params->sigma_dot_photoevap) {
         fprintf(stderr, "ERROR [runInitialization]: Failed to allocate disk arrays. Exiting.\n");
         if (dust_ouputput_file) fclose(dust_ouputput_file);
         if (disk_parameters_output_file) fclose(disk_parameters_output_file);
@@ -286,7 +287,12 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
         if (disk_params->gas_pressure_vector) free(disk_params->gas_pressure_vector);
         if (disk_params->gas_pressure_gradient_vector) free(disk_params->gas_pressure_gradient_vector);
         if (disk_params->gas_velocity_vector) free(disk_params->gas_velocity_vector);
+        if (disk_params->sigma_dot_photoevap) free(disk_params->sigma_dot_photoevap); 
         return 1;
+    }
+
+    for (int i = 0; i < disk_params->grid_number + 2; i++) {
+        disk_params->sigma_dot_photoevap[i] = 0.0;
     }
 
     readDiskParameters(disk_params);
