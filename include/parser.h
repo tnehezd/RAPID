@@ -61,7 +61,10 @@ typedef struct {
     bool enable_photoevaporation;                       /**< Option for enabling photoevaporation */
     char photoevaporation_mode[32];                     /**< Switch between Picogna, or Owen model */
     double xray_luminosity;                             /**< X-ray luminosity of the central star */
-
+    
+    bool   use_cutoff;                                  /**< Profile style: false = Normal Power-law, true = Cutoff */
+    double r_cutoff;                                    /**< Scaling/tapering radius for cutoff profile [AU] */
+    double n_for_cutoff;                                /**< Shape/sharpness parameter for exponential cutoff */
 } ParserOptions;
 
 /**

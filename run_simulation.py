@@ -123,6 +123,9 @@ def main():
         "a_mod_val": 0.0,
         "photoevap_mode": "none",
         "xray_lum": 1e30,
+        "cutoff": "none",
+        "cutoff_radius": 30.0,
+        "cutoff_sharpness": 1.5,
 
         # File Input/Output
         "input_file": "",
@@ -176,6 +179,9 @@ def main():
         "flaring_index": "flind_val",
         "photoevaporation_mode": "photoevap_mode",
         "xray_luminosity_erg_s": "xray_lum",
+        "use_cutoff_for_gas": "cutoff",
+        "characteristic_cutoff_radius_au": "cutoff_radius",
+        "cutoff_sharpness_factor": "cutoff_sharpness",
 
         "deadzone_inner_radius_au": "r_dze_i_val",
         "deadzone_outer_radius_au": "r_dze_o_val",
@@ -230,6 +236,7 @@ def main():
         "alpha_visc_val": "-alpha_init", "star_val": "-m0_init",
         "hasp_val": "-h_init", "flind_val": "-flind_init", 
         "photoevap_mode": "-photoevap_mode", "xray_lum": "-xray_luminosity",
+        "cutoff": "-cutoff", "cutoff_radius": "-cutoff_radius",  "cutoff_sharpness": "-cutoff_sharpness",
 
         # Dead Zone Parameters
         "r_dze_i_val": "-rdzei", "r_dze_o_val": "-rdzeo",

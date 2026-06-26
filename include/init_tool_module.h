@@ -19,12 +19,15 @@
  * the disk's physical and numerical setup before the simulation starts.
  */
 typedef struct {
+    bool    use_cutoff;                     /**< Initial condition profile type: false = Normal Power-Law, true = Exponential Cutoff. */
     int     n_grid_points;                  /**< Number of radial grid cells. */
     int     n_dust_particles;               /**< Total number of Lagrangian dust particles. */
     double  r_inner;                        /**< Inner disk boundary in AU. */
     double  r_outer;                        /**< Outer disk boundary in AU. */
     double  sigma0_gas_au;                  /**< Gas surface density normalization at 1 AU. */
     double  sigma_exponent;                 /**< Power-law exponent for the surface density profile. */
+    double  r_cutoff;                       /**< Characteristic exponential scaling/tapering radius in AU (used if ic_type == 2). */
+    double  n_for_cutoff;                   /**< Shape/sharpness parameter for the exponential cutoff (typically 2.0 - gamma). */
     double  alpha_viscosity;                /**< Background Shakura-Sunyaev alpha viscosity. */
     double  star_mass;                      /**< Central star mass in solar units. */
     double  aspect_ratio;                   /**< Disk aspect ratio, \f$h=H/r\f$, at 1 AU. */

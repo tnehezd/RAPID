@@ -105,7 +105,7 @@ double Func_C2012(double r, double norm, int hole, double r_hole, const DiskPara
     if(y >= 0) func_c = (a2*b2*exp(b2*y) + c2*d2*exp(d2*y) + e2*f2*exp(f2*y))/r * exp((-1)*pow(y/57,10));
     else func_c = 0.0;
   }
- return(func_c*norm*DAYS_PER_YEAR_CONVERSION_FACTOR);   // Convert to astro unit [M_sol/AU^2/day]
+ return(func_c*norm);//*DAYS_PER_YEAR_CONVERSION_FACTOR);   // Convert to astro unit [M_sol/AU^2/day]
 }
 
 /// @brief Creating array for disk wind values for easier calculation
@@ -165,71 +165,123 @@ void New_Photoevaporation(double *evap_array, double *radius_array, double lx, b
 }
 
 /// @brief Dynamically monitors and updates gap and inner cavity (hole) radii
-void Search_hole(double *radius_array, double *sigma_array, int &gap, int &hole, double &r_hole, const DiskParameters *disk_params) {  
-  int gap_index = 0;
-  
-  // 1. Initial gap detection phase
-  if(gap == 0){
-    for(int i = 1; i < disk_params->grid_number - 1; ++i){
-      if(sigma_array[i] <= ACTUAL_SIGMA_CRIT){
+void Search_hole(double *radius_array,
+                 double *sigma_array,
+                 int &gap,
+                 int &hole,
+                 double &r_hole,
+                 const DiskParameters *disk_params)
+{
+  const int N = disk_params->grid_number;
+
+  // ============================================================
+  // 1. INITIAL GAP DETECTION
+  // ============================================================
+  if (gap == 0) {
+    for (int i = 1; i < N - 1; i++) {
+
+      if (sigma_array[i] <= ACTUAL_SIGMA_CRIT) {
+
+        printf("\n====================================\n");
+        printf(" GAP CREATED\n");
+        printf(" r = %.3f AU\n", radius_array[i]);
+        printf(" sigma = %.3e\n", sigma_array[i]);
+        printf(" crit = %.3e\n", ACTUAL_SIGMA_CRIT);
+        printf(" i = %d\n", i);
+        printf("====================================\n");
+
         gap = 1;
-        gap_index = i;
-        break; 
-      } 
+        break;
+      }
     }
   }
-  
-  // 2. Active cavity tracking phase
-  else if(gap == 1){
-    if(hole == 0){
-      // Trigger full transition cavity mode if innermost physical cells clear out
-      if(sigma_array[1] < ACTUAL_SIGMA_CRIT || sigma_array[2] < ACTUAL_SIGMA_CRIT ) {
+
+  // ============================================================
+  // 2. ACTIVE CAVITY TRACKING
+  // ============================================================
+  else if (gap == 1) {
+
+    // ------------------------------------------------------------
+    // 2a. HOLE ACTIVATION
+    // ------------------------------------------------------------
+    if (hole == 0) {
+
+      if (sigma_array[1] < ACTUAL_SIGMA_CRIT ||
+          sigma_array[2] < ACTUAL_SIGMA_CRIT) {
         hole = 1;
       }
-      
-      int disk = 0;
-      for(int i = 1; i < disk_params->grid_number - 1; ++i) {
-          if(sigma_array[i] > ACTUAL_SIGMA_CRIT) disk++;
+
+      int alive_cells = 0;
+      for (int i = 1; i < N - 1; i++) {
+        if (sigma_array[i] > ACTUAL_SIGMA_CRIT) {
+          alive_cells++;
+        }
       }
-      if(disk == 0) hole = 1;
+
+      if (alive_cells == 0) {
+        hole = 1;
+      }
     }
-    
-    else if (hole == 1){
+
+    // ------------------------------------------------------------
+    // 2b. HOLE RADIUS TRACKING
+    // ------------------------------------------------------------
+    if (hole == 1) {
+
       double current_r_hole = 0.0;
-      int temp_for_hole = 0;
-      
-      // Algorithm A: Scan for sharp boundary transition (sign change method)
-      for(int i = 1; i < disk_params->grid_number - 1; i++){
-        double sigma_left  = sigma_array[i-1] - ACTUAL_SIGMA_CRIT;
-        double sigma_right = sigma_array[i]   - ACTUAL_SIGMA_CRIT;
-        
-        if((sigma_left * sigma_right <= 0.0) && temp_for_hole == 0) {
-          current_r_hole = (radius_array[i-1] + radius_array[i]) / 2.0;
-          temp_for_hole = 1;
+      int found = 0;
+
+      // --------------------------------------------------------
+      // Algorithm A: sign-change boundary detection
+      // --------------------------------------------------------
+      for (int i = 1; i < N - 1; i++) {
+
+        double sigma_left  = sigma_array[i - 1] - ACTUAL_SIGMA_CRIT;
+        double sigma_right = sigma_array[i]     - ACTUAL_SIGMA_CRIT;
+
+        if (sigma_left * sigma_right <= 0.0) {
+          current_r_hole = 0.5 * (radius_array[i - 1] + radius_array[i]);
+          found = 1;
           break;
         }
-      } 
-      
-      // Algorithm B (Fallback): If coarse linear grid resolution caused the loop to skip the sign change,
-      // dynamically sweep outward until locating the first cell with surviving mass.
-      if (current_r_hole == 0.0) {
-        for(int i = 0; i < disk_params->grid_number; i++) {
+      }
+
+      // --------------------------------------------------------
+      // Algorithm B: fallback (first surviving gas cell)
+      // --------------------------------------------------------
+      if (!found) {
+        for (int i = 0; i < N; i++) {
           if (sigma_array[i] > ACTUAL_SIGMA_CRIT) {
             current_r_hole = radius_array[i];
-            temp_for_hole = 1;
+            found = 1;
             break;
           }
         }
       }
-      
-      // Only overwrite the reference parameter if a valid physical edge was determined
-      if (current_r_hole > 0.0) {
-        r_hole = current_r_hole;
+
+      // --------------------------------------------------------
+      // VALIDATION (CRITICAL — AFTER COMPUTATION)
+      // --------------------------------------------------------
+      if (found) {
+        if (current_r_hole <= radius_array[0] ||
+            current_r_hole >= radius_array[N - 1]) {
+          found = 0; // reject unphysical result
+        }
       }
-      // Absolute fallback protection to prevent r_hole from dropping to 0.0 (which destroys the Picogna fitting)
-      else if (r_hole == 0.0) {
-        r_hole = radius_array[0];
+
+      // --------------------------------------------------------
+      // COMMIT ONLY VALID VALUES
+      // --------------------------------------------------------
+      if (found) {
+        r_hole = current_r_hole;
+      } else {
+        // safety: do NOT allow silent 0 AU hole in active state
+        if (r_hole <= 0.0) {
+          hole = 0; // rollback to avoid corrupt Picogna/Owen profile
+        }
       }
     }
   }
+
+
 }

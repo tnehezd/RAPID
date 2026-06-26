@@ -49,6 +49,11 @@ void createDefaultOptions(ParserOptions *opt) {
     strncpy(opt->photoevaporation_mode, "None", sizeof(opt->photoevaporation_mode) - 1);
     opt->photoevaporation_mode[sizeof(opt->photoevaporation_mode) - 1] = '\0';
     opt->xray_luminosity                            = 1.0e30;      // Standard X-ray luminosity [erg/s]
+    
+    // Fixed structure naming alignment
+    opt->use_cutoff                                 = false;       // Default: Normal profile
+    opt->r_cutoff                                   = 30.0;  
+    opt->n_for_cutoff                               = 1.5;
 
     fprintf(stderr, "Default options setting complete.\n");
 }
@@ -71,7 +76,7 @@ void printUsageToTerminal() {
     fprintf(stderr, "  -i <file>      Input profile file (e.g., init_data.dat)\n");
     fprintf(stderr, "  -o <dir>       Output directory name (default: 'output')\n");
     fprintf(stderr, "Initial profile generation options (used if -i is not provided):\n");
-    fprintf(stderr, "  -n <val>       Number of grid points (default: 2000)\n"); // This is common for sim and init
+    fprintf(stderr, "  -n <val>       Number of grid points (default: 2000)\n"); 
     fprintf(stderr, "  -ri <val>      Inner radius (AU, default: 1.0)\n");
     fprintf(stderr, "  -ro <val>      Outer radius (AU, default: 100.0)\n");
     fprintf(stderr, "  -sigma0_init <val> Initial gas surface density at 1 AU (M_sun/AU^2, default: 1.0)\n");
@@ -99,9 +104,12 @@ void printUsageToTerminal() {
     fprintf(stderr, "  -hdf5                       Shortcut for --output-format hdf5\n");
     fprintf(stderr, "Photoevaporation options:\n");
     fprintf(stderr, "  -photoevap <0|1>  Enable/disable photoevaporation globally (default: 0 = false)\n");
-    fprintf(stderr, "  -p_mode <string>  Model selection: 'Owen' or 'Picogna' (default: 'None')\n");
-    fprintf(stderr, "  -lx <val>         Stellar X-ray luminosity in erg/s (default: 1.0e30)\n");
-
+    fprintf(stderr, "  -photoevap_mode <string>  Model selection: 'Owen' or 'Picogna' (default: 'None')\n");
+    fprintf(stderr, "  -xray_luminosity <val>         Stellar X-ray luminosity in erg/s (default: 1.0e30)\n");
+    fprintf(stderr,"Initial Condition Profiles:\n");
+    fprintf(stderr,"  -cutoff <0|1>               Enable Anna's self-similar profile with exponential taper (default: 0)\n");
+    fprintf(stderr,"  -cutoff_radius <double>     Tapering radius in AU for cutoff style (default: 30.0)\n");
+    fprintf(stderr,"  -cutoff_sharpness <double>     Sharpness factor for exponential cutoff (default: 1.5)\n\n");
 }
 
 int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
@@ -150,15 +158,12 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
             i++;
             if (i < argc) opt->input_file = argv[i]; else { fprintf(stderr, "Error: Missing value for -i.\n"); return 1; }
         }
-        else if (strcmp(argv[i], "-o") == 0) { // Output directory name
+        else if (strcmp(argv[i], "-o") == 0) { 
             i++;
             if (i < argc) {
                 strncpy(opt->output_dir_name, argv[i], sizeof(opt->output_dir_name) - 1);
                 opt->output_dir_name[sizeof(opt->output_dir_name) - 1] = '\0';
-            } else {
-                fprintf(stderr, "Error: Missing value for -o.\n");
-                return 1;
-            }
+            } else { fprintf(stderr, "Error: Missing value for -o.\n"); return 1; }
         }
         else if (strcmp(argv[i], "-tmax") == 0) {
             i++;
@@ -168,7 +173,6 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
             i++;
             if (i < argc) opt->output_frequency = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -outfreq.\n"); return 1; }
         }
-
         else if (strcmp(argv[i], "-ri") == 0) { 
             i++; 
             if (i < argc) opt->rmin_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -ri.\n"); return 1; }; 
@@ -242,27 +246,16 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
             if (i < argc) opt->pdensity_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -pdensity.\n"); return 1; }
         }
         else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
-//            printUsageToTerminal();
             return 1;
         }
-
         else if (strcmp(argv[i], "--output-format") == 0) {
             i++;
             if (i < argc) {
-                if (strcmp(argv[i], "ascii") == 0)
-                    opt->output_format = OUTPUT_ASCII;
-                else if (strcmp(argv[i], "hdf5") == 0)
-                    opt->output_format = OUTPUT_HDF5;
-                else {
-                    fprintf(stderr, "Error: Unknown output format '%s'. Use ascii or hdf5.\n", argv[i]);
-                    return 1;
-                }
-            } else {
-                fprintf(stderr, "Error: Missing value for --output-format.\n");
-                return 1;
-            }
+                if (strcmp(argv[i], "ascii") == 0) opt->output_format = OUTPUT_ASCII;
+                else if (strcmp(argv[i], "hdf5") == 0) opt->output_format = OUTPUT_HDF5;
+                else { fprintf(stderr, "Error: Unknown output format '%s'. Use ascii or hdf5.\n", argv[i]); return 1; }
+            } else { fprintf(stderr, "Error: Missing value for --output-format.\n"); return 1; }
         }
-
         else if (strcmp(argv[i], "-photoevap") == 0) {
             i++;
             if (i < argc) {
@@ -275,7 +268,6 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
             if (i < argc) {
                 strncpy(opt->photoevaporation_mode, argv[i], sizeof(opt->photoevaporation_mode) - 1);
                 opt->photoevaporation_mode[sizeof(opt->photoevaporation_mode) - 1] = '\0';
-                
                 if (strcasecmp(opt->photoevaporation_mode, "none") != 0) {
                     opt->enable_photoevaporation = true;
                 }
@@ -286,17 +278,33 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
             if (i < argc) opt->xray_luminosity = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -xray_luminosity.\n"); return 1; }
         }
 
+        // -----------------------------------------------------------------
+        // CRITICAL FIX: Match the exact input-tracking value loop logic 
+        // -----------------------------------------------------------------
+        else if (strcmp(argv[i], "-cutoff") == 0) {
+            i++;
+            if (i < argc) {
+                int val = atoi(argv[i]);
+                opt->use_cutoff = (val != 0); // Correctly consumes the 1.0 or 0.0 trailing argument
+            } else { fprintf(stderr, "Error: Missing value for -cutoff.\n"); return 1; }
+        }
+        else if (strcmp(argv[i], "-cutoff_radius") == 0) {
+            i++;
+            if (i < argc) opt->r_cutoff = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -cutoff_radius.\n"); return 1; }
+        }
+        else if (strcmp(argv[i], "-cutoff_sharpness") == 0) {
+            i++;
+            if (i < argc) opt->n_for_cutoff = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -cutoff_sharpness.\n"); return 1; }
+        }        
+
         else if (strcmp(argv[i], "-ascii") == 0) {
             opt->output_format = OUTPUT_ASCII;
         }
         else if (strcmp(argv[i], "-hdf5") == 0) {
             opt->output_format = OUTPUT_HDF5;
         }
-
-
         else {
             fprintf(stderr, "ERROR [parseCLIOptions]: Invalid switch on command-line: %s!\n", argv[i]);
-  //          printUsageToTerminal(); 
             return 1;
         }
         i++;
