@@ -12,6 +12,7 @@
 #define SIMULATION_TYPES_H
 
 #include <stdio.h>
+#include <stdbool.h>
 #define MAX_PATH_LEN 16384 
 
 /**
@@ -55,6 +56,9 @@ typedef struct {
     int    hole_flag;
     double r_hole;
     double *sink_photoevap;
+    bool   enable_photoevaporation;       /**< Global switch to turn photoevaporation ON/OFF. */
+    char   photoevaporation_mode_string[32]; /**< Model selection: "Owen" or "Picogna" */
+    double xray_luminosity;               /**< Stellar X-ray luminosity [erg/s]. */
 } DiskParameters;
 
 

@@ -97,6 +97,25 @@ int main(int argc, const char **argv) {
     disk_params.drift_factor = 0.55; // set by Birnstiel 2012
     disk_params.particle_density = def.pdensity_val;
 
+    // --- PHOTOEVAPORATION PARAMETER MAPPING AND WARNING LOGIC ---
+    disk_params.enable_photoevaporation = def.enable_photoevaporation;
+    disk_params.xray_luminosity = def.xray_luminosity;
+    strncpy(disk_params.photoevaporation_mode_string, def.photoevaporation_mode, sizeof(disk_params.photoevaporation_mode_string) - 1);
+    disk_params.photoevaporation_mode_string[sizeof(disk_params.photoevaporation_mode_string) - 1] = '\0';
+
+    // Warn the user if a specific model is configured but photoevaporation is globally disabled
+    if (!disk_params.enable_photoevaporation) {
+        if (strcasecmp(disk_params.photoevaporation_mode_string, "none") != 0 && 
+            strcasecmp(disk_params.photoevaporation_mode_string, "") != 0) {
+            
+            fprintf(stderr, "\n********************************************************************************\n");
+            fprintf(stderr, "WARNING: Photoevaporation is globally set to FALSE, but a specific mode ('%s')\n", disk_params.photoevaporation_mode_string);
+            fprintf(stderr, "         and options were provided in the configuration!\n");
+            fprintf(stderr, "         The simulation will IGNORE these parameters and run WITHOUT photoevaporation.\n");
+            fprintf(stderr, "********************************************************************************\n\n");
+        }
+    }  
+
     sim_opts.flag_for_deadzone = (disk_params.r_dze_i > 0.0 || disk_params.r_dze_o > 0.0) ? 1.0 : 0.0;
 
     actual_run_dir = createRunDirectory(def.output_dir_name);
@@ -209,9 +228,28 @@ int main(int argc, const char **argv) {
     fprintf(stderr, "DEBUG [main]: loadGasSurfaceDensityFromFile completed. Calling applyBoundaryConditions for disk_params.radial_grid and disk_params.gas_surface_density_vector...\n");
     applyBoundaryConditions(disk_params.radial_grid, &disk_params);
     applyBoundaryConditions(disk_params.gas_surface_density_vector, &disk_params);
+    // This guarantees that the core integrator always has a valid, zeroed array for photoevaporation
+    disk_params.sigma_dot_photoevap = (double *)calloc((disk_params.grid_number + 2), sizeof(double));
+    if (!disk_params.sigma_dot_photoevap) {
+        fprintf(stderr, "ERROR [main]: Failed to allocate memory for sigma_dot_photoevap.\n");
+        return 1;
+    }
+    // =====================================
+
     fprintf(stderr, "DEBUG [main]: applyBoundaryConditions calls completed for initial profile.\n");
     fprintf(stderr, "DEBUG [main]: Calling printCurrentInformationAboutRun...\n");
     printCurrentInformationAboutRun(actual_run_dir, &disk_params);
+
+    // --- PRINT PHOTOEVAPORATION STATUS BEFORE INTEGRATION ---
+    fprintf(stderr, "\n==========================================================\n");
+    if (disk_params.enable_photoevaporation) {
+        fprintf(stderr, " PHOTOEVAPORATION: [ONLINE]\n");
+        fprintf(stderr, " MODEL PROFILE:    [%s]\n", disk_params.photoevaporation_mode_string);
+        fprintf(stderr, " X-RAY LUM_LX:     [%.2e erg/s]\n", disk_params.xray_luminosity);
+    } else {
+        fprintf(stderr, " PHOTOEVAPORATION: [OFFLINE] (Pure viscous hydrodynamics)\n");
+    }
+    fprintf(stderr, "==========================================================\n\n");
 
     if(mode == SnapshotNonevolving) {
         fprintf(stderr, "DEBUG [main]: Evolution (sim_opts.option_for_evolution=%.2f) and drift (sim_opts.option_for_dust_drift=%.2f) are OFF.\n", sim_opts.option_for_evolution, sim_opts.option_for_dust_drift);

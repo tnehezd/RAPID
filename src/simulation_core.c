@@ -36,18 +36,48 @@ void calculate1DDustDrift(double particle_radius, double pressure_gradient, doub
 
 double calculateTimeStep(const DiskParameters *disk_params) {
 
-    double max_diffusion_coefficient, time_step;
+    double max_viscosity = -1e10;
+    double min_photo_dt = 1e10; // Track the tightest constraint from the wind
     int i;
-    max_diffusion_coefficient = -10000.0;
+    int N = disk_params->grid_number;
+    double WIND_CRIT = 1e-20;
     
-    for(i = 0; i < disk_params->grid_number; i++) {
-        if(ftcsSecondDerivativeCoefficient(disk_params->radial_grid[i], disk_params) > max_diffusion_coefficient) {
-            max_diffusion_coefficient = ftcsSecondDerivativeCoefficient(disk_params->radial_grid[i], disk_params);
+    // 1. Calculate the viscous CFL constraint
+    for(i = 1; i <= N; i++) {
+        double current_nu = calculateKinematicViscosity(disk_params->radial_grid[i], disk_params);
+        if(current_nu > max_viscosity) {
+            max_viscosity = current_nu;
+        }
+
+        // 2. Calculate the photoevaporation timestep constraint (dt_photo = Sigma / Sigma_dot)
+        // Only check if photoevaporation is active and tracking array is valid
+        if (disk_params->enable_photoevaporation && disk_params->sigma_dot_photoevap != NULL) {
+            double sigma = disk_params->gas_surface_density_vector[i];
+            double sigma_dot = disk_params->sigma_dot_photoevap[i];
+            
+            // Avoid division by zero or negative rates; only check active depletion
+            if (sigma_dot > 1e-20 && sigma > WIND_CRIT) {
+                // Safety: do not allow the wind to deplete more than 10-20% of a cell's mass in a single step
+                double cell_photo_dt = 0.15 * (sigma / sigma_dot);
+                if (cell_photo_dt < min_photo_dt) {
+                    min_photo_dt = cell_photo_dt;
+                }
+            }
         }
     }
 
-    time_step = disk_params->delta_r * disk_params->delta_r / (2.0 * max_diffusion_coefficient);
-    fprintf(stderr," Actual calculateTimeStep: delta_r = %.2e, time_step = %.2e\n", disk_params->delta_r, time_step);
+    // Viscous explicit limit: dt = 0.35 * dr^2 / (2 * nu)
+    double safety_factor = 0.35;
+    double viscous_dt = safety_factor * (disk_params->delta_r * disk_params->delta_r) / (2.0 * max_viscosity);
+    
+    // Final time step is the strict minimum between viscosity and photoevaporation
+    double time_step = viscous_dt;
+    if (disk_params->enable_photoevaporation && min_photo_dt < viscous_dt) {
+        time_step = min_photo_dt;
+        fprintf(stderr," [NEW INTEGRATOR]: Wind limited dt = %.2e years\n", time_step);
+    } else {
+        fprintf(stderr," [NEW INTEGRATOR]: Viscous limited dt = %.2e year (Courant check)\n", time_step);
+    }
 
     return time_step;
 }

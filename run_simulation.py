@@ -100,6 +100,7 @@ def main():
         "drift": 1.0,
         "growth": 1.0,
         "evol": 1.0,
+        "photoevap": 0.0,
         "twopop": 1.0,
         "ufrag": 1000.0,
         "ffrag": 0.37,
@@ -120,6 +121,8 @@ def main():
         "dr_dze_i_val": 0.0,
         "dr_dze_o_val": 0.0,
         "a_mod_val": 0.0,
+        "photoevap_mode": "none",
+        "xray_lum": 1e30,
 
         # File Input/Output
         "input_file": "",
@@ -156,6 +159,7 @@ def main():
         "enable_dust_drift": "drift",
         "enable_dust_growth": "growth",
         "enable_gas_evolution": "evol",
+        "enable_photoevaporation": "photoevap",
         "enable_two_dust_populations": "twopop",
         "fragmentation_velocity": "ufrag",
         "fragmentation_factor": "ffrag",
@@ -170,6 +174,8 @@ def main():
         "star_mass_msun": "star_val",
         "aspect_ratio_at_1au": "hasp_val",
         "flaring_index": "flind_val",
+        "photoevaporation_mode": "photoevap_mode",
+        "xray_luminosity_erg_s": "xray_lum",
 
         "deadzone_inner_radius_au": "r_dze_i_val",
         "deadzone_outer_radius_au": "r_dze_o_val",
@@ -215,14 +221,15 @@ def main():
     c_arg_mapping = {
         # Simulation Control (C flags are unchanged)
         "drift": "-drift", "growth": "-growth", "evol": "-evol", "twopop": "-twopop",
-        "ufrag": "-ufrag", "ffrag": "-ffrag",
+        "ufrag": "-ufrag", "ffrag": "-ffrag", "photoevap": "-photoevap",
 
         # Grid and Disk Initial Parameters
         "ngrid_val": "-n", "ndust_val": "-ndust", # <--- MODIFIED: Key is now 'ndust_val'
         "rmin_val": "-ri", "rmax_val": "-ro",
         "sigma0_val": "-sigma0_init", "sigmap_exp_val": "-index_init",
         "alpha_visc_val": "-alpha_init", "star_val": "-m0_init",
-        "hasp_val": "-h_init", "flind_val": "-flind_init",
+        "hasp_val": "-h_init", "flind_val": "-flind_init", 
+        "photoevap_mode": "-photoevap_mode", "xray_lum": "-xray_luminosity",
 
         # Dead Zone Parameters
         "r_dze_i_val": "-rdzei", "r_dze_o_val": "-rdzeo",

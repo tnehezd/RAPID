@@ -45,6 +45,11 @@ void createDefaultOptions(ParserOptions *opt) {
     opt->pdensity_val                               = 1.6; 
     opt->output_format                              = OUTPUT_ASCII;
 
+    opt->enable_photoevaporation                    = false;       // off by default
+    strncpy(opt->photoevaporation_mode, "None", sizeof(opt->photoevaporation_mode) - 1);
+    opt->photoevaporation_mode[sizeof(opt->photoevaporation_mode) - 1] = '\0';
+    opt->xray_luminosity                            = 1.0e30;      // Standard X-ray luminosity [erg/s]
+
     fprintf(stderr, "Default options setting complete.\n");
 }
 
@@ -92,6 +97,10 @@ void printUsageToTerminal() {
     fprintf(stderr, "  --output-format <ascii|hdf5>  Select output format (default: ascii)\n");
     fprintf(stderr, "  -ascii                        Shortcut for --output-format ascii\n");
     fprintf(stderr, "  -hdf5                       Shortcut for --output-format hdf5\n");
+    fprintf(stderr, "Photoevaporation options:\n");
+    fprintf(stderr, "  -photoevap <0|1>  Enable/disable photoevaporation globally (default: 0 = false)\n");
+    fprintf(stderr, "  -p_mode <string>  Model selection: 'Owen' or 'Picogna' (default: 'None')\n");
+    fprintf(stderr, "  -lx <val>         Stellar X-ray luminosity in erg/s (default: 1.0e30)\n");
 
 }
 
@@ -253,6 +262,30 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
                 return 1;
             }
         }
+
+        else if (strcmp(argv[i], "-photoevap") == 0) {
+            i++;
+            if (i < argc) {
+                int val = atoi(argv[i]);
+                opt->enable_photoevaporation = (val != 0);
+            } else { fprintf(stderr, "Error: Missing value for -photoevap.\n"); return 1; }
+        }
+        else if (strcmp(argv[i], "-photoevap_mode") == 0) {
+            i++;
+            if (i < argc) {
+                strncpy(opt->photoevaporation_mode, argv[i], sizeof(opt->photoevaporation_mode) - 1);
+                opt->photoevaporation_mode[sizeof(opt->photoevaporation_mode) - 1] = '\0';
+                
+                if (strcasecmp(opt->photoevaporation_mode, "none") != 0) {
+                    opt->enable_photoevaporation = true;
+                }
+            } else { fprintf(stderr, "Error: Missing value for -photoevap_mode.\n"); return 1; }
+        }
+        else if (strcmp(argv[i], "-xray_luminosity") == 0) {
+            i++;
+            if (i < argc) opt->xray_luminosity = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -xray_luminosity.\n"); return 1; }
+        }
+
         else if (strcmp(argv[i], "-ascii") == 0) {
             opt->output_format = OUTPUT_ASCII;
         }
