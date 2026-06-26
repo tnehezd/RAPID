@@ -18,6 +18,9 @@
 extern "C" {
 #endif
 
+#undef ACTUAL_SIGMA_CRIT
+#define ACTUAL_SIGMA_CRIT 1.1e-15
+
 void computePhotoevaporationSink(void *disk_opaque)
 {
     DiskParameters *disk = static_cast<DiskParameters*>(disk_opaque);
