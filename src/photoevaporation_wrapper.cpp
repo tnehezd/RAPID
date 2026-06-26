@@ -93,10 +93,10 @@ void computePhotoevaporationSink(void *disk_opaque)
 
     // DEBUG LOG TO CATCH THE 20,000 YR CRASH
     if (gap == 1 || hole == 1) {
-        std::cerr << "[WRAPPER DETECTED HOLE]: gap=" << gap 
+/*        std::cerr << "[WRAPPER DETECTED HOLE]: gap=" << gap 
                   << ", hole=" << hole 
                   << ", r_hole=" << r_hole << " AU" << std::endl;
-        if (hole == 1 && r_hole == 0.0) {
+*/        if (hole == 1 && r_hole == 0.0) {
             std::cerr << "--> CRITICAL ERROR: Hole detected but r_hole is 0.0! Outer radius interpolation will explode." << std::endl;
         }
     }

@@ -14,13 +14,13 @@
 
 
 void initializeDefaultOptions(InitializeDefaultOptions *def) {
-    def->use_cutoff             = false; // Default: false = Normal Power-Law profile
+    def->use_cutoff             = false; 
     def->n_grid_points          = 1000; 
     def->n_dust_particles       = 2000;
     def->r_inner                = 0.1;
     def->r_outer                = 5.0;
     def->sigma0_gas_au          = 0.01; 
-    def->sigma_exponent         = 0.5;  // Note: used as negative slope in power laws
+    def->sigma_exponent         = 0.5;  
     def->alpha_viscosity        = 1.0e-2;
     def->star_mass              = 1.0; 
     def->aspect_ratio           = 5.0e-2;
@@ -33,7 +33,7 @@ void initializeDefaultOptions(InitializeDefaultOptions *def) {
     def->deadzone_alpha_mod     = 0.01;
 
     def->dust_to_gas_ratio      = 0.01;
-    def->disk_mass_dust         = 0.0100000001; 
+    def->disk_mass_dust         = 0.01; 
     def->one_size_particle_cm   = 1.0;
     def->two_pop_ratio          = 0.85; 
     def->micro_size_cm          = 1e-4; 
@@ -43,16 +43,14 @@ void initializeDefaultOptions(InitializeDefaultOptions *def) {
     def->output_base_path[0]    = '\0';
     def->dust_density_g_cm3     = 1.6;
 
-    // Added defaults for Anna's cutoff profile parameters
-    def->r_cutoff               = 30.0; // Tapering radius [AU]
-    def->n_for_cutoff           = 1.5;  // Shape parameter (typically 2.0 - gamma)
+    def->r_cutoff               = 30.0; 
+    def->n_for_cutoff           = 1.5;  
 }
 
 /**
  * @brief Calculates the normalization factor Sigma0 based on the selected Initial Condition type.
  */
 static long double calculateSigm0FromDiskMass(InitializeDefaultOptions *init_opts) {
-    // Kényszerítsük ki, hogy a sűrűség-kitevő (gamma) egy tiszta abszolút érték legyen
     double gamma = fabs(init_opts->sigma_exponent);
 
     if (!init_opts->use_cutoff) {
@@ -95,9 +93,10 @@ static long double calculateGasSurfaceDensityInitTool(double r_au, InitializeDef
         // Normal power law: \Sigma(r) = \Sigma_0 * r^-gamma
         return current_sigma0 * pow(r_au, -gamma);
     } else {
-        // Exponential cutoff profile: \Sigma(r) = \Sigma_1AU * (r/Rc)^-gamma * exp(-(r/Rc)^n)
+        // FIX: Exponential cutoff profile CORRECTLY scaled to 1 AU normalization
+        // \Sigma(r) = \Sigma_1AU * r^-gamma * exp(-(r/Rc)^n)
         double r_scaled = r_au / init_opts->r_cutoff;
-        return current_sigma0 * pow(r_scaled, -gamma) * exp(-pow(r_scaled, init_opts->n_for_cutoff));
+        return current_sigma0 * pow(r_au, -gamma) * exp(-pow(r_scaled, init_opts->n_for_cutoff));
     }
 }
 
@@ -143,10 +142,9 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
     double drdze_inner_calculated = pow(default_options->deadzone_r_inner, 1.0 + default_options->flaring_index) * default_options->aspect_ratio * default_options->deadzone_dr_inner;
     double drdze_outer_calculated = pow(default_options->deadzone_r_outer, 1.0 + default_options->flaring_index) * default_options->aspect_ratio * default_options->deadzone_dr_outer;
 
-    // Determine Sigma0 scaling based on mass constraints or direct specifications
-    const double DEFAULT_disk_mass_DUST = 0.01;
-    
-    if (fabs(default_options->disk_mass_dust - DEFAULT_disk_mass_DUST) > 1e-9 || default_options->use_cutoff) {
+    // --- FIX: NO HARDCODED DEFAULT_disk_mass_DUST TEMPLATE CHECK ---
+    // If the parser parsed an explicit mass or cutoff configuration, calculate Sigma0 dynamically.
+    if (default_options->use_cutoff || default_options->disk_mass_dust > 0.0) {
         current_sigma0_gas = calculateSigm0FromDiskMass(default_options);
         if (default_options->use_cutoff) {
             fprintf(stderr, "Sigma0 (at 1 AU reference template) calculated via Exponential Cutoff Profile: %Lg M_Sun/AU^2\n", current_sigma0_gas);
@@ -158,10 +156,8 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
         fprintf(stderr, "Using explicit Sigma0 (gas surface density at 1 AU): %Lg M_Sun/AU^2\n", current_sigma0_gas);
     }
 
-    const double DEFAULT_ONE_SIZE = 1.0;
-    if (fabs(default_options->one_size_particle_cm - DEFAULT_ONE_SIZE) > 1e-9 && default_options->one_size_particle_cm > 0) {
-        default_options->two_pop_ratio = 1.0;
-    }
+    // --- FIX: REMOVED THE HARDCODED TWO_POP_RATIO = 1.0 OVERRIDE BLOCK ---
+    // The ratio is now always dynamically processed as passed from parser contexts.
 
     char *full_init_dust_profile_path = NULL;
     char *full_disk_param_path = NULL;
@@ -206,7 +202,6 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
     initial_header_data.is_initial_data = 1;
     initial_header_data.R_in = default_options->r_inner;
     initial_header_data.R_out = default_options->r_outer;
-    // Mentésnél is tartsuk meg a konzisztens negatív előjelet a struktúra felé
     initial_header_data.sigma_exponent = -fabs(default_options->sigma_exponent);
     initial_header_data.sigma0_gas_au = current_sigma0_gas;
     initial_header_data.grav_const = G_DIMENSIONLESS;
@@ -225,6 +220,7 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
     printFileHeader(gas_parameters_output_file, FILE_TYPE_GAS_DENSITY, &initial_header_data);
     printFileHeader(disk_parameters_output_file, FILE_TYPE_DISK_PARAM, &initial_header_data);
 
+    // --- FIX: ALL HARDCODED FALLBACK OVERRIDES REMOVED HERE ---
     disk_params->grid_number = default_options->n_grid_points; 
     disk_params->r_min = default_options->r_inner;
     disk_params->r_max = default_options->r_outer;
@@ -240,6 +236,8 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
     disk_params->flaring_index = default_options->flaring_index;
     disk_params->stellar_mass = default_options->star_mass;
     disk_params->particle_density = default_options->dust_density_g_cm3;
+    disk_params->fragmentation_factor = default_options->fragmentation_factor;
+    disk_params->drift_factor = default_options->drift_factor;
 
     if (disk_params->grid_number > 1) {
         disk_params->delta_r = (disk_params->r_max - disk_params->r_min) / ((double)disk_params->grid_number - 1.0);
@@ -281,7 +279,7 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
     }
     fflush(gas_parameters_output_file); 
 
-    double fragmentation_velocity_cm_s = 1000.0;
+    double fragmentation_velocity_cm_s = disk_params->fragmentation_velocity > 0 ? disk_params->fragmentation_velocity : 1000.0;
     double fragmentation_velocity_au_yr2pi = fragmentation_velocity_cm_s * CM_PER_SEC_TO_AU_PER_YEAR_2PI;
     double fragmentation_velocity_sq_au_yr2pi_sq = fragmentation_velocity_au_yr2pi * fragmentation_velocity_au_yr2pi;
 
@@ -306,7 +304,8 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
         
         double s_max_cm;
 
-        if (fabs(default_options->one_size_particle_cm - DEFAULT_ONE_SIZE) > 1e-9 && default_options->one_size_particle_cm > 0) {
+        // --- FIX: CHECK AGAINST ONE_SIZE TRACKING DYNAMICALLY AS PASSED ---
+        if (default_options->one_size_particle_cm > 0.0) {
             s_max_cm = default_options->one_size_particle_cm;
         } else {
             double calculateKeplerianVelocity_au_yr2pi = calculateKeplerianVelocity(r_dust_particle_au, disk_params);

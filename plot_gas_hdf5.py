@@ -10,8 +10,8 @@ MSUN = 1.98847e33
 AU = 1.495978707e13
 MSUN_PER_AU2_TO_CGS = MSUN / (AU**2)
 
-logs_dir = "output_0061/LOGS"
-snapshot_step = 10000
+logs_dir = "output_0068/LOGS"
+snapshot_step = 20000
 
 file_pattern = os.path.join(logs_dir, "snapshot_*.h5")
 
@@ -59,4 +59,4 @@ while True:
     ax.set_title("Live Gas Surface Density Evolution")
     ax.grid(True, which="both", ls="--", alpha=0.6)
 
-    plt.pause(2)  # frissítés 2 másodpercenként
+    plt.pause(5)  # frissítés 2 másodpercenként
