@@ -9,11 +9,13 @@ struct WindParams{
 };
 
 #include "../include/photoevaporation.hpp"
-#include "../include/defines.hpp"
 #include <cmath>
 #include <iostream>
 #include <fstream>
 
+
+#define SIGMA_CRIT 1e-10  // Critical value for wind profile (below this value, wind is considered zero) [M_sol/AU^2/day]
+#define DEBUG 0
 
 using namespace owen2012;   
 using namespace picogna2019; 
@@ -31,7 +33,7 @@ using namespace picogna2019;
 /// @def DR       Radial step size [AU] ---- from include/defines.hpp
 /// @def a1,b1,c1,d1,e1,f1,g1  Coefficients for no hole case ---- from include/photoevaporation.hpp
 /// @def a2,b2,c2,d2,e2,f2  Coefficients for hole case ---- from include/photoevaporation.hpp
-double Norm(double *radius_array, int hole, double r_hole, double *dr_array){  //Unitless M_dot/sum = norm, Sigma_dot -> Sigma_dot*norm
+double Norm(double *radius_array, int hole, double r_hole, double *dr_array, const DiskParameters *disk_params){  //Unitless M_dot/sum = norm, Sigma_dot -> Sigma_dot*norm
   double func_c = 0.0;
   double sum = 0.0;
   double norm = 0.0;  
@@ -39,10 +41,10 @@ double Norm(double *radius_array, int hole, double r_hole, double *dr_array){  /
 
   if(hole == 0){  //Primordial disk - no hole
     
-    M_dot = 6.25e-9*pow(M_STAR,-0.068)*pow(L_X/1e30, 1.14);  //total Mass-loss rate for primordial disk [M_sol/yr]
+    M_dot = 6.25e-9*pow(disk_params->stellar_mass,-0.068)*pow(L_X/1e30, 1.14);  //total Mass-loss rate for primordial disk [M_sol/yr]
 
-    for(int i = 0; i < NGRID; i++ ){
-      double x = 0.85*radius_array[i]/M_STAR;     //Radius must be in AU, M_star in M_sol. 
+    for(int i = 0; i < disk_params->grid_number; i++ ){
+      double x = 0.85*radius_array[i]/disk_params->stellar_mass;     //Radius must be in AU, M_star in M_sol. 
       
       if(x > 0.7){
         func_c = pow(10, a1 * pow(log10(x), 6) + b1 * pow(log10(x), 5) + c1 * pow(log10(x), 4))
@@ -64,10 +66,10 @@ double Norm(double *radius_array, int hole, double r_hole, double *dr_array){  /
   } //end if(hole == 0)
 
   else if(hole == 1){  //Transition disk - Hole exists
-    M_dot = 4.8e-9*pow(M_STAR,-0.148)*pow(L_X/1e30, 1.14);  //total Mass-loss rate for transition disk [M_sol/yr]
+    M_dot = 4.8e-9*pow(disk_params->stellar_mass,-0.148)*pow(L_X/1e30, 1.14);  //total Mass-loss rate for transition disk [M_sol/yr]
 
-    for(int i = 0; i < NGRID; i++ ){
-      double y = 0.95*(radius_array[i]-r_hole)/M_STAR;
+    for(int i = 0; i < disk_params->grid_number; i++ ){
+      double y = 0.95*(radius_array[i]-r_hole)/disk_params->stellar_mass;
 
       if(y >= 0) func_c = (a2*b2*exp(b2*y) + c2*d2*exp(d2*y) + e2*f2*exp(f2*y))/radius_array[i]* exp((-1)*pow(y/57,10));
       else       func_c = 0.0;
@@ -88,13 +90,13 @@ double Norm(double *radius_array, int hole, double r_hole, double *dr_array){  /
 /// @param hole      0 -> no hole, 1 -> hole exists
 /// @param r_hole    The hole extends up until this radius [AU]
 /// @return func_c   Sigma_dot at radius r [M_sol/AU^2/day]
-double Func_C2012(double r, double norm, int hole, double r_hole) //Sigma_dot is in [M_sol/AU^2/yr] in the paper -> Astro unit: [M_sol/AU^2/day]
+double Func_C2012(double r, double norm, int hole, double r_hole, const DiskParameters *disk_params) //Sigma_dot is in [M_sol/AU^2/yr] in the paper -> Astro unit: [M_sol/AU^2/day]
 {
   double func_c = 0.0;  //unit : [M_sol/AU^2/yr]
 
   if(hole == 0) //no hole
   {
-    double x = 0.85*r/M_STAR;
+    double x = 0.85*r/disk_params->stellar_mass;
 
     if(x > 0.7)
     {
@@ -114,13 +116,13 @@ double Func_C2012(double r, double norm, int hole, double r_hole) //Sigma_dot is
   
   else if(hole == 1) //hole exists
   {
-    double y = 0.95*(r-r_hole)/M_STAR;
+    double y = 0.95*(r-r_hole)/disk_params->stellar_mass;
 
     if(y >= 0) func_c = (a2*b2*exp(b2*y) + c2*d2*exp(d2*y) + e2*f2*exp(f2*y))/r * exp((-1)*pow(y/57,10));
     else func_c = 0.0;
   }
   //if(func_c < 1e-20) func_c = 0.0; //cutoff for very small values
- return(func_c*norm*DAY2YEAR);   //Astro unit [M_sol/AU^2/day]
+ return(func_c*norm*DAYS_PER_YEAR_CONVERSION_FACTOR);   //Astro unit [M_sol/AU^2/day]
 }
 
 /// @brief Creating array for disk wind values for easier calculasion
@@ -129,23 +131,23 @@ double Func_C2012(double r, double norm, int hole, double r_hole) //Sigma_dot is
 /// @param norm          Normalizing factor, used by "Func_C2012"
 /// @param b_hole        Bool for hole, used by "Func_C2012"
 /// @param r_hole        Radius of hole, used by "Func_C2012"
-void Photoevaporation_2012(double *evap_array, double *radius_array, double norm, int b_hole, double r_hole, double *dr_array) {
-  for(int i = 0; i < NGRID; ++i) {
+void Photoevaporation_2012(double *evap_array, double *radius_array, double norm, int b_hole, double r_hole, double *dr_array, const DiskParameters *disk_params) {
+  for(int i = 0; i < disk_params->grid_number; ++i) {
 
-    evap_array[i] = Func_C2012(radius_array[i], norm, b_hole, r_hole);
-
+    evap_array[i] = Func_C2012(radius_array[i], norm, b_hole, r_hole, disk_params);
+  
    // if(evap_array[i]<1e-20) evap_array[i] = 0.0;
   }
-  if(DEBUG == 1)Debug_Photoevaporation_2012(evap_array, radius_array, norm, b_hole, r_hole, dr_array);
+  if(DEBUG == 1)Debug_Photoevaporation_2012(evap_array, radius_array, norm, b_hole, r_hole, dr_array, disk_params);
 }
 
-void Debug_Photoevaporation_2012(double *evap_array, double *radius_array, double norm, int b_hole, double r_hole, double *dr_array) {
+void Debug_Photoevaporation_2012(double *evap_array, double *radius_array, double norm, int b_hole, double r_hole, double *dr_array, const DiskParameters *disk_params) {
   double sum = 0.0;
-  double M_dot = 6.25e-9*pow(M_STAR,-0.068)*pow(L_X/1e30, 1.14);
-  for(int i = 0; i < NGRID; ++i) sum += 2*M_PI*radius_array[i]* evap_array[i]*dr_array[i];   //Astro unit [M_sol/day]
+  double M_dot = 6.25e-9*pow(disk_params->stellar_mass,-0.068)*pow(L_X/1e30, 1.14);
+  for(int i = 0; i < disk_params->grid_number; ++i) sum += 2*M_PI*radius_array[i]* evap_array[i]*dr_array[i];   //Astro unit [M_sol/day]
   double norm_check = 0.0;
-  for(int i = 0; i < NGRID; ++i) norm_check += 2*M_PI*radius_array[i]* Func_C2012(radius_array[i], norm, b_hole, r_hole)*dr_array[i];
-  std::cout << "Sum [M_sol/yr]: " << sum*YEAR2DAY <<  std::endl;
+  for(int i = 0; i < disk_params->grid_number; ++i) norm_check += 2*M_PI*radius_array[i]* Func_C2012(radius_array[i], norm, b_hole, r_hole,disk_params)*dr_array[i];
+  std::cout << "Sum [M_sol/yr]: " << sum*YEARS_PER_DAY_CONVERSION_FACTOR <<  std::endl;
   std::cout << "M_dot [M_sol/yr]: " << M_dot << std::endl;
   std::cout << "Norm check [M_sol/day]: " << norm_check << std::endl;
 }
@@ -183,8 +185,8 @@ double Func_C2019(double r, double L_x, bool b_hole, double r_hole)
 
     //return(M_W_dot); //for plotting article figure
     if(f_c < 1e-20) f_c = 0.0; 
-    return(f_c*DAY2YEAR); //for plotting article figure
-    //return(f_c*DAY2YEAR*norm*r*r*M_PI); //for ???? time evolution
+    return(f_c*DAYS_PER_YEAR_CONVERSION_FACTOR); //for plotting article figure
+    //return(f_c*DAYS_PER_YEAR_CONVERSION_FACTOR*norm*r*r*M_PI); //for ???? time evolution
 }
 
 /// @brief Calculates new photoevaporation profile into an array based on Picogna et al. 2019, usint Func_C2019
@@ -194,18 +196,18 @@ double Func_C2019(double r, double L_x, bool b_hole, double r_hole)
 /// @param b_hole bool of hole existence
 /// @param r_hole  The hole extends up until this radius [AU]
 /// @param dr Radial step size [AU] --- can be constant from defines.hpp or time dependent
-void New_Photoevaporation(double *evap_array, double *radius_array, double lx, bool b_hole, double r_hole, double *dr_array)
+void New_Photoevaporation(double *evap_array, double *radius_array, double lx, bool b_hole, double r_hole, double *dr_array, const DiskParameters *disk_params)
 {
   double sum = 0.0;
-  for(int i = 0; i < NGRID; ++i) evap_array[i] = Func_C2019(radius_array[i], lx, b_hole, r_hole);
-  for(int i = 0; i < NGRID; ++i) sum += 2*M_PI*radius_array[i]* evap_array[i]*dr_array[i];
+
+  for(int i = 0; i < disk_params->grid_number; ++i) evap_array[i] = Func_C2019(radius_array[i], lx, b_hole, r_hole);
+  for(int i = 0; i < disk_params->grid_number; ++i) sum += 2*M_PI*radius_array[i]* evap_array[i]*dr_array[i];
   if(DEBUG == 1) std::cout << "Sum: " << sum << std::endl;
 }
 
-void Search_hole(double *radius_array, double *sigma_array, int gap, int hole, double r_hole){
-  int gap_index = 0;
+void Search_hole(double *radius_array, double *sigma_array, int &gap, int &hole, double &r_hole, const DiskParameters *disk_params){  int gap_index = 0;
   if(gap == 0){
-    for(int i = 1; i < NGRID-1; ++i){
+    for(int i = 1; i < disk_params->grid_number-1; ++i){
       if(sigma_array[i] <= SIGMA_CRIT){
         gap = 1;
         gap_index = i;
@@ -226,7 +228,7 @@ void Search_hole(double *radius_array, double *sigma_array, int gap, int hole, d
       r_hole = 0.0;
       double sigma_temp = 0.0;
       int temp_for_hole = 0;
-      for(int i = 2; i < NGRID-1; i++){
+      for(int i = 2; i < disk_params->grid_number-1; i++){
         sigma_temp = (sigma_array[i-1]-SIGMA_CRIT)*(sigma_array[i]-SIGMA_CRIT);
         if( sigma_temp < 0.0 && temp_for_hole == 0) {
           r_hole = (radius_array[i]+radius_array[i+1])/2.0;

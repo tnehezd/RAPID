@@ -2,7 +2,7 @@
 
 // photoevaporation.hpp
 
-#include "../include/misc.hpp"
+#include "config.h"
 
 #define EVAPORATION_ON 0      // 0: no photoevaporation, 1: Owen et al. 2012 X-ray photoevaporation, 2: Picogna et al. 2019 X-ray photoevaporation
 #define WIND_CONV 1.0     // Conversion factor for wind profile output [from M_sol/AU^2/day to desired unit]
@@ -59,7 +59,7 @@ namespace picogna2019 {
 /// @def DR       Radial step size [AU] ---- from include/defines.hpp
 /// @def a1,b1,c1,d1,e1,f1,g1  Coefficients for no hole case ---- from include/photoevaporation.hpp
 /// @def a2,b2,c2,d2,e2,f2  Coefficients for hole case ---- from include/photoevaporation.hpp
-double Norm(double *radius_array, int hole, double r_hole, double *dr_array);
+double Norm(double *radius_array, int hole, double r_hole, double *dr_array, const DiskParameters *disk_params);
 
 /// @brief Counting sigma_dot for X-ray photoevaporation
 /// @param r         Radius where sigma_dot is calculated [AU]
@@ -67,7 +67,7 @@ double Norm(double *radius_array, int hole, double r_hole, double *dr_array);
 /// @param hole      0 -> no hole, 1 -> hole exists
 /// @param r_hole    The hole extends up until this radius [AU]
 /// @return func_c   Sigma_dot at radius r [M_sol/AU^2/day]
-double Func_C2012(double r, double norm, int hole, double r_hole);
+double Func_C2012(double r, double norm, int hole, double r_hole, const DiskParameters *disk_params);
 
 /// @brief Creating array for disk wind values for easier calculasion
 /// @param evap_array    disk wind values --- Astro unit: [M_sol/AU^2/yr]
@@ -75,9 +75,9 @@ double Func_C2012(double r, double norm, int hole, double r_hole);
 /// @param norm          Normalizing factor, used by "Func_C2012" --- dimensionless
 /// @param b_hole        Bool for hole, used by "Func_C2012"
 /// @param r_hole        Radius of hole, used by "Func_C2012" --- The hole extends up until this radius in [AU]
-void Photoevaporation_2012(double *evap_array, double *radius_array, double lx, int b_hole, double r_hole, double *dr_array);
+void Photoevaporation_2012(double *evap_array, double *radius_array, double lx, int b_hole, double r_hole, double *dr_array, const DiskParameters *disk_params);
 
-void Debug_Photoevaporation_2012(double *evap_array, double *radius_array, double norm, int b_hole, double r_hole, double *dr_array);
+void Debug_Photoevaporation_2012(double *evap_array, double *radius_array, double norm, int b_hole, double r_hole, double *dr_array, const DiskParameters *disk_params);
 //----------------------------------  Photoevaporation 2019 Picogna et al.  -------------------------------------//
 /// @brief Counting sigma_dot for new photoevaporation profile from Picogna et al. 2019
 /// @param r         Radius where sigma_dot is calculated [AU]
@@ -94,7 +94,7 @@ double Func_C2019(double r, double L_x, bool b_hole, double r_hole);
 /// @param b_hole bool of hole existence
 /// @param r_hole  The hole extends up until this radius [AU]
 /// @param dr Radial step size [AU] --- can be constant from defines.hpp or time dependent
-void New_Photoevaporation(double *a_evap, double *a_radius, double lx, bool b_hole, double r_hole, double *dr_array);
+void New_Photoevaporation(double *a_evap, double *a_radius, double lx, bool b_hole, double r_hole, double *dr_array, const DiskParameters *disk_params);
 
 
-void Search_hole(double *radius_array, double *sigma_array, int gap, int hole, double r_hole);
+void Search_hole(double *radius_array, double *sigma_array, int &gap, int &hole, double &r_hole, const DiskParameters *disk_params);

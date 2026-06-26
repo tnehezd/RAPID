@@ -2,6 +2,7 @@
 #include "photoevaporation_wrapper.h"
 #include "../extern/include/photoevaporation.hpp"
 #include <vector>
+#include <iostream>
 
 #ifdef __cplusplus
 extern "C" {
@@ -11,33 +12,41 @@ void computePhotoevaporationSink(void *disk_opaque)
 {
     DiskParameters *disk = static_cast<DiskParameters*>(disk_opaque);
 
-    int N = disk->grid_number; // A TE rácspontszámod
-    double *r = disk->radial_grid;
+    int N = disk->grid_number; // Physical grid size (excluding ghost cells)
     
-    // Generálunk egy valódi dr tömböt a Delta_R-ből, mivel a szimulációd fix lépésközzel megy
+    // Shift pointers by +1 to bypass the inner ghost cell and point to the actual physical disk
+    double *physical_r = disk->radial_grid + 1;
+    double *physical_sigma = disk->gas_surface_density_vector + 1;
+    
+    // Generate dr array using the simulation's spatial step size
     std::vector<double> dr_array(N, disk->delta_r);
     std::vector<double> local_evap(N, 0.0);
 
-    // KIKÉNYSZERÍTJÜK, hogy az extern kód a te csillagtömegedet használja, 
-    // ha a globális makró felülírható, vagy átadjuk a függvénynek:
-    // (Ha az M_STAR makró, akkor a Func_C-ben nem tudod átírni, de a hole_flag-et igen!)
+    // Dynamic hole tracking variables inside the wrapper (or you can add them to DiskParameters later)
+    static int gap = 0;
+    static int hole = 0;
+    static double r_hole = 0.0;
 
-    // A TE szimulációdból származó lyuk adatok (ha bevezeted őket a simulation_types.h-ba):
-    int hole_flag = 0;   // disk->hole_flag; 
-    double r_hole = 0.0; // disk->r_hole;
+    // 1. Search for a gap or an inner hole based on the current surface density profile
+    Search_hole(physical_r, physical_sigma, gap, hole, r_hole, disk);
 
-    // 1. Kiszámoljuk a normát a TE sugárrácsoddal és a valódi dr_array-jel
-    double norm = Norm(r, hole_flag, r_hole, dr_array.data());
+    // 2. Calculate the normalization factor using the active physical grid
+    double norm = Norm(physical_r, hole, r_hole, dr_array.data(), disk);
+//    std::cout << "WRAPPER CHECK: hole=" << hole << ", r_hole=" << r_hole << ", m_star=" << disk->stellar_mass << ", norm=" << norm << std::endl;
 
-    // 2. Futtatjuk a lefolyást
-    Photoevaporation_2012(local_evap.data(), r, norm, hole_flag, r_hole, dr_array.data());
+    // 3. Compute the photoevaporation profile into the local array
+    Photoevaporation_2012(local_evap.data(), physical_r, norm, hole, r_hole, dr_array.data(), disk);
 
-    // 3. Beírjuk a kiszámolt profilt a TE struktúrádba
+    // 4. Map the calculated sink profile back to your simulation's tracking array
     if (disk->sigma_dot_photoevap != nullptr) {
         for (int i = 0; i < N; i++) {
-            // Beindexeljük a belső rácsra (i+1 a ghost cellák miatt, ha az init_tool-ból indulunk ki)
+            // Synchronize index with your inner grid system (i+1 to account for the inner ghost cell)
             disk->sigma_dot_photoevap[i + 1] = local_evap[i];
         }
+        
+        // Extrapolate to boundary ghost cells to maintain smooth boundaries
+        disk->sigma_dot_photoevap[0] = disk->sigma_dot_photoevap[1];
+        disk->sigma_dot_photoevap[N + 1] = disk->sigma_dot_photoevap[N];
     }
 }
 
