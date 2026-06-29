@@ -50,6 +50,10 @@ typedef struct {
     double fragmentation_factor;          /**< Mass reduction factor after fragmentation. */
     double fragmentation_velocity;        /**< Fragmentation threshold velocity [m/s]. */
     double drift_factor;                  /**< Scaling factor for dust drift speed. */        
+    bool cutoff;             // Replaces or adds the cutoff flag
+    double r_cutoff;         // The characteristic tapering radius (Rc)
+    double n_cutoff;         // The exponent factor (n) for sharpness
+    double total_disk_mass;  // The clean name for your total disk mass variable    
     double *sigma_dot_photoevap;           /**< Sink term for photoevaporation */
     double *photoevap_sink;
     double *dr_array;

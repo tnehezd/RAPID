@@ -19,7 +19,8 @@ void createDefaultOptions(ParserOptions *opt) {
     opt->number_of_dust_particles                   = 5000;
     opt->rmin_val                                   = 1.0;
     opt->rmax_val                                   = 100.0;
-    opt->sigma0_val                                 = 1.0; 
+    opt->sigma0_val                                 = 0.0; 
+    opt->total_disk_mass                            = 0.0; 
     opt->sigmap_exp_val                             = 0.5; 
     opt->alpha_visc_val                             = 0.01;
     opt->star_val                                   = 1.0;
@@ -79,10 +80,11 @@ void printUsageToTerminal() {
     fprintf(stderr, "  -n <val>       Number of grid points (default: 2000)\n"); // This is common for sim and init
     fprintf(stderr, "  -ri <val>      Inner radius (AU, default: 1.0)\n");
     fprintf(stderr, "  -ro <val>      Outer radius (AU, default: 100.0)\n");
-    fprintf(stderr, "  -sigma0_init <val> Initial gas surface density at 1 AU (M_sun/AU^2, default: 1.0)\n");
+    fprintf(stderr, "  -disk_mass <val>   Total gas disk mass in Solar Masses (Alternative to -sigma0_init)\n");
+    fprintf(stderr, "  -sigma0_init <val> Initial gas surface density at 1 AU (Alternative to -disk_mass)\n");
     fprintf(stderr, "  -index_init <val> Exponent of surface density profile (positive value, default: 0.5 for r^-0.5)\n"); 
     fprintf(stderr, "  -alpha_init <val> Alpha viscosity (default: 0.01)\n");
-    fprintf(stderr, "  -m0_init <val> Star mass (M_sun, default: 1.0)\n");
+    fprintf(stderr, "  -stellar_mass <val> Star mass (M_sun, default: 1.0)\n");
     fprintf(stderr, "  -h_init <val>  Aspect ratio at 1 AU (H/R, default: 0.05)\n");
     fprintf(stderr, "  -flind_init <val> Flaring index (default: 0.5)\n");
     fprintf(stderr, "  -rdzei <val>   Inner dead zone radius (AU, default: 0.0)\n");
@@ -117,6 +119,9 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
 
     fprintf(stderr, "DEBUG [parseCLIOptions]: Parsing command-line arguments (%d total).\n", argc);
     int i = 1;
+
+    bool flag_has_disk_mass = false;
+    bool flag_has_sigma0    = false;
 
     while (i < argc) {
         if(strcmp(argv[i], "-drift") == 0) {
@@ -186,9 +191,20 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
             i++; 
             if (i < argc) opt->rmax_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -ro.\n"); return 1; }; 
         } 
+        // --- PARSING THE NEW MASS OPTIONS ---
+        else if (strcmp(argv[i], "-disk_mass") == 0) {
+            i++;
+            if (i < argc) {
+                opt->total_disk_mass = atof(argv[i]);
+                flag_has_disk_mass = true;
+            } else { fprintf(stderr, "Error: Missing value for -disk_mass.\n"); return 1; }
+        }
         else if (strcmp(argv[i], "-sigma0_init") == 0) {
             i++; 
-            if (i < argc) opt->sigma0_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -sigma0_init.\n"); return 1; }; 
+            if (i < argc) {
+                opt->sigma0_val = atof(argv[i]);
+                flag_has_sigma0 = true;
+            } else { fprintf(stderr, "Error: Missing value for -sigma0_init.\n"); return 1; }; 
         }
         else if (strcmp(argv[i], "-index_init") == 0) { 
             i++; 
@@ -226,9 +242,9 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
             i++; 
             if (i < argc) opt->flind_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -flind_init.\n"); return 1; }; 
         }
-        else if (strcmp(argv[i], "-m0_init") == 0) { 
+        else if (strcmp(argv[i], "-stellar_mass") == 0) { 
             i++; 
-            if (i < argc) opt->star_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -m0_init.\n"); return 1; }; 
+            if (i < argc) opt->star_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -stellar_mass.\n"); return 1; }; 
         } 
         else if (strcmp(argv[i], "-eps") == 0) { 
             i++; 
@@ -323,6 +339,23 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
         }
         i++;
     }
+
+
+    // --- CRITICAL CONFLICT RESOLUTION GUARD ---
+    if (flag_has_disk_mass && flag_has_sigma0) {
+        fprintf(stderr, "\n=========================================================================\n");
+        fprintf(stderr, "FATAL RUNTIME ERROR: Overdetermined initial conditions detected.\n");
+        fprintf(stderr, "You provided BOTH '-disk_mass' and '-sigma0_init'.\n");
+        fprintf(stderr, "Please specify only one method to define the disk's initial scale.\n");
+        fprintf(stderr, "=========================================================================\n\n");
+        return 1;
+    }
+
+    // Fallback fall-throughs if neither was explicitly set by the user
+    if (!flag_has_disk_mass && !flag_has_sigma0) {
+        opt->sigma0_val = 1.0; // Apply the safe default fallback to Sigma0
+    }
+
 
     fprintf(stderr, "DEBUG [parseCLIOptions]: Command-line parsing complete.\n");
     return 0;

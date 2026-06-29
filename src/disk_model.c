@@ -1,6 +1,7 @@
 // src/disk_model.c
 
 #include "disk_model.h"   
+#include "init_tool_module.h"
 #include "config.h"       
 #include "simulation_types.h"
 #include "gas_physics.h"
@@ -42,23 +43,34 @@ void createInitialGasSurfaceDensity(DiskParameters *disk_params){
 
     int i;
   
-    // Check if cutoff profile should be applied using the variables we already have
-    // If the cutoff radius is non-zero, we apply the exponential taper to the power-law
-    if (disk_params->r_max > 30.0) { 
+    // Check if the exponential cutoff profile is enabled via configuration
+    if (disk_params->cutoff) { 
         // -------------------------------------------------------------------------
-        // OPTION A: Power-law with Exponential Cutoff (No structural changes needed)
+        // OPTION A: Power-law with Dynamically Normalized Exponential Cutoff
         // -------------------------------------------------------------------------
-        double r_cutoff = 30.0; // Hardcoded default comparison radius (Anna's reference)
+        double gamma = -1.0 * disk_params->sigma_power_law_index; 
+        double r_c   = disk_params->r_cutoff; 
+        double n_c   = disk_params->n_cutoff; 
+
+        // Compute the grid-integrated profile shape to find the correct normalization factor
+        double current_integral = 0.0;
         for(i = 1; i <= disk_params->grid_number; i++) {
             double r = disk_params->radial_grid[i];
-            double base_power_law = disk_params->sigma_0 * pow(r, disk_params->sigma_power_law_index);
-            
-            // Apply the exponential taper on top of your existing profile
-            disk_params->gas_surface_density_vector[i] = base_power_law * exp(-pow(r / r_cutoff, 1.0));    
+            double profile_shape = pow(r, -gamma) * exp(-pow(r / r_c, n_c));
+            current_integral += 2.0 * M_PI * r * profile_shape * disk_params->delta_r;
+        }
+
+        // Calculate the mathematically exact sigma_0 required to match the total disk mass
+        double dynamic_sigma_0 = disk_params->total_disk_mass / current_integral;
+
+        // Populate the active grid cells using the consistently normalized profile
+        for(i = 1; i <= disk_params->grid_number; i++) {
+            double r = disk_params->radial_grid[i];
+            disk_params->gas_surface_density_vector[i] = dynamic_sigma_0 * pow(r, -gamma) * exp(-pow(r / r_c, n_c));    
         }
     } else {
         // -------------------------------------------------------------------------
-        // OPTION B: Your Original Pure Power-Law Profile
+        // OPTION B: Pure, Un-truncated Power-Law Profile
         // -------------------------------------------------------------------------
         for(i = 1; i <= disk_params->grid_number; i++) {
             disk_params->gas_surface_density_vector[i] = disk_params->sigma_0 * pow(disk_params->radial_grid[i], disk_params->sigma_power_law_index);    

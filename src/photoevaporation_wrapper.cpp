@@ -95,15 +95,15 @@ void computePhotoevaporationSink(void *disk_opaque)
     Search_hole(log_r.data(), log_sigma.data(), gap, hole, r_hole, disk);
 
     // DEBUG LOG TO CATCH THE 20,000 YR CRASH
-    if (gap == 1 || hole == 1) {
-/*        std::cerr << "[WRAPPER DETECTED HOLE]: gap=" << gap 
+/*    if (gap == 1 || hole == 1) {
+        std::cerr << "[WRAPPER DETECTED HOLE]: gap=" << gap 
                   << ", hole=" << hole 
                   << ", r_hole=" << r_hole << " AU" << std::endl;
-*/        if (hole == 1 && r_hole == 0.0) {
+        if (hole == 1 && r_hole == 0.0) {
             std::cerr << "--> CRITICAL ERROR: Hole detected but r_hole is 0.0! Outer radius interpolation will explode." << std::endl;
         }
     }
-
+*/
     std::string model_mode(disk->photoevaporation_mode_string);
     std::transform(model_mode.begin(), model_mode.end(), model_mode.begin(), [](unsigned char c){ return std::tolower(c); });
 
@@ -153,7 +153,7 @@ void computePhotoevaporationSink(void *disk_opaque)
     // 5. Map the final linear-spaced profile back to your tracking array
     if (disk->sigma_dot_photoevap != nullptr) {
         for (int i = 0; i < N; i++) {
-            disk->sigma_dot_photoevap[i + 1] = local_evap_linear[i] * days_per_year;
+            disk->sigma_dot_photoevap[i + 1] = local_evap_linear[i];
         }
         
         disk->sigma_dot_photoevap[0] = disk->sigma_dot_photoevap[1];

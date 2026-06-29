@@ -102,6 +102,7 @@ int main(int argc, const char **argv) {
     disk_params.fragmentation_velocity = def.fragmenatation_velocity;
     disk_params.drift_factor = 0.55; // set by Birnstiel 2012
     disk_params.particle_density = def.pdensity_val;
+    disk_params.total_disk_mass = def.total_disk_mass;    
 
     // --- PHOTOEVAPORATION PARAMETER MAPPING AND WARNING LOGIC ---
     disk_params.enable_photoevaporation = def.enable_photoevaporation;
@@ -206,6 +207,7 @@ int main(int argc, const char **argv) {
         init_tool_params.micro_size_cm = def.mic_val;
         init_tool_params.one_size_particle_cm = def.onesize_val;
         init_tool_params.dust_density_g_cm3 = def.pdensity_val;
+        init_tool_params.total_disk_mass = disk_params.total_disk_mass;
 
         fprintf(stderr, "DEBUG [main]: InitializeDefaultOptions (init_tool_params) structure populated for profile generation.\n");
         fprintf(stderr, "DEBUG [main]: Calling runInitialization(&init_tool_params, &disk_params)...\n");

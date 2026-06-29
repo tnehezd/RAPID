@@ -36,6 +36,7 @@ typedef struct {
     double rmin_val;                                    /**< Inner disk radius. */
     double rmax_val;                                    /**< Outer disk radius. */
     double sigma0_val;                                  /**< Gas surface density normalization. */
+    double total_disk_mass;                             /**< Total mass of the disk in MSun unit */
     double sigmap_exp_val;                              /**< Power-law exponent of surface density. */
     double alpha_visc_val;                              /**< Disk viscosity parameter. */
     double star_val;                                    /**< Stellar mass. */

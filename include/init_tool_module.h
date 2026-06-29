@@ -38,7 +38,7 @@ typedef struct {
     double  deadzone_dr_outer;              /**< Smoothing width for the outer Dead Zone edge in AU. */
     double  deadzone_alpha_mod;             /**< Reduced alpha viscosity within the Dead Zone. */
     double  dust_to_gas_ratio;              /**< Global dust-to-gas mass ratio, \f$\epsilon\f$. */
-    double  disk_mass_dust;                 /**< Total mass of the dust component. */
+    double  total_disk_mass;                /**< Total mass of the two components of the disk. */
     double  one_size_particle_cm;           /**< Size of the large dust population in \f$cm\f$. */
     double  two_pop_ratio;                  /**< Mass ratio between the two dust populations. */
     double  micro_size_cm;                  /**< Size of the small (micron) dust population in \f$cm\f$. */

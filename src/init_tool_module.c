@@ -12,7 +12,6 @@
 #include <string.h> 
 #include <math.h>   
 
-
 void initializeDefaultOptions(InitializeDefaultOptions *def) {
     def->use_cutoff             = false; 
     def->n_grid_points          = 1000; 
@@ -33,7 +32,7 @@ void initializeDefaultOptions(InitializeDefaultOptions *def) {
     def->deadzone_alpha_mod     = 0.01;
 
     def->dust_to_gas_ratio      = 0.01;
-    def->disk_mass_dust         = 0.01; 
+    def->total_disk_mass        = 0.01; // FIXED: Renamed from disk_mass_dust
     def->one_size_particle_cm   = 1.0;
     def->two_pop_ratio          = 0.85; 
     def->micro_size_cm          = 1e-4; 
@@ -47,14 +46,18 @@ void initializeDefaultOptions(InitializeDefaultOptions *def) {
     def->n_for_cutoff           = 1.5;  
 }
 
+
 /**
- * @brief Calculates the normalization factor Sigma0 based on the selected Initial Condition type.
+ * @brief Computes the initial surface density constant (Sigma0 at 1 AU) from total mass,
+ * or dynamically BACK-CALCULATES the integrated disk mass if Sigma0 was provided.
  */
 static long double calculateSigm0FromDiskMass(InitializeDefaultOptions *init_opts) {
     double gamma = fabs(init_opts->sigma_exponent);
 
+    // -------------------------------------------------------------------------
+    // CASE 1: Pure Power-Law Profile
+    // -------------------------------------------------------------------------
     if (!init_opts->use_cutoff) {
-        // Mode: Normal Power-Law Normalization (\Sigma \propto r^-gamma)
         double exponent_for_integral = -gamma + 2.0;
         double denominator;
 
@@ -64,20 +67,36 @@ static long double calculateSigm0FromDiskMass(InitializeDefaultOptions *init_opt
             denominator = (pow(init_opts->r_outer, exponent_for_integral) - pow(init_opts->r_inner, exponent_for_integral)) / exponent_for_integral;
         }
 
-        if (fabs(denominator) < 1e-12) {
-            fprintf(stderr, "Error: Denominator is zero in Sigma0 calculation!\n");
-            return 0.0;
+        // IF SIGMA0 IS THE INPUT: Back-calculate the true total gas mass via analytical integral
+        if (init_opts->total_disk_mass <= 0.0) { 
+            long double true_gas_mass = 2.0 * M_PI * init_opts->sigma0_gas_au * denominator;
+            
+            // The total disk mass is the GAS mass (the dust is just a 1% component inside it)
+            init_opts->total_disk_mass = (double)true_gas_mass; 
+            return (long double)init_opts->sigma0_gas_au;
         }
-        return (long double)init_opts->disk_mass_dust / (2.0 * M_PI * init_opts->dust_to_gas_ratio * denominator);
+
+        // IF MASS IS THE INPUT: Compute Sigma0 from the provided total gas mass
+        return (long double)init_opts->total_disk_mass / (2.0 * M_PI * denominator);
     } 
+    // -------------------------------------------------------------------------
+    // CASE 2: Exponential Cutoff Profile (Lynden-Bell & Pringle 1974)
+    // -------------------------------------------------------------------------
     else {
-        // Mode: Exponential Cutoff Normalization (Lynden-Bell & Pringle 1974)
         double r_cut = init_opts->r_cutoff;
         double n_cut = init_opts->n_for_cutoff;
-        double gas_disk_mass = init_opts->disk_mass_dust / init_opts->dust_to_gas_ratio;
-
         double conversion_exponent = (2.0 - gamma) / n_cut;
-        long double sigma_1AU = (gas_disk_mass * n_cut) / 
+
+        // IF SIGMA0 IS THE INPUT: Back-calculate the cutoff-integrated total gas mass
+        if (init_opts->total_disk_mass <= 0.0) { 
+            long double true_gas_mass = (2.0 * M_PI * init_opts->sigma0_gas_au * pow(r_cut, 2.0) * tgamma(conversion_exponent)) / n_cut;
+            
+            init_opts->total_disk_mass = (double)true_gas_mass; 
+            return (long double)init_opts->sigma0_gas_au;
+        }
+
+        // IF MASS IS THE INPUT: Compute Sigma0 from the provided total gas mass with cutoff normalization
+        long double sigma_1AU = (init_opts->total_disk_mass * n_cut) / 
                                (2.0 * M_PI * pow(r_cut, 2.0) * tgamma(conversion_exponent));
         return sigma_1AU;
     }
@@ -90,11 +109,8 @@ static long double calculateGasSurfaceDensityInitTool(double r_au, InitializeDef
     double gamma = fabs(init_opts->sigma_exponent);
 
     if (!init_opts->use_cutoff) {
-        // Normal power law: \Sigma(r) = \Sigma_0 * r^-gamma
         return current_sigma0 * pow(r_au, -gamma);
     } else {
-        // FIX: Exponential cutoff profile CORRECTLY scaled to 1 AU normalization
-        // \Sigma(r) = \Sigma_1AU * r^-gamma * exp(-(r/Rc)^n)
         double r_scaled = r_au / init_opts->r_cutoff;
         return current_sigma0 * pow(r_au, -gamma) * exp(-pow(r_scaled, init_opts->n_for_cutoff));
     }
@@ -142,22 +158,8 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
     double drdze_inner_calculated = pow(default_options->deadzone_r_inner, 1.0 + default_options->flaring_index) * default_options->aspect_ratio * default_options->deadzone_dr_inner;
     double drdze_outer_calculated = pow(default_options->deadzone_r_outer, 1.0 + default_options->flaring_index) * default_options->aspect_ratio * default_options->deadzone_dr_outer;
 
-    // --- FIX: NO HARDCODED DEFAULT_disk_mass_DUST TEMPLATE CHECK ---
-    // If the parser parsed an explicit mass or cutoff configuration, calculate Sigma0 dynamically.
-    if (default_options->use_cutoff || default_options->disk_mass_dust > 0.0) {
-        current_sigma0_gas = calculateSigm0FromDiskMass(default_options);
-        if (default_options->use_cutoff) {
-            fprintf(stderr, "Sigma0 (at 1 AU reference template) calculated via Exponential Cutoff Profile: %Lg M_Sun/AU^2\n", current_sigma0_gas);
-        } else {
-            fprintf(stderr, "Sigma0 calculated from total dust disk mass (Md): %Lg M_Sun/AU^2\n", current_sigma0_gas);
-        }
-    } else {
-        current_sigma0_gas = default_options->sigma0_gas_au;
-        fprintf(stderr, "Using explicit Sigma0 (gas surface density at 1 AU): %Lg M_Sun/AU^2\n", current_sigma0_gas);
-    }
-
-    // --- FIX: REMOVED THE HARDCODED TWO_POP_RATIO = 1.0 OVERRIDE BLOCK ---
-    // The ratio is now always dynamically processed as passed from parser contexts.
+    current_sigma0_gas = calculateSigm0FromDiskMass(default_options);
+    
 
     char *full_init_dust_profile_path = NULL;
     char *full_disk_param_path = NULL;
@@ -178,24 +180,6 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
         if (gas_parameters_output_file) fclose(gas_parameters_output_file);
         return 1;
     }
-
-    fprintf(stderr, "\n--- Simulation Initialization Parameters ---\n");
-    fprintf(stderr, "  Total dust disk mass (Solar Mass):  %lg\n", default_options->disk_mass_dust);
-    fprintf(stderr, "  Inner disk edge (AU):               %lg\n", default_options->r_inner);
-    fprintf(stderr, "  Outer disk edge (AU):               %lg\n", default_options->r_outer);
-    if (default_options->use_cutoff) {
-        fprintf(stderr, "  Profile Style:                      [Exponential Cutoff Taper]\n");
-        fprintf(stderr, "  Characteristic Cutoff Radius (AU):  %lg\n", default_options->r_cutoff);
-        fprintf(stderr, "  Cutoff Sharpness Exponent (n):      %lg\n", default_options->n_for_cutoff);
-    } else {
-        fprintf(stderr, "  Profile Style:                      [Standard Pure Power-Law]\n");
-    }
-    fprintf(stderr, "  Surface density profile exponent:   %lg\n", fabs(default_options->sigma_exponent));
-    fprintf(stderr, "  Gas surface density at 1 AU:        %Lg M_Sun/AU^2\n", current_sigma0_gas);
-    fprintf(stderr, "  Dust to gas ratio:                  %lg\n", default_options->dust_to_gas_ratio);
-    fprintf(stderr, "  Number of gas grid points:          %d\n", default_options->n_grid_points); 
-    fprintf(stderr, "  Number of dust particles:           %d\n", default_options->n_dust_particles);
-    fprintf(stderr, "--------------------------------------------\n\n");
 
     HeaderData initial_header_data;
     initial_header_data.current_time = 0.0;
@@ -220,7 +204,6 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
     printFileHeader(gas_parameters_output_file, FILE_TYPE_GAS_DENSITY, &initial_header_data);
     printFileHeader(disk_parameters_output_file, FILE_TYPE_DISK_PARAM, &initial_header_data);
 
-    // --- FIX: ALL HARDCODED FALLBACK OVERRIDES REMOVED HERE ---
     disk_params->grid_number = default_options->n_grid_points; 
     disk_params->r_min = default_options->r_inner;
     disk_params->r_max = default_options->r_outer;
@@ -304,7 +287,6 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
         
         double s_max_cm;
 
-        // --- FIX: CHECK AGAINST ONE_SIZE TRACKING DYNAMICALLY AS PASSED ---
         if (default_options->one_size_particle_cm > 0.0) {
             s_max_cm = default_options->one_size_particle_cm;
         } else {
@@ -367,6 +349,25 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
 
     fflush(disk_parameters_output_file);
     fclose(disk_parameters_output_file);
+
+
+    fprintf(stderr, "\n--- Simulation Initialization Parameters ---\n");
+    fprintf(stderr, "  Total disk mass (Solar Mass):       %lg\n", default_options->total_disk_mass); // FIXED: Renamed to total_disk_mass
+    fprintf(stderr, "  Inner disk edge (AU):               %lg\n", default_options->r_inner);
+    fprintf(stderr, "  Outer disk edge (AU):               %lg\n", default_options->r_outer);
+    if (default_options->use_cutoff) {
+        fprintf(stderr, "  Profile Style:                      [Exponential Cutoff Taper]\n");
+        fprintf(stderr, "  Characteristic Cutoff Radius (AU):  %lg\n", default_options->r_cutoff);
+        fprintf(stderr, "  Cutoff Sharpness Exponent (n):      %lg\n", default_options->n_for_cutoff);
+    } else {
+        fprintf(stderr, "  Profile Style:                      [Standard Pure Power-Law]\n");
+    }
+    fprintf(stderr, "  Surface density profile exponent:   %lg\n", fabs(default_options->sigma_exponent));
+    fprintf(stderr, "  Gas surface density at 1 AU:        %Lg M_Sun/AU^2\n", current_sigma0_gas);
+    fprintf(stderr, "  Dust to gas ratio:                  %lg\n", default_options->dust_to_gas_ratio);
+    fprintf(stderr, "  Number of gas grid points:          %d\n", default_options->n_grid_points); 
+    fprintf(stderr, "  Number of dust particles:           %d\n", default_options->n_dust_particles);
+    fprintf(stderr, "--------------------------------------------\n\n");
 
     return 0;
 }
