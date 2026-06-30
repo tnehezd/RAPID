@@ -28,7 +28,7 @@ disk_parameters:
   # PHOTOEVAPORATION SELECTION
   # Options: "Owen", "Picogna"
   photoevaporation_mode: "Picogna"
-  xray_luminosity_erg_s: 1.0e30
+  xray_luminosity_erg_s: 3.0e30
   # INITIAL CONDITION PROFILE SELECTOR
   # Set to True to enable Anna's self-similar profile with exponential taper
   # Set to False to use the standard pure power-law profile

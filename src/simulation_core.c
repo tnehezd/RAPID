@@ -406,6 +406,7 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
     int step_counter = 0;
     double current_disk_mass = initial_disk_mass;
     double target_termination_mass = initial_disk_mass * 0.001;
+    double DENSITY_FLOOR = 1e-12;
 
     do {
         double deltat = calculateTimeStep(disk_params) / 5.0;
@@ -425,6 +426,7 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
         // --- TÖMEG SZÁMÍTÁSA MINDEN LÉPÉSBEN A LOGOLÁSHOZ ÉS LEÁLLÍTÁSHOZ ---
         current_disk_mass = 0.0;
         int has_nan = 0;
+        int fully_evaporated_cells = 0;
 
         for (int i = 1; i <= disk_params->grid_number; i++) {
             // Biztonsági játék: ha a sűrűség negatívvá válna a fotóevaporáció miatt, ne engedjük!
@@ -434,6 +436,10 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
 
             if (isnan(disk_params->gas_surface_density_vector[i])) {
                 has_nan = 1;
+            }
+
+            if (disk_params->gas_surface_density_vector[i] <= DENSITY_FLOOR) {
+                fully_evaporated_cells++;
             }
 
             double cell_mass = 2.0 * M_PI * disk_params->radial_grid[i] * disk_params->delta_r * disk_params->gas_surface_density_vector[i];
@@ -448,10 +454,12 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
 
         // --- AUTOMATIKUS LEÁLLÍTÁS CRITERIA (KITERJESZTVE) ---
         // Ha a tömeg kisebb a küszöbnél, VAGY ha NaN lett, VAGY ha a has_nan flag bejelzett
-        if (current_disk_mass < target_termination_mass || isnan(current_disk_mass) || has_nan) { 
+        if (current_disk_mass < target_termination_mass || isnan(current_disk_mass) || has_nan || (fully_evaporated_cells >= (int)(disk_params->grid_number * 0.95))) { 
             fprintf(stderr, "\n\n[TERMINATION]: Early exit triggered!\n");
             if (isnan(current_disk_mass) || has_nan) {
                 fprintf(stderr, "Reason: Numerical instability detected (NaN). Disk is effectively evaporated.\n");
+            } else if (fully_evaporated_cells >= (int)(disk_params->grid_number * 0.95)) {
+                fprintf(stderr, "Reason: 95%% of the radial grid cells are fully evaporated (below %.1e M_Sun).\n", DENSITY_FLOOR);
             } else {
                 fprintf(stderr, "Reason: Disk mass reached the 0.1%% threshold: %.4e M_Sun (Target: %.4e M_Sun)\n", 
                         current_disk_mass, target_termination_mass);
