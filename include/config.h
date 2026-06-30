@@ -45,6 +45,15 @@ extern FILE *load_dust_particles_file;  /**< Pointer to the input file used for 
 /** @brief One Astronomical Unit in centimeters (CGS units). */
 #define AU_IN_CM                                1.496e13     
 
+/** @brief Factor to convert days to years. */
+#define DAYS_PER_YEAR_CONVERSION_FACTOR         2.737850787e-3
+
+/** @brief Factor to convert years to days. */
+#define YEARS_PER_DAY_CONVERSION_FACTOR         365.242199
+
+/** @brief Safety maximum value for timestep calculations. */
+#define TIMESTEP_MAX_SAFETY_LIMIT               -10000.0
+
 /** @brief Numerical safety factor used for rounding or thresholding operations. */
 #define ROUNDING_FACTOR                         1.0          
 

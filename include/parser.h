@@ -36,6 +36,7 @@ typedef struct {
     double rmin_val;                                    /**< Inner disk radius. */
     double rmax_val;                                    /**< Outer disk radius. */
     double sigma0_val;                                  /**< Gas surface density normalization. */
+    double total_disk_mass;                             /**< Total mass of the disk in MSun unit */
     double sigmap_exp_val;                              /**< Power-law exponent of surface density. */
     double alpha_visc_val;                              /**< Disk viscosity parameter. */
     double star_val;                                    /**< Stellar mass. */
@@ -58,6 +59,14 @@ typedef struct {
     double pdensity_val;                                /**< Dust particle density. */
     int output_format;                                  /**< Output format selector (0 = ASCII, 1 = HDF5). */
 
+    bool enable_photoevaporation;                       /**< Option for enabling photoevaporation */
+    char photoevaporation_mode[32];                     /**< Switch between Picogna, or Owen model */
+    double xray_luminosity;                             /**< X-ray luminosity of the central star */
+    
+    double enable_cutoff;                               /**< Enable cutoff radius */
+    bool   use_cutoff;                                  /**< Profile style: false = Normal Power-law, true = Cutoff */
+    double r_cutoff;                                    /**< Scaling/tapering radius for cutoff profile [AU] */
+    double n_for_cutoff;                                /**< Shape/sharpness parameter for exponential cutoff */
 } ParserOptions;
 
 /**

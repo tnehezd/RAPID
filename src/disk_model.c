@@ -1,6 +1,7 @@
 // src/disk_model.c
 
 #include "disk_model.h"   
+#include "init_tool_module.h"
 #include "config.h"       
 #include "simulation_types.h"
 #include "gas_physics.h"
@@ -31,65 +32,95 @@ void readDiskParameters(DiskParameters *disk_params) {
 
 
 void createRadialGrid(DiskParameters *disk_params) {
-	
-	int i;
- 	for(i = 0; i <= disk_params->grid_number+1; i++) {						
- 		disk_params->radial_grid[i] = disk_params->r_min + (i-1) * disk_params->delta_r;
-	}
+    
+    int i;
+    for(i = 0; i <= disk_params->grid_number+1; i++) {                      
+        disk_params->radial_grid[i] = disk_params->r_min + (i-1) * disk_params->delta_r;
+    }
 }
 
-void createInitialGasSurfaceDensity(DiskParameters *disk_params){	
+void createInitialGasSurfaceDensity(DiskParameters *disk_params){   
 
-  	int i;
+    int i;
   
-  	for(i = 1; i <= disk_params->grid_number; i++) {
-    		disk_params->gas_surface_density_vector[i] = disk_params->sigma_0 * pow(disk_params->radial_grid[i],disk_params->sigma_power_law_index);	
+    // Check if the exponential cutoff profile is enabled via configuration
+    if (disk_params->cutoff) { 
+        // -------------------------------------------------------------------------
+        // OPTION A: Power-law with Dynamically Normalized Exponential Cutoff
+        // -------------------------------------------------------------------------
+        double gamma = -1.0 * disk_params->sigma_power_law_index; 
+        double r_c   = disk_params->r_cutoff; 
+        double n_c   = disk_params->n_cutoff; 
+
+        // Compute the grid-integrated profile shape to find the correct normalization factor
+        double current_integral = 0.0;
+        for(i = 1; i <= disk_params->grid_number; i++) {
+            double r = disk_params->radial_grid[i];
+            double profile_shape = pow(r, -gamma) * exp(-pow(r / r_c, n_c));
+            current_integral += 2.0 * M_PI * r * profile_shape * disk_params->delta_r;
+        }
+
+        // Calculate the mathematically exact sigma_0 required to match the total disk mass
+        double dynamic_sigma_0 = disk_params->total_disk_mass / current_integral;
+
+        // Populate the active grid cells using the consistently normalized profile
+        for(i = 1; i <= disk_params->grid_number; i++) {
+            double r = disk_params->radial_grid[i];
+            disk_params->gas_surface_density_vector[i] = dynamic_sigma_0 * pow(r, -gamma) * exp(-pow(r / r_c, n_c));    
+        }
+    } else {
+        // -------------------------------------------------------------------------
+        // OPTION B: Pure, Un-truncated Power-Law Profile
+        // -------------------------------------------------------------------------
+        for(i = 1; i <= disk_params->grid_number; i++) {
+            disk_params->gas_surface_density_vector[i] = disk_params->sigma_0 * pow(disk_params->radial_grid[i], disk_params->sigma_power_law_index);    
+        }
     }
 
-  	applyBoundaryConditions(disk_params->gas_surface_density_vector,disk_params);
+    applyBoundaryConditions(disk_params->gas_surface_density_vector, disk_params);
 }
 
-void createInitialGasPressure(DiskParameters *disk_params){	
+void createInitialGasPressure(DiskParameters *disk_params){ 
 
-  	int i;
+    int i;
   
-  	for(i = 1; i <= disk_params->grid_number; i++) {
-    		disk_params->gas_pressure_vector[i] = calculateGasPressure(disk_params->gas_surface_density_vector[i],disk_params->radial_grid[i],disk_params);
-  	}
-  	applyBoundaryConditions(disk_params->gas_pressure_vector,disk_params);
+    for(i = 1; i <= disk_params->grid_number; i++) {
+            disk_params->gas_pressure_vector[i] = calculateGasPressure(disk_params->gas_surface_density_vector[i],disk_params->radial_grid[i],disk_params);
+    }
+    applyBoundaryConditions(disk_params->gas_pressure_vector,disk_params);
 
 }
 
 void createInitialGasPressureGradient(DiskParameters *disk_params){
 
-	calculateGasPressureGradient(disk_params);
-   	applyBoundaryConditions(disk_params->gas_pressure_gradient_vector,disk_params);
+    calculateGasPressureGradient(disk_params);
+    applyBoundaryConditions(disk_params->gas_pressure_gradient_vector,disk_params);
 
 }
 
-void createInitialGasVelocity(DiskParameters *disk_params){	
- 	
-	calculateGasRadialVelocity(disk_params);
-  	applyBoundaryConditions(disk_params->gas_velocity_vector,disk_params);
+void createInitialGasVelocity(DiskParameters *disk_params){ 
+    
+    calculateGasRadialVelocity(disk_params);
+    applyBoundaryConditions(disk_params->gas_velocity_vector,disk_params);
 }
 
 
 
 void calculateDustSurfaceDensityFromRepresentativeMass(double input_dust_radii_array[][2], double *input_mass_array, double output_dust_surfacedensity_array[][3], int particle_number, const DiskParameters *disk_params) {
 
-	int i;
+    int i;
 
-	for(i=0;i<particle_number;i++){
+    for(i=0;i<particle_number;i++){
 
-		if((input_dust_radii_array[i][0] >= disk_params->r_min)) {
-			output_dust_surfacedensity_array[i][0] = input_mass_array[i] / (2. * (input_dust_radii_array[i][0]-disk_params->delta_r/2.) * M_PI * disk_params->delta_r);	// sigma = m /(2 * r * pi * dr) --> dr is the original grid step
-			output_dust_surfacedensity_array[i][1] = input_dust_radii_array[i][0];																	
+        if((input_dust_radii_array[i][0] >= disk_params->r_min)) {
+            output_dust_surfacedensity_array[i][0] = input_mass_array[i] / (2. * (input_dust_radii_array[i][0]-disk_params->delta_r/2.) * M_PI * disk_params->delta_r); // sigma = m /(2 * r * pi * dr) --> dr is the original grid step
+            output_dust_surfacedensity_array[i][1] = input_dust_radii_array[i][0];                                                                  
 
-  			double radial_cell_position = (input_dust_radii_array[i][0] - disk_params->r_min) / disk_params->delta_r;     				
-			int radial_index = (int) floor(radial_cell_position);														
-			output_dust_surfacedensity_array[i][2] = (double) radial_index;
-		} else {
-			memset(output_dust_surfacedensity_array[i], 0, 3 * sizeof(double));
-		}
-	}
+            double radial_cell_position = (input_dust_radii_array[i][0] - disk_params->r_min) / disk_params->delta_r;                   
+            int radial_index = (int) floor(radial_cell_position);                                                       
+            output_dust_surfacedensity_array[i][2] = (double) radial_index;
+        } else {
+            memset(output_dust_surfacedensity_array[i], 0, 3 * sizeof(double));
+        }
+    }
 }

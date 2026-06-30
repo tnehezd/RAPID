@@ -129,7 +129,7 @@ void writeHDF5SnapshotToFile(double time, hid_t file_id, const SimulationOptions
     (void)sim_opts; // unused
 
     // -------------------
-    // GAS GROUP
+    // GAS GROUP (Mindig lefut, gáz-only és drift módban is)
     // -------------------
     hid_t group_gas = H5Gcreate2(file_id, "/gas_grid", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     H5Gclose(group_gas);
@@ -162,75 +162,76 @@ void writeHDF5SnapshotToFile(double time, hid_t file_id, const SimulationOptions
     H5Sclose(space_gas);
 
     // -------------------
-    // DUST EULER
+    // DUST EULER (CSAK ha van érvényes por rács!)
     // -------------------
-    hid_t group_dust = H5Gcreate2(file_id, "/dust_grid", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    H5Gclose(group_dust);
+    if (particle_data != NULL && particle_data->dust_surfacedensity != NULL) {
+        hid_t group_dust = H5Gcreate2(file_id, "/dust_grid", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        H5Gclose(group_dust);
 
-    hsize_t dims_grid[1] = { disk_params->grid_number };
-    hid_t space_grid = H5Screate_simple(1, dims_grid, NULL);
+        hsize_t dims_grid[1] = { disk_params->grid_number };
+        hid_t space_grid = H5Screate_simple(1, dims_grid, NULL);
 
-    hid_t dset_surface = H5Dcreate2(file_id, "/dust_grid/surface_density", H5T_NATIVE_DOUBLE,
-                                    space_grid, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    hid_t dset_dust_grid = H5Dcreate2(file_id, "/dust_grid/radial_grid", H5T_NATIVE_DOUBLE,
-                                      space_grid, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        hid_t dset_surface = H5Dcreate2(file_id, "/dust_grid/surface_density", H5T_NATIVE_DOUBLE,
+                                        space_grid, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        hid_t dset_dust_grid = H5Dcreate2(file_id, "/dust_grid/radial_grid", H5T_NATIVE_DOUBLE,
+                                          space_grid, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
-    H5Dwrite(dset_surface, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-             particle_data->dust_surfacedensity);
-    H5Dwrite(dset_dust_grid, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-             disk_params->radial_grid);
+        H5Dwrite(dset_surface, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
+                 particle_data->dust_surfacedensity);
+        H5Dwrite(dset_dust_grid, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
+                 disk_params->radial_grid);
 
-    H5Dclose(dset_surface);
-    H5Dclose(dset_dust_grid);
-    H5Sclose(space_grid);
+        H5Dclose(dset_surface);
+        H5Dclose(dset_dust_grid);
+        H5Sclose(space_grid);
+    }
 
 
     // --------------------
-    // PARTICLE LAGRANGIAN
+    // PARTICLE LAGRANGIAN (CSAK ha a részecskeszám > 0)
     // --------------------
+    if (particle_data != NULL && particle_data->allocated_particle_number > 0) {
+        hid_t group_particles = H5Gcreate2(file_id, "/particles", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        H5Gclose(group_particles);
 
-    hid_t group_particles = H5Gcreate2(file_id, "/particles", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    H5Gclose(group_particles);
+        hsize_t dims_particles[1] = { particle_data->allocated_particle_number };
+        hid_t space_particles = H5Screate_simple(1, dims_particles, NULL);
 
-    hsize_t dims_particles[1] = { particle_data->allocated_particle_number };
-    hid_t space_particles = H5Screate_simple(1, dims_particles, NULL);
+        hid_t dset_positions = H5Dcreate2(file_id, "/particles/position", H5T_NATIVE_DOUBLE, space_particles,
+                                          H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        double *positions = malloc(dims_particles[0] * sizeof(double));
+        for (size_t i = 0; i < dims_particles[0]; i++) {
+            positions[i] = particle_data->particle_distance_array[i][1] * AU_IN_CM;
+        }
+        H5Dwrite(dset_positions, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, positions);
+        H5Dclose(dset_positions);
+        free(positions);
 
-    hid_t dset_positions = H5Dcreate2(file_id, "/particles/position", H5T_NATIVE_DOUBLE, space_particles,
+        hid_t dset_size = H5Dcreate2(file_id, "/particles/size", H5T_NATIVE_DOUBLE, space_particles,
+                                     H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        double *sizes = malloc(dims_particles[0] * sizeof(double));
+        for (size_t i = 0; i < dims_particles[0]; i++) {
+            sizes[i] = particle_data->dust_particle_mass_array[i][1];
+        }
+        H5Dwrite(dset_size, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, sizes);
+        H5Dclose(dset_size);
+        free(sizes);
+
+        hid_t dset_index = H5Dcreate2(file_id, "/particles/index", H5T_NATIVE_INT, space_particles,
                                       H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    double *positions = malloc(dims_particles[0] * sizeof(double));
-    for (size_t i = 0; i < dims_particles[0]; i++) {
-        positions[i] = particle_data->particle_distance_array[i][1] * AU_IN_CM;
+        int *indices = malloc(dims_particles[0] * sizeof(int));
+        for (size_t i = 0; i < dims_particles[0]; i++) indices[i] = (int)i;
+        H5Dwrite(dset_index, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, indices);
+        H5Dclose(dset_index);
+        free(indices);
+
+        H5Sclose(space_particles);
     }
-    H5Dwrite(dset_positions, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, positions);
-    H5Dclose(dset_positions);
-    free(positions);
-
-    hid_t dset_size = H5Dcreate2(file_id, "/particles/size", H5T_NATIVE_DOUBLE, space_particles,
-                                 H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    double *sizes = malloc(dims_particles[0] * sizeof(double));
-    for (size_t i = 0; i < dims_particles[0]; i++) {
-        sizes[i] = particle_data->dust_particle_mass_array[i][1];
-    }
-    H5Dwrite(dset_size, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, sizes);
-    H5Dclose(dset_size);
-    free(sizes);
-
-    // -- original index 0..N-1
-    hid_t dset_index = H5Dcreate2(file_id, "/particles/index", H5T_NATIVE_INT, space_particles,
-                                  H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    int *indices = malloc(dims_particles[0] * sizeof(int));
-    for (size_t i = 0; i < dims_particles[0]; i++) indices[i] = (int)i;
-    H5Dwrite(dset_index, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, indices);
-    H5Dclose(dset_index);
-    free(indices);
-
-    H5Sclose(space_particles);
 
 
     // -------------------
-    // FRAME / TIME
+    // FRAME / TIME (Mindig lefut, a Python plot ezerrel várja)
     // -------------------
-
     hid_t group_frame = H5Gcreate2(file_id, "/frame", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     if (group_frame < 0) {
         fprintf(stderr, "ERROR: Could not create /frame group\n");
@@ -261,62 +262,39 @@ void writeHDF5SnapshotToFile(double time, hid_t file_id, const SimulationOptions
 
 
     // -------------------
-    // FRAME ATTRIBUTE: code_version
+    // FRAME ATTRIBUTES (Metadaták verzióhoz és kompilációhoz)
     // -------------------
-
     hid_t attr_type = H5Tcopy(H5T_C_S1);
     H5Tset_size(attr_type, strlen(SIM_VERSION));
     H5Tset_strpad(attr_type, H5T_STR_NULLTERM);
-
     hid_t attr_space = H5Screate(H5S_SCALAR);
-
     hid_t attr = H5Acreate2(group_frame, "code_version", attr_type, attr_space, H5P_DEFAULT, H5P_DEFAULT);
-
     H5Awrite(attr, attr_type, SIM_VERSION);
-
     H5Aclose(attr);
     H5Sclose(attr_space);
     H5Tclose(attr_type);
 
-
-
-    // -------------------
-    // FRAME ATTRIBUTE: compile_date
-    // -------------------
-
     hid_t attr_type_date = H5Tcopy(H5T_C_S1);
     H5Tset_size(attr_type_date, strlen(__DATE__));
     H5Tset_strpad(attr_type_date, H5T_STR_NULLTERM);
-
     hid_t attr_space_date = H5Screate(H5S_SCALAR);
-
     hid_t attr_date = H5Acreate2(group_frame, "compile_date", attr_type_date, attr_space_date, H5P_DEFAULT, H5P_DEFAULT);
-
     H5Awrite(attr_date, attr_type_date, __DATE__);
-
     H5Aclose(attr_date);
     H5Sclose(attr_space_date);
     H5Tclose(attr_type_date);
 
-    // -------------------
-    // FRAME ATTRIBUTE: compile_time
-    // -------------------
-
     hid_t attr_type_time = H5Tcopy(H5T_C_S1);
     H5Tset_size(attr_type_time, strlen(__TIME__));
     H5Tset_strpad(attr_type_time, H5T_STR_NULLTERM);
-
     hid_t attr_space_time = H5Screate(H5S_SCALAR);
-
     hid_t attr_time = H5Acreate2(group_frame, "compile_time", attr_type_time, attr_space_time, H5P_DEFAULT, H5P_DEFAULT);
-
     H5Awrite(attr_time, attr_type_time, __TIME__);
-
     H5Aclose(attr_time);
     H5Sclose(attr_space_time);
     H5Tclose(attr_type_time);
+    
     H5Gclose(group_frame);
-
 }
 
 void closeHDF5File(OutputFiles *output_files) {

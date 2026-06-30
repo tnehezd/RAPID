@@ -19,7 +19,8 @@ void createDefaultOptions(ParserOptions *opt) {
     opt->number_of_dust_particles                   = 5000;
     opt->rmin_val                                   = 1.0;
     opt->rmax_val                                   = 100.0;
-    opt->sigma0_val                                 = 1.0; 
+    opt->sigma0_val                                 = 0.0; 
+    opt->total_disk_mass                            = 0.0; 
     opt->sigmap_exp_val                             = 0.5; 
     opt->alpha_visc_val                             = 0.01;
     opt->star_val                                   = 1.0;
@@ -45,6 +46,16 @@ void createDefaultOptions(ParserOptions *opt) {
     opt->pdensity_val                               = 1.6; 
     opt->output_format                              = OUTPUT_ASCII;
 
+    opt->enable_photoevaporation                    = false;       // off by default
+    strncpy(opt->photoevaporation_mode, "None", sizeof(opt->photoevaporation_mode) - 1);
+    opt->photoevaporation_mode[sizeof(opt->photoevaporation_mode) - 1] = '\0';
+    opt->xray_luminosity                            = 1.0e30;      // Standard X-ray luminosity [erg/s]
+    
+    opt->enable_cutoff                          = 0.0; 
+    opt->use_cutoff                             = false; // Default: Normal profile
+    opt->r_cutoff                               = 30.0;  
+    opt->n_for_cutoff                           = 1.5;
+
     fprintf(stderr, "Default options setting complete.\n");
 }
 
@@ -69,10 +80,11 @@ void printUsageToTerminal() {
     fprintf(stderr, "  -n <val>       Number of grid points (default: 2000)\n"); // This is common for sim and init
     fprintf(stderr, "  -ri <val>      Inner radius (AU, default: 1.0)\n");
     fprintf(stderr, "  -ro <val>      Outer radius (AU, default: 100.0)\n");
-    fprintf(stderr, "  -sigma0_init <val> Initial gas surface density at 1 AU (M_sun/AU^2, default: 1.0)\n");
+    fprintf(stderr, "  -disk_mass <val>   Total gas disk mass in Solar Masses (Alternative to -sigma0_init)\n");
+    fprintf(stderr, "  -sigma0_init <val> Initial gas surface density at 1 AU (Alternative to -disk_mass)\n");
     fprintf(stderr, "  -index_init <val> Exponent of surface density profile (positive value, default: 0.5 for r^-0.5)\n"); 
     fprintf(stderr, "  -alpha_init <val> Alpha viscosity (default: 0.01)\n");
-    fprintf(stderr, "  -m0_init <val> Star mass (M_sun, default: 1.0)\n");
+    fprintf(stderr, "  -stellar_mass <val> Star mass (M_sun, default: 1.0)\n");
     fprintf(stderr, "  -h_init <val>  Aspect ratio at 1 AU (H/R, default: 0.05)\n");
     fprintf(stderr, "  -flind_init <val> Flaring index (default: 0.5)\n");
     fprintf(stderr, "  -rdzei <val>   Inner dead zone radius (AU, default: 0.0)\n");
@@ -92,6 +104,14 @@ void printUsageToTerminal() {
     fprintf(stderr, "  --output-format <ascii|hdf5>  Select output format (default: ascii)\n");
     fprintf(stderr, "  -ascii                        Shortcut for --output-format ascii\n");
     fprintf(stderr, "  -hdf5                       Shortcut for --output-format hdf5\n");
+    fprintf(stderr, "Photoevaporation options:\n");
+    fprintf(stderr, "  -photoevap <0|1>  Enable/disable photoevaporation globally (default: 0 = false)\n");
+    fprintf(stderr, "  -photoevap_mode <string>  Model selection: 'Owen' or 'Picogna' (default: 'None')\n");
+    fprintf(stderr, "  -xray_lumosity <val>         Stellar X-ray luminosity in erg/s (default: 1.0e30)\n");
+    fprintf(stderr,"Initial Condition Profiles:\n");
+    fprintf(stderr,"  -cutoff <0|1>               Enable Anna's self-similar profile with exponential taper\n");
+    fprintf(stderr,"  -cutoff_radius <double>     Tapering radius in AU for cutoff style (default: 30.0)\n");
+    fprintf(stderr,"  -cutoff_sharpness <double>     Sharpness factor for exponential cutoff (default: 1.5)\n\n");
 
 }
 
@@ -99,6 +119,9 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
 
     fprintf(stderr, "DEBUG [parseCLIOptions]: Parsing command-line arguments (%d total).\n", argc);
     int i = 1;
+
+    bool flag_has_disk_mass = false;
+    bool flag_has_sigma0    = false;
 
     while (i < argc) {
         if(strcmp(argv[i], "-drift") == 0) {
@@ -168,9 +191,20 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
             i++; 
             if (i < argc) opt->rmax_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -ro.\n"); return 1; }; 
         } 
+        // --- PARSING THE NEW MASS OPTIONS ---
+        else if (strcmp(argv[i], "-disk_mass") == 0) {
+            i++;
+            if (i < argc) {
+                opt->total_disk_mass = atof(argv[i]);
+                flag_has_disk_mass = true;
+            } else { fprintf(stderr, "Error: Missing value for -disk_mass.\n"); return 1; }
+        }
         else if (strcmp(argv[i], "-sigma0_init") == 0) {
             i++; 
-            if (i < argc) opt->sigma0_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -sigma0_init.\n"); return 1; }; 
+            if (i < argc) {
+                opt->sigma0_val = atof(argv[i]);
+                flag_has_sigma0 = true;
+            } else { fprintf(stderr, "Error: Missing value for -sigma0_init.\n"); return 1; }; 
         }
         else if (strcmp(argv[i], "-index_init") == 0) { 
             i++; 
@@ -208,9 +242,9 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
             i++; 
             if (i < argc) opt->flind_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -flind_init.\n"); return 1; }; 
         }
-        else if (strcmp(argv[i], "-m0_init") == 0) { 
+        else if (strcmp(argv[i], "-stellar_mass") == 0) { 
             i++; 
-            if (i < argc) opt->star_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -m0_init.\n"); return 1; }; 
+            if (i < argc) opt->star_val = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -stellar_mass.\n"); return 1; }; 
         } 
         else if (strcmp(argv[i], "-eps") == 0) { 
             i++; 
@@ -253,6 +287,43 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
                 return 1;
             }
         }
+
+        else if (strcmp(argv[i], "-photoevap") == 0) {
+            i++;
+            if (i < argc) {
+                int val = atoi(argv[i]);
+                opt->enable_photoevaporation = (val != 0);
+            } else { fprintf(stderr, "Error: Missing value for -photoevap.\n"); return 1; }
+        }
+        else if (strcmp(argv[i], "-photoevap_mode") == 0) {
+            i++;
+            if (i < argc) {
+                strncpy(opt->photoevaporation_mode, argv[i], sizeof(opt->photoevaporation_mode) - 1);
+                opt->photoevaporation_mode[sizeof(opt->photoevaporation_mode) - 1] = '\0';
+                
+                if (strcasecmp(opt->photoevaporation_mode, "none") != 0) {
+                    opt->enable_photoevaporation = true;
+                }
+            } else { fprintf(stderr, "Error: Missing value for -photoevap_mode.\n"); return 1; }
+        }
+        else if (strcmp(argv[i], "-xray_luminosity") == 0) {
+            i++;
+            if (i < argc) opt->xray_luminosity = atof(argv[i]); else { fprintf(stderr, "Error: Missing value for -xray_luminosity.\n"); return 1; }
+        }
+
+        else if (strcmp(argv[i], "-cutoff") == 0) {
+            opt->enable_cutoff = atof(argv[++i]); // Beolvassa a mögötte lévő 1.0-át!
+            if (opt->enable_cutoff == 1.0) {
+                opt->use_cutoff = true;
+            }
+        }
+        else if (strcmp(argv[i], "-cutoff_radius") == 0) {
+            if (i + 1 < argc) opt->r_cutoff = atof(argv[++i]);
+        }
+        else if (strcmp(argv[i], "-cutoff_sharpness") == 0) {
+            if (i + 1 < argc) opt->n_for_cutoff = atof(argv[++i]);
+        }        
+
         else if (strcmp(argv[i], "-ascii") == 0) {
             opt->output_format = OUTPUT_ASCII;
         }
@@ -268,6 +339,23 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
         }
         i++;
     }
+
+
+    // --- CRITICAL CONFLICT RESOLUTION GUARD ---
+    if (flag_has_disk_mass && flag_has_sigma0) {
+        fprintf(stderr, "\n=========================================================================\n");
+        fprintf(stderr, "FATAL RUNTIME ERROR: Overdetermined initial conditions detected.\n");
+        fprintf(stderr, "You provided BOTH '-disk_mass' and '-sigma0_init'.\n");
+        fprintf(stderr, "Please specify only one method to define the disk's initial scale.\n");
+        fprintf(stderr, "=========================================================================\n\n");
+        return 1;
+    }
+
+    // Fallback fall-throughs if neither was explicitly set by the user
+    if (!flag_has_disk_mass && !flag_has_sigma0) {
+        opt->sigma0_val = 1.0; // Apply the safe default fallback to Sigma0
+    }
+
 
     fprintf(stderr, "DEBUG [parseCLIOptions]: Command-line parsing complete.\n");
     return 0;

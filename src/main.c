@@ -1,3 +1,9 @@
+/**
+ * @file main.c
+ * @brief Main execution core and simulation orchestrator.
+ * @date 2026-06-26
+ */
+
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -96,6 +102,26 @@ int main(int argc, const char **argv) {
     disk_params.fragmentation_velocity = def.fragmenatation_velocity;
     disk_params.drift_factor = 0.55; // set by Birnstiel 2012
     disk_params.particle_density = def.pdensity_val;
+    disk_params.total_disk_mass = def.total_disk_mass;    
+
+    // --- PHOTOEVAPORATION PARAMETER MAPPING AND WARNING LOGIC ---
+    disk_params.enable_photoevaporation = def.enable_photoevaporation;
+    disk_params.xray_luminosity = def.xray_luminosity;
+    strncpy(disk_params.photoevaporation_mode_string, def.photoevaporation_mode, sizeof(disk_params.photoevaporation_mode_string) - 1);
+    disk_params.photoevaporation_mode_string[sizeof(disk_params.photoevaporation_mode_string) - 1] = '\0';
+
+    // Warn the user if a specific model is configured but photoevaporation is globally disabled
+    if (!disk_params.enable_photoevaporation) {
+        if (strcasecmp(disk_params.photoevaporation_mode_string, "none") != 0 && 
+            strcasecmp(disk_params.photoevaporation_mode_string, "") != 0) {
+            
+            fprintf(stderr, "\n********************************************************************************\n");
+            fprintf(stderr, "WARNING: Photoevaporation is globally set to FALSE, but a specific mode ('%s')\n", disk_params.photoevaporation_mode_string);
+            fprintf(stderr, "         and options were provided in the configuration!\n");
+            fprintf(stderr, "         The simulation will IGNORE these parameters and run WITHOUT photoevaporation.\n");
+            fprintf(stderr, "********************************************************************************\n\n");
+        }
+    }  
 
     sim_opts.flag_for_deadzone = (disk_params.r_dze_i > 0.0 || disk_params.r_dze_o > 0.0) ? 1.0 : 0.0;
 
@@ -115,6 +141,7 @@ int main(int argc, const char **argv) {
     fprintf(stderr, "Output subdirectories created.\n");
 
     int dummy_sys_ret; 
+    disk_params.sigma_dot_photoevap = NULL;
 
     if (def.input_file != NULL && strcmp(def.input_file, "") != 0) {
         strncpy(current_inputsig_file, def.input_file, MAX_PATH_LEN - 1);
@@ -155,6 +182,11 @@ int main(int argc, const char **argv) {
     } else {
         fprintf(stderr, "DEBUG [main]: No input file specified (-i flag not used). Generating default grid and profile.\n");
 
+        // Map cutoff options directly from parser (def) to init_tool_params without touching disk_params struct
+        init_tool_params.use_cutoff = def.use_cutoff;
+        init_tool_params.r_cutoff = def.r_cutoff;
+        init_tool_params.n_for_cutoff = def.n_for_cutoff;
+
         init_tool_params.n_grid_points = disk_params.grid_number; 
         init_tool_params.r_inner= disk_params.r_min;
         init_tool_params.r_outer = disk_params.r_max;
@@ -175,10 +207,12 @@ int main(int argc, const char **argv) {
         init_tool_params.micro_size_cm = def.mic_val;
         init_tool_params.one_size_particle_cm = def.onesize_val;
         init_tool_params.dust_density_g_cm3 = def.pdensity_val;
+        init_tool_params.total_disk_mass = disk_params.total_disk_mass;
 
         fprintf(stderr, "DEBUG [main]: InitializeDefaultOptions (init_tool_params) structure populated for profile generation.\n");
         fprintf(stderr, "DEBUG [main]: Calling runInitialization(&init_tool_params, &disk_params)...\n");
         strncpy(init_tool_params.output_base_path, initial_dir_path, MAX_PATH_LEN - 1);
+        init_tool_path_normalization:
         init_tool_params.output_base_path[MAX_PATH_LEN - 1] = '\0';
         runInitialization(&init_tool_params, &disk_params);
         fprintf(stderr, "DEBUG [main]: runInitialization completed. disk_params allocated and populated.\n");
@@ -209,9 +243,39 @@ int main(int argc, const char **argv) {
     fprintf(stderr, "DEBUG [main]: loadGasSurfaceDensityFromFile completed. Calling applyBoundaryConditions for disk_params.radial_grid and disk_params.gas_surface_density_vector...\n");
     applyBoundaryConditions(disk_params.radial_grid, &disk_params);
     applyBoundaryConditions(disk_params.gas_surface_density_vector, &disk_params);
+
+    // This guarantees that the core integrator always has a valid, zeroed array for photoevaporation
+    if (disk_params.sigma_dot_photoevap == NULL) {
+        disk_params.sigma_dot_photoevap = (double *)calloc((disk_params.grid_number + 2), sizeof(double));
+        if (!disk_params.sigma_dot_photoevap) {
+            fprintf(stderr, "ERROR [main]: Failed to allocate memory for sigma_dot_photoevap.\n");
+            return 1;
+        }
+    }
+
     fprintf(stderr, "DEBUG [main]: applyBoundaryConditions calls completed for initial profile.\n");
     fprintf(stderr, "DEBUG [main]: Calling printCurrentInformationAboutRun...\n");
     printCurrentInformationAboutRun(actual_run_dir, &disk_params);
+
+    // --- PRINT COMPREHENSIVE RUN STATUS INFO PANEL ---
+    fprintf(stderr, "\n==========================================================\n");
+    fprintf(stderr, " INITIAL GAS INITIAL CONDITION PROFILE:\n");
+    if (def.use_cutoff) {
+        fprintf(stderr, "   STYLE:          [Exponential Cutoff / Self-Similar Taper]\n");
+        fprintf(stderr, "   R_CUTOFF:       [%.2f AU]\n", def.r_cutoff);
+        fprintf(stderr, "   SHARPNESS N:    [%.2f]\n", def.n_for_cutoff);
+    } else {
+        fprintf(stderr, "   STYLE:          [Standard Pure Power-Law]\n");
+    }
+    fprintf(stderr, "----------------------------------------------------------\n");
+    if (disk_params.enable_photoevaporation) {
+        fprintf(stderr, " PHOTOEVAPORATION: [ONLINE]\n");
+        fprintf(stderr, " MODEL PROFILE:    [%s]\n", disk_params.photoevaporation_mode_string);
+        fprintf(stderr, " X-RAY LUM_LX:     [%.2e erg/s]\n", disk_params.xray_luminosity);
+    } else {
+        fprintf(stderr, " PHOTOEVAPORATION: [OFFLINE] (Pure viscous hydrodynamics)\n");
+    }
+    fprintf(stderr, "==========================================================\n\n");
 
     if(mode == SnapshotNonevolving) {
         fprintf(stderr, "DEBUG [main]: Evolution (sim_opts.option_for_evolution=%.2f) and drift (sim_opts.option_for_dust_drift=%.2f) are OFF.\n", sim_opts.option_for_evolution, sim_opts.option_for_dust_drift);
@@ -251,6 +315,7 @@ int main(int argc, const char **argv) {
     if (disk_params.gas_pressure_vector) free(disk_params.gas_pressure_vector);
     if (disk_params.gas_pressure_gradient_vector) free(disk_params.gas_pressure_gradient_vector);
     if (disk_params.gas_velocity_vector) free(disk_params.gas_velocity_vector);
+    if (disk_params.sigma_dot_photoevap) free(disk_params.sigma_dot_photoevap);
     fprintf(stderr, "DEBUG [main]: Dynamically allocated disk arrays freed.\n");
     free(current_inputsig_file);
     free(current_inputdust_file);
@@ -264,5 +329,4 @@ int main(int argc, const char **argv) {
     printFinalSimulationSummary(actual_run_dir, elapsed_wall_time, &sim_opts);
 
     return 0;
-
 }
