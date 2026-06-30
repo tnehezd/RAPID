@@ -18,37 +18,9 @@
 #include "boundary_conditions.h"
 #include "integrator.h"
 #include "hdf5_output.h"
+#include "print_terminal.h"
 
-static void printSimulationTime(int step,
-                                double deltat,
-                                double current_time_years,
-                                double internal_time,
-                                double output_time,
-                                const char *mode,
-                                int was_snapshot,
-                                double current_mass,
-                                double target_mass)
-{
-    if (step > 0) {
-        if (was_snapshot) {
-            fprintf(stderr, "\n");
-        } else {
-            fprintf(stderr, "\33[A\33[2K\r");
-        }
-    }
-    
-    // Egyetlen sorba rendezzük a lépést, az időt, a módot ÉS a korong aktuális tömegét
-    fprintf(stderr,
-            "[STEP: %6d] Time: %.4e/%.4e yr | dt: %.3e yr | Mass: %.3e/%.3e M_Sun | %s\33[K",
-            step,
-            current_time_years,
-            output_time,
-            deltat,
-            current_mass,
-            target_mass,
-            mode);
-    fflush(stderr);
-}
+
 
 void calculate1DDustDrift(double particle_radius, double pressure_gradient, double gas_surface_density, double gas_velocity, double radial_distance, double *drift_velocity, const DiskParameters *disk_params) {
     double local_pressure, local_pressure_scaleheight, local_pressure_gradient, stokes_number, local_soundspeed;
@@ -166,8 +138,8 @@ static void handleSnapshotASCII(int step, double t, double current_time_years, d
 
 //    if (step > 0) fprintf(stderr, "\33[A\33[2K\r");                                    
     // --- FIX: Nincs \n a snapshot jelzésnél sem ---
-    fprintf(stderr, "\n[SAVE: %6d] Time: %.2e yr | dt: %.2e yr | ASCII SNAPSHOT SAVED\n", step, current_time_years, (sim_opts->user_defined_time_step));
-    fflush(stderr);
+//    fprintf(stderr, "\n[SAVE: %6d] Time: %.2e yr | dt: %.2e yr | ASCII SNAPSHOT SAVED\n", step, current_time_years, (sim_opts->user_defined_time_step));
+//    fflush(stderr);
 
     handleSnapshot(t, current_time_years, output_time, sim_opts, output_files, dens_name, dust_name, dust_name2, size_name);
     snapshotInitAtT0(t, current_time_years, particle_data, disk_params, sim_opts, particle_number);
@@ -242,8 +214,8 @@ static void simulateDustDriftStep(int step, double *t, double deltat, double *ou
                                output_files, dens_name, dust_name, dust_name2, size_name);
         } else {
 //            if (step > 0) fprintf(stderr, "\33[A\33[2K\r");
-            fprintf(stderr, "\n[SAVE: %6d] Time: %.2e yr | dt: %.2e yr | HDF5 SNAPSHOT SAVE\n", step, current_time_years, deltat);
-            fflush(stderr);
+//            fprintf(stderr, "\n[SAVE: %6d] Time: %.2e yr | dt: %.2e yr | HDF5 SNAPSHOT SAVE\n", step, current_time_years, deltat);
+//            fflush(stderr);
 
             handleSnapshotHDF5(*output_time, sim_opts, output_files, disk_params, particle_data);
 
@@ -308,8 +280,8 @@ static void simulateGasOnlyStep(int step, double *t, double deltat, double *outp
         snapshot_done = 1;
         if (sim_opts->output_format == OUTPUT_ASCII) {
 //            if (step > 0) fprintf(stderr, "\33[A\33[2K\r");
-            fprintf(stderr, "\n[SAVE: %6d] Time: %.2e yr | dt: %.2e yr | ASCII SNAPSHOT SAVED\n", step, current_time_years, deltat);
-            fflush(stderr);
+//            fprintf(stderr, "\n[SAVE: %6d] Time: %.2e yr | dt: %.2e yr | ASCII SNAPSHOT SAVED\n", step, current_time_years, deltat);
+//            fflush(stderr);
 
             asprintf(&dens_name, "%s/%s/%s_%08d%s", sim_opts->output_dir_name, kLogFilesDirectory, kGasDensityProfileFilePrefix, (int)(*output_time), kFileNamesSuffix);
             output_files->surface_file = fopen(dens_name, "w");
@@ -325,8 +297,8 @@ static void simulateGasOnlyStep(int step, double *t, double deltat, double *outp
             }
         } else {    
 //            if (step > 0) fprintf(stderr, "\33[A\33[2K\r");
-            fprintf(stderr, "\n[SAVE: %6d] Time: %.2e yr | dt: %.2e yr | HDF5 SNAPSHOT SAVED\n", step, current_time_years, deltat);
-            fflush(stderr);
+//            fprintf(stderr, "\n[SAVE: %6d] Time: %.2e yr | dt: %.2e yr | HDF5 SNAPSHOT SAVED\n", step, current_time_years, deltat);
+//            fflush(stderr);
 
             handleSnapshotHDF5(*output_time, sim_opts, output_files, disk_params, NULL);
         }
@@ -446,10 +418,11 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
             current_disk_mass += cell_mass;
         }
 
-        // --- DIAGNOSZTIKAI KIÍRATÁS EGYBEN ---
+        // --- DIAGNOSZTIKAI KIÍRATÁS KISZERVEZVE ---
         if (step_counter % 10 == 0 || snapshot_done) {
             const char *mode_str = (mode > 1) ? "RUNNING (DUST DRIFT)" : "RUNNING (GAS ONLY)";
-            printSimulationTime(step_counter, deltat, current_time_years, t, output_time, mode_str, snapshot_done, current_disk_mass, target_termination_mass);
+            printStatus(step_counter, deltat, current_time_years, t, output_time, mode_str, snapshot_done,
+                        current_disk_mass, target_termination_mass, initial_disk_mass);
         }
 
         // --- AUTOMATIKUS LEÁLLÍTÁS CRITERIA (KITERJESZTVE) ---
