@@ -11,6 +11,8 @@ void printStatus(int step,
                       int was_snapshot,
                       double current_mass,
                       double target_mass,
-                      double initial_mass);
+                      double initial_mass, 
+                      double last_snapshot_time, 
+                      double interval);
 
 #endif // SIMULATION_IO_H

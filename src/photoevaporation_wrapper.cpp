@@ -126,7 +126,6 @@ void computePhotoevaporationSink(void *disk_opaque)
     // 4. INTERPOLATE CALCULATED RATES BACK TO YOUR LINEAR RECIPIENT GRID
     // =========================================================================
     std::vector<double> local_evap_linear(N, 0.0);
-    const double days_per_year = 365.242199;
 
     for (int i = 0; i < N; i++) {
         double target_linear_r = linear_r[i];

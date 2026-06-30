@@ -380,8 +380,23 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
     double target_termination_mass = initial_disk_mass * 0.001;
     double DENSITY_FLOOR = 1e-12;
 
+    double last_save_time = 0;
+    static double last_snapshot_time = 0.0; // static, hogy megjegyezze két lépés között
+    double snapshot_interval = sim_opts->maximum_simulation_time / sim_opts->output_frequency;
+
     do {
-        double deltat = calculateTimeStep(disk_params) / 5.0;
+        static double dt_old = 0.0;
+
+        
+        double dt_new = calculateTimeStep(disk_params) / 5.0;
+
+        if (dt_old == 0.0) dt_old = dt_new;
+
+        /* smoothing */
+        double deltat = 0.7 * dt_old + 0.3 * dt_new;
+
+        dt_old = deltat;
+
         ((SimulationOptions *)sim_opts)->user_defined_time_step = deltat;
 
         // Eldöntjük, hogy történt-e mentés ebben a lépésben (sormegszakításhoz)
@@ -422,7 +437,7 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
         if (step_counter % 10 == 0 || snapshot_done) {
             const char *mode_str = (mode > 1) ? "RUNNING (DUST DRIFT)" : "RUNNING (GAS ONLY)";
             printStatus(step_counter, deltat, current_time_years, t, output_time, mode_str, snapshot_done,
-                        current_disk_mass, target_termination_mass, initial_disk_mass);
+                        current_disk_mass, target_termination_mass, initial_disk_mass, last_snapshot_time, snapshot_interval);
         }
 
         // --- AUTOMATIKUS LEÁLLÍTÁS CRITERIA (KITERJESZTVE) ---
@@ -439,6 +454,11 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
             }
             break; 
         }
+
+        if (snapshot_done) {
+            last_snapshot_time = current_time_years;
+        }
+
 
     } while (t <= t_integration_in_internal_units);
 

@@ -39,13 +39,19 @@ static void renderBox(int step,
                       const char *mode,
                       double current_mass,
                       double target_mass,
-                      double initial_mass)
+                      double initial_mass,
+                      double last_snapshot_time,
+                      double interval)
 {
     double mass_percentage = (initial_mass > 0.0) ? (current_mass / initial_mass) * 100.0 : 0.0;
     if (mass_percentage > 100.0) mass_percentage = 100.0;
     if (mass_percentage < 0.0) mass_percentage = 0.0;
 
-    double time_progress = (output_time > 0.0) ? (current_time_years / output_time) * 100.0 : 0.0;
+    static double last_output_time = 0.0;
+
+    double time_in_interval = current_time_years - last_snapshot_time;
+    double time_progress = (interval > 0.0) ? (time_in_interval / interval) * 100.0 : 0.0;
+    
     if (time_progress > 100.0) time_progress = 100.0;
     if (time_progress < 0.0) time_progress = 0.0;
 
@@ -77,7 +83,9 @@ void printStatus(int step,
                  int was_snapshot,
                  double current_mass,
                  double target_mass,
-                 double initial_mass)
+                 double initial_mass, 
+                 double last_snapshot_time, 
+                 double interval)
 {
     (void)internal_time;
 
@@ -107,6 +115,6 @@ void printStatus(int step,
         live_box_printed_once = 1;
     }
 
-    renderBox(step, deltat, current_time_years, output_time, mode, current_mass, target_mass, initial_mass);
+    renderBox(step, deltat, current_time_years, output_time, mode, current_mass, target_mass, initial_mass, last_snapshot_time, interval);
     fflush(stderr);
 }
