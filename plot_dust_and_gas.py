@@ -9,7 +9,7 @@ import numpy as np
 MSUN = 1.98847e33
 AU = 1.495978707e13
 MSUN_PER_AU2_TO_CGS = MSUN / (AU**2)
-logs_dir = "output_0043/LOGS"
+logs_dir = "output_0050/LOGS"
 file_pattern = os.path.join(logs_dir, "snapshot_*.h5")
 
 # --- REFERENCIA SNAPSHOT (t=0) ---
@@ -74,6 +74,7 @@ while True:
     ax2.set_ylabel(r"$\Sigma(0) / \Sigma(t)$  and  $\Sigma_{\rm dust}(t)/(0.01\Sigma_{\rm gas}(0))$")
     ax2.set_title("Evolution Relative to Initial Snapshot")
     ax2.set_yscale('log')
+    ax2.set_ylim(1e-1,10)
     ax2.grid(True, which="both", ls="--", alpha=0.4)
     ax2.legend()
 

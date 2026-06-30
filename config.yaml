@@ -23,6 +23,19 @@ disk_parameters:
   star_mass_msun: 1.0            # Corresponds to 'star_val' (-m0_init)
   aspect_ratio_at_1au: 0.05      # Corresponds to 'hasp_val' (-h_init)
   flaring_index: 0.0             # Corresponds to 'flind_val' (-flind_init)
+  density_floor: 1e-12  
+  # PHOTOEVAPORATION SELECTION
+  # Options: "Owen", "Picogna"
+  photoevaporation_mode: "Picogna"
+  xray_luminosity_erg_s: 1.0e30
+  # INITIAL CONDITION PROFILE SELECTOR
+  # Set to True to enable Anna's self-similar profile with exponential taper
+  # Set to False to use the standard pure power-law profile
+  use_cutoff_for_gas: false
+  characteristic_cutoff_radius_au: 100.0   # Corresponds to '-rcutoff'
+  cutoff_sharpness_factor: 2.0           # Corresponds to '-ncutoff' (typically 2.0 - gamma)
+
+ 
 
 deadzone_parameters:
   # Dead Zone Parameters
@@ -40,8 +53,9 @@ dust_parameters:
   one_size_particle_value_cm: 1.0    # Corresponds to 'onesize_val' (-onesize)
   dust_particle_density_g_cm3: 1.6  # NEW: Por szemcse sűrűsége (g/cm^3)
   disk_mass_dust: 0.01
-  dust_smoothing_mode: "tophat"
-
+  dust_smoothing_mode: "gaussian"
+  gaussian_smoothing_sigma_grid_units: 1.0    # Width of the Gaussian kernel in grid-cell units (Δr). 1.0 means the smoothing spreads over roughly one cell.
+  gaussian_smoothing_cutoff_sigma: 3.0        # Kernel cutoff expressed in multiples of sigma. 3.0 means contributions beyond 3σ (≈ 3 grid cells) are ignored.
 
 output_parameters:
   # File I/O Parameters

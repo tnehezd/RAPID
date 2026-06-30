@@ -170,21 +170,45 @@ void calculateDustSurfaceDensity(const ParticleData *particle_data,
         }
     }
     else if (mode == 3) {
-        // --- Gaussian smoothing ---
+        // --- REAL Gaussian smoothing ---
+        double sigma = simulation_options->gaussian_sigma * disk_params->delta_r;
+        double cutoff = simulation_options->gaussian_cutoff;   // in multiples of sigma
+        int cutoff_cells = (int)(cutoff * sigma / disk_params->delta_r);
+
         double *tmp = malloc(grid_n * sizeof(double));
-        if (tmp) {
-            for (i = 0; i < grid_n; i++) {
-                double left  = (i > 0) ? particle_data->dust_surfacedensity[i-1] : particle_data->dust_surfacedensity[i];
-                double mid   = particle_data->dust_surfacedensity[i];
-                double right = (i < grid_n-1) ? particle_data->dust_surfacedensity[i+1] : particle_data->dust_surfacedensity[i];
-                tmp[i] = 0.25 * left + 0.5 * mid + 0.25 * right;
+        if (!tmp) return;
+
+        for (i = 0; i < grid_n; i++) {
+
+            double sum_weights = 0.0;
+            double smoothed_value = 0.0;
+
+            // j runs over neighbors within cutoff distance
+            for (int j = i - cutoff_cells; j <= i + cutoff_cells; j++) {
+
+                if (j < 0 || j >= grid_n)
+                    continue;
+
+                double dr = fabs(disk_params->radial_grid[j] - disk_params->radial_grid[i]);
+
+                double w = exp(-(dr * dr) / (2.0 * sigma * sigma));
+
+                smoothed_value += w * particle_data->dust_surfacedensity[j];
+                sum_weights += w;
             }
-            for (i = 0; i < grid_n; i++) {
-                particle_data->dust_surfacedensity[i] = tmp[i];
-            }
-            free(tmp);
+
+            if (sum_weights > 0.0)
+                tmp[i] = smoothed_value / sum_weights;
+            else
+                tmp[i] = particle_data->dust_surfacedensity[i];
         }
+
+        for (i = 0; i < grid_n; i++)
+            particle_data->dust_surfacedensity[i] = tmp[i];
+
+        free(tmp);
     }
+
 
     // 4. Normalizálás: Sigma = Mass / Area
     for (i = 0; i < grid_n; i++) {

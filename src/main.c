@@ -77,6 +77,9 @@ int main(int argc, const char **argv) {
     sim_opts.number_of_dust_particles = def.number_of_dust_particles;
     sim_opts.output_format = def.output_format;
     sim_opts.dust_smoothing_mode = def.dust_smoothing_mode;
+    sim_opts.gaussian_sigma = def.gaussian_sigma;
+    sim_opts.gaussian_cutoff     = def.gaussian_cutoff;
+
 
  
 
@@ -105,6 +108,10 @@ int main(int argc, const char **argv) {
     disk_params.drift_factor = 0.55; // set by Birnstiel 2012
     disk_params.particle_density = def.pdensity_val;
     disk_params.total_disk_mass = def.total_disk_mass;    
+    disk_params.gaussian_sigma  = sim_opts.gaussian_sigma;
+    disk_params.gaussian_cutoff = sim_opts.gaussian_cutoff;
+
+
 
     // --- PHOTOEVAPORATION PARAMETER MAPPING AND WARNING LOGIC ---
     disk_params.enable_photoevaporation = def.enable_photoevaporation;
@@ -210,13 +217,12 @@ int main(int argc, const char **argv) {
         init_tool_params.one_size_particle_cm = def.onesize_val;
         init_tool_params.dust_density_g_cm3 = def.pdensity_val;
         init_tool_params.total_disk_mass = disk_params.total_disk_mass;
+        init_tool_params.density_floor = disk_params.density_floor;
 
 
         fprintf(stderr, "DEBUG [main]: InitializeDefaultOptions (init_tool_params) structure populated for profile generation.\n");
         fprintf(stderr, "DEBUG [main]: Calling runInitialization(&init_tool_params, &disk_params)...\n");
         strncpy(init_tool_params.output_base_path, initial_dir_path, MAX_PATH_LEN - 1);
-        init_tool_path_normalization:
-        init_tool_params.output_base_path[MAX_PATH_LEN - 1] = '\0';
         runInitialization(&init_tool_params, &disk_params);
         fprintf(stderr, "DEBUG [main]: runInitialization completed. disk_params allocated and populated.\n");
         asprintf(&current_inputsig_file, "%s/%s%s", initial_dir_path, kInitialGasProfileFileName,kFileNamesSuffix);

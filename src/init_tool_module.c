@@ -24,6 +24,7 @@ void initializeDefaultOptions(InitializeDefaultOptions *def) {
     def->star_mass              = 1.0; 
     def->aspect_ratio           = 5.0e-2;
     def->flaring_index          = 0.0;  
+    def->density_floor          = 1e-12;
 
     def->deadzone_r_inner       = 0.0;
     def->deadzone_r_outer       = 0.0;

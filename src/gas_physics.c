@@ -148,29 +148,15 @@ void refreshGasSurfaceDensityPressurePressureGradient(const SimulationOptions *s
     // =========================================================================
     computePhotoevaporationSink(disk_params);
 
-    double mdot = 0.0;
-
-    for(int i=1;i<=disk_params->grid_number;i++)
-        mdot +=
-            2.0*M_PI*
-            disk_params->radial_grid[i]*
-            disk_params->sigma_dot_photoevap[i]*
-            disk_params->delta_r;
-
-//    printf("Wind Mdot = %.3e Msun/yr\n", mdot);
 
 
     double maxWind = 0.0;
-    double maxR = 0.0;
 
     for(int i=1;i<=disk_params->grid_number;i++){
         if(disk_params->sigma_dot_photoevap[i] > maxWind){
             maxWind = disk_params->sigma_dot_photoevap[i];
-            maxR = disk_params->radial_grid[i];
         }
     }
-
-//    printf("Peak wind: %.3e at %.2f AU\n", maxWind, maxR);    
 
 
     // =========================================================================

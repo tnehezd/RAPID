@@ -121,8 +121,8 @@ def main():
         "inner_radius_au": "rmin_val",
         "outer_radius_au": "rmax_val",
         "initial_gas_sigma0_msun_per_au2": "sigma0_val",
-        "disk_mass": "disk_mass",                     # <--- JAVÍTVA: A YAML-edben 'disk_mass' van!
-        "total_disk_mass": "disk_mass",                # Biztonsági másodlagos kulcs
+        "disk_mass": "disk_mass",                     
+        "total_disk_mass": "disk_mass",               
         "sigma_profile_exponent": "sigmap_exp_val",
         "alpha_viscosity": "alpha_visc_val",
         "star_mass_msun": "star_val",
@@ -133,6 +133,10 @@ def main():
         "use_cutoff_for_gas": "cutoff",
         "characteristic_cutoff_radius_au": "cutoff_radius",
         "cutoff_sharpness_factor": "cutoff_sharpness",
+        "density_floor": "density_floor",
+
+        "gaussian_smoothing_sigma_grid_units": "gaussian_smoothing_sigma_grid_units",
+        "gaussian_smoothing_cutoff_sigma": "gaussian_smoothing_cutoff_sigma",
 
         "deadzone_inner_radius_au": "r_dze_i_val",
         "deadzone_outer_radius_au": "r_dze_o_val",
@@ -179,10 +183,10 @@ def main():
         "cutoff": "-cutoff", "cutoff_radius": "-cutoff_radius",  "cutoff_sharpness": "-cutoff_sharpness",
         "r_dze_i_val": "-rdzei", "r_dze_o_val": "-rdzeo",
         "dr_dze_i_val": "-drdzei", "dr_dze_o_val": "-drdzeo",
-        "a_mod_val": "-amod",
+        "a_mod_val": "-amod", "density_floor": "-density_floor",
         "eps_val": "-eps", "ratio_val": "-ratio", "mic_val": "-mic", "onesize_val": "-onesize",
-        "pdensity_val": "-pdensity",
-        "input_file": "-i", "output_dir_name": "-o",
+        "pdensity_val": "-pdensity","gaussian_sigma_grid_units": "-gaussian_sigma_grid",
+        "gaussian_cutoff_sigma": "-gaussian_cutoff", "input_file": "-i", "output_dir_name": "-o",
         "output_format": "--output-format", "dust_smoothing_mode": "-dust_smoothing",
         "tStep": "-tStep", "totalTime": "-tmax", "outputFrequency": "-outfreq"
     }

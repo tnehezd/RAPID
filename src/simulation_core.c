@@ -72,7 +72,7 @@ double calculateTimeStep(const DiskParameters *disk_params) {
     return time_step;
 }
 
-static void handleSnapshot(double actual_time, double current_time_years, double *output_time, const SimulationOptions *sim_opts, OutputFiles *output_files, 
+static void handleSnapshot(double current_time_years, double *output_time, const SimulationOptions *sim_opts, OutputFiles *output_files, 
                            char *dens_name, char *dust_name, char *dust_name2, char *size_name){
     buildSnapshotFilenames(dens_name, dust_name, dust_name2, size_name, sim_opts, (int)(*output_time)); 
     output_files->surface_file = openSnapshotFile(dens_name, FILE_TYPE_GAS_DENSITY, current_time_years);
@@ -133,7 +133,7 @@ static int isSnapshotDue(double current_time_years, double output_time, double d
     return (periodic_output_time || initial_output_time) && output_time_sync;
 }
 
-static void handleSnapshotASCII(int step, double t, double current_time_years, double *output_time, ParticleData *particle_data, int particle_number, DiskParameters *disk_params, const SimulationOptions *sim_opts,
+static void handleSnapshotASCII(double t, double current_time_years, double *output_time, ParticleData *particle_data, int particle_number, DiskParameters *disk_params, const SimulationOptions *sim_opts,
                                 OutputFiles *output_files, char *dens_name, char *dust_name, char *dust_name2, char *size_name) {
 
 //    if (step > 0) fprintf(stderr, "\33[A\33[2K\r");                                    
@@ -141,7 +141,7 @@ static void handleSnapshotASCII(int step, double t, double current_time_years, d
 //    fprintf(stderr, "\n[SAVE: %6d] Time: %.2e yr | dt: %.2e yr | ASCII SNAPSHOT SAVED\n", step, current_time_years, (sim_opts->user_defined_time_step));
 //    fflush(stderr);
 
-    handleSnapshot(t, current_time_years, output_time, sim_opts, output_files, dens_name, dust_name, dust_name2, size_name);
+    handleSnapshot(current_time_years, output_time, sim_opts, output_files, dens_name, dust_name, dust_name2, size_name);
     snapshotInitAtT0(t, current_time_years, particle_data, disk_params, sim_opts, particle_number);
     snapshotPrintGas(disk_params, output_files, sim_opts);
     snapshotPrintDust((int)(*output_time), particle_data, disk_params, sim_opts, output_files, size_name);
@@ -195,22 +195,20 @@ static void handleSnapshotHDF5(double output_time, const SimulationOptions *sim_
     free(filename);
 }
 
-static void simulateDustDriftStep(int step, double *t, double deltat, double *output_time, ParticleData *particle_data, 
+static void simulateDustDriftStep(double *t, double deltat, double *output_time, ParticleData *particle_data, 
                                   int particle_number, DiskParameters *disk_params, const SimulationOptions *sim_opts,
                                   OutputFiles *output_files, char *dens_name, char *dust_name, char *dust_name2, 
                                   char *size_name) {
 
     double min_radius, max_radius;
     double current_time_years = *t / (2.0 * M_PI);
-    int snapshot_done = 0; 
 
 
     computeParticleRadiusRange(particle_data, particle_number, sim_opts->option_for_dust_secondary_population, &min_radius, &max_radius);
 
     if (isSnapshotDue(current_time_years, *output_time, deltat, sim_opts)) {
         if (sim_opts->output_format == OUTPUT_ASCII) {
-            snapshot_done = 1;
-            handleSnapshotASCII(step, *t, current_time_years, output_time, particle_data, particle_number, disk_params, sim_opts,
+            handleSnapshotASCII(*t, current_time_years, output_time, particle_data, particle_number, disk_params, sim_opts,
                                output_files, dens_name, dust_name, dust_name2, size_name);
         } else {
 //            if (step > 0) fprintf(stderr, "\33[A\33[2K\r");
@@ -270,14 +268,12 @@ static void simulateDustDriftStep(int step, double *t, double deltat, double *ou
     *t += deltat;
 }
 
-static void simulateGasOnlyStep(int step, double *t, double deltat, double *output_time, DiskParameters *disk_params,
+static void simulateGasOnlyStep(double *t, double deltat, double *output_time, DiskParameters *disk_params,
                                 const SimulationOptions *sim_opts, OutputFiles *output_files, char *dens_name)
 {
     double current_time_years = *t / (2.0 * M_PI);
-    int snapshot_done = 0; 
 
     if (isSnapshotDue(current_time_years, *output_time, deltat, sim_opts)) {
-        snapshot_done = 1;
         if (sim_opts->output_format == OUTPUT_ASCII) {
 //            if (step > 0) fprintf(stderr, "\33[A\33[2K\r");
 //            fprintf(stderr, "\n[SAVE: %6d] Time: %.2e yr | dt: %.2e yr | ASCII SNAPSHOT SAVED\n", step, current_time_years, deltat);
@@ -378,9 +374,7 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
     int step_counter = 0;
     double current_disk_mass = initial_disk_mass;
     double target_termination_mass = initial_disk_mass * 0.001;
-    double DENSITY_FLOOR = 1e-12;
 
-    double last_save_time = 0;
     static double last_snapshot_time = 0.0; // static, hogy megjegyezze két lépés között
     double snapshot_interval = sim_opts->maximum_simulation_time / sim_opts->output_frequency;
 
@@ -404,9 +398,9 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
         int snapshot_done = isSnapshotDue(current_time_years, output_time, deltat, sim_opts);
 
         if (mode > 1) {
-            simulateDustDriftStep(step_counter, &t, deltat, &output_time, &particle_data, particle_number, disk_params, sim_opts, output_files, dens_name, dust_name, dust_name2, size_name);
+            simulateDustDriftStep(&t, deltat, &output_time, &particle_data, particle_number, disk_params, sim_opts, output_files, dens_name, dust_name, dust_name2, size_name);
         } else { 
-            simulateGasOnlyStep(step_counter, &t, deltat, &output_time, disk_params, sim_opts, output_files, dens_name);
+            simulateGasOnlyStep(&t, deltat, &output_time, disk_params, sim_opts, output_files, dens_name);
         }    
         step_counter++;
 
@@ -425,7 +419,7 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
                 has_nan = 1;
             }
 
-            if (disk_params->gas_surface_density_vector[i] <= DENSITY_FLOOR) {
+            if (disk_params->gas_surface_density_vector[i] <= disk_params->density_floor) {
                 fully_evaporated_cells++;
             }
 
@@ -447,7 +441,7 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
             if (isnan(current_disk_mass) || has_nan) {
                 fprintf(stderr, "Reason: Numerical instability detected (NaN). Disk is effectively evaporated.\n");
             } else if (fully_evaporated_cells >= (int)(disk_params->grid_number * 0.95)) {
-                fprintf(stderr, "Reason: 95%% of the radial grid cells are fully evaporated (below %.1e M_Sun).\n", DENSITY_FLOOR);
+                fprintf(stderr, "Reason: 95%% of the radial grid cells are fully evaporated (below %.1e M_Sun).\n", disk_params->density_floor);
             } else {
                 fprintf(stderr, "Reason: Disk mass reached the 0.1%% threshold: %.4e M_Sun (Target: %.4e M_Sun)\n", 
                         current_disk_mass, target_termination_mass);

@@ -32,6 +32,7 @@ typedef struct {
     double  star_mass;                      /**< Central star mass in solar units. */
     double  aspect_ratio;                   /**< Disk aspect ratio, \f$h=H/r\f$, at 1 AU. */
     double  flaring_index;                  /**< Power-law index for disk flaring. */
+    double  density_floor;                  /**< Minimum allowed gas surface density (Σ_min) to prevent numerical underflow or negative densities. */
     double  deadzone_r_inner;               /**< Inner radius of the Dead Zone in AU. */
     double  deadzone_r_outer;               /**< Outer radius of the Dead Zone in AU. */
     double  deadzone_dr_inner;              /**< Smoothing width for the inner Dead Zone edge in AU. */

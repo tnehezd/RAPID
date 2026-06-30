@@ -47,8 +47,6 @@ static void renderBox(int step,
     if (mass_percentage > 100.0) mass_percentage = 100.0;
     if (mass_percentage < 0.0) mass_percentage = 0.0;
 
-    static double last_output_time = 0.0;
-
     double time_in_interval = current_time_years - last_snapshot_time;
     double time_progress = (interval > 0.0) ? (time_in_interval / interval) * 100.0 : 0.0;
     

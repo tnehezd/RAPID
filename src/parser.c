@@ -33,6 +33,12 @@ void createDefaultOptions(ParserOptions *opt) {
     opt->a_mod_val                                  = 0.0;
     opt->input_file                                 = NULL;
     opt->dust_smoothing_mode                        = 0;
+    opt->density_floor                              = 1e-12;  
+    
+    opt->gaussian_sigma                             = 1.0;      /**< default Gaussian kernel width */
+    opt->gaussian_cutoff                            = 3.0;     /**< default cutoff radius (3σ) */
+
+
 
     strncpy(opt->output_dir_name, "output", sizeof(opt->output_dir_name) - 1);
     opt->output_dir_name[sizeof(opt->output_dir_name) - 1] = '\0'; 
@@ -56,6 +62,8 @@ void createDefaultOptions(ParserOptions *opt) {
     opt->use_cutoff                             = false; // Default: Normal profile
     opt->r_cutoff                               = 30.0;  
     opt->n_for_cutoff                           = 1.5;
+
+    
 
     opt->dust_smoothing_mode = SMOOTHING_CIC; 
 
@@ -103,7 +111,12 @@ void printUsageToTerminal() {
     fprintf(stderr, "Other:\n");
     fprintf(stderr, "  -pdensity <val> Dust particle density (g/cm^3, default: 1.6)\n"); 
     fprintf(stderr, "  -h or --help   Display this help message\n");
-    fprintf(stderr, "  -dust_smoothing <cic|ngp|tophat|gaussian>  Select dust smoothing method for mapping Lagrangian particles to the Euler grid\n");
+    fprintf(stderr, "  -dust_smoothing <cic|ngp|tophat|gaussian>  Select dust smoothing method");
+    fprintf(stderr, "                                             for mapping Lagrangian particles to the Euler grid\n");
+    fprintf(stderr, "  -gaussian_sigma_grid <val>   Width of the Gaussian kernel in grid-cell units (Δr).\n");
+    fprintf(stderr, "                               Controls how far dust mass spreads around a particle.\n");
+    fprintf(stderr, "  -gaussian_cutoff <val>       Kernel cutoff expressed in multiples of sigma.\n");
+    fprintf(stderr, "                               Contributions beyond cutoff*sigma are ignored.\n");
     fprintf(stderr, "Output format options:\n");
     fprintf(stderr, "  --output-format <ascii|hdf5>  Select output format (default: ascii)\n");
     fprintf(stderr, "  -ascii                        Shortcut for --output-format ascii\n");
@@ -333,6 +346,20 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
         }
         else if (strcmp(argv[i], "-hdf5") == 0) {
             opt->output_format = OUTPUT_HDF5;
+        }
+        else if (strcmp(argv[i], "-gaussian_sigma_grid_units") == 0) {
+            i++;
+            if (i < argc) opt->gaussian_sigma = atof(argv[i]);
+        }
+
+        else if (strcmp(argv[i], "-gaussian_cutoff_sigma") == 0) {
+            i++;
+            if (i < argc) opt->gaussian_cutoff = atof(argv[i]);
+        }
+        else if (strcmp(argv[i], "-density_floor") == 0) {
+            i++;
+            if (i < argc) opt->density_floor = atof(argv[i]);
+            else { fprintf(stderr, "Error: Missing value for -density_floor.\n"); return 1; }
         }
 
         else if (strcmp(argv[i], "-dust_smoothing") == 0) {

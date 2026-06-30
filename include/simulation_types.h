@@ -58,11 +58,15 @@ typedef struct {
     double *photoevap_sink;
     double *dr_array;
     int    hole_flag;
+    double density_floor;   /**< Minimum allowed gas surface density */
     double r_hole;
     double *sink_photoevap;
     bool   enable_photoevaporation;       /**< Global switch to turn photoevaporation ON/OFF. */
     char   photoevaporation_mode_string[32]; /**< Model selection: "Owen" or "Picogna" */
     double xray_luminosity;               /**< Stellar X-ray luminosity [erg/s]. */
+    double gaussian_sigma;
+    double gaussian_cutoff;
+
 } DiskParameters;
 
 
@@ -122,6 +126,8 @@ typedef struct {
     char dust_input_filename[MAX_PATH_LEN];   /**< Path to dust input file. */
     OutputFormat output_format;               /**< Selects ASCII or HDF5 output backend. */
     int dust_smoothing_mode;                  /**< Dust smoothing method for mapping Lagrangian to Euler grid */
+    double gaussian_sigma;   /**< Gaussian kernel width in grid-cell units (Δr) */
+    double gaussian_cutoff;       /**< Gaussian kernel cutoff in multiples of sigma */
 } SimulationOptions;
 
 
