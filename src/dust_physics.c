@@ -92,40 +92,45 @@ double calculateDustParticleSize(double particle_radius, double particle_density
 
 
 void calculateDustSurfaceDensity(const ParticleData *particle_data, const SimulationOptions *simulation_options, const DiskParameters *disk_params) {
+    int i, k;
+    int grid_n = disk_params->grid_number; // Győződj meg róla, hogy ez definiálva van
 
-        
-    double grid_step = (disk_params->r_max - disk_params->r_min) / (particle_number - 1);
-    int i;
-    double temporary_dust_surfacedensity[particle_number][3];
-    double temporary_micron_dust_surfacedensity[particle_number][3];
-
-    for(i=0; i<particle_number; i++){
-        temporary_dust_surfacedensity[i][0] = 0.0; temporary_dust_surfacedensity[i][1] = 0.0; temporary_dust_surfacedensity[i][2] = 0.0;
-        temporary_micron_dust_surfacedensity[i][0] = 0.0; temporary_micron_dust_surfacedensity[i][1] = 0.0; temporary_micron_dust_surfacedensity[i][2] = 0.0;
-        particle_data->particle_distance_grid[i] = 0.0;
-        particle_data->micron_particle_distance_grid[i] = 0.0;
+    // 1. Reset: Minden cellát nullázunk
+    for (i = 0; i < grid_n; i++) {
         particle_data->dust_surfacedensity[i] = 0.0;
-        particle_data->micron_dust_surfacedensity[i] = 0.0;
+        if (simulation_options->option_for_dust_secondary_population == 1.0) {
+            particle_data->micron_dust_surfacedensity[i] = 0.0;
+        }
     }
 
-    calculateDustSurfaceDensityFromRepresentativeMass(particle_data->particle_distance_array, particle_data->dust_particle_mass_grid, temporary_dust_surfacedensity, particle_number,disk_params);
-    if (simulation_options->option_for_dust_secondary_population == 1.0) { 
-        calculateDustSurfaceDensityFromRepresentativeMass(particle_data->micron_particle_distance_array, particle_data->massmicradial_grid, temporary_micron_dust_surfacedensity, particle_number,disk_params);
+    // 2. CIC (Cloud-in-Cell) leképezés a fix rácsra
+    // Ahelyett, hogy összevonnánk (merge), a részecske tömegét arányosan osztjuk szét
+    for (k = 0; k < particle_number; k++) {
+        double r = particle_data->particle_distance_array[k][0];
+        
+        // Relatív pozíció a rácsban
+        double relative_pos = (r - disk_params->r_min) / disk_params->delta_r;
+        int idx = (int)floor(relative_pos);
+        double x = relative_pos - (double)idx; // A súlyozás: mennyi jut az idx+1-nek
+
+        // Biztonsági ellenőrzés, hogy a rácson belül maradjunk
+        if (idx >= 0 && idx < grid_n - 1) {
+            double m = particle_data->dust_particle_mass_grid[k];
+
+            // A részecske tömege (1-x) arányban az idx-be, x arányban az idx+1-be kerül
+            particle_data->dust_surfacedensity[idx]   += m * (1.0 - x);
+            particle_data->dust_surfacedensity[idx+1] += m * x;
+        }
     }
 
-    mergeParticlesByRadius(temporary_dust_surfacedensity, grid_step, particle_number,disk_params);
-    if (simulation_options->option_for_dust_secondary_population == 1.0) { 
-        mergeParticlesByRadius(temporary_micron_dust_surfacedensity, grid_step, particle_number,disk_params);
-    }
-
-    #pragma omp parallel for private(i)
-    for (i = 0; i < particle_number; i++) {
-        particle_data->particle_distance_grid[i] = temporary_dust_surfacedensity[i][1];
-        particle_data->dust_surfacedensity[i] = temporary_dust_surfacedensity[i][0];
-
-        if (simulation_options->option_for_dust_secondary_population == 1.0) { 
-            particle_data->micron_particle_distance_grid[i] = temporary_micron_dust_surfacedensity[i][1];
-            particle_data->micron_dust_surfacedensity[i] = temporary_micron_dust_surfacedensity[i][0];
+    // 3. Normalizálás: Sigma = Mass / Area
+    // Ez alakítja át a "kiosztott tömeget" felületi sűrűséggé (g/cm^2)
+    for (i = 0; i < grid_n; i++) {
+        double r_i = disk_params->radial_grid[i];
+        double area = 2.0 * M_PI * r_i * disk_params->delta_r;
+        
+        if (area > 1e-20) {
+            particle_data->dust_surfacedensity[i] /= area;
         }
     }
 }

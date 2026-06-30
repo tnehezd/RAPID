@@ -10,7 +10,7 @@ MSUN = 1.98847e33
 AU = 1.495978707e13
 MSUN_PER_AU2_TO_CGS = MSUN / (AU**2)
 
-logs_dir = "output_0004/LOGS"
+logs_dir = "output_0028/LOGS"
 snapshot_step = 15000
 
 file_pattern = os.path.join(logs_dir, "snapshot_*.h5")
@@ -47,7 +47,7 @@ while True:
     cmap = plt.get_cmap("viridis")
 
     for p in profiles:
-        ax.loglog(
+        ax.semilogy(
             p["r"],
             p["sigma"],
             color=cmap(norm(p["time"])),
@@ -57,7 +57,7 @@ while True:
 
     ax.set_xlabel("Radius [AU]")
     ax.set_ylabel(r"Gas Surface Density [g cm$^{-2}$]")
-    ax.set_ylim(0.001,50)
+    ax.set_ylim(3,50)
     ax.set_title("Live Gas Surface Density Evolution")
     ax.grid(True, which="both", ls="--", alpha=0.6)
 

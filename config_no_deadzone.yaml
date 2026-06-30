@@ -4,8 +4,8 @@
 # These directly map to the 'options_t' structure used for parsing.
 simulation_parameters:
   # Simulation Control Options (now with boolean flags for clarity)
-  enable_dust_drift: false            # Corresponds to 'drift' in C (1.0 for true, 0.0 for false)
-  enable_dust_growth: false           # Corresponds to 'growth' in C
+  enable_dust_drift: true            # Corresponds to 'drift' in C (1.0 for true, 0.0 for false)
+  enable_dust_growth: true           # Corresponds to 'growth' in C
   enable_gas_evolution: true        # Corresponds to 'evol' in C
   enable_two_dust_populations: false # Corresponds to 'twopop' in C
   enable_photoevaporation: true      #
@@ -28,11 +28,11 @@ disk_parameters:
   # PHOTOEVAPORATION SELECTION
   # Options: "Owen", "Picogna"
   photoevaporation_mode: "Picogna"
-  xray_luminosity_erg_s: 3.0e30
+  xray_luminosity_erg_s: 1.0e30
   # INITIAL CONDITION PROFILE SELECTOR
   # Set to True to enable Anna's self-similar profile with exponential taper
   # Set to False to use the standard pure power-law profile
-  use_cutoff_for_gas: true
+  use_cutoff_for_gas: false
   characteristic_cutoff_radius_au: 100.0   # Corresponds to '-rcutoff'
   cutoff_sharpness_factor: 2.0           # Corresponds to '-ncutoff' (typically 2.0 - gamma)
 
