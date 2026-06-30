@@ -4,8 +4,8 @@
 # These directly map to the 'options_t' structure used for parsing.
 simulation_parameters:
   # Simulation Control Options (now with boolean flags for clarity)
-  enable_dust_drift: false            # Corresponds to 'drift' in C (1.0 for true, 0.0 for false)
-  enable_dust_growth: false           # Corresponds to 'growth' in C
+  enable_dust_drift: true            # Corresponds to 'drift' in C (1.0 for true, 0.0 for false)
+  enable_dust_growth: true           # Corresponds to 'growth' in C
   enable_gas_evolution: true        # Corresponds to 'evol' in C
   enable_two_dust_populations: false # Corresponds to 'twopop' in C
   fragmentation_velocity: 500.0     # Corresponds to 'ufrag' in C
@@ -40,6 +40,8 @@ dust_parameters:
   one_size_particle_value_cm: 1.0    # Corresponds to 'onesize_val' (-onesize)
   dust_particle_density_g_cm3: 1.6  # NEW: Por szemcse sűrűsége (g/cm^3)
   disk_mass_dust: 0.01
+  dust_smoothing_mode: "tophat"
+
 
 output_parameters:
   # File I/O Parameters

@@ -58,7 +58,7 @@ typedef struct {
     double onesize_val;                                 /**< Single-size dust mode parameter. */
     double pdensity_val;                                /**< Dust particle density. */
     int output_format;                                  /**< Output format selector (0 = ASCII, 1 = HDF5). */
-
+    int dust_smoothing_mode;                            /**< Smoothing method for mapping Lagrangian dust surface density to Eulerian grid. */
     bool enable_photoevaporation;                       /**< Option for enabling photoevaporation */
     char photoevaporation_mode[32];                     /**< Switch between Picogna, or Owen model */
     double xray_luminosity;                             /**< X-ray luminosity of the central star */

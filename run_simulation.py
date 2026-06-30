@@ -153,6 +153,8 @@ def main():
         "fixed_time_step": "tStep",
         "total_simulation_time": "totalTime",
         "output_write_frequency": "outputFrequency",
+        "dust_smoothing_mode": "dust_smoothing_mode",
+
     }
 
     # Read ONLY what is explicitly written in the YAML file
@@ -181,7 +183,7 @@ def main():
         "eps_val": "-eps", "ratio_val": "-ratio", "mic_val": "-mic", "onesize_val": "-onesize",
         "pdensity_val": "-pdensity",
         "input_file": "-i", "output_dir_name": "-o",
-        "output_format": "--output-format",
+        "output_format": "--output-format", "dust_smoothing_mode": "-dust_smoothing",
         "tStep": "-tStep", "totalTime": "-tmax", "outputFrequency": "-outfreq"
     }
 

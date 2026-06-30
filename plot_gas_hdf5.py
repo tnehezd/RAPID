@@ -10,7 +10,7 @@ MSUN = 1.98847e33
 AU = 1.495978707e13
 MSUN_PER_AU2_TO_CGS = MSUN / (AU**2)
 
-logs_dir = "output_0028/LOGS"
+logs_dir = "output_0029/LOGS"
 snapshot_step = 15000
 
 file_pattern = os.path.join(logs_dir, "snapshot_*.h5")

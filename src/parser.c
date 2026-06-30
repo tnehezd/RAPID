@@ -32,6 +32,7 @@ void createDefaultOptions(ParserOptions *opt) {
     opt->dr_dze_o_val                               = 0.0;
     opt->a_mod_val                                  = 0.0;
     opt->input_file                                 = NULL;
+    opt->dust_smoothing_mode                        = 0;
 
     strncpy(opt->output_dir_name, "output", sizeof(opt->output_dir_name) - 1);
     opt->output_dir_name[sizeof(opt->output_dir_name) - 1] = '\0'; 
@@ -55,6 +56,8 @@ void createDefaultOptions(ParserOptions *opt) {
     opt->use_cutoff                             = false; // Default: Normal profile
     opt->r_cutoff                               = 30.0;  
     opt->n_for_cutoff                           = 1.5;
+
+    opt->dust_smoothing_mode = SMOOTHING_CIC; 
 
     fprintf(stderr, "Default options setting complete.\n");
 }
@@ -100,6 +103,7 @@ void printUsageToTerminal() {
     fprintf(stderr, "Other:\n");
     fprintf(stderr, "  -pdensity <val> Dust particle density (g/cm^3, default: 1.6)\n"); 
     fprintf(stderr, "  -h or --help   Display this help message\n");
+    fprintf(stderr, "  -dust_smoothing <cic|ngp|tophat|gaussian>  Select dust smoothing method for mapping Lagrangian particles to the Euler grid\n");
     fprintf(stderr, "Output format options:\n");
     fprintf(stderr, "  --output-format <ascii|hdf5>  Select output format (default: ascii)\n");
     fprintf(stderr, "  -ascii                        Shortcut for --output-format ascii\n");
@@ -329,6 +333,27 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
         }
         else if (strcmp(argv[i], "-hdf5") == 0) {
             opt->output_format = OUTPUT_HDF5;
+        }
+
+        else if (strcmp(argv[i], "-dust_smoothing") == 0) {
+            i++;
+            if (i < argc) {
+                if (strcmp(argv[i], "cic") == 0)
+                    opt->dust_smoothing_mode = 0;
+                else if (strcmp(argv[i], "ngp") == 0)
+                    opt->dust_smoothing_mode = 1;
+                else if (strcmp(argv[i], "tophat") == 0)
+                    opt->dust_smoothing_mode = 2;
+                else if (strcmp(argv[i], "gaussian") == 0)
+                    opt->dust_smoothing_mode = 3;
+                else {
+                    fprintf(stderr, "Error: Unknown dust smoothing mode '%s'. Use cic|ngp|tophat|gaussian.\n", argv[i]);
+                    return 1;
+                }
+            } else {
+                fprintf(stderr, "Error: Missing value for -dust_smoothing.\n");
+                return 1;
+            }
         }
 
 

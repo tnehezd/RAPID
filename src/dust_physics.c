@@ -90,12 +90,14 @@ double calculateDustParticleSize(double particle_radius, double particle_density
     return particle_size;
 }
 
-
-void calculateDustSurfaceDensity(const ParticleData *particle_data, const SimulationOptions *simulation_options, const DiskParameters *disk_params) {
+void calculateDustSurfaceDensity(const ParticleData *particle_data,
+                                 const SimulationOptions *simulation_options,
+                                 const DiskParameters *disk_params)
+{
     int i, k;
-    int grid_n = disk_params->grid_number; // Győződj meg róla, hogy ez definiálva van
+    int grid_n = disk_params->grid_number;
 
-    // 1. Reset: Minden cellát nullázunk
+    // 1. Reset
     for (i = 0; i < grid_n; i++) {
         particle_data->dust_surfacedensity[i] = 0.0;
         if (simulation_options->option_for_dust_secondary_population == 1.0) {
@@ -103,37 +105,98 @@ void calculateDustSurfaceDensity(const ParticleData *particle_data, const Simula
         }
     }
 
-    // 2. CIC (Cloud-in-Cell) leképezés a fix rácsra
-    // Ahelyett, hogy összevonnánk (merge), a részecske tömegét arányosan osztjuk szét
-    for (k = 0; k < particle_number; k++) {
-        double r = particle_data->particle_distance_array[k][0];
-        
-        // Relatív pozíció a rácsban
-        double relative_pos = (r - disk_params->r_min) / disk_params->delta_r;
-        int idx = (int)floor(relative_pos);
-        double x = relative_pos - (double)idx; // A súlyozás: mennyi jut az idx+1-nek
+    // 2. Mapping (CIC or NGP)
+    int mode = simulation_options->dust_smoothing_mode;
 
-        // Biztonsági ellenőrzés, hogy a rácson belül maradjunk
-        if (idx >= 0 && idx < grid_n - 1) {
-            double m = particle_data->dust_particle_mass_grid[k];
+    if (mode == 0) {
+        // --- CIC ---
+        for (k = 0; k < particle_number; k++) {
+            double r = particle_data->particle_distance_array[k][0];
+            double relative_pos = (r - disk_params->r_min) / disk_params->delta_r;
+            int idx = (int)floor(relative_pos);
+            double x = relative_pos - (double)idx;
 
-            // A részecske tömege (1-x) arányban az idx-be, x arányban az idx+1-be kerül
-            particle_data->dust_surfacedensity[idx]   += m * (1.0 - x);
-            particle_data->dust_surfacedensity[idx+1] += m * x;
+            if (idx >= 0 && idx < grid_n - 1) {
+                double m = particle_data->dust_particle_mass_grid[k];
+                particle_data->dust_surfacedensity[idx]   += m * (1.0 - x);
+                particle_data->dust_surfacedensity[idx+1] += m * x;
+            }
+        }
+    }
+    else if (mode == 1) {
+        // --- NGP ---
+        for (k = 0; k < particle_number; k++) {
+            double r = particle_data->particle_distance_array[k][0];
+            double relative_pos = (r - disk_params->r_min) / disk_params->delta_r;
+            int idx = (int)round(relative_pos);
+
+            if (idx >= 0 && idx < grid_n) {
+                double m = particle_data->dust_particle_mass_grid[k];
+                particle_data->dust_surfacedensity[idx] += m;
+            }
+        }
+    }
+    else {
+        // --- TopHat & Gaussian always start from CIC mapping ---
+        for (k = 0; k < particle_number; k++) {
+            double r = particle_data->particle_distance_array[k][0];
+            double relative_pos = (r - disk_params->r_min) / disk_params->delta_r;
+            int idx = (int)floor(relative_pos);
+            double x = relative_pos - (double)idx;
+
+            if (idx >= 0 && idx < grid_n - 1) {
+                double m = particle_data->dust_particle_mass_grid[k];
+                particle_data->dust_surfacedensity[idx]   += m * (1.0 - x);
+                particle_data->dust_surfacedensity[idx+1] += m * x;
+            }
         }
     }
 
-    // 3. Normalizálás: Sigma = Mass / Area
-    // Ez alakítja át a "kiosztott tömeget" felületi sűrűséggé (g/cm^2)
+    // 3. Smoothing (TopHat or Gaussian)
+    if (mode == 2) {
+        // --- TopHat smoothing ---
+        double *tmp = malloc(grid_n * sizeof(double));
+        if (tmp) {
+            for (i = 0; i < grid_n; i++) {
+                double left  = (i > 0) ? particle_data->dust_surfacedensity[i-1] : particle_data->dust_surfacedensity[i];
+                double mid   = particle_data->dust_surfacedensity[i];
+                double right = (i < grid_n-1) ? particle_data->dust_surfacedensity[i+1] : particle_data->dust_surfacedensity[i];
+                tmp[i] = (left + mid + right) / 3.0;
+            }
+            for (i = 0; i < grid_n; i++) {
+                particle_data->dust_surfacedensity[i] = tmp[i];
+            }
+            free(tmp);
+        }
+    }
+    else if (mode == 3) {
+        // --- Gaussian smoothing ---
+        double *tmp = malloc(grid_n * sizeof(double));
+        if (tmp) {
+            for (i = 0; i < grid_n; i++) {
+                double left  = (i > 0) ? particle_data->dust_surfacedensity[i-1] : particle_data->dust_surfacedensity[i];
+                double mid   = particle_data->dust_surfacedensity[i];
+                double right = (i < grid_n-1) ? particle_data->dust_surfacedensity[i+1] : particle_data->dust_surfacedensity[i];
+                tmp[i] = 0.25 * left + 0.5 * mid + 0.25 * right;
+            }
+            for (i = 0; i < grid_n; i++) {
+                particle_data->dust_surfacedensity[i] = tmp[i];
+            }
+            free(tmp);
+        }
+    }
+
+    // 4. Normalizálás: Sigma = Mass / Area
     for (i = 0; i < grid_n; i++) {
         double r_i = disk_params->radial_grid[i];
         double area = 2.0 * M_PI * r_i * disk_params->delta_r;
-        
+
         if (area > 1e-20) {
             particle_data->dust_surfacedensity[i] /= area;
         }
     }
 }
+
 
 
 void calculateDustDistance(const char *file_name, ParticleData *particle_data, double actual_timestep, double actual_time, int number_of_particles, const SimulationOptions *simulation_options, const DiskParameters *disk_params){

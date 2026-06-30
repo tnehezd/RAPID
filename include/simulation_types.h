@@ -121,6 +121,7 @@ typedef struct {
     char output_dir_name[MAX_PATH_LEN];       /**< Output directory for results. */
     char dust_input_filename[MAX_PATH_LEN];   /**< Path to dust input file. */
     OutputFormat output_format;               /**< Selects ASCII or HDF5 output backend. */
+    int dust_smoothing_mode;                  /**< Dust smoothing method for mapping Lagrangian to Euler grid */
 } SimulationOptions;
 
 
@@ -224,6 +225,14 @@ typedef struct {
     double total_dust_mass;      /**< Total dust mass (primary + secondary) [M_sun]. */
     int trap_id;                 /**< Unique identifier for the trap. */                     
 } PressureTrap;
+
+
+typedef enum {
+    SMOOTHING_CIC = 0,
+    SMOOTHING_NGP = 1,
+    SMOOTHING_TOPHAT = 2,
+    SMOOTHING_GAUSSIAN = 3
+} DustSmoothingMode;
 
 
 

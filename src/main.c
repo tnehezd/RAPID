@@ -76,6 +76,8 @@ int main(int argc, const char **argv) {
     sim_opts.output_frequency = def.output_frequency;
     sim_opts.number_of_dust_particles = def.number_of_dust_particles;
     sim_opts.output_format = def.output_format;
+    sim_opts.dust_smoothing_mode = def.dust_smoothing_mode;
+
  
 
     fprintf(stderr, "DEBUG [main]: def.output_dir_name BEFORE sim_opts population: '%s'\n", def.output_dir_name);
@@ -208,6 +210,7 @@ int main(int argc, const char **argv) {
         init_tool_params.one_size_particle_cm = def.onesize_val;
         init_tool_params.dust_density_g_cm3 = def.pdensity_val;
         init_tool_params.total_disk_mass = disk_params.total_disk_mass;
+
 
         fprintf(stderr, "DEBUG [main]: InitializeDefaultOptions (init_tool_params) structure populated for profile generation.\n");
         fprintf(stderr, "DEBUG [main]: Calling runInitialization(&init_tool_params, &disk_params)...\n");
