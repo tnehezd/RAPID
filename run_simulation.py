@@ -4,7 +4,7 @@ import argparse
 import os
 import datetime
 
-def run_c_program(executable_path, params, arg_mapping, program_name="C Program"):
+def run_c_program(executable_path, params, arg_mapping, verbosity_flag, program_name="C Program"):
     """
     Runs a C program with the given parameters.
     """
@@ -13,6 +13,11 @@ def run_c_program(executable_path, params, arg_mapping, program_name="C Program"
         return False, None
 
     cmd_args = [executable_path]
+    
+    # Adding the verbosity flag (-v or -vv)
+    if verbosity_flag:
+        cmd_args.append(verbosity_flag)
+
     for py_key, value in params.items():
         c_arg_name = arg_mapping.get(py_key)
         if c_arg_name:
@@ -104,7 +109,8 @@ def main():
         "deadzone_parameters",
         "dust_parameters",
         "output_parameters",
-        "time_parameters"
+        "time_parameters",
+        "log_parameters"
     ]
 
     # YAML → C mapping 
@@ -162,7 +168,6 @@ def main():
         "total_simulation_time": "totalTime",
         "output_write_frequency": "outputFrequency",
         "dust_smoothing_mode": "dust_smoothing_mode",
-
     }
 
     # Read ONLY what is explicitly written in the YAML file
@@ -199,9 +204,17 @@ def main():
     if not all_params:
         print("Error: No parameters could be parsed from YAML. Exiting.")
         return
+    
+    # 2. Add hozzá a logolási flaget
+    verbosity_level = full_config.get("log_parameters", {}).get("info_level", "none")
+    verbosity_flag = ""
+    if verbosity_level == "info":
+        verbosity_flag = "-v"
+    elif verbosity_level == "debug":
+        verbosity_flag = "-vv"
 
     # 2. Run the main C program with ONLY configured parameters
-    success, return_code = run_c_program(main_executable, all_params, c_arg_mapping, "Main Simulation Program")
+    success, return_code = run_c_program(main_executable, all_params, c_arg_mapping, verbosity_flag, "Main Simulation Program")
 
     if not success:
         print(f"The C program exited with an error (error code: {return_code}).")
