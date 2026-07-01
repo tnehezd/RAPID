@@ -13,7 +13,6 @@ However, the project remains under active development in terms of features and c
 Upcoming and ongoing extensions include:
 
 - Additional numerical integrators
-- Extended boundary condition options
 - Dust settling implementation  
   (transition from 1D to 1+1D structure)
 - General validation and benchmark test problems  
