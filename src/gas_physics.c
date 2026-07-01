@@ -108,7 +108,7 @@ void calculateGasRadialVelocity(DiskParameters *disk_params) {
     }
 }
 
-void refreshGasSurfaceDensityPressurePressureGradient(const SimulationOptions *sim_opts, DiskParameters *disk_params) { 
+void refreshGasSurfaceDensityPressurePressureGradient(SimulationOptions *sim_opts, DiskParameters *disk_params) { 
 
     double gas_sigma_dot_viscosity, gas_sigma_dot_viscosity_backwards, gas_sigma_dot_viscosity_forward;
     double gas_surface_density_temp[disk_params->grid_number + 2]; 
@@ -182,7 +182,10 @@ void refreshGasSurfaceDensityPressurePressureGradient(const SimulationOptions *s
     // 4. UPDATE DERIVATIVES AND BOUNDARY CONDITIONS
     // =========================================================================
     calculateGasPressureGradient(disk_params);
-    applyBoundaryConditions(disk_params->gas_surface_density_vector, disk_params); 
-    applyBoundaryConditions(disk_params->gas_pressure_vector, disk_params);
-    applyBoundaryConditions(disk_params->gas_pressure_gradient_vector, disk_params);
+    sim_opts->current_bc_target = 0;
+    applyBoundaryConditions(disk_params->gas_surface_density_vector, disk_params, sim_opts); 
+    sim_opts->current_bc_target = 1;
+    applyBoundaryConditions(disk_params->gas_pressure_vector, disk_params, sim_opts);
+    sim_opts->current_bc_target = 2;
+    applyBoundaryConditions(disk_params->gas_pressure_gradient_vector, disk_params, sim_opts);
 }

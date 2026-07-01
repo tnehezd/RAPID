@@ -79,6 +79,9 @@ int main(int argc, const char **argv) {
     sim_opts.dust_smoothing_mode = def.dust_smoothing_mode;
     sim_opts.gaussian_sigma = def.gaussian_sigma;
     sim_opts.gaussian_cutoff     = def.gaussian_cutoff;
+    sim_opts.inner_boundary_condition_type = def.inner_boundary_condition_type;
+    sim_opts.outer_boundary_condition_type = def.outer_boundary_condition_type;
+
 
 
  
@@ -110,6 +113,36 @@ int main(int argc, const char **argv) {
     disk_params.total_disk_mass = def.total_disk_mass;    
     disk_params.gaussian_sigma  = sim_opts.gaussian_sigma;
     disk_params.gaussian_cutoff = sim_opts.gaussian_cutoff;
+
+    // --- BOUNDARY CONDITION STRING MAPPING ---
+    switch (sim_opts.inner_boundary_condition_type) {
+        case 0: strcpy(disk_params.inner_bc_string, "zero"); break;
+        case 1: strcpy(disk_params.inner_bc_string, "parabolic"); break;
+        case 2: strcpy(disk_params.inner_bc_string, "fixed_flux"); break;
+        case 3: strcpy(disk_params.inner_bc_string, "absorbing"); break;
+        case 4: strcpy(disk_params.inner_bc_string, "reflecting"); break;
+        case 5: strcpy(disk_params.inner_bc_string, "linear"); break;
+        case 6: strcpy(disk_params.inner_bc_string, "loggrid"); break;
+    }
+
+    switch (sim_opts.outer_boundary_condition_type) {
+        case 0: strcpy(disk_params.outer_bc_string, "zero"); break;
+        case 1: strcpy(disk_params.outer_bc_string, "parabolic"); break;
+        case 2: strcpy(disk_params.outer_bc_string, "fixed_flux"); break;
+        case 3: strcpy(disk_params.outer_bc_string, "absorbing"); break;
+        case 4: strcpy(disk_params.outer_bc_string, "reflecting"); break;
+        case 5: strcpy(disk_params.outer_bc_string, "linear"); break;
+        case 6: strcpy(disk_params.outer_bc_string, "loggrid"); break;
+    }
+
+    // --- DUST SMOOTHING STRING MAPPING ---
+    switch (sim_opts.dust_smoothing_mode) {
+        case 0: strcpy(disk_params.dust_smoothing_mode_string, "CIC"); break;
+        case 1: strcpy(disk_params.dust_smoothing_mode_string, "NGP"); break;
+        case 2: strcpy(disk_params.dust_smoothing_mode_string, "TopHat"); break;
+        case 3: strcpy(disk_params.dust_smoothing_mode_string, "Gaussian"); break;
+    }
+
 
 
 
@@ -223,7 +256,7 @@ int main(int argc, const char **argv) {
         fprintf(stderr, "DEBUG [main]: InitializeDefaultOptions (init_tool_params) structure populated for profile generation.\n");
         fprintf(stderr, "DEBUG [main]: Calling runInitialization(&init_tool_params, &disk_params)...\n");
         strncpy(init_tool_params.output_base_path, initial_dir_path, MAX_PATH_LEN - 1);
-        runInitialization(&init_tool_params, &disk_params);
+        runInitialization(&init_tool_params, &disk_params,&sim_opts);
         fprintf(stderr, "DEBUG [main]: runInitialization completed. disk_params allocated and populated.\n");
         asprintf(&current_inputsig_file, "%s/%s%s", initial_dir_path, kInitialGasProfileFileName,kFileNamesSuffix);
         fprintf(stderr, "DEBUG [main]: Generated GAS profile will be loaded from '%s'.\n", current_inputsig_file);
@@ -250,8 +283,8 @@ int main(int argc, const char **argv) {
     fprintf(stderr, "DEBUG [main]: Initial profile loading for loadGasSurfaceDensityFromFile...\n");
     loadGasSurfaceDensityFromFile(&disk_params, current_inputsig_file); 
     fprintf(stderr, "DEBUG [main]: loadGasSurfaceDensityFromFile completed. Calling applyBoundaryConditions for disk_params.radial_grid and disk_params.gas_surface_density_vector...\n");
-    applyBoundaryConditions(disk_params.radial_grid, &disk_params);
-    applyBoundaryConditions(disk_params.gas_surface_density_vector, &disk_params);
+    sim_opts.current_bc_target = 0;
+    applyBoundaryConditions(disk_params.gas_surface_density_vector, &disk_params, &sim_opts);
 
     // This guarantees that the core integrator always has a valid, zeroed array for photoevaporation
     if (disk_params.sigma_dot_photoevap == NULL) {
@@ -283,6 +316,24 @@ int main(int argc, const char **argv) {
         fprintf(stderr, " X-RAY LUM_LX:     [%.2e erg/s]\n", disk_params.xray_luminosity);
     } else {
         fprintf(stderr, " PHOTOEVAPORATION: [OFFLINE] (Pure viscous hydrodynamics)\n");
+    }
+    fprintf(stderr, "==========================================================\n\n");
+
+        // --- PRINT BOUNDARY CONDITION STATUS ---
+    fprintf(stderr, "==========================================================\n");
+    fprintf(stderr, " BOUNDARY CONDITIONS:\n");
+    fprintf(stderr, "   INNER BC:       [%s]\n", disk_params.inner_bc_string);
+    fprintf(stderr, "   OUTER BC:       [%s]\n", disk_params.outer_bc_string);
+    fprintf(stderr, "----------------------------------------------------------\n");
+
+        // --- PRINT DUST SMOOTHING STATUS (ONLY IF DUST EXISTS) ---
+    if (sim_opts.option_for_dust_drift) {
+        fprintf(stderr, " DUST SMOOTHING:\n");
+        fprintf(stderr, "   METHOD:         [%s]\n", disk_params.dust_smoothing_mode_string);
+        fprintf(stderr, "   GAUSS SIGMA:    [%.2f grid units]\n", disk_params.gaussian_sigma);
+        fprintf(stderr, "   GAUSS CUTOFF:   [%.2f sig]\n", disk_params.gaussian_cutoff);
+    } else {
+        fprintf(stderr, " DUST SMOOTHING:   [NO DUST PRESENT]\n");
     }
     fprintf(stderr, "==========================================================\n\n");
 

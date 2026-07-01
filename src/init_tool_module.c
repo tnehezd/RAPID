@@ -145,7 +145,7 @@ static int validateInitializationInputs(const InitializeDefaultOptions *opts) {
     return 0; 
 }
 
-int runInitialization(InitializeDefaultOptions *default_options, DiskParameters *disk_params) {
+int runInitialization(InitializeDefaultOptions *default_options, DiskParameters *disk_params, SimulationOptions *sim_opts) {
     FILE *dust_ouputput_file = NULL; 
     FILE *disk_parameters_output_file = NULL; 
     FILE *gas_parameters_output_file = NULL; 
@@ -246,11 +246,12 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
     for (int i = 1; i <= disk_params->grid_number; i++) {
         disk_params->gas_surface_density_vector[i] = (double)calculateGasSurfaceDensityInitTool(disk_params->radial_grid[i], default_options, current_sigma0_gas);
     }
-    applyBoundaryConditions(disk_params->gas_surface_density_vector, disk_params);
+    sim_opts->current_bc_target = 0;
+    applyBoundaryConditions(disk_params->gas_surface_density_vector, disk_params, sim_opts);
 
-    createInitialGasPressure(disk_params);
-    createInitialGasPressureGradient(disk_params);
-    createInitialGasVelocity(disk_params);
+    createInitialGasPressure(disk_params,sim_opts);
+    createInitialGasPressureGradient(disk_params,sim_opts);
+    createInitialGasVelocity(disk_params,sim_opts);
 
     for (int i_loop = 0; i_loop < default_options->n_grid_points; i_loop++) {
         double r_gas_grid_au = disk_params->radial_grid[i_loop + 1];

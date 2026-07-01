@@ -165,6 +165,6 @@ void calculateGasPressureGradient(DiskParameters *disk_params);
  * @param sim_opts     Pointer to simulation options.
  * @param disk_params  Pointer to disk parameter structure.
  */
-void refreshGasSurfaceDensityPressurePressureGradient(const SimulationOptions *sim_opts, DiskParameters *disk_params);
+void refreshGasSurfaceDensityPressurePressureGradient(SimulationOptions *sim_opts, DiskParameters *disk_params);
 
 #endif // GAS_PHYSICS_H

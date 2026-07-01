@@ -196,7 +196,7 @@ static void handleSnapshotHDF5(double output_time, const SimulationOptions *sim_
 }
 
 static void simulateDustDriftStep(double *t, double deltat, double *output_time, ParticleData *particle_data, 
-                                  int particle_number, DiskParameters *disk_params, const SimulationOptions *sim_opts,
+                                  int particle_number, DiskParameters *disk_params, SimulationOptions *sim_opts,
                                   OutputFiles *output_files, char *dens_name, char *dust_name, char *dust_name2, 
                                   char *size_name) {
 
@@ -269,7 +269,7 @@ static void simulateDustDriftStep(double *t, double deltat, double *output_time,
 }
 
 static void simulateGasOnlyStep(double *t, double deltat, double *output_time, DiskParameters *disk_params,
-                                const SimulationOptions *sim_opts, OutputFiles *output_files, char *dens_name)
+                                SimulationOptions *sim_opts, OutputFiles *output_files, char *dens_name)
 {
     double current_time_years = *t / (2.0 * M_PI);
 
@@ -306,7 +306,7 @@ static void simulateGasOnlyStep(double *t, double deltat, double *output_time, D
     *t += deltat;
 }
 
-void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files) {
+void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params, SimulationOptions *sim_opts, OutputFiles *output_files) {
     ParticleData particle_data;
     HeaderData header_data_for_files; 
     double output_time = 0.; 

@@ -35,7 +35,10 @@ disk_parameters:
   characteristic_cutoff_radius_au: 100.0   # Corresponds to '-rcutoff'
   cutoff_sharpness_factor: 2.0           # Corresponds to '-ncutoff' (typically 2.0 - gamma)
 
- 
+boundary_conditions:
+  inner_boundary_condition: "fixed_flux"     # Options: "fixed_flux", "reflective", "outflow", "parabolic", "zero_gradient"
+  outer_boundary_condition: "parabolic"
+
 
 deadzone_parameters:
   # Dead Zone Parameters

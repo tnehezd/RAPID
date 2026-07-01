@@ -1,69 +1,204 @@
-#include "utils.h"
-#include "config.h"
-#include <math.h>
-#include <stdlib.h>
-#include "particle_data.h"
-#include "simulation_types.h" 
-#include "dust_physics.h"
-#include "gas_physics.h"
+// FIELD TYPES FOR BC CORRECTION
+// 0 = Sigma, radial gas vel.
+// 1 = Pressure
+// 2 = Pressure Gradient
+// (set by caller before applyBoundaryConditions)
+
+
 #include "boundary_conditions.h"
+#include <math.h>
 
-
-void parabolicExtrapolationToGhostCells(double *input_vector, int reference_index1, int reference_index2, int reference_index3, double *out_coefficient_quadratic, double *out_coefficient_linear, double *out_coefficient_constant, double grid_spacing, const DiskParameters *disk_params) {
 
 /**
- * @brief Parabolic ghost-cell extrapolation for smooth outflow boundaries.
+ * @brief Correct BC type for fields where some BCs are invalid.
  *
- * This routine computes a second-order polynomial (parabolic) extrapolation
- * based on three interior grid points and evaluates the resulting polynomial
- * at the ghost-cell location. The extrapolated value is then used to fill
- * the ghost cell.
+ * absorbing (3)  → only valid for Sigma
+ * fixed_flux (2) → only valid for Sigma
  *
- * This is NOT a physical boundary condition by itself. It does not impose
- * Dirichlet or Neumann constraints. Instead, it provides a smooth numerical
- * continuation of the interior solution beyond the computational domain.
- *
- * In practice, this acts as a non-reflecting, smooth outflow boundary:
- * the field is allowed to "leave" the domain by following its interior trend,
- * without enforcing a fixed value (Dirichlet) or a strict zero gradient
- * (Neumann). This reduces spurious reflections and maintains second-order
- * accuracy at the boundary.
- *
- * Use this method whenever a numerically stable, trend-following outflow
- * closure is desired. For true Dirichlet or Neumann boundaries, use the
- * corresponding explicit ghost-cell formulas instead.
+ * For Pressure and dP/dr:
+ *   absorbing → fallback to zero-gradient (0)
+ *   fixed_flux → fallback to parabolic (1)
  */
+int correctBCForField(int bc_type, int field_type)
+{
+    // ABSORBING BC
+    if (bc_type == 3) {
+        if (field_type == 0) return 3;   // Sigma OK
+        return 0;                        // Pressure, dP/dr → zero-gradient
+    }
 
-	double x_coordinate_1, x_coordinate_2, x_coordinate_3;
-	double value_1, value_2, value_3;	
-	double local_coefficient_quadratic, local_coefficient_linear, local_coefficient_constant;
+    // FIXED-FLUX BC
+    if (bc_type == 2) {
+        if (field_type == 0) return 2;   // Sigma OK
+        return 1;                        // Pressure, dP/dr → parabolic
+    }
 
-	x_coordinate_1 = disk_params->r_min + (reference_index1-1) * grid_spacing;
-	x_coordinate_2 = disk_params->r_min + (reference_index2-1) * grid_spacing;
-	x_coordinate_3 = disk_params->r_min + (reference_index3-1) * grid_spacing;
- 
-	value_1 = input_vector[reference_index1];
-	value_2 = input_vector[reference_index2];
-	value_3 = input_vector[reference_index3];
-
-	local_coefficient_quadratic = ((value_1 - value_3) / (x_coordinate_1 - x_coordinate_3) - (value_1 - value_2) / (x_coordinate_1 - x_coordinate_2)) / (x_coordinate_3 - x_coordinate_2);
-	local_coefficient_linear = (value_1 - value_2) / (x_coordinate_1 - x_coordinate_2) - local_coefficient_quadratic * (x_coordinate_1 + x_coordinate_2);
-	local_coefficient_constant = value_1 - local_coefficient_quadratic * x_coordinate_1 * x_coordinate_1 - local_coefficient_linear * x_coordinate_1;
-
-	*out_coefficient_quadratic = local_coefficient_quadratic;
-	*out_coefficient_linear = local_coefficient_linear;
-	*out_coefficient_constant = local_coefficient_constant;
-
+    // All other BCs valid for all fields
+    return bc_type;
 }
 
 
-void applyBoundaryConditions(double *input_vector, const DiskParameters *disk_params) {
+/************************************************************
+ * PARABOLIC EXTRAPOLATION (kept exactly as requested)
+ ************************************************************/
+void parabolicExtrapolationToGhostCells(double *input_vector,
+                                        int i1, int i2, int i3,
+                                        double *a, double *b, double *c,
+                                        double dr,
+                                        const DiskParameters *dp)
+{
+    double x1 = dp->r_min + (i1 - 1) * dr;
+    double x2 = dp->r_min + (i2 - 1) * dr;
+    double x3 = dp->r_min + (i3 - 1) * dr;
 
-//  OPEN BOUNDARY: Parabolic extrapolation is applied to both velocity and all other physical quantities.
-//	parabolicExtrapolationToGhostCells(veinput_vectorc, 1, 2, 3, &a, &b, &c, disk_params->delta_r,disk_params);
-//	input_vector[0] =  a * (disk_params->r_min - disk_params->delta_r) * (disk_params->r_min - disk_params->delta_r) + b * (disk_params->r_min - disk_params->delta_r) + c;
-	input_vector[0] = input_vector[1];
-//	parabolicExtrapolationToGhostCells(input_vector, disk_params->grid_number - 2, disk_params->grid_number - 1, disk_params->grid_number, &a, &b, &c, disk_params->delta_r,disk_params);
-//	input_vector[disk_params->grid_number+1] = a * (disk_params->r_max + disk_params->delta_r) * (disk_params->r_max + disk_params->delta_r) + b * (disk_params->r_max + disk_params->delta_r) + c;
-	input_vector[disk_params->grid_number+1] = input_vector[disk_params->grid_number];
+    double v1 = input_vector[i1];
+    double v2 = input_vector[i2];
+    double v3 = input_vector[i3];
+
+    double aq = ((v1 - v3) / (x1 - x3) - (v1 - v2) / (x1 - x2)) / (x3 - x2);
+    double bl = (v1 - v2) / (x1 - x2) - aq * (x1 + x2);
+    double cn = v1 - aq * x1 * x1 - bl * x1;
+
+    *a = aq;
+    *b = bl;
+    *c = cn;
+}
+
+/************************************************************
+ * DISPATCHER
+ ************************************************************/
+void applyBoundaryConditions(double *v,
+                             const DiskParameters *dp,
+                             const SimulationOptions *opt)
+{
+    // Determine corrected BC for this field
+    int bc_inner = correctBCForField(opt->inner_boundary_condition_type,
+                                     opt->current_bc_target);
+
+    int bc_outer = correctBCForField(opt->outer_boundary_condition_type,
+                                     opt->current_bc_target);
+
+    // INNER BC
+    switch(bc_inner) {
+        case 0: applyZeroGradientInner(v, dp); break;
+        case 1: applyParabolicInner(v, dp); break;
+        case 2: applyFixedFluxInner(v, dp); break;
+        case 3: applyAbsorbingInner(v, dp); break;
+        case 4: applyReflectingInner(v, dp); break;
+        case 5: applyLinearExtrapolationInner(v, dp); break;
+        case 6: applyLogGridExtrapolationInner(v, dp); break;
+        default: applyZeroGradientInner(v, dp); break;
+    }
+
+    // OUTER BC
+    switch(bc_outer) {
+        case 0: applyZeroGradientOuter(v, dp); break;
+        case 1: applyParabolicOuter(v, dp); break;
+        case 2: applyFixedFluxOuter(v, dp); break;
+        case 3: applyAbsorbingOuter(v, dp); break;
+        case 4: applyReflectingOuter(v, dp); break;
+        case 5: applyLinearExtrapolationOuter(v, dp); break;
+        case 6: applyLogGridExtrapolationOuter(v, dp); break;
+        default: applyZeroGradientOuter(v, dp); break;
+    }
+}
+
+
+/************************************************************
+ * INNER BC IMPLEMENTATIONS
+ ************************************************************/
+void applyZeroGradientInner(double *v, const DiskParameters *dp)
+{
+	(void)dp; // Unused parameter
+    v[0] = v[1];
+}
+
+void applyParabolicInner(double *v, const DiskParameters *dp)
+{
+    double a,b,c;
+    parabolicExtrapolationToGhostCells(v, 1, 2, 3, &a, &b, &c, dp->delta_r, dp);
+    double xg = dp->r_min - dp->delta_r;
+    v[0] = a*xg*xg + b*xg + c;
+}
+
+void applyFixedFluxInner(double *v, const DiskParameters *dp)
+{
+    double r0 = dp->radial_grid[0];
+    double r1 = dp->radial_grid[1];
+    v[0] = v[1] * sqrt(r1 / r0);
+}
+
+void applyAbsorbingInner(double *v, const DiskParameters *dp)
+{
+    (void)dp; // Unused parameter
+    v[0] = 0.0;
+}
+
+void applyReflectingInner(double *v, const DiskParameters *dp)
+{
+    (void)dp; // Unused parameter
+    v[0] = v[2];
+}
+
+void applyLinearExtrapolationInner(double *v, const DiskParameters *dp)
+{
+    (void)dp; // Unused parameter
+    v[0] = 2*v[1] - v[2];
+}
+
+void applyLogGridExtrapolationInner(double *v, const DiskParameters *dp)
+{
+    double dr_left = dp->radial_grid[1] - dp->radial_grid[0];
+    double dr_right = dp->radial_grid[2] - dp->radial_grid[1];
+    v[0] = v[1] + dr_left/dr_right * (v[1] - v[2]);
+}
+
+/************************************************************
+ * OUTER BC IMPLEMENTATIONS
+ ************************************************************/
+void applyZeroGradientOuter(double *v, const DiskParameters *dp)
+{
+    int N = dp->grid_number;
+    v[N+1] = v[N];
+}
+
+void applyParabolicOuter(double *v, const DiskParameters *dp)
+{
+    int N = dp->grid_number;
+    double a,b,c;
+    parabolicExtrapolationToGhostCells(v, N-2, N-1, N, &a, &b, &c, dp->delta_r, dp);
+    double xg = dp->r_max + dp->delta_r;
+    v[N+1] = a*xg*xg + b*xg + c;
+}
+
+void applyFixedFluxOuter(double *v, const DiskParameters *dp)
+{
+    int N = dp->grid_number;
+    v[N+1] = v[N];  // simple outflow
+}
+
+void applyAbsorbingOuter(double *v, const DiskParameters *dp)
+{
+    int N = dp->grid_number;
+    v[N+1] = 0.0;
+}
+
+void applyReflectingOuter(double *v, const DiskParameters *dp)
+{
+    int N = dp->grid_number;
+    v[N+1] = v[N-1];
+}
+
+void applyLinearExtrapolationOuter(double *v, const DiskParameters *dp)
+{
+    int N = dp->grid_number;
+    v[N+1] = 2*v[N] - v[N-1];
+}
+
+void applyLogGridExtrapolationOuter(double *v, const DiskParameters *dp)
+{
+    int N = dp->grid_number;
+    double dr_left  = dp->radial_grid[N]   - dp->radial_grid[N-1];
+    double dr_right = dp->radial_grid[N-1] - dp->radial_grid[N-2];
+    v[N+1] = v[N] + dr_left/dr_right * (v[N] - v[N-1]);
 }

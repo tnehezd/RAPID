@@ -52,8 +52,9 @@ void createRadialGrid(DiskParameters *disk_params);
  * by all subsequent gas and dust physics modules.
  *
  * @param disk_params Pointer to the DiskParameters structure.
+ * @param sim_opts 	  Pointer to the SimulationOptions structure.
  */
-void createInitialGasSurfaceDensity(DiskParameters *disk_params);
+void createInitialGasSurfaceDensity(DiskParameters *disk_params, SimulationOptions *sim_opts);
 
 /**
  * @brief Computes the initial gas pressure profile.
@@ -62,8 +63,9 @@ void createInitialGasSurfaceDensity(DiskParameters *disk_params);
  * structure, this function evaluates the gas pressure \f$P(r)\f$ across the grid.
  *
  * @param disk_params Pointer to the DiskParameters structure.
+ * @param sim_opts 	  Pointer to the SimulationOptions structure.
  */
-void createInitialGasPressure(DiskParameters *disk_params);
+void createInitialGasPressure(DiskParameters *disk_params, SimulationOptions *sim_opts);
 
 /**
  * @brief Computes the initial radial pressure gradient \f$dP/dr\f$\f$.
@@ -73,8 +75,9 @@ void createInitialGasPressure(DiskParameters *disk_params);
  * pressure profile across the radial grid.
  *
  * @param disk_params Pointer to the DiskParameters structure.
+ * @param sim_opts 	  Pointer to the SimulationOptions structure.
  */
-void createInitialGasPressureGradient(DiskParameters *disk_params);
+void createInitialGasPressureGradient(DiskParameters *disk_params, SimulationOptions *sim_opts);
 
 /**
  * @brief Computes the initial gas radial velocity profile.
@@ -84,8 +87,9 @@ void createInitialGasPressureGradient(DiskParameters *disk_params);
  * the gas_velocity array in the DiskParameters structure.
  *
  * @param disk_params Pointer to the DiskParameters structure.
+ * @param sim_opts 	  Pointer to the SimulationOptions structure.
  */
-void createInitialGasVelocity(DiskParameters *disk_params);
+void createInitialGasVelocity(DiskParameters *disk_params, SimulationOptions *sim_opts);
 
 /**
  * @brief Maps representative dust particle masses onto the gas grid.

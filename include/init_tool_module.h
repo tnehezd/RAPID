@@ -65,6 +65,6 @@ void initializeDefaultOptions(InitializeDefaultOptions *opt);
  * @param[out] output_disk_params  Pointer to the disk parameters structure to be populated.
  * @return                     Returns 0 on success, non-zero on failure.
  */
-int runInitialization(InitializeDefaultOptions *opts, DiskParameters *output_disk_params);
+int runInitialization(InitializeDefaultOptions *opts, DiskParameters *output_disk_params, SimulationOptions *sim_opts);
 
 #endif // INIT_TOOL_MODULE_H
