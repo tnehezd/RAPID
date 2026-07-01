@@ -401,13 +401,13 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
         else if (strcmp(argv[i], "-inner_bc") == 0) {
             i++;
             if (i < argc) {
-                if      (strcmp(argv[i], "zero_gradient") == 0)     opt->inner_boundary_condition_type = 0;
-                else if (strcmp(argv[i], "parabolic") == 0)         opt->inner_boundary_condition_type = 1;
-                else if (strcmp(argv[i], "fixed_flux") == 0)        opt->inner_boundary_condition_type = 2;
-                else if (strcmp(argv[i], "absorbing") == 0)         opt->inner_boundary_condition_type = 3;
-                else if (strcmp(argv[i], "reflecting") == 0)        opt->inner_boundary_condition_type = 4;
-                else if (strcmp(argv[i], "linear") == 0)            opt->inner_boundary_condition_type = 5;
-                else if (strcmp(argv[i], "loggrid") == 0)           opt->inner_boundary_condition_type = 6;
+                if      (strcmp(argv[i], "zero_gradient") == 0)         opt->inner_boundary_condition_type = 0;
+                else if (strcmp(argv[i], "parabolic") == 0)             opt->inner_boundary_condition_type = 1;
+                else if (strcmp(argv[i], "fixed_flux") == 0)            opt->inner_boundary_condition_type = 2;
+                else if (strcmp(argv[i], "absorbing") == 0)             opt->inner_boundary_condition_type = 3;
+                else if (strcmp(argv[i], "reflecting") == 0)            opt->inner_boundary_condition_type = 4;
+                else if (strcmp(argv[i], "linear_extrapolation") == 0)  opt->inner_boundary_condition_type = 5;
+                else if (strcmp(argv[i], "loggrid") == 0)               opt->inner_boundary_condition_type = 6;
                 else {
                     fprintf(stderr, "Error: Unknown inner BC '%s'.\n", argv[i]);
                     return 1;
@@ -417,13 +417,13 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
         else if (strcmp(argv[i], "-outer_bc") == 0) {
             i++;
             if (i < argc) {
-                if      (strcmp(argv[i], "zero_gradient") == 0)     opt->outer_boundary_condition_type = 0;
-                else if (strcmp(argv[i], "parabolic") == 0)         opt->outer_boundary_condition_type = 1;
-                else if (strcmp(argv[i], "fixed_flux") == 0)        opt->outer_boundary_condition_type = 2;
-                else if (strcmp(argv[i], "absorbing") == 0)         opt->outer_boundary_condition_type = 3;
-                else if (strcmp(argv[i], "reflecting") == 0)        opt->outer_boundary_condition_type = 4;
-                else if (strcmp(argv[i], "linear") == 0)            opt->outer_boundary_condition_type = 5;
-                else if (strcmp(argv[i], "loggrid") == 0)           opt->outer_boundary_condition_type = 6;
+                if      (strcmp(argv[i], "zero_gradient") == 0)         opt->outer_boundary_condition_type = 0;
+                else if (strcmp(argv[i], "parabolic") == 0)             opt->outer_boundary_condition_type = 1;
+                else if (strcmp(argv[i], "fixed_flux") == 0)            opt->outer_boundary_condition_type = 2;
+                else if (strcmp(argv[i], "absorbing") == 0)             opt->outer_boundary_condition_type = 3;
+                else if (strcmp(argv[i], "reflecting") == 0)            opt->outer_boundary_condition_type = 4;
+                else if (strcmp(argv[i], "linear_extrapolation") == 0)  opt->outer_boundary_condition_type = 5;
+                else if (strcmp(argv[i], "loggrid") == 0)               opt->outer_boundary_condition_type = 6;
                 else {
                     fprintf(stderr, "Error: Unknown outer BC '%s'.\n", argv[i]);
                     return 1;

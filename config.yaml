@@ -36,7 +36,7 @@ disk_parameters:
   cutoff_sharpness_factor: 2.0           # Corresponds to '-ncutoff' (typically 2.0 - gamma)
 
 boundary_conditions:
-  inner_boundary_condition: "fixed_flux"     # Options: "fixed_flux", "reflective", "outflow", "parabolic", "zero_gradient"
+  inner_boundary_condition: "fixed_flux"     # Options: "zero_gradient", "parabolic", "fixed_flux", "absorbing", "reflecting", "linear_extrapolation"
   outer_boundary_condition: "parabolic"
 
 
