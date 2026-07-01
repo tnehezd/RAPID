@@ -4,7 +4,7 @@ This repository contains the source code for `RAPID` (Representative Approach fo
 
 The core of the code was originally written in C during my PhD between 2012 and 2015. It has since been restructured into a more modular form to improve its functionality and maintainability.
 
-#### ⚠️ 2.2.0 Version: Stable Structure – Ongoing Feature Development
+#### ⚠️ 2.2.1 Version: Stable Structure – Ongoing Feature Development
 
 The core structure of the codebase has now been finalized, and no further refactoring is planned. The architecture, naming conventions, and overall organization are stable and consistent with the [Coding Standard](docs/CodingStandard.md).
 
