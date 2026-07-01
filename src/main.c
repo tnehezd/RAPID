@@ -297,7 +297,7 @@ int main(int argc, const char **argv) {
 
     fprintf(stderr, "DEBUG [main]: applyBoundaryConditions calls completed for initial profile.\n");
     fprintf(stderr, "DEBUG [main]: Calling printCurrentInformationAboutRun...\n");
-    printCurrentInformationAboutRun(actual_run_dir, &disk_params);
+    printCurrentInformationAboutRun(actual_run_dir, &disk_params, &sim_opts);
 
     // --- PRINT COMPREHENSIVE RUN STATUS INFO PANEL ---
     fprintf(stderr, "\n==========================================================\n");

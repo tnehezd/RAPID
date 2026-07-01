@@ -52,8 +52,9 @@ char *createRunDirectory(const char *base_path);
  *
  * @param directory_name Name of the run directory.
  * @param disk_params Pointer to the DiskParameters structure.
+ * @param sim_opts Pointer to the SimulationOptions structure.
  */
-void printCurrentInformationAboutRun(const char *directory_name, const DiskParameters *disk_params);
+void printCurrentInformationAboutRun(const char *directory_name, const DiskParameters *disk_params, const SimulationOptions *sim_opts);
 
 /**
  * @brief Writes gas surface density, pressure, and pressure derivative data to file.

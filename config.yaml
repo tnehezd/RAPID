@@ -26,7 +26,7 @@ disk_parameters:
   density_floor: 1e-12  
   # PHOTOEVAPORATION SELECTION
   # Options: "Owen", "Picogna"
-  photoevaporation_mode: "Picogna"
+  photoevaporation_mode: "none"
   xray_luminosity_erg_s: 1.0e30
   # INITIAL CONDITION PROFILE SELECTOR
   # Set to True to enable Anna's self-similar profile with exponential taper
@@ -36,7 +36,7 @@ disk_parameters:
   cutoff_sharpness_factor: 2.0           # Corresponds to '-ncutoff' (typically 2.0 - gamma)
 
 boundary_conditions:
-  inner_boundary_condition: "fixed_flux"     # Options: "zero_gradient", "parabolic", "fixed_flux", "absorbing", "reflecting", "linear_extrapolation"
+  inner_boundary_condition: "absorbing"     # Options: "zero_gradient", "parabolic", "fixed_flux", "absorbing", "reflecting", "linear_extrapolation"
   outer_boundary_condition: "parabolic"
 
 

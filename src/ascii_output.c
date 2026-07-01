@@ -204,7 +204,7 @@ void printCentered(FILE *file, const char *text) {
     fprintf(file, "#\n"); 
 }
 
-void printCurrentInformationAboutRun(const char *directory_name, const DiskParameters *disk_params) {
+void printCurrentInformationAboutRun(const char *directory_name, const DiskParameters *disk_params, const SimulationOptions *sim_opts) {
 
     char *full_path = NULL;
     char file_name[100];
@@ -249,31 +249,73 @@ void printCurrentInformationAboutRun(const char *directory_name, const DiskParam
     fprintf(info_file, "  Binary Compiled:   %s %s\n", __DATE__, __TIME__);
     fprintf(info_file, "  Output Directory:  %s\n", directory_name);
     fprintf(info_file, "==========================================================\n\n");
-    fprintf(info_file, "--- [ Central Star ] ---\n");
+    fprintf(info_file, "\n--- [ Time Parameter ] ---\n");
+    fprintf(info_file, "  Total Time:        %.3e yr\n\n", sim_opts->maximum_simulation_time);
+
+    fprintf(info_file, "\n--- [ Central Star ] ---\n");
     fprintf(info_file, "  Stellar Mass:      %.4f M_Sun\n\n", disk_params->stellar_mass);
-    fprintf(info_file, "--- [ Disk Geometry & Gas ] ---\n");
+
+    fprintf(info_file, "\n--- [ Disk Geometry & Gas ] ---\n");
     fprintf(info_file, "  Radial Range:      %.2f - %.2f AU\n", disk_params->r_min, disk_params->r_max);
     fprintf(info_file, "  Gas Grid Points:   %d\n", disk_params->grid_number);
     fprintf(info_file, "  Sigma_0 (1 AU):    %.4e M_Sun/AU^2\n", disk_params->sigma_0);
     fprintf(info_file, "  Sigma Exponent:    %.4f\n", disk_params->sigma_power_law_index);
     fprintf(info_file, "  Aspect Ratio (H/R): %.4f\n", disk_params->h_aspect_ratio);
+    fprintf(info_file, "  Density Floor:     %.3e M_Sun/AU^2\n", disk_params->density_floor);
     fprintf(info_file, "  Flaring Index:     %.4f\n", disk_params->flaring_index);
-    fprintf(info_file, "  Alpha Viscosity:   %.4e\n\n", disk_params->alpha_parameter);
+    fprintf(info_file, "  Alpha Viscosity:   %.4e\n", disk_params->alpha_parameter);
+    fprintf(info_file, "  Total Disk Mass:   %.4e M_Sun\n\n", disk_params->total_disk_mass);
 
-    fprintf(info_file, "--- [ Dead Zone Configuration ] ---\n");
+
+    fprintf(info_file, "\n--- [ Gas Cutoff Profile ] ---\n");
+    fprintf(info_file, "  Use Cutoff:        %s\n", disk_params->cutoff ? "YES" : "NO");
+    if (disk_params->cutoff) {
+        fprintf(info_file, "  Cutoff Radius:     %.2f AU\n", disk_params->r_cutoff);
+        fprintf(info_file, "  Cutoff Sharpness:  %.2f\n", disk_params->n_cutoff);
+    }
+
+    fprintf(info_file, "\n");
+
+    fprintf(info_file, "\n--- [ Dead Zone Configuration ] ---\n");
     if (disk_params->r_dze_i > 0.0 || disk_params->r_dze_o > 0.0) {
         fprintf(info_file, "  Status:            ENABLED\n");
-        fprintf(info_file, "  Inner DZE Radius:  %.2f AU (Trans. width: %.2f)\n", disk_params->r_dze_i, disk_params->dr_dze_i);
-        fprintf(info_file, "  Outer DZE Radius:  %.2f AU (Trans. width: %.2f)\n", disk_params->r_dze_o, disk_params->dr_dze_o);
+        fprintf(info_file, "  Inner DZE Radius:  %.2f AU (Trans. width: %.2f)\n",
+                disk_params->r_dze_i, disk_params->dr_dze_i);
+        fprintf(info_file, "  Outer DZE Radius:  %.2f AU (Trans. width: %.2f)\n",
+                disk_params->r_dze_o, disk_params->dr_dze_o);
         fprintf(info_file, "  Alpha Mod Factor:  %.4e\n", disk_params->alpha_parameter_modification);
     } else {
         fprintf(info_file, "  Status:            DISABLED (Uniform alpha)\n");
     }
 
+    fprintf(info_file, "\n");
+
+    fprintf(info_file, "\n--- [ Boundary Conditions ] ---\n");
+    fprintf(info_file, "  Inner BC:          %s\n", disk_params->inner_bc_string);
+    fprintf(info_file, "  Outer BC:          %s\n\n", disk_params->outer_bc_string);
+
+    fprintf(info_file, "\n--- [ Photoevaporation ] ---\n");
+    if (strcmp(disk_params->photoevaporation_mode_string, "none") != 0) {
+        fprintf(info_file, "  Mode:              DISABLED\n");
+    } else {
+        fprintf(info_file, "  Mode:              %s\n", disk_params->photoevaporation_mode_string);
+        fprintf(info_file, "  X-ray Luminosity:  %.3e erg/s\n", disk_params->xray_luminosity);
+    }
+    fprintf(info_file, "\n");
+
     fprintf(info_file, "\n--- [ Dust Properties ] ---\n");
     fprintf(info_file, "  Particle Density:  %.2f g/cm^3\n", disk_params->particle_density);
     fprintf(info_file, "  Fragmentation Vel: %.2f cm/s\n", disk_params->fragmentation_velocity);
     fprintf(info_file, "  Global Dust Count: %d\n", particle_number);
+    fprintf(info_file, "  Dust Smoothing:    %s\n", disk_params->dust_smoothing_mode_string);
+    if (sim_opts->dust_smoothing_mode == 3) {
+        fprintf(info_file, "    Gaussian Sigma:    %.2f grid units\n", disk_params->gaussian_sigma);
+        fprintf(info_file, "    Gaussian Cutoff:   %.2f sigma\n", disk_params->gaussian_cutoff);
+    }
+
+    fprintf(info_file, "\n");
+
+
     fprintf(info_file, "\n==========================================================\n");
     fprintf(info_file, "         End of Configuration Summary\n");
     fprintf(info_file, "==========================================================\n");
