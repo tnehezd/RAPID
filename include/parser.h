@@ -69,6 +69,9 @@ typedef struct {
     bool   use_cutoff;                                  /**< Profile style: false = Normal Power-law, true = Cutoff */
     double r_cutoff;                                    /**< Scaling/tapering radius for cutoff profile [AU] */
     double n_for_cutoff;                                /**< Shape/sharpness parameter for exponential cutoff */
+    int inner_boundary_condition_type;                  /**< Inner boundary condition */
+    int outer_boundary_condition_type;                  /**< Outer boundary condition */
+
 } ParserOptions;
 
 /**

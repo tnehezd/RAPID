@@ -63,7 +63,9 @@ void createDefaultOptions(ParserOptions *opt) {
     opt->r_cutoff                               = 30.0;  
     opt->n_for_cutoff                           = 1.5;
 
-    
+    opt->inner_boundary_condition_type          = 0;   // default: zero-gradient inner
+    opt->outer_boundary_condition_type          = 1;   // default: parabolic outer
+
 
     opt->dust_smoothing_mode = SMOOTHING_CIC; 
 
@@ -129,6 +131,19 @@ void printUsageToTerminal() {
     fprintf(stderr,"  -cutoff <0|1>               Enable Anna's self-similar profile with exponential taper\n");
     fprintf(stderr,"  -cutoff_radius <double>     Tapering radius in AU for cutoff style (default: 30.0)\n");
     fprintf(stderr,"  -cutoff_sharpness <double>     Sharpness factor for exponential cutoff (default: 1.5)\n\n");
+    fprintf(stderr, "Boundary condition options:\n");
+    fprintf(stderr, "  -inner_bc <name>   Inner boundary type. Available names:\n");
+    fprintf(stderr, "                     zero        = Zero-gradient (Neumann)\n");
+    fprintf(stderr, "                     parabolic   = Smooth parabolic extrapolation\n");
+    fprintf(stderr, "                     fixed_flux  = Lynden–Bell viscous flux condition\n");
+    fprintf(stderr, "                     absorbing   = Dust sink (ghost cell = 0)\n");
+    fprintf(stderr, "                     reflecting  = Mirror boundary (non-physical)\n");
+    fprintf(stderr, "                     linear      = Linear extrapolation outflow\n");
+    fprintf(stderr, "                     loggrid     = Logarithmic-grid extrapolation\n\n");
+
+    fprintf(stderr, "  -outer_bc <name>   Outer boundary type. Same names as inner_bc.\n");
+    fprintf(stderr, "                     Recommended: parabolic or linear for smooth outflow.\n\n");
+
 
 }
 
@@ -382,6 +397,40 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
                 return 1;
             }
         }
+
+        else if (strcmp(argv[i], "-inner_bc") == 0) {
+            i++;
+            if (i < argc) {
+                if      (strcmp(argv[i], "zero_gradient") == 0)     opt->inner_boundary_condition_type = 0;
+                else if (strcmp(argv[i], "parabolic") == 0)         opt->inner_boundary_condition_type = 1;
+                else if (strcmp(argv[i], "fixed_flux") == 0)        opt->inner_boundary_condition_type = 2;
+                else if (strcmp(argv[i], "absorbing") == 0)         opt->inner_boundary_condition_type = 3;
+                else if (strcmp(argv[i], "reflecting") == 0)        opt->inner_boundary_condition_type = 4;
+                else if (strcmp(argv[i], "linear") == 0)            opt->inner_boundary_condition_type = 5;
+                else if (strcmp(argv[i], "loggrid") == 0)           opt->inner_boundary_condition_type = 6;
+                else {
+                    fprintf(stderr, "Error: Unknown inner BC '%s'.\n", argv[i]);
+                    return 1;
+                }
+            }
+        }
+        else if (strcmp(argv[i], "-outer_bc") == 0) {
+            i++;
+            if (i < argc) {
+                if      (strcmp(argv[i], "zero_gradient") == 0)     opt->outer_boundary_condition_type = 0;
+                else if (strcmp(argv[i], "parabolic") == 0)         opt->outer_boundary_condition_type = 1;
+                else if (strcmp(argv[i], "fixed_flux") == 0)        opt->outer_boundary_condition_type = 2;
+                else if (strcmp(argv[i], "absorbing") == 0)         opt->outer_boundary_condition_type = 3;
+                else if (strcmp(argv[i], "reflecting") == 0)        opt->outer_boundary_condition_type = 4;
+                else if (strcmp(argv[i], "linear") == 0)            opt->outer_boundary_condition_type = 5;
+                else if (strcmp(argv[i], "loggrid") == 0)           opt->outer_boundary_condition_type = 6;
+                else {
+                    fprintf(stderr, "Error: Unknown outer BC '%s'.\n", argv[i]);
+                    return 1;
+                }
+            }
+        }
+
 
 
         else {

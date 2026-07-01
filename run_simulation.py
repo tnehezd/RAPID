@@ -100,6 +100,7 @@ def main():
     yaml_sections = [
         "simulation_parameters",
         "disk_parameters",
+        "boundary_conditions",
         "deadzone_parameters",
         "dust_parameters",
         "output_parameters",
@@ -115,6 +116,9 @@ def main():
         "enable_two_dust_populations": "twopop",
         "fragmentation_velocity": "ufrag",
         "fragmentation_factor": "ffrag",
+
+        "inner_boundary_condition": "inner_bc",
+        "outer_boundary_condition": "outer_bc",
 
         "number_of_grid_points": "ngrid_val",
         "number_of_dust_particles": "ndust_val",
@@ -176,6 +180,7 @@ def main():
         "ufrag": "-ufrag", "ffrag": "-ffrag", "photoevap": "-photoevap",
         "ngrid_val": "-n", "ndust_val": "-ndust", 
         "rmin_val": "-ri", "rmax_val": "-ro",
+        "inner_bc": "-inner_bc", "outer_bc": "-outer_bc",
         "sigma0_val": "-sigma0_init", "sigmap_exp_val": "-index_init",
         "alpha_visc_val": "-alpha_init", "star_val": "-stellar_mass", "disk_mass": "-disk_mass",
         "hasp_val": "-h_init", "flind_val": "-flind_init", 

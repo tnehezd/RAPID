@@ -1,41 +1,172 @@
-/**
- * @file boundary_conditions.h
- * @brief Boundary condition handlers and ghost-cell extrapolation.
- */
-
 #ifndef BOUNDARY_CONDITIONS_H
 #define BOUNDARY_CONDITIONS_H
 
-#include "simulation_types.h" 
+#include "simulation_types.h"
 
-/**
- * @brief Parabolic ghost-cell extrapolation for smooth outflow boundaries.
- * * Fits a second-order polynomial \f$y(r) = a \cdot r^2 + b\cdot r + c\f$ through three interior points
- * to provide a smooth numerical continuation beyond the computational domain.
+/*
+ * ============================================================
+ *  BOUNDARY CONDITIONS MODULE — FULL DESCRIPTION
+ * ============================================================
  *
- * @param[in]  input_vector             The physical field to be extrapolated.
- * @param[in]  reference_index1         First interior grid index for the fit.
- * @param[in]  reference_index2         Second interior grid index for the fit.
- * @param[in]  reference_index3         Third interior grid index for the fit.
- * @param[out] out_coefficient_quadratic Pointer to store the quadratic coefficient (a).
- * @param[out] out_coefficient_linear    Pointer to store the linear coefficient (b).
- * @param[out] out_coefficient_constant  Pointer to store the constant coefficient (c).
- * @param[in]  grid_spacing             Radial grid resolution (dr).
- * @param[in]  disk_params              Pointer to global disk parameters.
- * @return void
- */
-void parabolicExtrapolationToGhostCells(double *input_vector, int reference_index1, int reference_index2, int reference_index3, 
-	                                    double *out_coefficient_quadratic, double *out_coefficient_linear, double *out_coefficient_constant, 
-	                                    double grid_spacing, const DiskParameters *disk_params);
-
-/**
- * @brief Applies physical and numerical boundary conditions to a given field.
- * * Updates ghost cells at the inner and outer boundaries to ensure stability.
+ *  PURPOSE:
+ *    This module implements boundary conditions for the
+ *    EULERIAN GAS FIELDS of the 1D viscous disk model:
  *
- * @param[in,out] input_vector          The array to be updated with boundary values.
- * @param[in]     disk_params           Pointer to global disk parameters.
- * @return void
+ *        - gas surface density Σ(r)
+ *        - gas pressure P(r)
+ *        - gas pressure gradient dP/dr
+ *        - gas radial velocity v_gas(r)
+ *
+ *    These quantities live on the Euler grid and require
+ *    ghost-cell boundary conditions for numerical stability.
+ *
+ *
+ *  IMPORTANT:
+ *    DUST IS NOT TREATED AS AN EULERIAN FIELD.
+ *
+ *    Dust is represented by LAGRANGIAN PARTICLES.
+ *    Therefore:
+ *
+ *        *** NO boundary conditions are applied to dust here. ***
+ *
+ *    Dust “boundary behaviour” (infall, escape, reflection)
+ *    is handled entirely inside the particle integrator.
+ *
+ *
+ * ============================================================
+ *  FIELD-SPECIFIC BC LOGIC
+ * ============================================================
+ *
+ *  Some BC types are only physically meaningful for Σ(r).
+ *  For example:
+ *
+ *    - Absorbing BC (3)      → only valid for Σ (dust/gas sink)
+ *    - Fixed-flux BC (2)     → only valid for Σ (viscous flux)
+ *
+ *  Pressure and pressure-gradient cannot use these BCs.
+ *
+ *  Therefore the dispatcher automatically corrects BC types:
+ *
+ *    FIELD TYPE:
+ *       0 = Σ(r)
+ *       1 = P(r)
+ *       2 = dP/dr
+ *
+ *    CORRECTION RULES:
+ *       absorbing (3):
+ *           Σ → absorbing
+ *           P → zero-gradient
+ *           dP/dr → zero-gradient
+ *
+ *       fixed_flux (2):
+ *           Σ → fixed_flux
+ *           P → parabolic
+ *           dP/dr → parabolic
+ *
+ *       all other BCs:
+ *           valid for all fields
+ *
+ *
+ * ============================================================
+ *  INNER BOUNDARY CONDITION TYPES
+ * ============================================================
+ *
+ *   0 = Zero-gradient inner
+ *       Neumann BC. Ghost cell = first interior cell.
+ *       Simple, stable, non-physical.
+ *
+ *   1 = Parabolic inner
+ *       Smooth extrapolation using 3 interior points.
+ *       Non-reflecting, good for gas outflow-like inner edges.
+ *
+ *   2 = Fixed-flux inner (Lynden–Bell)
+ *       Enforces Σ r^(1/2) = const.
+ *       Physical viscous disk inner boundary.
+ *
+ *   3 = Absorbing inner
+ *       Ghost cell = 0. Dust/gas sink at inner edge.
+ *       Physical for dust; gas fallback handled by correction.
+ *
+ *   4 = Reflecting inner
+ *       Ghost cell mirrors interior. Non-physical; test only.
+ *
+ *   5 = Linear extrapolation inner
+ *       v0 = 2*v1 - v2. Simple, stable continuation.
+ *
+ *   6 = Log-grid extrapolation inner
+ *       Extrapolation respecting logarithmic spacing.
+ *
+ *
+ * ============================================================
+ *  OUTER BOUNDARY CONDITION TYPES
+ * ============================================================
+ *
+ *   0 = Zero-gradient outer
+ *       Neumann BC. Simple outflow.
+ *
+ *   1 = Parabolic outer
+ *       Smooth, non-reflecting outflow.
+ *       Excellent for viscous diffusion stability.
+ *
+ *   2 = Fixed-flux outer
+ *       Viscous disk outer-edge flux condition.
+ *
+ *   3 = Absorbing outer
+ *       Ghost cell = 0. Dust sink at outer boundary.
+ *
+ *   4 = Reflecting outer
+ *       Ghost cell mirrors interior. Non-physical.
+ *
+ *   5 = Linear extrapolation outer
+ *       v(N+1) = 2*v(N) - v(N-1). Very stable outflow.
+ *
+ *   6 = Log-grid extrapolation outer
+ *       Extrapolation respecting logarithmic spacing.
+ *
+ *
+ * ============================================================
+ *  NOTE ON RADIAL GRID:
+ * ============================================================
+ *
+ *   The radial grid r[i] is GEOMETRY, not a physical field.
+ *   Boundary conditions DO NOT apply to the radial grid.
+ *
+ *   Ghost-cell coordinates are set by createRadialGrid()
+ *   and must not be modified by BC routines.
+ *
+ * ============================================================
  */
-void applyBoundaryConditions(double *input_vector,const DiskParameters *disk_params);
 
-#endif // BOUNDARY_CONDITIONS_H
+
+
+/* Dispatcher */
+void applyBoundaryConditions(double *v,
+                             const DiskParameters *dp,
+                             const SimulationOptions *opt);
+
+/* Parabolic helper */
+void parabolicExtrapolationToGhostCells(double *input_vector,
+                                        int i1, int i2, int i3,
+                                        double *a, double *b, double *c,
+                                        double grid_spacing,
+                                        const DiskParameters *dp);
+
+/* INNER BCs */
+void applyZeroGradientInner(double *v, const DiskParameters *dp);
+void applyParabolicInner(double *v, const DiskParameters *dp);
+void applyFixedFluxInner(double *v, const DiskParameters *dp);
+void applyAbsorbingInner(double *v, const DiskParameters *dp);
+void applyReflectingInner(double *v, const DiskParameters *dp);
+void applyLinearExtrapolationInner(double *v, const DiskParameters *dp);
+void applyLogGridExtrapolationInner(double *v, const DiskParameters *dp);
+
+/* OUTER BCs */
+void applyZeroGradientOuter(double *v, const DiskParameters *dp);
+void applyParabolicOuter(double *v, const DiskParameters *dp);
+void applyFixedFluxOuter(double *v, const DiskParameters *dp);
+void applyAbsorbingOuter(double *v, const DiskParameters *dp);
+void applyReflectingOuter(double *v, const DiskParameters *dp);
+void applyLinearExtrapolationOuter(double *v, const DiskParameters *dp);
+void applyLogGridExtrapolationOuter(double *v, const DiskParameters *dp);
+
+#endif

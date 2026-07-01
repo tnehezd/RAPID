@@ -39,7 +39,7 @@ void createRadialGrid(DiskParameters *disk_params) {
     }
 }
 
-void createInitialGasSurfaceDensity(DiskParameters *disk_params){   
+void createInitialGasSurfaceDensity(DiskParameters *disk_params, SimulationOptions *sim_opts){   
 
     int i;
   
@@ -77,31 +77,34 @@ void createInitialGasSurfaceDensity(DiskParameters *disk_params){
         }
     }
 
-    applyBoundaryConditions(disk_params->gas_surface_density_vector, disk_params);
+    applyBoundaryConditions(disk_params->gas_surface_density_vector, disk_params,sim_opts);
 }
 
-void createInitialGasPressure(DiskParameters *disk_params){ 
+void createInitialGasPressure(DiskParameters *disk_params, SimulationOptions *sim_opts){ 
 
     int i;
   
     for(i = 1; i <= disk_params->grid_number; i++) {
             disk_params->gas_pressure_vector[i] = calculateGasPressure(disk_params->gas_surface_density_vector[i],disk_params->radial_grid[i],disk_params);
     }
-    applyBoundaryConditions(disk_params->gas_pressure_vector,disk_params);
+    sim_opts->current_bc_target = 1;
+    applyBoundaryConditions(disk_params->gas_pressure_vector,disk_params,sim_opts);
 
 }
 
-void createInitialGasPressureGradient(DiskParameters *disk_params){
+void createInitialGasPressureGradient(DiskParameters *disk_params, SimulationOptions *sim_opts){
 
     calculateGasPressureGradient(disk_params);
-    applyBoundaryConditions(disk_params->gas_pressure_gradient_vector,disk_params);
+    sim_opts->current_bc_target = 2;
+    applyBoundaryConditions(disk_params->gas_pressure_gradient_vector,disk_params,sim_opts);
 
 }
 
-void createInitialGasVelocity(DiskParameters *disk_params){ 
+void createInitialGasVelocity(DiskParameters *disk_params, SimulationOptions *sim_opts){ 
     
     calculateGasRadialVelocity(disk_params);
-    applyBoundaryConditions(disk_params->gas_velocity_vector,disk_params);
+    sim_opts->current_bc_target = 0;
+    applyBoundaryConditions(disk_params->gas_velocity_vector,disk_params,sim_opts);
 }
 
 

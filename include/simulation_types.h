@@ -66,6 +66,9 @@ typedef struct {
     double xray_luminosity;               /**< Stellar X-ray luminosity [erg/s]. */
     double gaussian_sigma;
     double gaussian_cutoff;
+    char inner_bc_string[32];
+    char outer_bc_string[32];
+    char dust_smoothing_mode_string[32];
 
 } DiskParameters;
 
@@ -126,8 +129,11 @@ typedef struct {
     char dust_input_filename[MAX_PATH_LEN];   /**< Path to dust input file. */
     OutputFormat output_format;               /**< Selects ASCII or HDF5 output backend. */
     int dust_smoothing_mode;                  /**< Dust smoothing method for mapping Lagrangian to Euler grid */
-    double gaussian_sigma;   /**< Gaussian kernel width in grid-cell units (Δr) */
-    double gaussian_cutoff;       /**< Gaussian kernel cutoff in multiples of sigma */
+    double gaussian_sigma;                    /**< Gaussian kernel width in grid-cell units (Δr) */
+    double gaussian_cutoff;                   /**< Gaussian kernel cutoff in multiples of sigma */
+    int inner_boundary_condition_type;        /**< Option for boundary condition at the inner edge */
+    int outer_boundary_condition_type;        /**< Option for boundary condition at the outer edge */
+    int current_bc_target;                    /**< Helper to check the current array for BC application */
 } SimulationOptions;
 
 
