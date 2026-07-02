@@ -4,48 +4,45 @@ import argparse
 import os
 import datetime
 
+prefix = "[PY-WRAPPER]"
+
+
 def run_c_program(executable_path, params, arg_mapping, verbosity_flag, program_name="C Program"):
     """
     Runs a C program with the given parameters.
     """
     if not os.path.exists(executable_path):
-        print(f"Error: The '{program_name}' executable was not found at: {executable_path}. Have you compiled it?")
+        print(f"{prefix} Error: The '{program_name}' executable was not found at: {executable_path}.")
         return False, None
 
     cmd_args = [executable_path]
     
-    # Adding the verbosity flag (-v or -vv)
     if verbosity_flag:
         cmd_args.append(verbosity_flag)
 
     for py_key, value in params.items():
         c_arg_name = arg_mapping.get(py_key)
         if c_arg_name:
-            # Handle boolean values: convert to "1.0" or "0.0" for C
             if isinstance(value, bool):
                 cmd_args.extend([c_arg_name, "1.0" if value else "0.0"])
-            # Handle input_file_path specifically: only pass if not empty
             elif c_arg_name == "-i":
                 if value is not None and str(value).strip() != "":
                     cmd_args.extend([c_arg_name, str(value)])
-            # Handle output_directory_name: ensure it's always passed
             elif c_arg_name == "-o":
                 if value is not None and str(value).strip() != "":
                     cmd_args.extend([c_arg_name, str(value)])
-                else: # Fallback to a default if somehow empty (shouldn't happen with updated defaults)
+                else:
                     cmd_args.extend([c_arg_name, "output"])
-            # Handle other numeric or string parameters
             else:
                 cmd_args.extend([c_arg_name, str(value)])
 
-    print(f"\n--- Running: {program_name} ---")
-    print(f"Command: {' '.join(cmd_args)}")
+    print(f"\n{prefix} --- Running: {program_name} ---")
+    print(f"{prefix} The current command-line arguments are:\n {' '.join(cmd_args)}")
 
-    # Current environment variables are copied
     current_env = os.environ.copy()
-    # Set OMP_NUM_THREADS to 1
     current_env["OMP_NUM_THREADS"] = "1"
-    print(f"Setting OMP_NUM_THREADS={current_env['OMP_NUM_THREADS']} for this run.")
+    print(f"{prefix} Setting OMP_NUM_THREADS={current_env['OMP_NUM_THREADS']} for this run.")
+    print(f"{prefix} Start running the binary ({executable_path}) at {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}...\n")
 
     try:
         process = subprocess.Popen(
@@ -56,23 +53,24 @@ def run_c_program(executable_path, params, arg_mapping, verbosity_flag, program_
             encoding='cp1252',
             errors='replace',
             bufsize=1,
-            env=current_env # Pass the modified environment variables
+            env=current_env
         )
         for line in process.stdout:
-            print(line, end='') # Print output in real-time
+            # Itt NE tegyünk prefixet, hogy a C kimenete tiszta maradjon
+            print(line, end='') 
         process.wait()
 
         if process.returncode != 0:
-            print(f"{program_name} exited with error code: {process.returncode}")
+            print(f"\n{prefix} {program_name} exited with error code: {process.returncode}")
             return False, process.returncode
         else:
-            print(f"{program_name} completed successfully.")
+            print(f"\n{prefix} {program_name} completed successfully.")
             return True, 0
     except FileNotFoundError:
-        print(f"Error: Command '{executable_path}' not found. Check path and permissions.")
+        print(f"{prefix} Error: Command '{executable_path}' not found.")
         return False, 1
     except Exception as e:
-        print(f"An error occurred while running {program_name}: {e}")
+        print(f"{prefix} An error occurred while running {program_name}: {e}")
         return False, 1
 
 
@@ -92,10 +90,10 @@ def main():
         with open(config_file, 'r') as f:
             full_config = yaml.safe_load(f) or {}
     except FileNotFoundError:
-        print(f"Error: Configuration file '{config_file}' not found.")
+        print(f"{prefix} Error: Configuration file '{config_file}' not found.")
         return
     except yaml.YAMLError as exc:
-        print(f"Error parsing YAML file '{config_file}': {exc}")
+        print(f"{prefix} Error parsing YAML file '{config_file}': {exc}")
         return
 
     # --- FIX: Üres szótárból indulunk ki, nincsenek keményen kódolt defaultok ---
@@ -202,7 +200,7 @@ def main():
     }
 
     if not all_params:
-        print("Error: No parameters could be parsed from YAML. Exiting.")
+        print(f"{prefix} Error: No parameters could be parsed from YAML. Exiting.")
         return
     
     # 2. Add hozzá a logolási flaget
@@ -217,10 +215,10 @@ def main():
     success, return_code = run_c_program(main_executable, all_params, c_arg_mapping, verbosity_flag, "Main Simulation Program")
 
     if not success:
-        print(f"The C program exited with an error (error code: {return_code}).")
+        print(f"{prefix} The C program exited with an error (error code: {return_code}) with the Python wrapper.")
         return
 
-    print("\nAll programs completed successfully.")
+    print(f"{prefix} All programs completed successfully.")
 
 if __name__ == "__main__":
     main()

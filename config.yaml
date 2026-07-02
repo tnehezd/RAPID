@@ -69,8 +69,8 @@ output_parameters:
 time_parameters:
   # Time Parameters
   fixed_time_step: 0.0              # Corresponds to 'tStep' (-tStep) --- let's set it to 0, as the code itself calculates adaptive timestep...
-  total_simulation_time: 5.0e5       # Corresponds to 'totalTime' (-tmax)
-  output_write_frequency: 1000     # Corresponds to 'outputFrequency' (-outfreq)
+  total_simulation_time: 1e3       # Corresponds to 'totalTime' (-tmax)
+  output_write_frequency: 5     # Corresponds to 'outputFrequency' (-outfreq)
 
 log_parameters:
-  info_level: "debug" # "none", "info", vagy "debug"
+  info_level: "none" # "none", "info", vagy "debug"

@@ -13,20 +13,21 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#include "logger.h"
 
 
 void readDiskParameters(DiskParameters *disk_params) {
 
     if (disk_params == NULL) {
-        fprintf(stderr, "ERROR [readDiskParameters]: Received NULL disk_params pointer.\n");
+        LOG_ERROR("Received NULL disk_params pointer.\n");
         exit(EXIT_FAILURE);
     }
 
-    fprintf(stderr, "DEBUG [readDiskParameters]: Calculating derived disk parameters and writing to output file.\n");
+    LOG_DEBUG("Calculating derived disk parameters and writing to output file.\n");
 
     disk_params->particle_density_dimensionless = disk_params->particle_density / SOLAR_MASS_IN_GRAMS * AU_IN_CM * AU_IN_CM * AU_IN_CM;
 
-    fprintf(stderr, "DEBUG [readDiskParameters]: Calculated particle_density = %.2e, particle_density_dimensionless = %.2e.\n",
+    LOG_DEBUG("Calculated particle_density = %.2e, particle_density_dimensionless = %.2e.\n",
            disk_params->particle_density, disk_params->particle_density_dimensionless);
 }
 

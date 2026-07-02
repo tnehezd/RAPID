@@ -11,6 +11,7 @@
 #include "utils.h"
 
 #include "hdf5_output.h"
+#include "logger.h"
 
 #define MAX_TRAPS 5
 
@@ -113,7 +114,7 @@ int initHDF5File(const char *filename, OutputFiles *output_files) {
 
     hid_t file_id = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     if (file_id < 0) {
-        fprintf(stderr, "ERROR: Could not create HDF5 file %s\n", filename);
+        LOG_ERROR("Could not create HDF5 file %s\n", filename);
         return 1;
     }
 
@@ -234,21 +235,21 @@ void writeHDF5SnapshotToFile(double time, hid_t file_id, const SimulationOptions
     // -------------------
     hid_t group_frame = H5Gcreate2(file_id, "/frame", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     if (group_frame < 0) {
-        fprintf(stderr, "ERROR: Could not create /frame group\n");
+        LOG_ERROR("Could not create /frame group\n");
         return;
     }
 
     hsize_t dims_time[1] = {1};
     hid_t space_time = H5Screate_simple(1, dims_time, NULL);
     if (space_time < 0) {
-        fprintf(stderr, "ERROR: Could not create dataspace for time\n");
+        LOG_ERROR("Could not create dataspace for time\n");
         H5Gclose(group_frame);
         return;
     }
 
     hid_t dset_time = H5Dcreate2(group_frame, "time", H5T_NATIVE_DOUBLE, space_time, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     if (dset_time < 0) {
-        fprintf(stderr, "ERROR: Could not create /frame/time dataset\n");
+        LOG_ERROR("Could not create /frame/time dataset\n");
         H5Sclose(space_time);
         H5Gclose(group_frame);
         return;

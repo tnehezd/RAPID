@@ -10,7 +10,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <omp.h>             
+#include <omp.h>     
+#include "logger.h"        
 
 double calculateStokesNumber(double particle_radius, double gas_surfacedensity, const DiskParameters *disk_params) { 
 
@@ -256,7 +257,7 @@ void calculateDustDistance(const char *file_name, ParticleData *particle_data, d
                         if (drift_timescale_file != NULL) {
                             fprintf(drift_timescale_file, "%lg %lg\n", particle_data->particle_distance_array[i][0], (particle_data->particle_distance_array[i][0] / current_timestep_value) / (2.0 * M_PI));
                         } else {
-                            fprintf(stderr, "ERROR: drift_timescale_file is NULL during write in calculateDustDistance (t=0 block).\n");
+                            LOG_ERROR("drift_timescale_file is NULL during write in calculateDustDistance (t=0 block).\n");
                         }
                     }
                 }

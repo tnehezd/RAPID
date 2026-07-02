@@ -61,15 +61,14 @@ static void renderBox(int step,
         p += sprintf(bar_str + p, "%c", (i < pos) ? '#' : '.');
     }
 
-    // KIPUCOLVA: Kiszedve az összes \033[K a sorok végéről, ami törölte a múltat
-    fprintf(stderr, ANSI_GRAY "+------------------------------------------------------------+" ANSI_RESET "\n");
+    fprintf(stderr, ANSI_GRAY "==========================================================================" ANSI_RESET "\n");
     fprintf(stderr, " | " ANSI_BLUE "STEP:" ANSI_RESET "        %-8d | " ANSI_MAGENTA "Mode:" ANSI_RESET " %s\n", step, mode);
     fprintf(stderr, " | " ANSI_BLUE "TIME:" ANSI_RESET "        %.4e / %.4e yr  " ANSI_GRAY "[" ANSI_GREEN "%s" ANSI_GRAY "] " ANSI_GREEN "%5.1f%%" ANSI_RESET "\n",
             current_time_years, output_time, bar_str, time_progress);
     fprintf(stderr, " | " ANSI_BLUE "DT:" ANSI_RESET "          %.4e yr\n", deltat);
     fprintf(stderr, " | " ANSI_BLUE "DISK MASS:" ANSI_RESET "   %.4e / %.4e M_Sun " ANSI_YELLOW "(Remaining: %5.2f%%)" ANSI_RESET "\n",
             current_mass, target_mass, mass_percentage);
-    fprintf(stderr, ANSI_GRAY "+------------------------------------------------------------+" ANSI_RESET "\n");
+    fprintf(stderr, ANSI_GRAY "==========================================================================" ANSI_RESET "\n");
 }
 
 void printStatus(int step,

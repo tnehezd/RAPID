@@ -1,3 +1,4 @@
+#include "logger.h"
 #include "init_tool_module.h"
 #include "config.h" 
 #include "disk_model.h" 
@@ -11,6 +12,8 @@
 #include <stdlib.h>
 #include <string.h> 
 #include <math.h>   
+
+#include "print_panels.h"
 
 void initializeDefaultOptions(InitializeDefaultOptions *def) {
     def->use_cutoff             = false; 
@@ -127,19 +130,19 @@ static double findMinimumForThreeNumbersInitTool(double value1, double value2, d
 
 static int validateInitializationInputs(const InitializeDefaultOptions *opts) {
     if (opts->r_inner <= 0.0) {
-        fprintf(stderr, "ERROR [runInitialization]: Inner radius must be positive. Value: %lg\n", opts->r_inner);
+        LOG_ERROR("Inner radius must be positive. Value: %lg\n", opts->r_inner);
         return 1;
     }
     if (opts->r_outer <= opts->r_inner) {
-        fprintf(stderr, "ERROR [runInitialization]: Outer radius must be greater than inner. R_in: %lg, R_out: %lg\n", opts->r_inner, opts->r_outer);
+        LOG_ERROR("Outer radius must be greater than inner. R_in: %lg, R_out: %lg\n", opts->r_inner, opts->r_outer);
         return 1;
     }
     if (opts->n_grid_points <= 0) {
-        fprintf(stderr, "ERROR [runInitialization]: Grid points must be positive. Value: %d\n", opts->n_grid_points);
+        LOG_ERROR("Grid points must be positive. Value: %d\n", opts->n_grid_points);
         return 1;
     }
     if (opts->n_dust_particles <= 0) {
-        fprintf(stderr, "ERROR [runInitialization]: Dust particles must be positive. Value: %d\n", opts->n_dust_particles);
+        LOG_ERROR("Dust particles must be positive. Value: %d\n", opts->n_dust_particles);
         return 1;
     }
     return 0; 
@@ -353,23 +356,7 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
     fclose(disk_parameters_output_file);
 
 
-    fprintf(stderr, "\n--- Simulation Initialization Parameters ---\n");
-    fprintf(stderr, "  Total disk mass (Solar Mass):       %lg\n", default_options->total_disk_mass); // FIXED: Renamed to total_disk_mass
-    fprintf(stderr, "  Inner disk edge (AU):               %lg\n", default_options->r_inner);
-    fprintf(stderr, "  Outer disk edge (AU):               %lg\n", default_options->r_outer);
-    if (default_options->use_cutoff) {
-        fprintf(stderr, "  Profile Style:                      [Exponential Cutoff Taper]\n");
-        fprintf(stderr, "  Characteristic Cutoff Radius (AU):  %lg\n", default_options->r_cutoff);
-        fprintf(stderr, "  Cutoff Sharpness Exponent (n):      %lg\n", default_options->n_for_cutoff);
-    } else {
-        fprintf(stderr, "  Profile Style:                      [Standard Pure Power-Law]\n");
-    }
-    fprintf(stderr, "  Surface density profile exponent:   %lg\n", fabs(default_options->sigma_exponent));
-    fprintf(stderr, "  Gas surface density at 1 AU:        %Lg M_Sun/AU^2\n", current_sigma0_gas);
-    fprintf(stderr, "  Dust to gas ratio:                  %lg\n", default_options->dust_to_gas_ratio);
-    fprintf(stderr, "  Number of gas grid points:          %d\n", default_options->n_grid_points); 
-    fprintf(stderr, "  Number of dust particles:           %d\n", default_options->n_dust_particles);
-    fprintf(stderr, "--------------------------------------------\n\n");
+    printInitializationParameters(default_options, current_sigma0_gas);
 
     return 0;
 }

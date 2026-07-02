@@ -19,6 +19,7 @@
 #include "integrator.h"
 #include "hdf5_output.h"
 #include "print_terminal.h"
+#include "logger.h"
 
 
 
@@ -68,7 +69,6 @@ double calculateTimeStep(const DiskParameters *disk_params) {
         time_step = min_photo_dt;
     }
 
-    // --- FIX: KITÖRÖLTÜK A FÖLÖSLEGESSÉ VÁLT, SORMEGSZAKÍTÓ FPRINTF-EKET ---
     return time_step;
 }
 
@@ -136,11 +136,6 @@ static int isSnapshotDue(double current_time_years, double output_time, double d
 static void handleSnapshotASCII(double t, double current_time_years, double *output_time, ParticleData *particle_data, int particle_number, DiskParameters *disk_params, const SimulationOptions *sim_opts,
                                 OutputFiles *output_files, char *dens_name, char *dust_name, char *dust_name2, char *size_name) {
 
-//    if (step > 0) fprintf(stderr, "\33[A\33[2K\r");                                    
-    // --- FIX: Nincs \n a snapshot jelzésnél sem ---
-//    fprintf(stderr, "\n[SAVE: %6d] Time: %.2e yr | dt: %.2e yr | ASCII SNAPSHOT SAVED\n", step, current_time_years, (sim_opts->user_defined_time_step));
-//    fflush(stderr);
-
     handleSnapshot(current_time_years, output_time, sim_opts, output_files, dens_name, dust_name, dust_name2, size_name);
     snapshotInitAtT0(t, current_time_years, particle_data, disk_params, sim_opts, particle_number);
     snapshotPrintGas(disk_params, output_files, sim_opts);
@@ -177,17 +172,13 @@ static void handleSnapshotHDF5(double output_time, const SimulationOptions *sim_
 
     hid_t file_id = (hid_t)(intptr_t)output_files->hdf5_file;
 
-    // --- FIX: Ha gáz módban vagyunk és a particle_data NULL, csinálunk egy biztonságos, üres struktúrát ---
+    // --- FIX: If in gas-only mode: create a dummy particle data structure ---
     if (particle_data == NULL) {
         ParticleData dummy_particle_data;
         memset(&dummy_particle_data, 0, sizeof(ParticleData));
-        // Biztonság kedvéért a globális vagy lokális részecskeszámot 0-ra állítjuk a struktúrán belül, 
-        // ha a writeHDF5SnapshotToFile ezt ellenőrizné:
-        // dummy_particle_data.particle_number = 0; 
 
         writeHDF5SnapshotToFile(output_time, file_id, sim_opts, disk_params, &dummy_particle_data);
     } else {
-        // Ha van por (Dust drift mód), akkor megy az eredeti pointer
         writeHDF5SnapshotToFile(output_time, file_id, sim_opts, disk_params, particle_data);
     }
 
@@ -211,9 +202,6 @@ static void simulateDustDriftStep(double *t, double deltat, double *output_time,
             handleSnapshotASCII(*t, current_time_years, output_time, particle_data, particle_number, disk_params, sim_opts,
                                output_files, dens_name, dust_name, dust_name2, size_name);
         } else {
-//            if (step > 0) fprintf(stderr, "\33[A\33[2K\r");
-//            fprintf(stderr, "\n[SAVE: %6d] Time: %.2e yr | dt: %.2e yr | HDF5 SNAPSHOT SAVE\n", step, current_time_years, deltat);
-//            fflush(stderr);
 
             handleSnapshotHDF5(*output_time, sim_opts, output_files, disk_params, particle_data);
 
@@ -275,9 +263,6 @@ static void simulateGasOnlyStep(double *t, double deltat, double *output_time, D
 
     if (isSnapshotDue(current_time_years, *output_time, deltat, sim_opts)) {
         if (sim_opts->output_format == OUTPUT_ASCII) {
-//            if (step > 0) fprintf(stderr, "\33[A\33[2K\r");
-//            fprintf(stderr, "\n[SAVE: %6d] Time: %.2e yr | dt: %.2e yr | ASCII SNAPSHOT SAVED\n", step, current_time_years, deltat);
-//            fflush(stderr);
 
             asprintf(&dens_name, "%s/%s/%s_%08d%s", sim_opts->output_dir_name, kLogFilesDirectory, kGasDensityProfileFilePrefix, (int)(*output_time), kFileNamesSuffix);
             output_files->surface_file = fopen(dens_name, "w");
@@ -292,10 +277,6 @@ static void simulateGasOnlyStep(double *t, double deltat, double *output_time, D
                 output_files->surface_file = NULL;
             }
         } else {    
-//            if (step > 0) fprintf(stderr, "\33[A\33[2K\r");
-//            fprintf(stderr, "\n[SAVE: %6d] Time: %.2e yr | dt: %.2e yr | HDF5 SNAPSHOT SAVED\n", step, current_time_years, deltat);
-//            fflush(stderr);
-
             handleSnapshotHDF5(*output_time, sim_opts, output_files, disk_params, NULL);
         }
         snapshotAdvance(output_time, sim_opts);
@@ -314,12 +295,12 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
     for (int i = 1; i <= disk_params->grid_number; i++) {
         initial_disk_mass += 2.0 * M_PI * disk_params->radial_grid[i] * disk_params->delta_r * disk_params->gas_surface_density_vector[i];
     }
-    fprintf(stderr, "INFO [Termination Check]: Numerically integrated initial disk mass is: %.5e M_Sun\n", initial_disk_mass);
-    fprintf(stderr, "INFO [Termination Check]: YAML provided initial disk mass is: %.5e M_Sun\n", disk_params->total_disk_mass);
-    fprintf(stderr, "INFO [Termination Check]: Initial calculated disk mass is %.5e M_Sun\n", initial_disk_mass);
+    LOG_INFO("Numerically integrated initial disk mass is: %.5e M_Sun\n", initial_disk_mass);
+    LOG_INFO("YAML provided initial disk mass is: %.5e M_Sun\n", disk_params->total_disk_mass);
+    LOG_INFO("Initial calculated disk mass is %.5e M_Sun\n", initial_disk_mass);
 
     if (disk_params == NULL) {
-        fprintf(stderr, "ERROR [timeIntegrationForTheSystem]: disk_params_ptr is NULL!\n");
+        LOG_ERROR("disk_params_ptr is NULL!\n");
         exit(1);
     }
 
@@ -328,18 +309,18 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
     if (mode > 2) {
         particle_number = calculateNumbersOfParticles(sim_opts->dust_input_filename);
     } else {
-        fprintf(stderr, "INFO [timeIntegrationForTheSystem]: Gas-only mode active. Particle count set to 0.\n");
+        LOG_INFO("Gas-only mode active. Particle count set to 0.\n");
         particle_number = 0;
     }
 
     if (particle_number > 0 && allocateParticleData(&particle_data, particle_number, (int)sim_opts->option_for_dust_secondary_population) != 0) {
-        fprintf(stderr, "ERROR: Failed to allocate particle data. Exiting.\n");
+        LOG_ERROR("Failed to allocate particle data. Exiting.\n");
         exit(EXIT_FAILURE);
     }
 
     if (mode > 2) {
         if (setupInitialOutputFiles(output_files, sim_opts, disk_params, &header_data_for_files) != 0) {
-            fprintf(stderr, "ERROR: Failed to set up initial output files. Exiting.\n");
+            LOG_ERROR("Failed to set up initial output files. Exiting.\n");
             exit(EXIT_FAILURE);
         }
         loadDustParticlesFromFile(&particle_data, sim_opts->dust_input_filename);
@@ -393,7 +374,6 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
 
         ((SimulationOptions *)sim_opts)->user_defined_time_step = deltat;
 
-        // Eldöntjük, hogy történt-e mentés ebben a lépésben (sormegszakításhoz)
         double current_time_years = t / (2.0 * M_PI);
         int snapshot_done = isSnapshotDue(current_time_years, output_time, deltat, sim_opts);
 
@@ -404,13 +384,13 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
         }    
         step_counter++;
 
-        // --- TÖMEG SZÁMÍTÁSA MINDEN LÉPÉSBEN A LOGOLÁSHOZ ÉS LEÁLLÍTÁSHOZ ---
+        // --- Calcualte mass in each step for termination ---
         current_disk_mass = 0.0;
         int has_nan = 0;
         int fully_evaporated_cells = 0;
 
         for (int i = 1; i <= disk_params->grid_number; i++) {
-            // Biztonsági játék: ha a sűrűség negatívvá válna a fotóevaporáció miatt, ne engedjük!
+            // Don't allow negative surface densities, set them to zero if they occur
             if (disk_params->gas_surface_density_vector[i] < 0.0) {
                 disk_params->gas_surface_density_vector[i] = 0.0;
             }
@@ -427,23 +407,23 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
             current_disk_mass += cell_mass;
         }
 
-        // --- DIAGNOSZTIKAI KIÍRATÁS KISZERVEZVE ---
+        // --- Diagnostic output ---
         if (step_counter % 10 == 0 || snapshot_done) {
             const char *mode_str = (mode > 1) ? "RUNNING (DUST DRIFT)" : "RUNNING (GAS ONLY)";
             printStatus(step_counter, deltat, current_time_years, t, output_time, mode_str, snapshot_done,
                         current_disk_mass, target_termination_mass, initial_disk_mass, last_snapshot_time, snapshot_interval);
         }
 
-        // --- AUTOMATIKUS LEÁLLÍTÁS CRITERIA (KITERJESZTVE) ---
-        // Ha a tömeg kisebb a küszöbnél, VAGY ha NaN lett, VAGY ha a has_nan flag bejelzett
+        // --- Automatic termination ---
+        // If the mass is lower than the threshold, or if NaN is detected, or the has_nan fag is triggered
         if (current_disk_mass < target_termination_mass || isnan(current_disk_mass) || has_nan || (fully_evaporated_cells >= (int)(disk_params->grid_number * 0.95))) { 
-            fprintf(stderr, "\n\n[TERMINATION]: Early exit triggered!\n");
+            LOG_INFO("Early exit triggered!\n");
             if (isnan(current_disk_mass) || has_nan) {
-                fprintf(stderr, "Reason: Numerical instability detected (NaN). Disk is effectively evaporated.\n");
+                LOG_ERROR("Reason: Numerical instability detected (NaN). Disk is effectively evaporated.\n");
             } else if (fully_evaporated_cells >= (int)(disk_params->grid_number * 0.95)) {
-                fprintf(stderr, "Reason: 95%% of the radial grid cells are fully evaporated (below %.1e M_Sun).\n", disk_params->density_floor);
+                LOG_ERROR("Reason: 95%% of the radial grid cells are fully evaporated (below %.1e M_Sun).\n", disk_params->density_floor);
             } else {
-                fprintf(stderr, "Reason: Disk mass reached the 0.1%% threshold: %.4e M_Sun (Target: %.4e M_Sun)\n", 
+                LOG_ERROR("Reason: Disk mass reached the 0.1%% threshold: %.4e M_Sun (Target: %.4e M_Sun)\n", 
                         current_disk_mass, target_termination_mass);
             }
             break; 
@@ -460,7 +440,7 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
         closeMassTimeSeries();
     }
 
-    fprintf(stderr, "\n\nDEBUG [timeIntegrationForTheSystem]: Main simulation loop finished.\n");
+    LOG_INFO("Main simulation loop finished.\n");
     cleanupSimulationResources(&particle_data, output_files);
-    fprintf(stderr, "DEBUG [timeIntegrationForTheSystem]: Cleanup completed.\n");
+    LOG_INFO("Cleanup completed.\n");
 }

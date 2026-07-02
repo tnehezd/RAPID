@@ -1,3 +1,4 @@
+#include "print_panels.h"
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
@@ -7,6 +8,7 @@
 #include <sys/types.h>
 #include <unistd.h> 
 #include <pwd.h>    
+#include "logger.h"
 
 
 #ifdef _OPENMP
@@ -41,14 +43,14 @@ int calculateNumbersOfParticles(const char *particle_data_file_name) {
 
     particle_file = fopen(particle_data_file_name, "r");
     if (particle_file == NULL) {
-        fprintf(stderr, "ERROR [calculateNumbersOfParticles]: Could not open file '%s'.\n", particle_data_file_name);
+        LOG_ERROR("Could not open file '%s'.\n", particle_data_file_name);
         perror("Reason"); 
         exit(EXIT_FAILURE);
     }
 
     for (int i = 0; i < INIT_DATA_HEADER_LINES; i++) {
         if (fgets(line_buffer, sizeof(line_buffer), particle_file) == NULL) {
-            fprintf(stderr, "ERROR [calculateNumbersOfParticles]: Unexpected end of file while skipping %d header lines in '%s'.\n", INIT_DATA_HEADER_LINES, particle_data_file_name);
+            LOG_ERROR("Unexpected end of file while skipping %d header lines in '%s'.\n", INIT_DATA_HEADER_LINES, particle_data_file_name);
             fclose(particle_file);
             exit(EXIT_FAILURE);
         }
@@ -74,7 +76,7 @@ void loadDustParticlesFromFile(ParticleData *particle_data, const char *particle
     load_dust_particles_file = fopen(particle_data_file_name,"r");
 
     if (load_dust_particles_file == NULL) {
-        fprintf(stderr, "ERROR [loadDustParticlesFromFile]: Could not open file '%s'.\n", particle_data_file_name);
+        LOG_ERROR("Could not open file '%s'.\n", particle_data_file_name);
         perror("Reason");
         exit(EXIT_FAILURE);
     }
@@ -83,7 +85,7 @@ void loadDustParticlesFromFile(ParticleData *particle_data, const char *particle
     char line_buffer[1024];
     for (int k = 0; k < INIT_DATA_HEADER_LINES; k++) {
         if (fgets(line_buffer, sizeof(line_buffer), load_dust_particles_file) == NULL) {
-            fprintf(stderr, "ERROR [loadDustParticlesFromFile]: Unexpected end of file while skipping headers in '%s'.\n", particle_data_file_name);
+            LOG_ERROR("Unexpected end of file while skipping headers in '%s'.\n", particle_data_file_name);
             fclose(load_dust_particles_file);
             exit(EXIT_FAILURE);
         }
@@ -100,9 +102,7 @@ void loadDustParticlesFromFile(ParticleData *particle_data, const char *particle
             particle_data->micron_particle_distance_array[i][1] = micron_particle_radius / AU_IN_CM; 
             particle_data->massmicradial_grid[i] = micron_representative_mass;
         } else {
-            fprintf(stderr, "\n\n******************* ERROR!      *********************\n\n");
-            fprintf(stderr, "   Failed to read line %d from particle data file '%s'!\n", i, particle_data_file_name);
-            fprintf(stderr, "   Expected 6 values, but fscanf failed. Program will exit.\n");
+            LOG_ERROR("Failed to read line %d from particle data file '%s'!\n  Expected 6 values, but fscanf failed. Program will exit.", i, particle_data_file_name);
             fclose(load_dust_particles_file);
             exit(EXIT_FAILURE);
         }
@@ -117,7 +117,7 @@ void loadGasSurfaceDensityFromFile(DiskParameters *disk_params, const char *disk
 
     FILE *input_file = fopen(input_disk_file_name, "r");
     if (input_file == NULL) {
-        fprintf(stderr, "ERROR [loadGasSurfaceDensityFromFile]: Could not open input file '%s'.\n", input_disk_file_name);
+        LOG_ERROR("Could not open input file '%s'.\n", input_disk_file_name);
         perror("Reason");
         exit(EXIT_FAILURE);
     }
@@ -134,7 +134,7 @@ void loadGasSurfaceDensityFromFile(DiskParameters *disk_params, const char *disk
     }
 
     if (feof(input_file) && (line[0] == '#' || strncmp(line, "---", 3) == 0)) {
-        fprintf(stderr, "ERROR [loadGasSurfaceDensityFromFile]: File '%s' is empty or only contains comments/headers.\n", input_disk_file_name);
+        LOG_ERROR("File '%s' is empty or only contains comments/headers.\n", input_disk_file_name);
         fclose(input_file);
         exit(EXIT_FAILURE);
     }
@@ -148,7 +148,7 @@ void loadGasSurfaceDensityFromFile(DiskParameters *disk_params, const char *disk
     for (int i = 0; i < disk_params->grid_number; i++) {
         if (fscanf(input_file, "%d %lf %lf %lf %lf",
                          &index, &r_value, &surfacedensity_gas_value, &gas_pressure_value, &gas_pressure_gradient_value) != 5) {
-            fprintf(stderr, "ERROR [loadGasSurfaceDensityFromFile]: Failed to read 4 values for row %d from file '%s'. File may be malformed or ended unexpectedly.\n", i, input_disk_file_name);
+            LOG_ERROR("Failed to read 4 values for row %d from file '%s'. File may be malformed or ended unexpectedly.\n", i, input_disk_file_name);
             fclose(input_file);
             exit(EXIT_FAILURE);
         }
@@ -159,7 +159,7 @@ void loadGasSurfaceDensityFromFile(DiskParameters *disk_params, const char *disk
             disk_params->gas_pressure_vector[i + 1] = gas_pressure_value;
             disk_params->gas_pressure_gradient_vector[i + 1] = gas_pressure_gradient_value;
         } else {
-            fprintf(stderr, "WARNING [loadGasSurfaceDensityFromFile]: Attempted to write to out-of-bounds index %d. Max allowed index: %d (grid_number+1).\n", i + 1, disk_params->grid_number + 1);
+            LOG_WARN("Attempted to write to out-of-bounds index %d. Max allowed index: %d (grid_number+1).\n", i + 1, disk_params->grid_number + 1);
         }
     }
 
@@ -179,13 +179,13 @@ char *createRunDirectory(const char *dir_path) {
         asprintf(&temporary_path, "%s_%04d", dir_path, ++counter);
 
         if (counter > 99) {
-            fprintf(stderr, "ERROR: Too many directories.\n");
+            LOG_ERROR("Too many directories.\n");
             exit(1);
         }
     }
 
     if (MKDIR_CALL(temporary_path) != 0) {
-        perror("mkdir failed");
+        LOG_ERROR("mkdir failed");
         exit(1);
     }
 
@@ -224,11 +224,11 @@ void printCurrentInformationAboutRun(const char *directory_name, const DiskParam
     sprintf(file_name, "%s%s", kCurrentInfoFile, kFileNamesSuffix);
     asprintf(&full_path, "%s/%s", directory_name, file_name);
 
-    fprintf(stderr, "DEBUG [printCurrentInformationAboutRun]: Writing run info to: '%s'\n", full_path);
+    LOG_INFO("Writing run info to: '%s'\n", full_path);
 
     FILE *info_file = fopen(full_path, "w");
     if (info_file == NULL) {
-        fprintf(stderr, "ERROR: Could not open info file '%s'.\n", full_path);
+        LOG_ERROR("Could not open info file '%s'.\n", full_path);
         if (full_path) free(full_path);
         return;
     }
@@ -353,7 +353,7 @@ void printGasSurfaceDensityPressurePressureDerivateFile(const DiskParameters *di
     int i;
 
     if (output_files->surface_file == NULL) {
-        fprintf(stderr, "ERROR: output_files->surface_file is NULL in printGasSurfaceDensityPressurePressureDerivateFile! Cannot write sigma data.\n");
+        LOG_ERROR("output_files->surface_file is NULL in printGasSurfaceDensityPressurePressureDerivateFile! Cannot write sigma data.\n");
         return;
     }
 
@@ -369,7 +369,7 @@ void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const 
     int i;
 
     if (output_files->dust_file == NULL) {
-        fprintf(stderr, "ERROR: output_files->dust_file is NULL in printDustSurfaceDensityPressurePressureDerivateFile! Cannot write main dust surface density.\n");
+        LOG_ERROR("output_files->dust_file is NULL in printDustSurfaceDensityPressurePressureDerivateFile! Cannot write main dust surface density.\n");
         return;
     }
 
@@ -399,7 +399,7 @@ void printDustParticleSizeFile(char *size_name, int step, double (*rad)[2], doub
     if (sim_opts->option_for_dust_growth == 1.0) {
         fout_size = openSnapshotFile(size_name, FILE_TYPE_PARTICLE_SIZE, (double)step / (2.0 * M_PI));        
         if (fout_size == NULL) {
-            fprintf(stderr, "ERROR: Could not open size file '%s' in printDustParticleSizeFile!\n", size_name);
+            LOG_ERROR("Could not open size file '%s' in printDustParticleSizeFile!\n", size_name);
             return;
         }
     }
@@ -425,7 +425,7 @@ void printDustParticleSizeFile(char *size_name, int step, double (*rad)[2], doub
 void printFileHeader(FILE *file, FileType_e file_type, const HeaderData *header_data) {
     
     if (file == NULL) {
-        fprintf(stderr, "ERROR [printFileHeader]: Attempted to write header to a NULL file pointer!\n");
+        LOG_ERROR("Attempted to write header to a NULL file pointer!\n");
         return;
     }
 
@@ -528,7 +528,7 @@ void printFileHeader(FILE *file, FileType_e file_type, const HeaderData *header_
             break;
 
         default:
-            fprintf(stderr, "WARNING [printFileHeader]: Unknown file type for header generation: %d!\n", file_type);
+            LOG_WARN("Unknown file type for header generation: %d!\n", file_type);
             break;
     }
     fflush(file);
@@ -564,7 +564,9 @@ void printFinalSimulationSummary(const char *directory_name, double elapsed_seco
     
     if (full_path) free(full_path);
     
-    printf("\n>> Simulation finished in %02d:%02d:%02d. Summary written to logs.\n", h, m, s);
+    char buffer[128];
+    snprintf(buffer, sizeof(buffer), "Simulation finished in %02d:%02d:%02d. Summary written to logs.", h, m, s);
+    printHeader(buffer);
 }
 
 
@@ -582,11 +584,11 @@ int setupInitialOutputFiles(OutputFiles *output_files, const SimulationOptions *
         header_data_for_files->R_out = disk_params->r_max;
 
         asprintf(&mass_output, "%s/%s/%s%s", sim_opts->output_dir_name, kLogFilesDirectory, kDustAccumulationFileName, kFileNamesSuffix);
-        fprintf(stderr, "DEBUG [setupInitialOutputFiles]: Paths:\n  Mass: %s\n", mass_output);
+        LOG_INFO("Writing initial mass output to: %s\n", mass_output);
 
         output_files->mass_file = fopen(mass_output, "w");
         if (output_files->mass_file == NULL) {
-            fprintf(stderr, "ERROR: Could not open %s\n", mass_output);
+            LOG_ERROR("Could not open %s\n", mass_output);
             goto cleanup_error;
         }
 
@@ -620,13 +622,13 @@ void cleanupSimulationResources(ParticleData *particle_data, OutputFiles *output
         free(particle_data->micron_dust_surfacedensity); particle_data->micron_dust_surfacedensity = NULL;
         free(particle_data->particle_distance_grid); particle_data->particle_distance_grid = NULL;
         free(particle_data->micron_particle_distance_grid); particle_data->micron_particle_distance_grid = NULL;
-        fprintf(stderr, "DEBUG [cleanupSimulationResources]: All dynamically allocated particle arrays freed.\n");
+        LOG_DEBUG("All dynamically allocated particle arrays freed.\n");
     }
 
     if (output_files->mass_file != NULL) {
         fclose(output_files->mass_file);
         output_files->mass_file = NULL;
-        fprintf(stderr, "DEBUG [cleanupSimulationResources]: Closed %s%s\n", kDustAccumulationFileName,kFileNamesSuffix);
+        LOG_DEBUG("Closed %s%s\n", kDustAccumulationFileName,kFileNamesSuffix);
     }
 }
 
@@ -635,7 +637,7 @@ FILE *openSnapshotFile(const char *file_name, FileType_e file_type, double curre
 
     FILE *file = fopen(file_name, "w");
     if (file == NULL) {
-        fprintf(stderr, "ERROR: Could not open %s for writing.\n", file_name);
+        LOG_ERROR("Could not open %s for writing.\n", file_name);
         return NULL;
     }
 

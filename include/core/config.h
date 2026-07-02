@@ -84,6 +84,8 @@ extern const char * const kCurrentRuntimeInfoFile;      			/**< Filename for hig
 extern const char * const kSnapshotOutputFileNamePrefix;			/**< Filename for HDF5 snapshot output. */
 extern const char * const kTimeSeriesForMassAccumulatinFileName; 	/**< Filename for HDF mass accumulation file. */
 extern const char * const kFileNamesHDF5Suffix;						/**< Common suffix for output files for HDF5 files (e.g., .dat or .txt). */
+
+extern const int kTerminalWidth;                                    /**< Width of the terminal for formatted output. */
 /**@}*/
 
 #endif // CONFIG_H
