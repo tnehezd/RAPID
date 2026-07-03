@@ -106,7 +106,7 @@ static void snapshotPrintGas(DiskParameters *disk_params, OutputFiles *output_fi
 
 static void snapshotPrintDust(int output_time, ParticleData *particle_data, DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files, char *size_name, char *size_name2, SnapshotMode mode) {
     if (isDustEnabled(mode)) {
-        printDustParticleSizeFile(size_name, size_name2, output_time, particle_data->particle_distance_array, particle_data->micron_particle_distance_array, disk_params, sim_opts, output_files, mode);
+        printDustParticleSizeFile(size_name, size_name2, output_time, particle_data, disk_params, sim_opts, output_files, mode);
     }
 }
 

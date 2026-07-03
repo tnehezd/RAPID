@@ -6,7 +6,7 @@ simulation_parameters:
   # Simulation Control Options (now with boolean flags for clarity)
   enable_dust_drift: true            # Corresponds to 'drift' in C (1.0 for true, 0.0 for false)
   enable_dust_growth: true           # Corresponds to 'growth' in C
-  enable_gas_evolution: false        # Corresponds to 'evol' in C
+  enable_gas_evolution: true        # Corresponds to 'evol' in C
   enable_two_dust_populations: true # Corresponds to 'twopop' in C
   fragmentation_velocity: 500.0     # Corresponds to 'ufrag' in C
   fragmentation_factor: 0.37         # Corresponds to 'ffrag' in C
@@ -69,7 +69,7 @@ output_parameters:
 time_parameters:
   # Time Parameters
   fixed_time_step: 0.0              # Corresponds to 'tStep' (-tStep) --- let's set it to 0, as the code itself calculates adaptive timestep...
-  total_simulation_time: 5e3       # Corresponds to 'totalTime' (-tmax)
+  total_simulation_time: 1e3       # Corresponds to 'totalTime' (-tmax)
   output_write_frequency: 5     # Corresponds to 'outputFrequency' (-outfreq)
 
 log_parameters:

@@ -86,16 +86,18 @@ void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const 
  * @param size_name Output filename.
  * @param size_name2 Output filename for micron-sized particles.
  * @param step Current simulation step.
- * @param rad 2D array of particle radii.
- * @param radmicr 2D array of micron-sized particle radii.
+ * @param particle_data Pointer to ParticleData structure.
  * @param disk_params Pointer to DiskParameters.
  * @param sim_opts Pointer to SimulationOptions.
  * @param output_files Pointer to OutputFiles.
  * @param mode SnapshotMode indicating the type of snapshot being written.
  */
-void printDustParticleSizeFile(char *size_name, char *size_name2, int step, double (*rad)[2], double (*radmicr)[2],
-                        const DiskParameters *disk_params, const SimulationOptions *sim_opts,
-                        OutputFiles *output_files, SnapshotMode mode);
+void printDustParticleSizeFile(char *size_name, char *size_name2, int step, 
+                               ParticleData *particle_data, 
+                               const DiskParameters *disk_params, 
+                               const SimulationOptions *sim_opts, 
+                               OutputFiles *output_files, 
+                               SnapshotMode mode);
 
 /**
  * @brief Writes the evolution of trap mass over time to file.

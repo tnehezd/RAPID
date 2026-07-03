@@ -400,23 +400,35 @@ void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const 
     }
 }
 
-void printDustParticleSizeFile(char *size_name, char *size_name2, int step, double (*rad)[2], double (*micron_particle_radius)[2], const DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files, SnapshotMode mode) {
+/**
+ * @brief Prints dust particle radial positions and sizes to ASCII output files.
+ * 
+ * Uses the ParticleData structure directly to ensure the most recent particle
+ * coordinates are accessed.
+ */
+void printDustParticleSizeFile(char *size_name, char *size_name2, int step, 
+                               ParticleData *particle_data, 
+                               const DiskParameters *disk_params, 
+                               const SimulationOptions *sim_opts, 
+                               OutputFiles *output_files, 
+                               SnapshotMode mode) {
 
     FILE *fout_size = NULL;
     FILE *fout_size2 = NULL;
     int i;
     int is_twopop = isSecondaryPopulationEnabled(mode);
-    int is_dust_growth_enabled = isDustGrowthEnabled(mode);
 
-    if (is_dust_growth_enabled) {
+    // Open output files if dust is enabled in the current mode.
+    // Note: Removed 'isDustGrowthEnabled' dependency so files are updated during drift.
+    if (isDustEnabled(mode)) {
         fout_size = openSnapshotFile(size_name, FILE_TYPE_PARTICLE_SIZE, (double)step / (2.0 * M_PI));        
         if (fout_size == NULL) {
             LOG_ERROR("Could not open size file '%s' in printDustParticleSizeFile!\n", size_name);
             return;
         }
 
-        if(is_twopop) {
-            fout_size2 = openSnapshotFile(size_name2, FILE_TYPE_DUST_MICRON_DENSITY, (double)step / (2.0 * M_PI));
+        if (is_twopop && particle_data->micron_particle_distance_array != NULL) {
+            fout_size2 = openSnapshotFile(size_name2, FILE_TYPE_MICRON_PARTICLE_SIZE, (double)step / (2.0 * M_PI));
             if (fout_size2 == NULL) {
                 LOG_ERROR("Could not open micron size file '%s' in printDustParticleSizeFile!\n", size_name2);
                 fclose(fout_size);
@@ -425,26 +437,31 @@ void printDustParticleSizeFile(char *size_name, char *size_name2, int step, doub
         }
     }
 
+    // Iterate through particles using the direct ParticleData pointers
     for (i = 0; i < particle_number; i++) { 
-        if (is_dust_growth_enabled && fout_size != NULL) {
-            if (rad[i][0] >= disk_params->r_min) {
-                fprintf(fout_size, "%-10lg %-10d %-20.6e %-20.6e\n", (double)step, i, rad[i][0], rad[i][1] * AU_IN_CM);
-            }
+        
+        // Write primary population size data
+        if (fout_size != NULL && particle_data->particle_distance_array[i][0] >= disk_params->r_min) {
+            fprintf(fout_size, "%-10d %-10d %-20.6e %-20.6e\n", 
+                    step, i, 
+                    particle_data->particle_distance_array[i][0], 
+                    particle_data->particle_distance_array[i][1] * AU_IN_CM);
+        }
 
-            if(is_twopop && fout_size2 != NULL) {
-                if (micron_particle_radius[i][0] >= disk_params->r_min) {
-                    fprintf(fout_size2, "%-10lg %-10d %-20.6e %-20.6e\n", (double)step, i, micron_particle_radius[i][0], micron_particle_radius[i][1] * AU_IN_CM);
-                }
+        // Write secondary population size data if enabled
+        if (is_twopop && fout_size2 != NULL && particle_data->micron_particle_distance_array != NULL) {
+            if (particle_data->micron_particle_distance_array[i][0] >= disk_params->r_min) {
+                fprintf(fout_size2, "%-10d %-10d %-20.6e %-20.6e\n", 
+                        step, i, 
+                        particle_data->micron_particle_distance_array[i][0], 
+                        particle_data->micron_particle_distance_array[i][1] * AU_IN_CM);
             }
         }
     }
 
-    if (is_dust_growth_enabled && fout_size != NULL) {
-        fclose(fout_size);
-    }
-    if (is_dust_growth_enabled && fout_size2 != NULL) {
-        fclose(fout_size2);
-    }   
+    // Close files safely
+    if (fout_size != NULL) fclose(fout_size);
+    if (fout_size2 != NULL) fclose(fout_size2);
 }
 
 void printFileHeader(FILE *file, FileType_e file_type, const HeaderData *header_data) {
