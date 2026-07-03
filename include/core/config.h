@@ -80,6 +80,7 @@ extern const char * const kConfigFilesDirectory;        			/**< Directory path w
 extern const char * const kFileNamesSuffix;             			/**< Common suffix for output files for ASCII files (e.g., .dat or .txt). */
 extern const char * const kCurrentInfoFile;             			/**< Filename for general runtime info. */
 extern const char * const kDustParticleSizeFileName;    			/**< Filename for particle size distribution data. */
+extern const char * const kMicronDustParticleSizeFileName;    		/**< Filename for micron-sized particle size distribution data. */
 extern const char * const kCurrentRuntimeInfoFile;      			/**< Filename for high-frequency runtime diagnostics. */
 extern const char * const kSnapshotOutputFileNamePrefix;			/**< Filename for HDF5 snapshot output. */
 extern const char * const kTimeSeriesForMassAccumulatinFileName; 	/**< Filename for HDF mass accumulation file. */

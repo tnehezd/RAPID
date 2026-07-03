@@ -20,6 +20,6 @@ obj/
 _build/
 docs/xml/
 
-utils/
+
 
 *.png

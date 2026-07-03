@@ -6,8 +6,8 @@ simulation_parameters:
   # Simulation Control Options (now with boolean flags for clarity)
   enable_dust_drift: true            # Corresponds to 'drift' in C (1.0 for true, 0.0 for false)
   enable_dust_growth: true           # Corresponds to 'growth' in C
-  enable_gas_evolution: true        # Corresponds to 'evol' in C
-  enable_two_dust_populations: false # Corresponds to 'twopop' in C
+  enable_gas_evolution: false        # Corresponds to 'evol' in C
+  enable_two_dust_populations: true # Corresponds to 'twopop' in C
   fragmentation_velocity: 500.0     # Corresponds to 'ufrag' in C
   fragmentation_factor: 0.37         # Corresponds to 'ffrag' in C
   number_of_dust_particles: 2000  
@@ -64,7 +64,7 @@ output_parameters:
   # File I/O Parameters
   input_file_path: ""                # Path to the input profile file (e.g., "init_data.dat"), leave empty "" for generation (-i)
   output_directory_name: "output"    # Output directory name (-o)
-  output_format: "hdf5"               # Format of the outputfile (can set to hdf5)
+  output_format: "ascii"               # Format of the outputfile (can set to hdf5)
 
 time_parameters:
   # Time Parameters
@@ -73,4 +73,4 @@ time_parameters:
   output_write_frequency: 5     # Corresponds to 'outputFrequency' (-outfreq)
 
 log_parameters:
-  info_level: "none" # "none", "info", vagy "debug"
+  info_level: "debug" # "none", "info", vagy "debug"

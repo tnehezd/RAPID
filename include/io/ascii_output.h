@@ -84,16 +84,18 @@ void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const 
  * @brief Writes dust particle size distribution to file.
  *
  * @param size_name Output filename.
+ * @param size_name2 Output filename for micron-sized particles.
  * @param step Current simulation step.
  * @param rad 2D array of particle radii.
  * @param radmicr 2D array of micron-sized particle radii.
  * @param disk_params Pointer to DiskParameters.
  * @param sim_opts Pointer to SimulationOptions.
  * @param output_files Pointer to OutputFiles.
+ * @param mode SnapshotMode indicating the type of snapshot being written.
  */
-void printDustParticleSizeFile(char *size_name, int step, double (*rad)[2], double (*radmicr)[2],
+void printDustParticleSizeFile(char *size_name, char *size_name2, int step, double (*rad)[2], double (*radmicr)[2],
                         const DiskParameters *disk_params, const SimulationOptions *sim_opts,
-                        OutputFiles *output_files);
+                        OutputFiles *output_files, SnapshotMode mode);
 
 /**
  * @brief Writes the evolution of trap mass over time to file.
@@ -114,13 +116,14 @@ void printTrapMassEvolution(double current_time_years, int num_found, const Pres
  * appropriate header information.
  */
 typedef enum {
-    FILE_TYPE_MASS_ACCUMULATION,      /**< Mass accumulation output file. */
-    FILE_TYPE_GAS_DENSITY,            /**< Gas surface density file. */
-    FILE_TYPE_DUST_DENSITY,           /**< Dust surface density file. */
-    FILE_TYPE_DUST_MICRON_DENSITY,    /**< Micron-sized dust density file. */
-    FILE_TYPE_INTIIAL_DUST_PROFILE,   /**< Initial dust distribution profile. */
-    FILE_TYPE_PARTICLE_SIZE,          /**< Dust particle size distribution file. */
-    FILE_TYPE_DISK_PARAM              /**< Disk parameter summary file. */
+    FILE_TYPE_MASS_ACCUMULATION,        /**< Mass accumulation output file. */
+    FILE_TYPE_GAS_DENSITY,              /**< Gas surface density file. */
+    FILE_TYPE_DUST_DENSITY,             /**< Dust surface density file. */
+    FILE_TYPE_DUST_MICRON_DENSITY,      /**< Micron-sized dust density file. */
+    FILE_TYPE_INTIIAL_DUST_PROFILE,     /**< Initial dust distribution profile. */
+    FILE_TYPE_PARTICLE_SIZE,            /**< Dust particle size distribution file. */
+    FILE_TYPE_MICRON_PARTICLE_SIZE,     /**< Micron-sized dust particle size distribution file. */
+    FILE_TYPE_DISK_PARAM                /**< Disk parameter summary file. */
 } FileType_e;
 
 /**
@@ -195,9 +198,9 @@ FILE *openSnapshotFile(const char *filename,FileType_e file_type,double current_
  * @brief Closes all snapshot files associated with the simulation.
  *
  * @param output_files Pointer to OutputFiles.
- * @param sim_opts Pointer to SimulationOptions.
+ * @param mode SnapshotMode indicating which files to close.
  */
-void closeSnapshotFiles(OutputFiles *output_files, const SimulationOptions *sim_opts);
+void closeSnapshotFiles(OutputFiles *output_files, SnapshotMode mode);
 
 /**
  * @brief Prints a summary of the simulation after completion.
@@ -215,10 +218,12 @@ void printFinalSimulationSummary(const char *directory_name, double elapsed_seco
  * @param dust_name Output buffer for dust density filename.
  * @param dust_name2 Output buffer for micron dust density filename.
  * @param size_name Output buffer for particle size filename.
+ * @param size_name2 Output buffer for micron particle size filename.
  * @param sim_opts Pointer to SimulationOptions.
  * @param snapshot_id Snapshot index.
+ * @param mode SnapshotMode indicating which files to create.
  */
-void buildSnapshotFilenames(char *dens_name, char *dust_name, char *dust_name2, char *size_name, const SimulationOptions *sim_opts, int snapshot_id);
+void buildSnapshotFilenames(char *dens_name, char *dust_name, char *dust_name2, char *size_name, char *size_name2, const SimulationOptions *sim_opts, int snapshot_id, SnapshotMode mode);
 
 #endif // ASCII_OUTPUT_H
 
