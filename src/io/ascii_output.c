@@ -68,20 +68,18 @@ int calculateNumbersOfParticles(const char *particle_data_file_name) {
 }
 
 void loadDustParticlesFromFile(ParticleData *particle_data, const char *particle_data_file_name) {
-
     int i, particle_index;
     double distance, particle_radius, micron_particle_radius;
     long double representative_mass;
     long double micron_representative_mass;
 
-    load_dust_particles_file = fopen(particle_data_file_name,"r");
+    load_dust_particles_file = fopen(particle_data_file_name, "r");
 
     if (load_dust_particles_file == NULL) {
         LOG_ERROR("Could not open file '%s'.\n", particle_data_file_name);
         perror("Reason");
         exit(EXIT_FAILURE);
     }
-
 
     char line_buffer[1024];
     for (int k = 0; k < INIT_DATA_HEADER_LINES; k++) {
@@ -92,18 +90,27 @@ void loadDustParticlesFromFile(ParticleData *particle_data, const char *particle
         }
     }
 
-
     for (i = 0; i < particle_number; i++) {
-        if(fscanf(load_dust_particles_file,"%d %lg %Lg %Lg %lg %lg",&particle_index,&distance,&representative_mass,&micron_representative_mass,&particle_radius,&micron_particle_radius) == 6) {
+        if (fscanf(load_dust_particles_file, "%d %lg %Lg %Lg %lg %lg", 
+                   &particle_index, &distance, &representative_mass, &micron_representative_mass, 
+                   &particle_radius, &micron_particle_radius) == 6) {
+            
+            // Primary population (always valid)
             particle_data->particle_distance_array[i][0] = distance;
             particle_data->particle_distance_array[i][1] = particle_radius / AU_IN_CM; 
             particle_data->dust_particle_mass_grid[i] = representative_mass;
 
-            particle_data->micron_particle_distance_array[i][0] = distance;
-            particle_data->micron_particle_distance_array[i][1] = micron_particle_radius / AU_IN_CM; 
-            particle_data->massmicradial_grid[i] = micron_representative_mass;
+            // SAFE GUARD: Only write to secondary population if arrays are allocated
+            if (particle_data->micron_particle_distance_array != NULL) {
+                particle_data->micron_particle_distance_array[i][0] = distance;
+                particle_data->micron_particle_distance_array[i][1] = micron_particle_radius / AU_IN_CM; 
+            }
+            if (particle_data->massmicradial_grid != NULL) {
+                particle_data->massmicradial_grid[i] = micron_representative_mass;
+            }
+            
         } else {
-            LOG_ERROR("Failed to read line %d from particle data file '%s'!\n  Expected 6 values, but fscanf failed. Program will exit.", i, particle_data_file_name);
+            LOG_ERROR("Failed to read line %d from particle data file '%s'!\n", i, particle_data_file_name);
             fclose(load_dust_particles_file);
             exit(EXIT_FAILURE);
         }
