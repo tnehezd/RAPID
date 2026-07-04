@@ -28,6 +28,11 @@
 #include "particle_data.h"
 
 /**
+ * @brief 
+ */
+void applyCoagulationMassTransfer(ParticleData *p, DiskParameters *disk, SimulationOptions *sim_opts, double dt);
+
+/**
  * @brief Computes the Stokes number of a dust particle.
  *
  * The Stokes number characterizes the aerodynamic coupling between a dust grain

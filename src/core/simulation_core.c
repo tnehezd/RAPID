@@ -332,6 +332,9 @@ static void simulateDustDriftStep(double *t, double deltat, double *output_time,
 
     // 4. Evolve particle positions
     calculateDustDistance(sim_opts->output_dir_name, particle_data, deltat, *t, particle_number, sim_opts, disk_params);
+    if(isSecondaryPopulationEnabled(mode)) {
+        applyCoagulationMassTransfer(particle_data, disk_params, sim_opts, deltat);
+    }
 
     *t += deltat;
 }
