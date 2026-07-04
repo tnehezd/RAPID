@@ -7,12 +7,12 @@
 #include <hdf5.h>  
 #include <omp.h>
 #include <time.h>
+#include "simulation_core.h"
 #include "config.h"       
 #include "ascii_output.h"     
 #include "disk_model.h"   
 #include "dust_physics.h" 
 #include "utils.h"        
-#include "simulation_core.h"
 #include "particle_data.h" 
 #include "gas_physics.h"
 #include "boundary_conditions.h"
@@ -34,13 +34,63 @@ void calculate1DDustDrift(double particle_radius, double pressure_gradient, doub
     *drift_velocity = gas_velocity / (1. + stokes_number * stokes_number) + stokes_number / (1. + stokes_number * stokes_number) * local_pressure_scaleheight / local_pressure * local_pressure_gradient * local_soundspeed;
 }
 
-double calculateTimeStep(const DiskParameters *disk_params) {
+double getMaximumDriftVelocity(const ParticleData *particle_data, int particle_number, const DiskParameters *disk_params, SnapshotMode mode) {
+    double max_v = 0.0;
+    double v_drift = 0.0;
+
+    // 1. Iterate over the primary (cm-sized) dust population
+    for (int i = 0; i < particle_number; i++) {
+        double r = particle_data->particle_distance_array[i][0];
+        if (r < disk_params->r_min || r > disk_params->r_max) continue;
+
+        int idx = (int)particle_data->dust_particle_mass_array[i][1]; // Grid index
+        
+        calculate1DDustDrift(
+            particle_data->particle_distance_array[i][1], // Particle radius
+            disk_params->gas_pressure_gradient_vector[idx],
+            disk_params->gas_surface_density_vector[idx],
+            disk_params->gas_velocity_vector[idx],
+            r,
+            &v_drift,
+            disk_params
+        );
+
+        if (fabs(v_drift) > max_v) max_v = fabs(v_drift);
+    }
+
+    // 2. Iterate over the secondary (micron-sized) dust population if enabled
+    if (isSecondaryPopulationEnabled(mode)) {
+        for (int i = 0; i < particle_number; i++) {
+            double r_mic = particle_data->micron_particle_distance_array[i][0];
+            if (r_mic < disk_params->r_min || r_mic > disk_params->r_max) continue;
+
+            int idx_mic = (int)particle_data->micron_dust_particle_mass_array[i][1]; // Micron grid index
+            
+            calculate1DDustDrift(
+                particle_data->micron_particle_distance_array[i][1], // Micron radius
+                disk_params->gas_pressure_gradient_vector[idx_mic],
+                disk_params->gas_surface_density_vector[idx_mic],
+                disk_params->gas_velocity_vector[idx_mic],
+                r_mic,
+                &v_drift,
+                disk_params
+            );
+
+            if (fabs(v_drift) > max_v) max_v = fabs(v_drift);
+        }
+    }
+
+    return max_v;
+}
+
+double calculateTimeStep(const DiskParameters *disk_params, double max_drift_v) {
     double max_viscosity = -1e10;
     double min_photo_dt = 1e10; 
     int i;
     int N = disk_params->grid_number;
     double WIND_CRIT = 1e-20;
     
+    // 1. Gas/Viscous and Photoevaporation loops (already existing)
     for(i = 1; i <= N; i++) {
         double current_nu = calculateKinematicViscosity(disk_params->radial_grid[i], disk_params);
         if(current_nu > max_viscosity) {
@@ -63,9 +113,20 @@ double calculateTimeStep(const DiskParameters *disk_params) {
     double safety_factor = 0.35;
     double viscous_dt = safety_factor * (disk_params->delta_r * disk_params->delta_r) / (2.0 * max_viscosity);
     
+    // 2. Dust Drift CFL condition (The "Brake" you wanted)
+    double dust_dt = 1e10; // Default: effectively infinity
+    if (max_drift_v > 1e-15) { // Avoid division by zero
+        double dust_safety_factor = 0.4;
+        dust_dt = dust_safety_factor * disk_params->delta_r / max_drift_v;
+    }
+    
+    // 3. Select the most restrictive timestep
     double time_step = viscous_dt;
-    if (disk_params->enable_photoevaporation && min_photo_dt < viscous_dt) {
+    if (disk_params->enable_photoevaporation && min_photo_dt < time_step) {
         time_step = min_photo_dt;
+    }
+    if (dust_dt < time_step) {
+        time_step = dust_dt;
     }
 
     return time_step;
@@ -106,7 +167,7 @@ static void snapshotPrintGas(DiskParameters *disk_params, OutputFiles *output_fi
 
 static void snapshotPrintDust(int output_time, ParticleData *particle_data, DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files, char *size_name, char *size_name2, SnapshotMode mode) {
     if (isDustEnabled(mode)) {
-        printDustParticleSizeFile(size_name, size_name2, output_time, particle_data, disk_params, sim_opts, output_files, mode);
+        printDustParticleSizeFile(size_name, size_name2, output_time, particle_data, disk_params, output_files, mode);
     }
 }
 
@@ -373,8 +434,8 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
     do {
         static double dt_old = 0.0;
 
-        
-        double dt_new = calculateTimeStep(disk_params) / 5.0;
+        double max_drift_velocity = getMaximumDriftVelocity(&particle_data, particle_number, disk_params, mode);        
+        double dt_new = calculateTimeStep(disk_params, max_drift_velocity) / 5.0;
 
         if (dt_old == 0.0) dt_old = dt_new;
 

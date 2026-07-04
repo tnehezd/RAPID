@@ -52,7 +52,7 @@ dust_parameters:
   # Dust Initialization Parameters (if initial profile is generated)
   initial_dust_to_gas_ratio: 0.01    # Corresponds to 'eps_val' (-eps)
   population_one_mass_ratio: 0.85    # Corresponds to 'ratio_val' (-ratio)
-  micro_particle_size_cm: 0.01     # Corresponds to 'mic_val' (-mic)
+  micro_particle_size_cm: 0.0001     # Corresponds to 'mic_val' (-mic)
   one_size_particle_value_cm: 1.0    # Corresponds to 'onesize_val' (-onesize)
   dust_particle_density_g_cm3: 1.6  # NEW: Por szemcse sűrűsége (g/cm^3)
   disk_mass_dust: 0.01

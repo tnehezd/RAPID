@@ -95,7 +95,6 @@ void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const 
 void printDustParticleSizeFile(char *size_name, char *size_name2, int step, 
                                ParticleData *particle_data, 
                                const DiskParameters *disk_params, 
-                               const SimulationOptions *sim_opts, 
                                OutputFiles *output_files, 
                                SnapshotMode mode);
 

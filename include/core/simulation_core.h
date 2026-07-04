@@ -11,8 +11,10 @@
 #ifndef SIMULATION_CORE_H
 #define SIMULATION_CORE_H
 
+#include "particle_data.h"
 #include "disk_model.h"        
 #include "simulation_types.h"  
+
 
 /**
  * @brief Computes the radial drift velocity of dust particles in 1D.
@@ -32,15 +34,30 @@
 void calculate1DDustDrift(double particle_radius, double pressure_gradient, double gas_surface_density, double gas_velocity, double radial_distance, double *drift_velocity, const DiskParameters *disk_params);
 
 /**
+ * @brief Gets the maximum drift velocity of dust particles.
+ *
+ * This function iterates through all dust particles and computes their drift velocities,
+ * returning the maximum absolute value found.
+ *
+ * @param particle_data Pointer to the particle data structure.
+ * @param particle_number Number of dust particles.
+ * @param disk_params Pointer to the disk parameter structure.
+ * @param mode SnapshotMode indicating the type of snapshot being processed.
+ * @return The maximum drift velocity.
+ */
+double getMaximumDriftVelocity(const ParticleData *particle_data, int particle_number, const DiskParameters *disk_params, SnapshotMode mode);
+
+/**
  * @brief Computes the simulation time step based on disk parameters.
  *
  * The time step is typically determined by stability constraints such as
  * Courant conditions or drift/growth timescales.
  *
  * @param disk_params Pointer to the DiskParameters structure.
+ * @param max_drift_v The maximum drift velocity of the dust particles.
  * @return The computed time step.
  */
-double calculateTimeStep(const DiskParameters *disk_params);
+double calculateTimeStep(const DiskParameters *disk_params, double max_drift_v);
 
 /**
  * @brief Performs the full time integration loop for the simulation.
