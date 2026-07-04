@@ -92,7 +92,7 @@ static void snapshotInitAtT0(double t, double current_time_years, ParticleData *
         updateParticleGridIndices(particle_data, t, particle_number, disk_params, isSecondaryPopulationEnabled(mode));
 
         if (isDustEnabled(mode)) {
-            calculateDustSurfaceDensity(particle_data, sim_opts, disk_params);
+            calculateDustSurfaceDensity(particle_data, sim_opts, disk_params, mode);
         }
     }
 }
@@ -119,8 +119,8 @@ static void snapshotResetMasses(ParticleData *particle_data, int particle_number
     }
 }
 
-static void snapshotDustSurfacedensity(double output_time, ParticleData *particle_data, DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files) {
-    calculateDustSurfaceDensity(particle_data, sim_opts, disk_params);
+static void snapshotDustSurfacedensity(double output_time, ParticleData *particle_data, DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files, SnapshotMode mode) {
+    calculateDustSurfaceDensity(particle_data, sim_opts, disk_params, mode);
 
     printDustSurfaceDensityPressurePressureDerivateFile(
         disk_params->radial_grid,
@@ -156,7 +156,7 @@ static void handleSnapshotASCII(double t, double current_time_years, double *out
     snapshotPrintGas(disk_params, output_files, isGasEvolutionEnabled(mode));
     snapshotPrintDust((int)(*output_time), particle_data, disk_params, sim_opts, output_files, size_name, size_name2, mode);
     snapshotResetMasses(particle_data, particle_number, sim_opts);
-    snapshotDustSurfacedensity(*output_time, particle_data, disk_params, sim_opts, output_files);
+    snapshotDustSurfacedensity(*output_time, particle_data, disk_params, sim_opts, output_files, mode);
 
     PressureTrap current_traps[3];
     int num_found = identifyPressureTraps(disk_params, current_traps, 3);
@@ -255,14 +255,22 @@ static void simulateDustDriftStep(double *t, double deltat, double *output_time,
         refreshGasSurfaceDensityPressurePressureGradient(sim_opts, disk_params);
     }
 
+
+    // 1. Update grid indices based on current positions
     updateParticleGridIndices(particle_data, *t, particle_number, disk_params, isSecondaryPopulationEnabled(mode));
 
-    if (sim_opts->option_for_dust_growth == 1.) {
-        calculateDustSurfaceDensity(particle_data, sim_opts, disk_params);
+    // 2. Refresh dust density distribution
+    if (isDustEnabled(mode)) {
+        calculateDustSurfaceDensity(particle_data, sim_opts, disk_params, mode);
     }
 
-    calculateDustDistance(sim_opts->output_dir_name, particle_data, deltat, *t, particle_number, sim_opts, disk_params);
+    // 3. Update particle sizes if growth is enabled
+    if (isDustGrowthEnabled(mode)) {
+        updateParticleSizes(particle_data, particle_number, deltat, disk_params, sim_opts, mode);
+    }
 
+    // 4. Evolve particle positions
+    calculateDustDistance(sim_opts->output_dir_name, particle_data, deltat, *t, particle_number, sim_opts, disk_params);
 
     *t += deltat;
 }
