@@ -2,6 +2,8 @@
 #include <math.h>
 #include <string.h>
 #include "print_terminal.h"
+#include "simulation_types.h"
+#include "logger.h"
 
 #define ANSI_RESET   "\x1b[0m"
 #define ANSI_BLUE    "\x1b[36m"
@@ -82,18 +84,22 @@ void printStatus(int step,
                  double target_mass,
                  double initial_mass, 
                  double last_snapshot_time, 
-                 double interval)
+                 double interval,
+                 SimulationOptions *sim_opts)
 {
     (void)internal_time;
 
+
+    const char *out = (sim_opts->output_format == OUTPUT_HDF5) ? "HDF5" : "ASCII";
+    
     if (was_snapshot) {
         if (status_state == STATUS_BOX) {
             moveCursorDown(BOX_LINES);
             clearCurrentLine();
         }
 
-        fprintf(stderr, "\n[SAVE AT STEP: %6d] Time: %.2e yr | dt: %.2e yr | HDF5 SNAPSHOT SAVED\n",
-                step, current_time_years, deltat);
+        fprintf(stderr, "\n[SAVE AT STEP: %6d] Time: %.2e yr | dt: %.2e yr | %s SNAPSHOT SAVED\n",
+                step, current_time_years, deltat, out);
         fflush(stderr);
 
         status_state = STATUS_IDLE;

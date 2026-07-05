@@ -44,6 +44,12 @@ double getMaximumDriftVelocity(const ParticleData *particle_data, int particle_n
         if (r < disk_params->r_min || r > disk_params->r_max) continue;
 
         int idx = (int)particle_data->dust_particle_mass_array[i][1]; // Grid index
+        // Boundary safety check to prevent segmentation faults
+        if (idx < 0) {
+            idx = 0;
+        } else if (idx >= disk_params->grid_number) {
+            idx = disk_params->grid_number - 1;
+        }
         
         calculate1DDustDrift(
             particle_data->particle_distance_array[i][1], // Particle radius
@@ -242,7 +248,7 @@ static void handleSnapshotHDF5(double output_time, const SimulationOptions *sim_
              sim_opts->output_dir_name, kLogFilesDirectory, kSnapshotOutputFileNamePrefix, (int)(output_time), kFileNamesHDF5Suffix);
 
     if (initHDF5File(filename, output_files) != 0) {
-        fprintf(stderr, "\nERROR: Could not initialize HDF5 file %s\n", filename);
+        LOG_ERROR("Could not initialize HDF5 file %s", filename);
         return;
     }
 
@@ -486,7 +492,7 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
         if (step_counter % 10 == 0 || snapshot_done) {
             const char *mode_str = snapshotModeToString(mode);
             printStatus(step_counter, deltat, current_time_years, t, output_time, mode_str, snapshot_done,
-                        current_disk_mass, target_termination_mass, initial_disk_mass, last_snapshot_time, snapshot_interval);
+                        current_disk_mass, target_termination_mass, initial_disk_mass, last_snapshot_time, snapshot_interval, sim_opts);
         }
 
         // --- Automatic termination ---

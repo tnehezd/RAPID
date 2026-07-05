@@ -30,20 +30,20 @@ int allocateParticleData(ParticleData *particle_data, size_t particle_count, int
         return 0; 
     }
 
-    // 1. Allocate primary population arrays (always required)
-    particle_data->particle_distance_array     = malloc(particle_count * sizeof(*particle_data->particle_distance_array));
-    particle_data->dust_particle_mass_grid     = malloc(particle_count * sizeof(double));
-    particle_data->dust_particle_mass_array    = malloc(particle_count * sizeof(*particle_data->dust_particle_mass_array));
-    particle_data->dust_surfacedensity         = malloc(particle_count * sizeof(double));
-    particle_data->particle_distance_grid      = malloc(particle_count * sizeof(double));
+    // 1. Primary population arrays
+    particle_data->particle_distance_array     = calloc(particle_count, sizeof(*particle_data->particle_distance_array));
+    particle_data->dust_particle_mass_grid     = calloc(particle_count, sizeof(double));
+    particle_data->dust_particle_mass_array    = calloc(particle_count, sizeof(*particle_data->dust_particle_mass_array));
+    particle_data->dust_surfacedensity         = calloc(particle_count, sizeof(double));
+    particle_data->particle_distance_grid      = calloc(particle_count, sizeof(double));
 
-    // 2. Allocate secondary population arrays (only if enabled)
+    // 2. Secondary population arrays (only if enabled)
     if (is_twopop_enabled) {
-        particle_data->micron_particle_distance_array = malloc(particle_count * sizeof(*particle_data->micron_particle_distance_array));
-        particle_data->massmicradial_grid            = malloc(particle_count * sizeof(double));
-        particle_data->micron_dust_particle_mass_array = malloc(particle_count * sizeof(*particle_data->micron_dust_particle_mass_array));
-        particle_data->micron_dust_surfacedensity      = malloc(particle_count * sizeof(double));
-        particle_data->micron_particle_distance_grid   = malloc(particle_count * sizeof(double));
+        particle_data->micron_particle_distance_array = calloc(particle_count, sizeof(*particle_data->micron_particle_distance_array));
+        particle_data->massmicradial_grid            = calloc(particle_count, sizeof(double));
+        particle_data->micron_dust_particle_mass_array = calloc(particle_count, sizeof(*particle_data->micron_dust_particle_mass_array));
+        particle_data->micron_dust_surfacedensity      = calloc(particle_count, sizeof(double));
+        particle_data->micron_particle_distance_grid   = calloc(particle_count, sizeof(double));
     }
 
     // 3. Error checking for primary arrays
