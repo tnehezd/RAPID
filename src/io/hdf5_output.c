@@ -163,28 +163,36 @@ void writeHDF5SnapshotToFile(double time, hid_t file_id, const SimulationOptions
     H5Sclose(space_gas);
 
     // -------------------
-    // DUST EULER (CSAK ha van érvényes por rács!)
+    // DUST EULER (Primary + Micron)
     // -------------------
-    if (particle_data != NULL && particle_data->dust_surfacedensity != NULL) {
-        hid_t group_dust = H5Gcreate2(file_id, "/dust_grid", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        H5Gclose(group_dust);
+    if (particle_data != NULL) {
+        // 1. Primary Dust
+        if (particle_data->dust_surfacedensity != NULL) {
+            hid_t group_dust = H5Gcreate2(file_id, "/dust_grid", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+            hsize_t dims_grid[1] = { disk_params->grid_number };
+            hid_t space_grid = H5Screate_simple(1, dims_grid, NULL);
 
-        hsize_t dims_grid[1] = { disk_params->grid_number };
-        hid_t space_grid = H5Screate_simple(1, dims_grid, NULL);
+            hid_t dset_surface = H5Dcreate2(group_dust, "surface_density", H5T_NATIVE_DOUBLE, space_grid, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+            H5Dwrite(dset_surface, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, particle_data->dust_surfacedensity);
+            
+            H5Dclose(dset_surface);
+            H5Sclose(space_grid);
+            H5Gclose(group_dust);
+        }
 
-        hid_t dset_surface = H5Dcreate2(file_id, "/dust_grid/surface_density", H5T_NATIVE_DOUBLE,
-                                        space_grid, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        hid_t dset_dust_grid = H5Dcreate2(file_id, "/dust_grid/radial_grid", H5T_NATIVE_DOUBLE,
-                                          space_grid, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        // 2. Micron Dust (Only if population is enabled/allocated)
+        if (particle_data->micron_dust_surfacedensity != NULL) {
+            hid_t group_micron = H5Gcreate2(file_id, "/micron_grid", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+            hsize_t dims_grid[1] = { disk_params->grid_number };
+            hid_t space_grid = H5Screate_simple(1, dims_grid, NULL);
 
-        H5Dwrite(dset_surface, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-                 particle_data->dust_surfacedensity);
-        H5Dwrite(dset_dust_grid, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-                 disk_params->radial_grid);
-
-        H5Dclose(dset_surface);
-        H5Dclose(dset_dust_grid);
-        H5Sclose(space_grid);
+            hid_t dset_surface = H5Dcreate2(group_micron, "surface_density", H5T_NATIVE_DOUBLE, space_grid, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+            H5Dwrite(dset_surface, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, particle_data->micron_dust_surfacedensity);
+            
+            H5Dclose(dset_surface);
+            H5Sclose(space_grid);
+            H5Gclose(group_micron);
+        }
     }
 
 

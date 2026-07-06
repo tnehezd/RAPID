@@ -59,6 +59,7 @@ typedef struct {
     double *dr_array;
     int    hole_flag;
     double density_floor;   /**< Minimum allowed gas surface density */
+    double dust_density_floor;
     double r_hole;
     double *sink_photoevap;
     bool   enable_photoevaporation;       /**< Global switch to turn photoevaporation ON/OFF. */

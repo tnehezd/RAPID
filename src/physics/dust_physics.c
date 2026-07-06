@@ -213,7 +213,6 @@ void calculateDustSurfaceDensity(const ParticleData *particle_data,
     int grid_n = disk_params->grid_number;
     int is_twopop = (simulation_options->option_for_dust_secondary_population == 1);
 
-
     // 1. Reset
     for (i = 0; i < grid_n; i++) {
         particle_data->dust_surfacedensity[i] = 0.0;
@@ -224,13 +223,10 @@ void calculateDustSurfaceDensity(const ParticleData *particle_data,
 
     // 2. Mapping (CIC or NGP)
     int mode_type = simulation_options->dust_smoothing_mode;
-
     for (k = 0; k < particle_number; k++) {
-        // Primary Mapping
         double r = particle_data->particle_distance_array[k][0];
         double rel_pos = (r - disk_params->r_min) / disk_params->delta_r;
         
-        // Secondary Mapping (if enabled)
         double r_mic = 0.0;
         double rel_pos_mic = 0.0;
         if (is_twopop) {
@@ -238,19 +234,14 @@ void calculateDustSurfaceDensity(const ParticleData *particle_data,
             rel_pos_mic = (r_mic - disk_params->r_min) / disk_params->delta_r;
         }
 
-        // Apply mapping based on mode (CIC/NGP)
         if (mode_type == 1) { // NGP
             int idx = (int)round(rel_pos);
-            if (idx >= 0 && idx < grid_n) {
-                particle_data->dust_surfacedensity[idx] += particle_data->dust_particle_mass_grid[k];
-            }
+            if (idx >= 0 && idx < grid_n) particle_data->dust_surfacedensity[idx] += particle_data->dust_particle_mass_grid[k];
             if (is_twopop) {
                 int idx_m = (int)round(rel_pos_mic);
-                if (idx_m >= 0 && idx_m < grid_n) {
-                    particle_data->micron_dust_surfacedensity[idx_m] += particle_data->massmicradial_grid[k];
-                }
+                if (idx_m >= 0 && idx_m < grid_n) particle_data->micron_dust_surfacedensity[idx_m] += particle_data->massmicradial_grid[k];
             }
-        } else { // CIC (Default for all other modes)
+        } else { // CIC
             int idx = (int)floor(rel_pos);
             double x = rel_pos - (double)idx;
             if (idx >= 0 && idx < grid_n - 1) {
@@ -270,20 +261,60 @@ void calculateDustSurfaceDensity(const ParticleData *particle_data,
         }
     }
 
-    // 3. Smoothing (TopHat or Gaussian) - apply to both arrays
-    // Note: If you have Gaussian smoothing, remember to apply it to micron_dust_surfacedensity as well!
-    // (Skipped full snippet for brevity, ensure you loop over 'is_twopop' arrays too)
+    // 3. Smoothing (TopHat or Gaussian)
+    if (simulation_options->dust_smoothing_mode == 2) { // TopHat
+        double *tmp_cm = calloc(grid_n, sizeof(double));
+        double *tmp_mic = calloc(grid_n, sizeof(double));
+        for (i = 0; i < grid_n; i++) {
+            double left = (i > 0) ? i - 1 : i;
+            double right = (i < grid_n - 1) ? i + 1 : i;
+            tmp_cm[i] = (particle_data->dust_surfacedensity[(int)left] + particle_data->dust_surfacedensity[i] + particle_data->dust_surfacedensity[(int)right]) / 3.0;
+            if (is_twopop) tmp_mic[i] = (particle_data->micron_dust_surfacedensity[(int)left] + particle_data->micron_dust_surfacedensity[i] + particle_data->micron_dust_surfacedensity[(int)right]) / 3.0;
+        }
+        for (i = 0; i < grid_n; i++) {
+            particle_data->dust_surfacedensity[i] = tmp_cm[i];
+            if (is_twopop) particle_data->micron_dust_surfacedensity[i] = tmp_mic[i];
+        }
+        free(tmp_cm); free(tmp_mic);
+    }
+    else if (simulation_options->dust_smoothing_mode == 3) { // Gaussian
+        double sigma = simulation_options->gaussian_sigma * disk_params->delta_r;
+        int cutoff_cells = (int)(simulation_options->gaussian_cutoff * sigma / disk_params->delta_r);
+        double *tmp_cm = calloc(grid_n, sizeof(double));
+        double *tmp_mic = calloc(grid_n, sizeof(double));
+        for (i = 0; i < grid_n; i++) {
+            double sum_w = 0.0, s_cm = 0.0, s_mic = 0.0;
+            for (int j = i - cutoff_cells; j <= i + cutoff_cells; j++) {
+                if (j < 0 || j >= grid_n) continue;
+                double dr = fabs(disk_params->radial_grid[j] - disk_params->radial_grid[i]);
+                double w = exp(-(dr * dr) / (2.0 * sigma * sigma));
+                s_cm += w * particle_data->dust_surfacedensity[j];
+                if (is_twopop) s_mic += w * particle_data->micron_dust_surfacedensity[j];
+                sum_w += w;
+            }
+            tmp_cm[i] = (sum_w > 0.0) ? s_cm / sum_w : particle_data->dust_surfacedensity[i];
+            if (is_twopop) tmp_mic[i] = (sum_w > 0.0) ? s_mic / sum_w : particle_data->micron_dust_surfacedensity[i];
+        }
+        for (i = 0; i < grid_n; i++) {
+            particle_data->dust_surfacedensity[i] = tmp_cm[i];
+            if (is_twopop) particle_data->micron_dust_surfacedensity[i] = tmp_mic[i];
+        }
+        free(tmp_cm); free(tmp_mic);
+    }
 
-    // 4. Normalization
+    // 4. Normalization and Density Floor
     for (i = 0; i < grid_n; i++) {
-        double r_i = disk_params->radial_grid[i];
-        double area = 2.0 * M_PI * r_i * disk_params->delta_r;
-
+        double area = 2.0 * M_PI * disk_params->radial_grid[i] * disk_params->delta_r;
         if (area > 1e-20) {
             particle_data->dust_surfacedensity[i] /= area;
+            if (particle_data->dust_surfacedensity[i] < disk_params->density_floor) particle_data->dust_surfacedensity[i] = 0.0;
             if (is_twopop) {
                 particle_data->micron_dust_surfacedensity[i] /= area;
+                if (particle_data->micron_dust_surfacedensity[i] < disk_params->density_floor) particle_data->micron_dust_surfacedensity[i] = 0.0;
             }
+        } else {
+            particle_data->dust_surfacedensity[i] = 0.0;
+            if (is_twopop) particle_data->micron_dust_surfacedensity[i] = 0.0;
         }
     }
 }

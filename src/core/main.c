@@ -257,6 +257,7 @@ int main(int argc, const char **argv) {
         init_tool_params.dust_density_g_cm3 = def.pdensity_val;
         init_tool_params.total_disk_mass = disk_params.total_disk_mass;
         init_tool_params.density_floor = disk_params.density_floor;
+        init_tool_params.dust_density_floor = disk_params.dust_density_floor;
 
 
         LOG_DEBUG("InitializeDefaultOptions (init_tool_params) structure populated for profile generation.");

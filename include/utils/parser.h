@@ -65,6 +65,7 @@ typedef struct {
     char photoevaporation_mode[32];                     /**< Switch between Picogna, or Owen model */
     double xray_luminosity;                             /**< X-ray luminosity of the central star */
     double density_floor;                               /**< Minimum allowed gas surface density */
+    double dust_density_floor;                          /**< Minimum allowed valude for dust surface density */
     double enable_cutoff;                               /**< Enable cutoff radius */
     bool   use_cutoff;                                  /**< Profile style: false = Normal Power-law, true = Cutoff */
     double r_cutoff;                                    /**< Scaling/tapering radius for cutoff profile [AU] */

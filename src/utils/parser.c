@@ -36,6 +36,7 @@ void createDefaultOptions(ParserOptions *opt) {
     opt->input_file                                 = NULL;
     opt->dust_smoothing_mode                        = 0;
     opt->density_floor                              = 1e-12;  
+    opt->dust_density_floor                         = 1e-15;
     
     opt->gaussian_sigma                             = 1.0;      /**< default Gaussian kernel width */
     opt->gaussian_cutoff                            = 3.0;     /**< default cutoff radius (3σ) */
@@ -115,6 +116,8 @@ void printUsageToTerminal() {
     fprintf(stderr, "Other:\n");
     fprintf(stderr, "  -pdensity <val> Dust particle density (g/cm^3, default: 1.6)\n"); 
     fprintf(stderr, "  -h or --help   Display this help message\n");
+    fprintf(stderr, "  -density_floor <val>      Minimum allowed gas surface density (default: 1e-12)\n");  
+    fprintf(stderr, "  -dust_density_floor <val> Minimum allowed dust surface density (default: 1e-15)\n");    
     fprintf(stderr, "  -dust_smoothing <cic|ngp|tophat|gaussian>  Select dust smoothing method\n");
     fprintf(stderr, "                                             for mapping Lagrangian particles to the Euler grid\n");
     fprintf(stderr, "  -gaussian_sigma_grid <val>   Width of the Gaussian kernel in grid-cell units (Δr).\n");
@@ -382,7 +385,11 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
             if (i < argc) opt->density_floor = atof(argv[i]);
             else { LOG_ERROR("Missing value for -density_floor.\n"); return 1; }
         }
-
+        else if (strcmp(argv[i], "-dust_density_floor") == 0) {
+            i++;
+            if (i < argc) opt->dust_density_floor = atof(argv[i]);
+            else { LOG_ERROR("Missing value for -dust_density_floor.\n"); return 1; }
+        }
         else if (strcmp(argv[i], "-dust_smoothing") == 0) {
             i++;
             if (i < argc) {
