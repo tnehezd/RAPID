@@ -1,3 +1,4 @@
+#include "utils.h"
 #include "print_panels.h"
 #include <stdio.h>
 #include <time.h>
@@ -67,20 +68,18 @@ int calculateNumbersOfParticles(const char *particle_data_file_name) {
 }
 
 void loadDustParticlesFromFile(ParticleData *particle_data, const char *particle_data_file_name) {
-
     int i, particle_index;
     double distance, particle_radius, micron_particle_radius;
     long double representative_mass;
     long double micron_representative_mass;
 
-    load_dust_particles_file = fopen(particle_data_file_name,"r");
+    load_dust_particles_file = fopen(particle_data_file_name, "r");
 
     if (load_dust_particles_file == NULL) {
         LOG_ERROR("Could not open file '%s'.\n", particle_data_file_name);
         perror("Reason");
         exit(EXIT_FAILURE);
     }
-
 
     char line_buffer[1024];
     for (int k = 0; k < INIT_DATA_HEADER_LINES; k++) {
@@ -91,18 +90,27 @@ void loadDustParticlesFromFile(ParticleData *particle_data, const char *particle
         }
     }
 
-
     for (i = 0; i < particle_number; i++) {
-        if(fscanf(load_dust_particles_file,"%d %lg %Lg %Lg %lg %lg",&particle_index,&distance,&representative_mass,&micron_representative_mass,&particle_radius,&micron_particle_radius) == 6) {
+        if (fscanf(load_dust_particles_file, "%d %lg %Lg %Lg %lg %lg", 
+                   &particle_index, &distance, &representative_mass, &micron_representative_mass, 
+                   &particle_radius, &micron_particle_radius) == 6) {
+            
+            // Primary population (always valid)
             particle_data->particle_distance_array[i][0] = distance;
             particle_data->particle_distance_array[i][1] = particle_radius / AU_IN_CM; 
             particle_data->dust_particle_mass_grid[i] = representative_mass;
 
-            particle_data->micron_particle_distance_array[i][0] = distance;
-            particle_data->micron_particle_distance_array[i][1] = micron_particle_radius / AU_IN_CM; 
-            particle_data->massmicradial_grid[i] = micron_representative_mass;
+            // SAFE GUARD: Only write to secondary population if arrays are allocated
+            if (particle_data->micron_particle_distance_array != NULL) {
+                particle_data->micron_particle_distance_array[i][0] = distance;
+                particle_data->micron_particle_distance_array[i][1] = micron_particle_radius / AU_IN_CM; 
+            }
+            if (particle_data->massmicradial_grid != NULL) {
+                particle_data->massmicradial_grid[i] = micron_representative_mass;
+            }
+            
         } else {
-            LOG_ERROR("Failed to read line %d from particle data file '%s'!\n  Expected 6 values, but fscanf failed. Program will exit.", i, particle_data_file_name);
+            LOG_ERROR("Failed to read line %d from particle data file '%s'!\n", i, particle_data_file_name);
             fclose(load_dust_particles_file);
             exit(EXIT_FAILURE);
         }
@@ -374,6 +382,7 @@ void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const 
     }
 
     for(i=0;i<particle_number;i++){
+
         if (r[i] >= disk_params->r_min) { 
             fprintf(output_files->dust_file,"%-16lg %-23.5f %-20.6e\n",(double)step,r[i],dust_surfacedensity[i]);
         }
@@ -391,35 +400,67 @@ void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const 
     }
 }
 
-void printDustParticleSizeFile(char *size_name, int step, double (*rad)[2], double (*micron_particle_radius)[2], const DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files) {
+/**
+ * @brief Prints dust particle radial positions and sizes to ASCII output files.
+ * 
+ * Uses the ParticleData structure directly to ensure the most recent particle
+ * coordinates are accessed.
+ */
+void printDustParticleSizeFile(char *size_name, char *size_name2, int step, 
+                               ParticleData *particle_data, 
+                               const DiskParameters *disk_params, 
+                               OutputFiles *output_files, 
+                               SnapshotMode mode) {
 
     FILE *fout_size = NULL;
+    FILE *fout_size2 = NULL;
     int i;
+    int is_twopop = isSecondaryPopulationEnabled(mode);
 
-    if (sim_opts->option_for_dust_growth == 1.0) {
+    // Open output files if dust is enabled in the current mode.
+    // Note: Removed 'isDustGrowthEnabled' dependency so files are updated during drift.
+    if (isDustEnabled(mode)) {
         fout_size = openSnapshotFile(size_name, FILE_TYPE_PARTICLE_SIZE, (double)step / (2.0 * M_PI));        
         if (fout_size == NULL) {
             LOG_ERROR("Could not open size file '%s' in printDustParticleSizeFile!\n", size_name);
             return;
         }
+
+        if (is_twopop && particle_data->micron_particle_distance_array != NULL) {
+            fout_size2 = openSnapshotFile(size_name2, FILE_TYPE_MICRON_PARTICLE_SIZE, (double)step / (2.0 * M_PI));
+            if (fout_size2 == NULL) {
+                LOG_ERROR("Could not open micron size file '%s' in printDustParticleSizeFile!\n", size_name2);
+                fclose(fout_size);
+                return;
+            }
+        }
     }
 
+    // Iterate through particles using the direct ParticleData pointers
     for (i = 0; i < particle_number; i++) { 
-        if (sim_opts->option_for_dust_secondary_population == 1.0 && output_files->micron_motion_file != NULL) {
-            if (micron_particle_radius[i][0] >= disk_params->r_min) { 
-                fprintf(output_files->micron_motion_file, "%-16lg %-10d %-20.6e %-20.6e\n", (double)step, i, micron_particle_radius[i][0],micron_particle_radius[i][1] * AU_IN_CM);
-            }
+        
+        // Write primary population size data
+        if (fout_size != NULL && particle_data->particle_distance_array[i][0] >= disk_params->r_min) {
+            fprintf(fout_size, "%-10d %-10d %-20.6e %-20.6e\n", 
+                    step, i, 
+                    particle_data->particle_distance_array[i][0], 
+                    particle_data->particle_distance_array[i][1] * AU_IN_CM);
         }
-        if (sim_opts->option_for_dust_growth == 1.0 && fout_size != NULL) {
-            if (rad[i][0] >= disk_params->r_min) {
-                fprintf(fout_size, "%-10lg %-10d %-20.6e %-20.6e\n", (double)step, i, rad[i][0], rad[i][1] * AU_IN_CM);
+
+        // Write secondary population size data if enabled
+        if (is_twopop && fout_size2 != NULL && particle_data->micron_particle_distance_array != NULL) {
+            if (particle_data->micron_particle_distance_array[i][0] >= disk_params->r_min) {
+                fprintf(fout_size2, "%-10d %-10d %-20.6e %-20.6e\n", 
+                        step, i, 
+                        particle_data->micron_particle_distance_array[i][0], 
+                        particle_data->micron_particle_distance_array[i][1] * AU_IN_CM);
             }
         }
     }
 
-    if (sim_opts->option_for_dust_growth == 1.0 && fout_size != NULL) {
-        fclose(fout_size);
-    }
+    // Close files safely
+    if (fout_size != NULL) fclose(fout_size);
+    if (fout_size2 != NULL) fclose(fout_size2);
 }
 
 void printFileHeader(FILE *file, FileType_e file_type, const HeaderData *header_data) {
@@ -504,6 +545,18 @@ void printFileHeader(FILE *file, FileType_e file_type, const HeaderData *header_
                     "Time_step", "Index" ,"Radial_distance_AU", "Particle_size_cm");
             fprintf(file, "#--------------------------------------------------------------------------\n");
             break;            
+
+        case FILE_TYPE_MICRON_PARTICLE_SIZE:
+            if (header_data && header_data->is_initial_data) {
+                fprintf(file, "# Initial micron particle size profile\n");
+            } else {
+                fprintf(file, "# This file contains the size of each micron dust particle at %e years\n", header_data ? header_data->current_time : 0.0);
+            }
+            fprintf(file, "#--------------------------------------------------------------------------\n");
+            fprintf(file, "# %-10s %-10s  %-20s %-20s\n",
+                    "Time_step", "Index" ,"Radial_distance_AU", "Micron_particle_size_cm");
+            fprintf(file, "#--------------------------------------------------------------------------\n");
+            break;
 
         case FILE_TYPE_INTIIAL_DUST_PROFILE:
             if (header_data && header_data->is_initial_data) {
@@ -652,28 +705,31 @@ FILE *openSnapshotFile(const char *file_name, FileType_e file_type, double curre
 }
 
 
-void buildSnapshotFilenames(char *dens_name, char *dust_name, char *dust_name2, char *size_name, const SimulationOptions *sim_opts, int snapshot_id){
+void buildSnapshotFilenames(char *dens_name, char *dust_name, char *dust_name2, char *size_name, char *size_name2, 
+                            const SimulationOptions *sim_opts, int snapshot_id, SnapshotMode mode) {
 
     sprintf(dens_name, "%s/%s/%s_%08d%s",
-             sim_opts->output_dir_name, kLogFilesDirectory,
-             kGasDensityProfileFilePrefix, snapshot_id, kFileNamesSuffix);
+             sim_opts->output_dir_name, kLogFilesDirectory, kGasDensityProfileFilePrefix, snapshot_id, kFileNamesSuffix);
 
     sprintf(dust_name, "%s/%s/%s_%08d%s",
-             sim_opts->output_dir_name, kLogFilesDirectory,
-             kDustDensityProfileFilePrefix, snapshot_id, kFileNamesSuffix);
+             sim_opts->output_dir_name, kLogFilesDirectory, kDustDensityProfileFilePrefix, snapshot_id, kFileNamesSuffix);
 
-    if (sim_opts->option_for_dust_secondary_population == 1) {
+    // Használd a segédfüggvényt a sim_opts flag helyett
+    if (isSecondaryPopulationEnabled(mode)) {
         sprintf(dust_name2, "%s/%s/%s_%08d%s",
-                 sim_opts->output_dir_name, kLogFilesDirectory,
-                 kMicronDustDensityProfileFilePrefix, snapshot_id, kFileNamesSuffix); 
+                 sim_opts->output_dir_name, kLogFilesDirectory, kMicronDustDensityProfileFilePrefix, snapshot_id, kFileNamesSuffix); 
     }
 
     sprintf(size_name, "%s/%s/%s_%08d%s",
-             sim_opts->output_dir_name, kLogFilesDirectory,
-             kDustParticleSizeFileName, snapshot_id, kFileNamesSuffix);
+             sim_opts->output_dir_name, kLogFilesDirectory, kDustParticleSizeFileName, snapshot_id, kFileNamesSuffix);
+
+    if (isSecondaryPopulationEnabled(mode)) {
+        sprintf(size_name2, "%s/%s/%s_%08d%s",
+                 sim_opts->output_dir_name, kLogFilesDirectory, kMicronDustParticleSizeFileName, snapshot_id, kFileNamesSuffix);
+    }
 }
 
-void closeSnapshotFiles(OutputFiles *output_files, const SimulationOptions *sim_opts) {
+void closeSnapshotFiles(OutputFiles *output_files, SnapshotMode mode) {
 
     if (output_files->surface_file != NULL) {
         fclose(output_files->surface_file);
@@ -684,8 +740,19 @@ void closeSnapshotFiles(OutputFiles *output_files, const SimulationOptions *sim_
         output_files->dust_file = NULL;
     }
 
-    if (sim_opts->option_for_dust_secondary_population == 1 && output_files->micron_dust_file != NULL) {
-        fclose(output_files->micron_dust_file);
-        output_files->micron_dust_file = NULL;
+    if (isSecondaryPopulationEnabled(mode)) {
+        if (output_files->micron_dust_file != NULL) {
+            fclose(output_files->micron_dust_file);
+            output_files->micron_dust_file = NULL;
+        }
+        if (output_files->size_micron_file != NULL) {
+            fclose(output_files->size_micron_file);
+            output_files->size_micron_file = NULL;
+        }
+    }
+    
+    if (output_files->size_file != NULL) {
+        fclose(output_files->size_file);
+        output_files->size_file = NULL;
     }
 }

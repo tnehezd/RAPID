@@ -28,6 +28,11 @@
 #include "particle_data.h"
 
 /**
+ * @brief 
+ */
+void applyCoagulationMassTransfer(ParticleData *p, DiskParameters *disk, SimulationOptions *sim_opts, double dt);
+
+/**
  * @brief Computes the Stokes number of a dust particle.
  *
  * The Stokes number characterizes the aerodynamic coupling between a dust grain
@@ -101,6 +106,24 @@ double calculateDriftInducedFragmentationBarrier(double gas_surfacedensity, doub
 double calculateGrowthTimescale(double radial_distance, double dust_to_gas_ratio, const DiskParameters *disk_params);
 
 /**
+ * @brief Updates the sizes of all dust particles based on growth and barrier physics.
+ * 
+ * This function iterates over all particles, computes the relevant physical barriers,
+ * and updates their sizes accordingly. It also accounts for the growth timescale.
+ * 
+ * @param particle_data Pointer to the ParticleData structure containing particle information.
+ * @param particle_number Total number of particles in the simulation.
+ * @param actual_timestep Current simulation timestep.
+ * @param disk_params Pointer to the DiskParameters structure containing disk properties.
+ * @param sim_opts Pointer to the SimulationOptions structure containing simulation settings.
+ * @param mode SnapshotMode indicating the type of snapshot being processed.
+ * @return Updated particle sizes.
+ * 
+ */
+void updateParticleSizes(ParticleData *particle_data, int particle_number, double actual_timestep, 
+                        const DiskParameters *disk_params, const SimulationOptions *sim_opts, SnapshotMode mode);
+
+/**
  * @brief Computes the dust particle size using the Birnstiel et al. model.
  *
  * This function evaluates the maximum allowed particle size based on
@@ -127,8 +150,9 @@ double calculateDustParticleSize(double particle_radius, double particle_density
  * @param particle_data           Pointer to particle data structure.
  * @param simulation_options      Pointer to simulation options.
  * @param disk_params             Pointer to disk parameter structure.
+ * @param mode                    Snapshot mode.
  */
-void calculateDustSurfaceDensity(const ParticleData *particle_data, const SimulationOptions *simulation_options, const DiskParameters *disk_params);
+void calculateDustSurfaceDensity(const ParticleData *particle_data, const SimulationOptions *simulation_options, const DiskParameters *disk_params, SnapshotMode mode);
 
 /**
  * @brief Updates and stores the new radial positions of dust particles.

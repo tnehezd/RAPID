@@ -7,10 +7,10 @@ simulation_parameters:
   enable_dust_drift: true            # Corresponds to 'drift' in C (1.0 for true, 0.0 for false)
   enable_dust_growth: true           # Corresponds to 'growth' in C
   enable_gas_evolution: true        # Corresponds to 'evol' in C
-  enable_two_dust_populations: false # Corresponds to 'twopop' in C
+  enable_two_dust_populations: true  # Corresponds to 'twopop' in C
   fragmentation_velocity: 500.0     # Corresponds to 'ufrag' in C
   fragmentation_factor: 0.37         # Corresponds to 'ffrag' in C
-  number_of_dust_particles: 2000  
+  number_of_dust_particles: 1000  
  
 disk_parameters:
   # Grid and Disk Initial Parameters (used if no input_file is provided)
@@ -24,6 +24,7 @@ disk_parameters:
   aspect_ratio_at_1au: 0.05      # Corresponds to 'hasp_val' (-h_init)
   flaring_index: 0.0             # Corresponds to 'flind_val' (-flind_init)
   density_floor: 1e-12  
+  dust_density_floor: 1e-14
   # PHOTOEVAPORATION SELECTION
   # Options: "Owen", "Picogna"
   photoevaporation_mode: "none"
@@ -36,7 +37,7 @@ disk_parameters:
   cutoff_sharpness_factor: 2.0           # Corresponds to '-ncutoff' (typically 2.0 - gamma)
 
 boundary_conditions:
-  inner_boundary_condition: "absorbing"     # Options: "zero_gradient", "parabolic", "fixed_flux", "absorbing", "reflecting", "linear_extrapolation"
+  inner_boundary_condition: "zero_gradient"     # Options: "zero_gradient", "parabolic", "fixed_flux", "absorbing", "reflecting", "linear_extrapolation"
   outer_boundary_condition: "parabolic"
 
 
@@ -52,7 +53,7 @@ dust_parameters:
   # Dust Initialization Parameters (if initial profile is generated)
   initial_dust_to_gas_ratio: 0.01    # Corresponds to 'eps_val' (-eps)
   population_one_mass_ratio: 0.85    # Corresponds to 'ratio_val' (-ratio)
-  micro_particle_size_cm: 0.01     # Corresponds to 'mic_val' (-mic)
+  micro_particle_size_cm: 0.0001     # Corresponds to 'mic_val' (-mic)
   one_size_particle_value_cm: 1.0    # Corresponds to 'onesize_val' (-onesize)
   dust_particle_density_g_cm3: 1.6  # NEW: Por szemcse sűrűsége (g/cm^3)
   disk_mass_dust: 0.01
@@ -69,8 +70,8 @@ output_parameters:
 time_parameters:
   # Time Parameters
   fixed_time_step: 0.0              # Corresponds to 'tStep' (-tStep) --- let's set it to 0, as the code itself calculates adaptive timestep...
-  total_simulation_time: 1e3       # Corresponds to 'totalTime' (-tmax)
-  output_write_frequency: 5     # Corresponds to 'outputFrequency' (-outfreq)
+  total_simulation_time: 5e5       # Corresponds to 'totalTime' (-tmax)
+  output_write_frequency: 1000     # Corresponds to 'outputFrequency' (-outfreq)
 
 log_parameters:
   info_level: "none" # "none", "info", vagy "debug"

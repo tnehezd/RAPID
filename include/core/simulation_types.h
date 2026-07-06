@@ -50,6 +50,7 @@ typedef struct {
     double fragmentation_factor;          /**< Mass reduction factor after fragmentation. */
     double fragmentation_velocity;        /**< Fragmentation threshold velocity [m/s]. */
     double drift_factor;                  /**< Scaling factor for dust drift speed. */        
+    double two_pop_ratio;
     bool cutoff;             // Replaces or adds the cutoff flag
     double r_cutoff;         // The characteristic tapering radius (Rc)
     double n_cutoff;         // The exponent factor (n) for sharpness
@@ -59,6 +60,7 @@ typedef struct {
     double *dr_array;
     int    hole_flag;
     double density_floor;   /**< Minimum allowed gas surface density */
+    double dust_density_floor;
     double r_hole;
     double *sink_photoevap;
     bool   enable_photoevaporation;       /**< Global switch to turn photoevaporation ON/OFF. */
@@ -165,13 +167,14 @@ typedef struct {
      * ASCII output format
      * ========================= */
 
-    FILE *dust_motion_file;   /**< Drift velocities of dust particles. */
-    FILE *micron_motion_file; /**< Drift velocities of micron-sized dust. */
-    FILE *mass_file;          /**< Dust mass evolution output. */
-    FILE *surface_file;       /**< Gas surface density and pressure output. */
-    FILE *dust_file;          /**< Dust surface density output. */
-    FILE *micron_dust_file;   /**< Micron dust surface density output. */
-    FILE *size_file;          /**< Dust particle size distribution output. */
+    FILE *dust_motion_file;    /**< Drift velocities of dust particles. */
+    FILE *micron_motion_file;  /**< Drift velocities of micron-sized dust. */
+    FILE *mass_file;           /**< Dust mass evolution output. */
+    FILE *surface_file;        /**< Gas surface density and pressure output. */
+    FILE *dust_file;           /**< Dust surface density output. */
+    FILE *micron_dust_file;    /**< Micron dust surface density output. */
+    FILE *size_file;           /**< Dust particle size distribution output. */
+    FILE *size_micron_file; /**< Size distribution for secondary dust population. */
 
     /* =========================
      * HDF5 output handling
@@ -195,12 +198,16 @@ typedef struct {
  * the simulation (gas, drift, growth, two‑population models, etc.).
  */
 typedef enum {
-    SnapshotNonevolving     = 0,    /**< No snapshots written. */
-    SnapshotGas             = 1,    /**< Gas‑only snapshots. */
-    SnapshotDrift           = 2,    /**< Dust drift snapshots. */
-    SnapshotGrowth          = 3,    /**< Dust growth snapshots. */
-    SnapshotDriftTwoPop     = 4,    /**< Drift snapshots for two dust populations. */
-    SnapshotGrowthTwoPop    = 5     /**< Growth snapshots for two dust populations. */
+    SnapshotNonevolving             = 0,        /**< No snapshots written. */
+    SnapshotGas                     = 1,        /**< Gas‑only snapshots. */
+    SnapshotDrift                   = 2,        /**< Dust drift snapshots. */
+    SnapshotGrowth                  = 3,        /**< Dust growth snapshots. */
+    SnapshotDriftTwoPop             = 4,        /**< Drift snapshots for two dust populations. */
+    SnapshotGrowthTwoPop            = 5,        /**< Growth snapshots for two dust populations. */
+    SnapshotDriftStaticGas          = 6,        /**< Drift snapshots with static gas profile. */
+    SnapshotGrowthStaticGas         = 7,        /**< Growth snapshots with static gas profile. */
+    SnapshotDriftStaticGasTwoPop    = 8,        /**< Drift snapshots with static gas and two dust populations. */
+    SnapshotGrowthStaticGasTwoPop   = 9         /**< Growth snapshots with static gas and two dust populations. */   
 
 } SnapshotMode;
 

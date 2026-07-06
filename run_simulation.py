@@ -142,6 +142,7 @@ def main():
         "characteristic_cutoff_radius_au": "cutoff_radius",
         "cutoff_sharpness_factor": "cutoff_sharpness",
         "density_floor": "density_floor",
+        "dust_density_floor": "dust_density_floor",
 
         "gaussian_smoothing_sigma_grid_units": "gaussian_smoothing_sigma_grid_units",
         "gaussian_smoothing_cutoff_sigma": "gaussian_smoothing_cutoff_sigma",
@@ -191,7 +192,7 @@ def main():
         "cutoff": "-cutoff", "cutoff_radius": "-cutoff_radius",  "cutoff_sharpness": "-cutoff_sharpness",
         "r_dze_i_val": "-rdzei", "r_dze_o_val": "-rdzeo",
         "dr_dze_i_val": "-drdzei", "dr_dze_o_val": "-drdzeo",
-        "a_mod_val": "-amod", "density_floor": "-density_floor",
+        "a_mod_val": "-amod", "density_floor": "-density_floor", "dust_density_floor": "-dust_density_floor",
         "eps_val": "-eps", "ratio_val": "-ratio", "mic_val": "-mic", "onesize_val": "-onesize",
         "pdensity_val": "-pdensity","gaussian_sigma_grid_units": "-gaussian_sigma_grid",
         "gaussian_cutoff_sigma": "-gaussian_cutoff", "input_file": "-i", "output_dir_name": "-o",

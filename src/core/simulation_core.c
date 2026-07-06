@@ -7,12 +7,12 @@
 #include <hdf5.h>  
 #include <omp.h>
 #include <time.h>
+#include "simulation_core.h"
 #include "config.h"       
 #include "ascii_output.h"     
 #include "disk_model.h"   
 #include "dust_physics.h" 
 #include "utils.h"        
-#include "simulation_core.h"
 #include "particle_data.h" 
 #include "gas_physics.h"
 #include "boundary_conditions.h"
@@ -20,7 +20,6 @@
 #include "hdf5_output.h"
 #include "print_terminal.h"
 #include "logger.h"
-
 
 
 void calculate1DDustDrift(double particle_radius, double pressure_gradient, double gas_surface_density, double gas_velocity, double radial_distance, double *drift_velocity, const DiskParameters *disk_params) {
@@ -35,13 +34,69 @@ void calculate1DDustDrift(double particle_radius, double pressure_gradient, doub
     *drift_velocity = gas_velocity / (1. + stokes_number * stokes_number) + stokes_number / (1. + stokes_number * stokes_number) * local_pressure_scaleheight / local_pressure * local_pressure_gradient * local_soundspeed;
 }
 
-double calculateTimeStep(const DiskParameters *disk_params) {
+double getMaximumDriftVelocity(const ParticleData *particle_data, int particle_number, const DiskParameters *disk_params, SnapshotMode mode) {
+    double max_v = 0.0;
+    double v_drift = 0.0;
+
+    // 1. Iterate over the primary (cm-sized) dust population
+    for (int i = 0; i < particle_number; i++) {
+        double r = particle_data->particle_distance_array[i][0];
+        if (r < disk_params->r_min || r > disk_params->r_max) continue;
+
+        int idx = (int)particle_data->dust_particle_mass_array[i][1]; // Grid index
+        // Boundary safety check to prevent segmentation faults
+        if (idx < 0) {
+            idx = 0;
+        } else if (idx >= disk_params->grid_number) {
+            idx = disk_params->grid_number - 1;
+        }
+        
+        calculate1DDustDrift(
+            particle_data->particle_distance_array[i][1], // Particle radius
+            disk_params->gas_pressure_gradient_vector[idx],
+            disk_params->gas_surface_density_vector[idx],
+            disk_params->gas_velocity_vector[idx],
+            r,
+            &v_drift,
+            disk_params
+        );
+
+        if (fabs(v_drift) > max_v) max_v = fabs(v_drift);
+    }
+
+    // 2. Iterate over the secondary (micron-sized) dust population if enabled
+    if (isSecondaryPopulationEnabled(mode)) {
+        for (int i = 0; i < particle_number; i++) {
+            double r_mic = particle_data->micron_particle_distance_array[i][0];
+            if (r_mic < disk_params->r_min || r_mic > disk_params->r_max) continue;
+
+            int idx_mic = (int)particle_data->micron_dust_particle_mass_array[i][1]; // Micron grid index
+            
+            calculate1DDustDrift(
+                particle_data->micron_particle_distance_array[i][1], // Micron radius
+                disk_params->gas_pressure_gradient_vector[idx_mic],
+                disk_params->gas_surface_density_vector[idx_mic],
+                disk_params->gas_velocity_vector[idx_mic],
+                r_mic,
+                &v_drift,
+                disk_params
+            );
+
+            if (fabs(v_drift) > max_v) max_v = fabs(v_drift);
+        }
+    }
+
+    return max_v;
+}
+
+double calculateTimeStep(const DiskParameters *disk_params, double max_drift_v) {
     double max_viscosity = -1e10;
     double min_photo_dt = 1e10; 
     int i;
     int N = disk_params->grid_number;
     double WIND_CRIT = 1e-20;
     
+    // 1. Gas/Viscous and Photoevaporation loops (already existing)
     for(i = 1; i <= N; i++) {
         double current_nu = calculateKinematicViscosity(disk_params->radial_grid[i], disk_params);
         if(current_nu > max_viscosity) {
@@ -64,44 +119,61 @@ double calculateTimeStep(const DiskParameters *disk_params) {
     double safety_factor = 0.35;
     double viscous_dt = safety_factor * (disk_params->delta_r * disk_params->delta_r) / (2.0 * max_viscosity);
     
+    // 2. Dust Drift CFL condition (The "Brake" you wanted)
+    double dust_dt = 1e10; // Default: effectively infinity
+    if (max_drift_v > 1e-15) { // Avoid division by zero
+        double dust_safety_factor = 0.4;
+        dust_dt = dust_safety_factor * disk_params->delta_r / max_drift_v;
+    }
+    
+    // 3. Select the most restrictive timestep
     double time_step = viscous_dt;
-    if (disk_params->enable_photoevaporation && min_photo_dt < viscous_dt) {
+    if (disk_params->enable_photoevaporation && min_photo_dt < time_step) {
         time_step = min_photo_dt;
+    }
+    if (dust_dt < time_step) {
+        time_step = dust_dt;
     }
 
     return time_step;
 }
 
 static void handleSnapshot(double current_time_years, double *output_time, const SimulationOptions *sim_opts, OutputFiles *output_files, 
-                           char *dens_name, char *dust_name, char *dust_name2, char *size_name){
-    buildSnapshotFilenames(dens_name, dust_name, dust_name2, size_name, sim_opts, (int)(*output_time)); 
-    output_files->surface_file = openSnapshotFile(dens_name, FILE_TYPE_GAS_DENSITY, current_time_years);
+                           char *dens_name, char *dust_name, char *dust_name2, char *size_name, char *size_name2, SnapshotMode mode) {
+    buildSnapshotFilenames(dens_name, dust_name, dust_name2, size_name, size_name2, sim_opts, (int)(*output_time),mode); 
+    if(isGasEvolutionEnabled(mode)) {
+        output_files->surface_file = openSnapshotFile(dens_name, FILE_TYPE_GAS_DENSITY, current_time_years);
+    }
     output_files->dust_file = openSnapshotFile(dust_name, FILE_TYPE_DUST_DENSITY, current_time_years);
-    if (sim_opts->option_for_dust_secondary_population == 1.0) {
+    if (isSecondaryPopulationEnabled(mode)) {
         output_files->micron_dust_file = openSnapshotFile(dust_name2, FILE_TYPE_DUST_MICRON_DENSITY, current_time_years);
     }
     output_files->size_file = openSnapshotFile(size_name, FILE_TYPE_PARTICLE_SIZE, current_time_years);
+    if (isSecondaryPopulationEnabled(mode)) {
+        output_files->size_micron_file = openSnapshotFile(size_name2, FILE_TYPE_MICRON_PARTICLE_SIZE, current_time_years);
+    }
 }
 
-static void snapshotInitAtT0(double t, double current_time_years, ParticleData *particle_data, DiskParameters *disk_params, const SimulationOptions *sim_opts, int particle_number) {
+static void snapshotInitAtT0(double t, double current_time_years, ParticleData *particle_data, DiskParameters *disk_params, const SimulationOptions *sim_opts, int particle_number, SnapshotMode mode) {
     if (current_time_years == 0) {
-        updateParticleGridIndices(particle_data, t, particle_number, disk_params);
-        if (sim_opts->option_for_dust_secondary_population == 1) updateParticleGridIndices(particle_data, t, particle_number, disk_params);
-        if (sim_opts->option_for_dust_growth == 1.) {
-            calculateDustSurfaceDensity(particle_data, sim_opts, disk_params);
+        updateParticleGridIndices(particle_data, t, particle_number, disk_params, isSecondaryPopulationEnabled(mode));
+
+        if (isDustEnabled(mode)) {
+            calculateDustSurfaceDensity(particle_data, sim_opts, disk_params, mode);
         }
     }
 }
 
-static void snapshotPrintGas(DiskParameters *disk_params, OutputFiles *output_files,const SimulationOptions *sim_opts) {
-    if (sim_opts->option_for_evolution == 1 ) {
+static void snapshotPrintGas(DiskParameters *disk_params, OutputFiles *output_files, int is_gas_evolution_enabled) {
+    
+    if(is_gas_evolution_enabled) {
         printGasSurfaceDensityPressurePressureDerivateFile(disk_params, output_files);
     }
 }
 
-static void snapshotPrintDust(int output_time, ParticleData *particle_data, DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files, char *size_name) {
-    if (sim_opts->option_for_dust_drift == 1) {
-        printDustParticleSizeFile(size_name, output_time, particle_data->particle_distance_array, particle_data->micron_particle_distance_array, disk_params, sim_opts, output_files);
+static void snapshotPrintDust(int output_time, ParticleData *particle_data, DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files, char *size_name, char *size_name2, SnapshotMode mode) {
+    if (isDustEnabled(mode)) {
+        printDustParticleSizeFile(size_name, size_name2, output_time, particle_data, disk_params, output_files, mode);
     }
 }
 
@@ -114,10 +186,20 @@ static void snapshotResetMasses(ParticleData *particle_data, int particle_number
     }
 }
 
-static void snapshotDustSurfacedensity(double output_time, ParticleData *particle_data, DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files) {
-    if (sim_opts->option_for_dust_growth == 1.) {
-        printDustSurfaceDensityPressurePressureDerivateFile(particle_data->particle_distance_grid, particle_data->micron_particle_distance_grid, particle_data->dust_surfacedensity, particle_data->micron_dust_surfacedensity, disk_params, sim_opts, output_files, (int)output_time);
-    }
+static void snapshotDustSurfacedensity(double output_time, ParticleData *particle_data, DiskParameters *disk_params, const SimulationOptions *sim_opts, OutputFiles *output_files, SnapshotMode mode) {
+    calculateDustSurfaceDensity(particle_data, sim_opts, disk_params, mode);
+
+    printDustSurfaceDensityPressurePressureDerivateFile(
+        disk_params->radial_grid,
+        disk_params->radial_grid,
+        particle_data->dust_surfacedensity,
+        particle_data->micron_dust_surfacedensity,       // Második populáció (micron)
+        disk_params, 
+        sim_opts, 
+        output_files, 
+        (int)output_time
+    );
+
 }
 
 static void snapshotAdvance(double *output_time, const SimulationOptions *sim_opts) {
@@ -134,14 +216,14 @@ static int isSnapshotDue(double current_time_years, double output_time, double d
 }
 
 static void handleSnapshotASCII(double t, double current_time_years, double *output_time, ParticleData *particle_data, int particle_number, DiskParameters *disk_params, const SimulationOptions *sim_opts,
-                                OutputFiles *output_files, char *dens_name, char *dust_name, char *dust_name2, char *size_name) {
+                                OutputFiles *output_files, char *dens_name, char *dust_name, char *dust_name2, char *size_name, char *size_name2, SnapshotMode mode) {
 
-    handleSnapshot(current_time_years, output_time, sim_opts, output_files, dens_name, dust_name, dust_name2, size_name);
-    snapshotInitAtT0(t, current_time_years, particle_data, disk_params, sim_opts, particle_number);
-    snapshotPrintGas(disk_params, output_files, sim_opts);
-    snapshotPrintDust((int)(*output_time), particle_data, disk_params, sim_opts, output_files, size_name);
+    handleSnapshot(current_time_years, output_time, sim_opts, output_files, dens_name, dust_name, dust_name2, size_name, size_name2, mode);
+    snapshotInitAtT0(t, current_time_years, particle_data, disk_params, sim_opts, particle_number, mode);
+    snapshotPrintGas(disk_params, output_files, isGasEvolutionEnabled(mode));
+    snapshotPrintDust((int)(*output_time), particle_data, disk_params, sim_opts, output_files, size_name, size_name2, mode);
     snapshotResetMasses(particle_data, particle_number, sim_opts);
-    snapshotDustSurfacedensity(*output_time, particle_data, disk_params, sim_opts, output_files);
+    snapshotDustSurfacedensity(*output_time, particle_data, disk_params, sim_opts, output_files, mode);
 
     PressureTrap current_traps[3];
     int num_found = identifyPressureTraps(disk_params, current_traps, 3);
@@ -157,7 +239,7 @@ static void handleSnapshotASCII(double t, double current_time_years, double *out
 
     printTrapMassEvolution(*output_time, num_found, current_traps, output_files);
     snapshotAdvance(output_time, sim_opts);
-    closeSnapshotFiles(output_files, sim_opts);
+    closeSnapshotFiles(output_files, mode);
 }
 
 static void handleSnapshotHDF5(double output_time, const SimulationOptions *sim_opts, OutputFiles *output_files, DiskParameters *disk_params, ParticleData *particle_data) {
@@ -166,7 +248,7 @@ static void handleSnapshotHDF5(double output_time, const SimulationOptions *sim_
              sim_opts->output_dir_name, kLogFilesDirectory, kSnapshotOutputFileNamePrefix, (int)(output_time), kFileNamesHDF5Suffix);
 
     if (initHDF5File(filename, output_files) != 0) {
-        fprintf(stderr, "\nERROR: Could not initialize HDF5 file %s\n", filename);
+        LOG_ERROR("Could not initialize HDF5 file %s", filename);
         return;
     }
 
@@ -189,7 +271,7 @@ static void handleSnapshotHDF5(double output_time, const SimulationOptions *sim_
 static void simulateDustDriftStep(double *t, double deltat, double *output_time, ParticleData *particle_data, 
                                   int particle_number, DiskParameters *disk_params, SimulationOptions *sim_opts,
                                   OutputFiles *output_files, char *dens_name, char *dust_name, char *dust_name2, 
-                                  char *size_name) {
+                                  char *size_name, char *size_name2, SnapshotMode mode) {
 
     double min_radius, max_radius;
     double current_time_years = *t / (2.0 * M_PI);
@@ -200,7 +282,7 @@ static void simulateDustDriftStep(double *t, double deltat, double *output_time,
     if (isSnapshotDue(current_time_years, *output_time, deltat, sim_opts)) {
         if (sim_opts->output_format == OUTPUT_ASCII) {
             handleSnapshotASCII(*t, current_time_years, output_time, particle_data, particle_number, disk_params, sim_opts,
-                               output_files, dens_name, dust_name, dust_name2, size_name);
+                               output_files, dens_name, dust_name, dust_name2, size_name, size_name2, mode);
         } else {
 
             handleSnapshotHDF5(*output_time, sim_opts, output_files, disk_params, particle_data);
@@ -236,21 +318,28 @@ static void simulateDustDriftStep(double *t, double deltat, double *output_time,
         }
     }
 
-    if (sim_opts->option_for_evolution == 1.) {
+    if (isGasEvolutionEnabled(mode)) {
         refreshGasSurfaceDensityPressurePressureGradient(sim_opts, disk_params);
     }
 
-    updateParticleGridIndices(particle_data, *t, particle_number, disk_params);
-    if (sim_opts->option_for_dust_secondary_population == 1) {
-        updateParticleGridIndices(particle_data, *t, particle_number, disk_params);
-    }
-    if (sim_opts->option_for_dust_growth == 1.) {
-        calculateDustSurfaceDensity(particle_data, sim_opts, disk_params);
+
+    // 1. Update grid indices based on current positions
+    updateParticleGridIndices(particle_data, *t, particle_number, disk_params, isSecondaryPopulationEnabled(mode));
+
+    // 2. Refresh dust density distribution
+    if (isDustEnabled(mode)) {
+        calculateDustSurfaceDensity(particle_data, sim_opts, disk_params, mode);
     }
 
+    // 3. Update particle sizes if growth is enabled
+    if (isDustGrowthEnabled(mode)) {
+        updateParticleSizes(particle_data, particle_number, deltat, disk_params, sim_opts, mode);
+    }
+
+    // 4. Evolve particle positions
     calculateDustDistance(sim_opts->output_dir_name, particle_data, deltat, *t, particle_number, sim_opts, disk_params);
-    if (sim_opts->option_for_dust_secondary_population == 1.) {
-        calculateDustDistance(sim_opts->output_dir_name, particle_data, deltat, *t, particle_number, sim_opts, disk_params);
+    if(isSecondaryPopulationEnabled(mode)) {
+        applyCoagulationMassTransfer(particle_data, disk_params, sim_opts, deltat);
     }
 
     *t += deltat;
@@ -289,7 +378,8 @@ static void simulateGasOnlyStep(double *t, double deltat, double *output_time, D
 
 void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params, SimulationOptions *sim_opts, OutputFiles *output_files) {
     ParticleData particle_data;
-    HeaderData header_data_for_files; 
+    HeaderData header_data_for_files;     
+
     double output_time = 0.; 
     double initial_disk_mass = 0.0;
     for (int i = 1; i <= disk_params->grid_number; i++) {
@@ -306,7 +396,7 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
 
     memset(&particle_data, 0, sizeof(ParticleData));
 
-    if (mode > 2) {
+    if (mode >= SnapshotDrift) {
         particle_number = calculateNumbersOfParticles(sim_opts->dust_input_filename);
     } else {
         LOG_INFO("Gas-only mode active. Particle count set to 0.\n");
@@ -318,7 +408,7 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
         exit(EXIT_FAILURE);
     }
 
-    if (mode > 2) {
+    if (mode >= SnapshotDrift) {
         if (setupInitialOutputFiles(output_files, sim_opts, disk_params, &header_data_for_files) != 0) {
             LOG_ERROR("Failed to set up initial output files. Exiting.\n");
             exit(EXIT_FAILURE);
@@ -330,18 +420,9 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
     char dust_name[MAX_PATH_LEN] = "";
     char dust_name2[MAX_PATH_LEN] = "";
     char size_name[MAX_PATH_LEN] = "";
+    char size_name2[MAX_PATH_LEN] = "";
     double t = 0.0;
     double t_integration_in_internal_units = sim_opts->maximum_simulation_time * 2.0 * M_PI;
-
-    if (sim_opts->option_for_dust_secondary_population == 0 && particle_number > 0) {
-        for (int k = 0; k < particle_number; k++) {
-            particle_data.micron_particle_distance_array[k][0] = 0;
-            particle_data.micron_particle_distance_array[k][1] = 0;
-            particle_data.micron_dust_particle_mass_array[k][0] = 0;
-            particle_data.micron_dust_particle_mass_array[k][1] = 0;
-            particle_data.massmicradial_grid[k] = 0;
-        }
-    }
 
     if (sim_opts->output_format == OUTPUT_HDF5) {
         char *ts_filename = NULL;
@@ -362,8 +443,8 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
     do {
         static double dt_old = 0.0;
 
-        
-        double dt_new = calculateTimeStep(disk_params) / 5.0;
+        double max_drift_velocity = getMaximumDriftVelocity(&particle_data, particle_number, disk_params, mode);        
+        double dt_new = calculateTimeStep(disk_params, max_drift_velocity) / 5.0;
 
         if (dt_old == 0.0) dt_old = dt_new;
 
@@ -377,8 +458,8 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
         double current_time_years = t / (2.0 * M_PI);
         int snapshot_done = isSnapshotDue(current_time_years, output_time, deltat, sim_opts);
 
-        if (mode > 1) {
-            simulateDustDriftStep(&t, deltat, &output_time, &particle_data, particle_number, disk_params, sim_opts, output_files, dens_name, dust_name, dust_name2, size_name);
+        if (isDustEnabled(mode)) {
+            simulateDustDriftStep(&t, deltat, &output_time, &particle_data, particle_number, disk_params, sim_opts, output_files, dens_name, dust_name, dust_name2, size_name, size_name2, mode);
         } else { 
             simulateGasOnlyStep(&t, deltat, &output_time, disk_params, sim_opts, output_files, dens_name);
         }    
@@ -409,9 +490,9 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
 
         // --- Diagnostic output ---
         if (step_counter % 10 == 0 || snapshot_done) {
-            const char *mode_str = (mode > 1) ? "RUNNING (DUST DRIFT)" : "RUNNING (GAS ONLY)";
+            const char *mode_str = snapshotModeToString(mode);
             printStatus(step_counter, deltat, current_time_years, t, output_time, mode_str, snapshot_done,
-                        current_disk_mass, target_termination_mass, initial_disk_mass, last_snapshot_time, snapshot_interval);
+                        current_disk_mass, target_termination_mass, initial_disk_mass, last_snapshot_time, snapshot_interval, sim_opts);
         }
 
         // --- Automatic termination ---
