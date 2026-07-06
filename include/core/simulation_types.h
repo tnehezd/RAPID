@@ -50,6 +50,7 @@ typedef struct {
     double fragmentation_factor;          /**< Mass reduction factor after fragmentation. */
     double fragmentation_velocity;        /**< Fragmentation threshold velocity [m/s]. */
     double drift_factor;                  /**< Scaling factor for dust drift speed. */        
+    double two_pop_ratio;
     bool cutoff;             // Replaces or adds the cutoff flag
     double r_cutoff;         // The characteristic tapering radius (Rc)
     double n_cutoff;         // The exponent factor (n) for sharpness

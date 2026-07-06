@@ -304,18 +304,36 @@ void calculateDustSurfaceDensity(const ParticleData *particle_data,
 
     // 4. Normalization and Density Floor
     for (i = 0; i < grid_n; i++) {
-        double area = 2.0 * M_PI * disk_params->radial_grid[i] * disk_params->delta_r;
+        double r_i = disk_params->radial_grid[i];
+        double area = 2.0 * M_PI * r_i * disk_params->delta_r;
+
+        // Perform normalization only if area is valid
         if (area > 1e-20) {
             particle_data->dust_surfacedensity[i] /= area;
-            if (particle_data->dust_surfacedensity[i] < disk_params->density_floor) particle_data->dust_surfacedensity[i] = 0.0;
             if (is_twopop) {
                 particle_data->micron_dust_surfacedensity[i] /= area;
-                if (particle_data->micron_dust_surfacedensity[i] < disk_params->density_floor) particle_data->micron_dust_surfacedensity[i] = 0.0;
             }
         } else {
+            // If area is invalid, force density to zero
             particle_data->dust_surfacedensity[i] = 0.0;
-            if (is_twopop) particle_data->micron_dust_surfacedensity[i] = 0.0;
+            if (is_twopop) {
+                particle_data->micron_dust_surfacedensity[i] = 0.0;
+            }
         }
+
+        // Apply floor to the final surface density values (independent of area check)
+        if (particle_data->dust_surfacedensity[i] < disk_params->dust_density_floor) {
+            particle_data->dust_surfacedensity[i] = 0.0;
+        }
+        
+        if (is_twopop) {
+            if (particle_data->micron_dust_surfacedensity[i] < disk_params->dust_density_floor) {
+                particle_data->micron_dust_surfacedensity[i] = 0.0;
+            }
+        }
+
+        
+
     }
 }
 
@@ -383,6 +401,7 @@ void calculateDustDistance(const char *file_name, ParticleData *particle_data, d
                 particle_data->micron_particle_distance_array[i][1] = 0.0;
             }
         }
+        
     }
 
     #pragma omp master
