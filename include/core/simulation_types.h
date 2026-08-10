@@ -71,6 +71,9 @@ typedef struct {
     char inner_bc_string[32];
     char outer_bc_string[32];
     char dust_smoothing_mode_string[32];
+    int is_ring_test_active;            /**< Flag to indicate if ring test is active */
+    double fixed_ring_viscosity;        /**< Fixed viscosity value for ring test     */
+    double ring_mass;        /**< Mass of the ring for the viscous ring test */
 
 } DiskParameters;
 

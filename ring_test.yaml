@@ -1,0 +1,37 @@
+test:
+  enabled: true
+  type: "ring"
+
+  ring_center_au: 10.0
+  ring_width_au: 1.0
+  fixed_ring_viscosity: 0.01  # Fixed viscosity value for the ring test
+  ring_mass: 1.0
+
+
+disk_parameters:
+  number_of_grid_points: 500
+  inner_radius_au: 2.0
+  outer_radius_au: 25.0
+
+
+simulation_parameters:
+  enable_gas_evolution: true
+
+boundary_conditions:
+  inner_boundary_condition: "linear_extrapolation"
+  outer_boundary_condition: "linear_extrapolation"
+
+
+time_parameters:
+  total_simulation_time: 2600
+  output_write_frequency: 40
+
+
+output_parameters:
+  input_file_path: ""
+  output_directory_name: "output_ring_test"
+  output_format: "ascii"
+
+
+log_parameters:
+  info_level: "info"

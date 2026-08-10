@@ -22,7 +22,21 @@
 #include "parser.h"
 #include "print_panels.h"    
 #include "logger.h" 
+#include "ring_test.h"
 
+
+static const char* getBoundaryConditionString(int bc_type) {
+    switch (bc_type) {
+        case 0: return "zero_gradient";
+        case 1: return "parabolic";
+        case 2: return "fixed_flux";
+        case 3: return "absorbing";
+        case 4: return "reflecting";
+        case 5: return "linear_extrapolation";
+        case 6: return "log_grid_extrapolation";
+        default: return "unknown";
+    }
+}
 
 extern void initializeDefaultOptions(InitializeDefaultOptions *def);
 
@@ -59,13 +73,109 @@ int main(int argc, const char **argv) {
     g_log_level = def.verbose;
 
     LOG_INFO("Command-line options parsed successfully. Logging level set to %d.", g_log_level);
-    
+        
     size_t len = strlen(def.output_dir_name);
 
     if (len > 0 && def.output_dir_name[len - 1] == '/') {
         def.output_dir_name[len - 1] = '\0';
     }
 
+    // ======================================================================
+    //                           TEST MODE HANDLING
+    // ======================================================================
+    if (def.test_enabled) {
+
+        if (strcmp(def.test_type, "ring") == 0) {
+
+            LOG_INFO("Running viscous ring test.");
+
+            actual_run_dir = createRunDirectory(def.output_dir_name);
+
+            char *logs_path = NULL;
+            asprintf(&logs_path, "%s/%s", actual_run_dir, kLogFilesDirectory);
+            createRunDirectory(logs_path);
+            free(logs_path);
+
+            DiskParameters disk;
+            SimulationOptions sim;
+
+
+            disk.is_ring_test_active = 1;
+            disk.fixed_ring_viscosity = def.fixed_ring_viscosity;
+
+            disk.r_min        = def.rmin_val;
+            disk.r_max        = def.rmax_val;
+            disk.grid_number  = def.number_of_grid_points;
+
+            disk.alpha_parameter = def.alpha_visc_val;
+            disk.stellar_mass = 1.0;
+            disk.h_aspect_ratio = 0.05; 
+            disk.flaring_index  = 0.0;  
+            disk.enable_photoevaporation = 0;
+            disk.ring_mass = def.ring_mass;
+
+            double ring_mass = disk.ring_mass;
+
+            // 1) Vektorok lefoglalása
+            disk.radial_grid                  = malloc((disk.grid_number + 2) * sizeof(double));
+            disk.gas_surface_density_vector   = malloc((disk.grid_number + 2) * sizeof(double));
+            disk.gas_pressure_vector          = malloc((disk.grid_number + 2) * sizeof(double));
+            disk.gas_pressure_gradient_vector = malloc((disk.grid_number + 2) * sizeof(double));
+            disk.gas_velocity_vector          = malloc((disk.grid_number + 2) * sizeof(double));
+            disk.sigma_dot_photoevap          = calloc((disk.grid_number + 2), sizeof(double));
+
+            if (!disk.radial_grid || !disk.gas_surface_density_vector || !disk.gas_pressure_vector || 
+                !disk.gas_pressure_gradient_vector || !disk.gas_velocity_vector || !disk.sigma_dot_photoevap) {
+                LOG_ERROR("Memory allocation failed for ring test vectors.");
+                return 1;
+            }
+
+            disk.delta_r = (disk.r_max - disk.r_min) / (disk.grid_number - 1.0);
+
+            // --- FONTOS: Hívjuk meg a hivatalos rácsgenerálót, hogy minden radial_grid[i] érvényes legyen! ---
+            createRadialGrid(&disk);
+
+            // 2) Egyedi gyűrű profil beállítása
+            setupViscousRingTestCustom(&sim, &disk, def.ring_center, def.ring_width, ring_mass);
+
+            // 3) Peremfeltétel a sűrűségre (EZ TÖLTI FEL A SZELLEMMEZŐKET ÉS A SZÉLEKET IS TISZTÁRA)
+            sim.current_bc_target = 0;
+            applyBoundaryConditions(disk.gas_surface_density_vector, &disk, &sim);
+
+            LOG_INFO("Boundary conditions applied: inner=%s, outer=%s", 
+                     getBoundaryConditionString(def.inner_boundary_condition_type), 
+                     getBoundaryConditionString(def.outer_boundary_condition_type));
+
+            // 4) Nyomás és gradiensek inicializálása CSAK EZUTÁN
+            createInitialGasPressure(&disk, &sim);
+            createInitialGasPressureGradient(&disk, &sim);
+            createInitialGasVelocity(&disk, &sim);
+
+            double nu = 0.01; // vagy a megadott viszkozitás
+            sim.user_defined_time_step = 0.1 * disk.delta_r * disk.delta_r / nu;
+
+            sim.option_for_evolution = 1.0;
+            sim.maximum_simulation_time = def.maximum_simulation_time;
+            sim.output_frequency = def.output_frequency;
+
+            strncpy(sim.output_dir_name, actual_run_dir, MAX_PATH_LEN - 1);
+
+            OutputFiles output_files = {0};
+            // Itt nyithatod meg a kimeneti fájlokat is, amiket a kiíró vár, ha szükséges.
+
+            LOG_INFO("Starting ring test time integration...");
+            timeIntegrationForTheSystem(SnapshotGas, &disk, &sim, &output_files);
+
+            LOG_INFO("Ring test completed.");
+            return 0;
+        }
+
+
+        LOG_ERROR("Unknown test type: %s", def.test_type);
+        return 1;
+    }
+
+    
     DiskParameters disk_params; 
     SimulationOptions sim_opts;
     OutputFiles output_files;
@@ -125,6 +235,10 @@ int main(int argc, const char **argv) {
     disk_params.two_pop_ratio = def.ratio_val;
     disk_params.density_floor      = def.density_floor;
     disk_params.dust_density_floor = def.dust_density_floor;
+    disk_params.is_ring_test_active = 0;
+    disk_params.fixed_ring_viscosity = 0.0; // Default value, can be overridden by test mode
+    disk_params.ring_mass = 0.0; // Default value, can be overridden by test mode
+
 
     // --- BOUNDARY CONDITION STRING MAPPING ---
     switch (sim_opts.inner_boundary_condition_type) {

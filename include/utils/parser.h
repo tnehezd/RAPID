@@ -73,6 +73,14 @@ typedef struct {
     int inner_boundary_condition_type;                  /**< Inner boundary condition */
     int outer_boundary_condition_type;                  /**< Outer boundary condition */
     int verbose;                                        /**< Logging level: 0=Error/Warn, 1=Info, 2=Debug */
+    bool test_enabled;
+    char test_type[32];
+
+    double ring_center;
+    double ring_width;
+    double fixed_ring_viscosity;                        /**< Fixed viscosity value for ring test */
+    double ring_mass;                        /**< Mass of the ring for ring test */
+
 
 } ParserOptions;
 

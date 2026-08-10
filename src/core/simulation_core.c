@@ -350,9 +350,30 @@ static void simulateGasOnlyStep(double *t, double deltat, double *output_time, D
 {
     double current_time_years = *t / (2.0 * M_PI);
 
+    // 1. ELŐSZÖR alkalmazzuk a peremfeltételt, hogy a szellemmezők tiszta adatok legyenek!
+    sim_opts->current_bc_target = 0; // Sigma
+    applyBoundaryConditions(disk_params->gas_surface_density_vector, disk_params, sim_opts);
+
+    // 2. UTÁNA jöhet a gázállapot és a gradiensek frissítése
+    refreshGasSurfaceDensityPressurePressureGradient(sim_opts, disk_params);
+
+    applyBoundaryConditions(disk_params->gas_surface_density_vector, disk_params, sim_opts);
+
+    // --- Ellenőrzés CSAK UTÁNA ---
+    for (int i = 0; i <= disk_params->grid_number + 1; i++) {
+        if (isnan(disk_params->gas_surface_density_vector[i]) || 
+            isnan(disk_params->gas_pressure_vector[i]) || 
+            isnan(disk_params->gas_pressure_gradient_vector[i])) {
+            LOG_ERROR("NAN DETECTED at index %d! (Sigma: %e, P: %e, dP/dr: %e)", 
+                      i, disk_params->gas_surface_density_vector[i], 
+                         disk_params->gas_pressure_vector[i], 
+                         disk_params->gas_pressure_gradient_vector[i]);
+            exit(1);
+        }
+    }
+
     if (isSnapshotDue(current_time_years, *output_time, deltat, sim_opts)) {
         if (sim_opts->output_format == OUTPUT_ASCII) {
-
             asprintf(&dens_name, "%s/%s/%s_%08d%s", sim_opts->output_dir_name, kLogFilesDirectory, kGasDensityProfileFilePrefix, (int)(*output_time), kFileNamesSuffix);
             output_files->surface_file = fopen(dens_name, "w");
 
@@ -371,8 +392,6 @@ static void simulateGasOnlyStep(double *t, double deltat, double *output_time, D
         snapshotAdvance(output_time, sim_opts);
     }
 
-
-    refreshGasSurfaceDensityPressurePressureGradient(sim_opts, disk_params);
     *t += deltat;
 }
 

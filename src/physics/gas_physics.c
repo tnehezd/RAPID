@@ -24,6 +24,10 @@ double calculateTurbulentAlpha(double radial_distance, const DiskParameters *dis
 
 double calculateKinematicViscosity(double radial_distance, const DiskParameters *disk_params) {
     
+    if (disk_params->is_ring_test_active) {
+        return disk_params->fixed_ring_viscosity;
+    }
+
     double gas_viscosity, local_soundspeed, local_pressure_scaleheight;
     local_pressure_scaleheight = calculatePressureScaleHeight(radial_distance,disk_params);
     local_soundspeed = calculateLocalSoundSpeed(radial_distance,disk_params);

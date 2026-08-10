@@ -7,7 +7,9 @@ import datetime
 prefix = "[PY-WRAPPER]"
 
 
-def run_c_program(executable_path, params, arg_mapping, verbosity_flag, program_name="C Program"):
+def run_c_program(executable_path, params, arg_mapping, verbosity_flag, program_name="C Program",
+                  test_enabled=False, test_type=None, ring_center=None, ring_width=None):
+
     """
     Runs a C program with the given parameters.
     """
@@ -16,6 +18,17 @@ def run_c_program(executable_path, params, arg_mapping, verbosity_flag, program_
         return False, None
 
     cmd_args = [executable_path]
+
+    if verbosity_flag:
+        cmd_args.append(verbosity_flag)
+
+    # --- TEST FLAGS ---
+    if test_enabled and test_type == "ring":
+        cmd_args.append("-ring_test")
+        if ring_center is not None:
+            cmd_args.extend(["-ring_center", str(ring_center)])
+        if ring_width is not None:
+            cmd_args.extend(["-ring_width", str(ring_width)])
     
     if verbosity_flag:
         cmd_args.append(verbosity_flag)
@@ -197,7 +210,13 @@ def main():
         "pdensity_val": "-pdensity","gaussian_sigma_grid_units": "-gaussian_sigma_grid",
         "gaussian_cutoff_sigma": "-gaussian_cutoff", "input_file": "-i", "output_dir_name": "-o",
         "output_format": "--output-format", "dust_smoothing_mode": "-dust_smoothing",
-        "tStep": "-tStep", "totalTime": "-tmax", "outputFrequency": "-outfreq"
+        "tStep": "-tStep", "totalTime": "-tmax", "outputFrequency": "-outfreq",
+        "ring_test": "-ring_test",
+        "ring_center": "-ring_center",
+        "ring_width": "-ring_width",
+        "fixed_ring_viscosity": "-fixed_ring_visc",
+        "sigma_at_peak": "-sigma_at_ring_center",
+
     }
 
     if not all_params:
@@ -212,8 +231,39 @@ def main():
     elif verbosity_level == "debug":
         verbosity_flag = "-vv"
 
+    # --- TEST MODE HANDLING ---
+    test_cfg = full_config.get("test", {})
+    test_enabled = False
+    test_type = None
+
+    if test_cfg.get("enabled", False):
+        test_type = test_cfg.get("type", "")
+        if test_type == "ring":
+            test_enabled = True
+            ring_center = test_cfg.get("ring_center_au", None)
+            ring_width  = test_cfg.get("ring_width_au", None)
+            fixed_ring_viscosity = test_cfg.get("fixed_ring_viscosity", None)
+            if fixed_ring_viscosity is not None:
+                all_params["fixed_ring_viscosity"] = fixed_ring_viscosity
+            ring_mass = test_cfg.get("ring_mass", None)
+            if ring_mass is not None:
+                all_params["ring_mass"] = ring_mass 
+
+
+
+
     # 2. Run the main C program with ONLY configured parameters
-    success, return_code = run_c_program(main_executable, all_params, c_arg_mapping, verbosity_flag, "Main Simulation Program")
+    success, return_code = run_c_program(
+        main_executable,
+        all_params,
+        c_arg_mapping,
+        verbosity_flag,
+        "Main Simulation Program",
+        test_enabled=test_enabled,
+        test_type=test_type,
+        ring_center=ring_center,
+        ring_width=ring_width
+    )
 
     if not success:
         print(f"{prefix} The C program exited with an error (error code: {return_code}) with the Python wrapper.")

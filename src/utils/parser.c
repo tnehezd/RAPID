@@ -71,6 +71,13 @@ void createDefaultOptions(ParserOptions *opt) {
 
 
     opt->dust_smoothing_mode = SMOOTHING_CIC; 
+    opt->test_enabled = false;
+    strcpy(opt->test_type, "");
+    opt->ring_center = 10.0;
+    opt->ring_width = 2.0;
+    opt->fixed_ring_viscosity = 1e-5; // Default viscosity for ring test
+    opt->ring_mass = 1.0; // Default gas surface density at ring center
+
 
     LOG_DEBUG("Default options setting complete.\n");
 }
@@ -152,7 +159,14 @@ void printUsageToTerminal() {
     fprintf(stderr, "Log control:\n");
     fprintf(stderr, "  -v             Enable INFO logging level\n");
     fprintf(stderr, "  -vv            Enable DEBUG logging level (very verbose)\n\n");
-
+    fprintf(stderr, "Test options:\n");
+    fprintf(stderr, "  -test <test_name>   Enable a specific test. Available tests:\n");
+    fprintf(stderr, "                      ring  = Viscous ring test\n");
+    fprintf(stderr, "  -ring_center <val>  Center of the ring for the viscous ring test (default: 10.0 AU)\n");
+    fprintf(stderr, "  -ring_width <val>   Width of the ring for the viscous ring test (default: 2.0 AU)\n");
+    fprintf(stderr, "  -ring_visc <val>    Fixed viscosity for the viscous ring test (default: 1e-5)\n");
+    fprintf(stderr, "  -fixed_ring_visc <val>  Fixed viscosity for the viscous ring test (default: 1e-5)\n");   
+    fprintf(stderr, "  -ring_mass <val>  Mass of the ring for the viscous ring test (default: 1.0)\n");
 
 }
 
@@ -328,6 +342,32 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
                 return 1;
             }
         }
+
+        else if (strcmp(argv[i], "-ring_test") == 0) {
+            opt->test_enabled = true;
+            strcpy(opt->test_type, "ring");
+        }
+        else if (strcmp(argv[i], "-ring_center") == 0) {
+            i++;
+            if (i < argc) opt->ring_center = atof(argv[i]);
+            else { LOG_ERROR("Missing value for -ring_center.\n"); return 1; }
+        }
+        else if (strcmp(argv[i], "-ring_width") == 0) {
+            i++;
+            if (i < argc) opt->ring_width = atof(argv[i]);
+            else { LOG_ERROR("Missing value for -ring_width.\n"); return 1; }
+        }
+        else if (strcmp(argv[i], "-fixed_ring_visc") == 0) {
+            i++;
+            if (i < argc) opt->fixed_ring_viscosity = atof(argv[i]);
+            else { LOG_ERROR("Missing value for -fixed_ring_visc.\n"); return 1; }
+        }
+        else if (strcmp(argv[i], "-ring_mass") == 0) {
+            i++;
+            if (i < argc) opt->ring_mass = atof(argv[i]);
+            else { LOG_ERROR("Missing value for -ring_mass.\n"); return 1; }
+        }
+
 
         else if (strcmp(argv[i], "-photoevap") == 0) {
             i++;
