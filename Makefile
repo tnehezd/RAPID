@@ -40,7 +40,10 @@ ifeq ($(UNAME_S), Darwin)
               -L$(HDF5_HOME)/lib -lhdf5 -lhdf5_hl
 
 else
-    # Linux (Ubuntu / GitHub Actions) settings
+    # Linux (Ubuntu) settings - use gcc/g++ for native OpenMP (libgomp) support
+    CC = gcc
+    CXX = g++
+    
     CFLAGS = -Wall -Wextra -std=c99 -g -O0 $(INC_FLAGS) -D_GNU_SOURCE \
              -I/usr/include/hdf5/serial -fopenmp
              

@@ -4,12 +4,43 @@ import yaml
 import subprocess
 import datetime
 
-PREFIX = "[PY-WRAPPER]"
+PREFIX = "[PY-WRAPPER: RAPIDSIM]"
+
+def get_version():
+    # 1. Megpróbáljuk kiolvasni a feltelepített csomag metaadatából (ez a legtisztább)
+    try:
+        import importlib.metadata as importlib_metadata
+        return importlib_metadata.version("rapidsim")
+    except Exception:
+        pass
+
+    # 2. Ha nincs feltelepítve, vagy fejlesztői módban vagyunk, olvassuk ki élőben a pyproject.toml-ből vagy setup.py-ból
+    try:
+        package_dir = os.path.dirname(os.path.abspath(__file__))
+        # Megkeressük a gyökeret (akár a wrapper mappájából, akár egy szinttel feljebb)
+        for path_candidate in [
+            os.path.join(package_dir, "..", "pyproject.toml"),
+            os.path.join(package_dir, "pyproject.toml"),
+            os.path.join(package_dir, "..", "setup.py"),
+            os.path.join(package_dir, "setup.py")
+        ]:
+            if os.path.exists(path_candidate):
+                with open(path_candidate, "r", encoding="utf-8") as f:
+                    content = f.read()
+                    match = re.search(r'version\s*=\s*["\']([^"\']+)["\']', content)
+                    if match:
+                        return match.group(1)
+    except Exception:
+        pass
+
+    return "unknown"
 
 def main():
     parser = argparse.ArgumentParser(description="Runs the simulation workflow with YAML configuration.")
     parser.add_argument("-c", "--config", default="config.yaml",
                         help="Path to the YAML configuration file.")
+    parser.add_argument("--version", action="version", version=f"%(prog)s {get_version()}")
+    
     args = parser.parse_args()
 
     config_file = os.path.abspath(args.config)
@@ -88,7 +119,7 @@ def main():
         "eps_val": "-eps", "ratio_val": "-ratio", "mic_val": "-mic", "onesize_val": "-onesize",
         "pdensity_val": "-pdensity",
         
-        # --- EZ KELL HOGY LEGYEN (pontosan ahogy a C parser várja): ---
+        # Gaussian smoothing mappings expected by the C parser
         "gaussian_smoothing_sigma_grid_units": "-gaussian_sigma_grid_units",
         "gaussian_smoothing_cutoff_sigma": "-gaussian_cutoff_sigma", 
         
@@ -120,13 +151,14 @@ def main():
             else:
                 cmd_args.extend([c_arg_name, str(value)])
 
-    # Robust binary location resolver
+    # Robust binary location resolver (checking data/ directory first)
     package_dir = os.path.dirname(os.path.abspath(__file__))
     possible_paths = [
-        os.path.join(package_dir, "bin", "simulation"),          # 1. Inside installed package
-        os.path.abspath(os.path.join(package_dir, "..", "bin", "simulation")), # 2. Parent relative
-        os.path.abspath("./bin/simulation"),                     # 3. Current working directory bin/
-        os.path.abspath("../bin/simulation")                     # 4. One level up cwd
+        os.path.join(package_dir, "data", "simulation"),          # 1. Inside installed package data/
+        os.path.join(package_dir, "bin", "simulation"),          # 2. Legacy / fallback inside package
+        os.path.abspath(os.path.join(package_dir, "..", "bin", "simulation")), # 3. Parent relative
+        os.path.abspath("./bin/simulation"),                     # 4. Current working directory bin/
+        os.path.abspath("../bin/simulation")                     # 5. One level up cwd
     ]
 
     binary_path = None
