@@ -6,7 +6,7 @@ on:
 
 jobs:
   build_wheels:
-    name: Build wheel for ${{ matrix.os }}
+    name: Build package for ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -28,7 +28,6 @@ jobs:
       - name: Install system dependencies (Linux)
         if: runner.os == 'Linux'
         run: |
-          # Remove problematic Microsoft/Azure mirror lists that cause timeouts, keep official sources
           sudo rm -f /etc/apt/sources.list.d/microsoft* || true
           sudo apt-get update -y
           sudo apt-get install -y libhdf5-dev libomp-dev
@@ -38,19 +37,24 @@ jobs:
         run: |
           brew install hdf5 libomp
 
-      - name: Compile C simulation engine
+      - name: Compile C simulation engine (Test build)
         run: |
           make clean
           make all
 
-      - name: Build wheel
+      - name: Build Source Distribution (Linux) or Wheel (macOS)
+        if: runner.os == 'Linux'
+        run: python -m build --sdist
+
+      - name: Build Wheel (macOS)
+        if: runner.os == 'macOS'
         run: python -m build --wheel
 
-      - name: Upload wheels to artifact
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: wheels-${{ matrix.os }}
-          path: dist/*.whl
+          name: package-${{ matrix.os }}
+          path: dist/*
 
   pypi-publish:
     name: Upload to PyPI
@@ -59,11 +63,11 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - name: Download all wheels
+      - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: dist
-          pattern: wheels-*
+          pattern: package-*
           merge-multiple: true
 
       - name: Publish package to PyPI
