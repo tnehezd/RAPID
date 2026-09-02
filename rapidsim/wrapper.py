@@ -120,12 +120,24 @@ def main():
             else:
                 cmd_args.extend([c_arg_name, str(value)])
 
-    # Locate embedded binary inside package or fallback to local build
+    # Robust binary location resolver
     package_dir = os.path.dirname(os.path.abspath(__file__))
-    binary_path = os.path.join(package_dir, "bin", "simulation")
+    possible_paths = [
+        os.path.join(package_dir, "bin", "simulation"),          # 1. Inside installed package
+        os.path.abspath(os.path.join(package_dir, "..", "bin", "simulation")), # 2. Parent relative
+        os.path.abspath("./bin/simulation"),                     # 3. Current working directory bin/
+        os.path.abspath("../bin/simulation")                     # 4. One level up cwd
+    ]
 
-    if not os.path.exists(binary_path):
-        binary_path = "./bin/simulation"
+    binary_path = None
+    for p in possible_paths:
+        if os.path.exists(p):
+            binary_path = p
+            break
+
+    if not binary_path or not os.path.exists(binary_path):
+        print(f"{PREFIX} Error: Could not find 'simulation' binary. Tried paths:\n" + "\n".join(possible_paths))
+        return
 
     full_cmd = [binary_path] + cmd_args
 
