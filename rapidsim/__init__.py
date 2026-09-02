@@ -1,2 +1,2 @@
 # rapidsim/__init__.py
-from .wrapper import main
+from .run_simulation import main

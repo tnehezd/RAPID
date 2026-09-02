@@ -18,12 +18,11 @@ classifiers = [
     "Operating System :: MacOS",
 ]
 dependencies = [
-    "PyYAML", # Mivel a wrapper használja a yaml-t, jelöljük függőségként!
+    "PyYAML", 
 ]
 
-# EZ A VARÁZSLAT: Így lesz a wrapperből egy globális `rapidsim` parancs a terminálban!
 [project.scripts]
-rapidsim = "rapidsim.wrapper:main" 
+rapidsim = "rapidsim.run_simulation:main" 
 
 [tool.setuptools]
 packages = ["rapidsim"]
