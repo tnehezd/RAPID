@@ -22,11 +22,25 @@
 #include "parser.h"
 #include "print_panels.h"    
 #include "logger.h" 
+#include <signal.h>
+#include <stdio.h>
 
 
 extern void initializeDefaultOptions(InitializeDefaultOptions *def);
 
+// Jelkezelő függvény, ami lefut, ha lenyomod a Ctrl + C-t
+void handle_sigint(int sig) {
+    fprintf(stderr, "\n[C-CORE] Simulation aborted by user (Ctrl+C).\n");
+    // Ittkilépés előtt megteheted a szükséges takarítást (pl. HDF5 file lezárása)
+    exit(130); // A szabványos kilépési kód megszakításra
+}
+
 int main(int argc, const char **argv) {
+
+    setvbuf(stdout, NULL, _IONBF, 0);
+    setvbuf(stderr, NULL, _IONBF, 0);
+    signal(SIGINT, handle_sigint);
+
 
     time_t wall_start, wall_end;
     time(&wall_start); 

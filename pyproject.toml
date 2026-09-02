@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rapidsim"
-version = "0.1.0"
+version = "1.0.0"
 description = "A Python wrapper for RAPID code"
 readme = "README.md"
 authors = [
@@ -22,7 +22,7 @@ dependencies = [
 ]
 
 [project.scripts]
-rapidsim = "rapidsim.run_simulation:main" 
+rapidsim = "rapidsim.wrapper:main" 
 
 [tool.setuptools]
 packages = ["rapidsim"]

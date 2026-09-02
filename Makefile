@@ -26,7 +26,8 @@ LDFLAGS = -lm -L$(LIBOMP)/lib -lomp \
           -L/usr/local/Cellar/hdf5/2.0.0_1/lib -lhdf5 -lhdf5_hl
 
 # Recursively find all .c and .cpp source files in the src and extern/src directories
-SRCS_C = $(shell find $(SRC_DIR) -name "*.c")
+# Find all .c files in src, but EXCLUDE python_interface.c
+SRCS_C = $(shell find $(SRC_DIR) -name "*.c" ! -name "python_interface.c")
 SRCS_CPP = $(shell find $(SRC_DIR) -name "*.cpp")
 EXTERN_CPP = $(wildcard $(EXTERN_DIR)/*.cpp)
 

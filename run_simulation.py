@@ -1,5 +1,3 @@
-from html import parser
-
 import yaml
 import subprocess
 import argparse
@@ -46,6 +44,7 @@ def run_c_program(executable_path, params, arg_mapping, verbosity_flag, program_
     print(f"{prefix} Setting OMP_NUM_THREADS={current_env['OMP_NUM_THREADS']} for this run.")
     print(f"{prefix} Start running the binary ({executable_path}) at {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}...\n")
 
+    process = None
     try:
         process = subprocess.Popen(
             cmd_args,
@@ -58,7 +57,6 @@ def run_c_program(executable_path, params, arg_mapping, verbosity_flag, program_
             env=current_env
         )
         for line in process.stdout:
-            # Itt NE tegyünk prefixet, hogy a C kimenete tiszta maradjon
             print(line, end='') 
         process.wait()
 
@@ -71,13 +69,22 @@ def run_c_program(executable_path, params, arg_mapping, verbosity_flag, program_
     except FileNotFoundError:
         print(f"{prefix} Error: Command '{executable_path}' not found.")
         return False, 1
+    except KeyboardInterrupt:
+        print(f"\n{prefix} Simulation aborted by user (Ctrl+C). Terminating process...")
+        if process:
+            process.terminate()
+            try:
+                process.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                process.kill()
+        return False, 130
     except Exception as e:
         print(f"{prefix} An error occurred while running {program_name}: {e}")
         return False, 1
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Runs the simulation with YAML configuration.")
+    parser = argparse.ArgumentParser(description="Runs the simulation workflow with YAML configuration.")
     parser.add_argument("-c", "--config", default="config.yaml",
                         help="Path to the YAML configuration file.")
     parser.add_argument("-exec", "--executable", default="./bin/simulation",
@@ -98,7 +105,6 @@ def main():
         print(f"{prefix} Error parsing YAML file '{config_file}': {exc}")
         return
 
-    # --- FIX: Üres szótárból indulunk ki, nincsenek keményen kódolt defaultok ---
     all_params = {}
 
     # YAML nested sections
@@ -175,12 +181,12 @@ def main():
     for section in yaml_sections:
         if section in full_config:
             yaml_params = full_config[section]
-            if yaml_params: # Ellenőrizzük, hogy a szekció nem üres-e
+            if yaml_params:
                 for yaml_key, c_key in yaml_to_c_mapping.items():
                     if yaml_key in yaml_params:
                         all_params[c_key] = yaml_params[yaml_key]
 
-    # C program argument mapping
+    # C program argument mapping (helyes, szinkronizált gaussian kulcsokkal)
     c_arg_mapping = {
         "drift": "-drift", "growth": "-growth", "evol": "-evol", "twopop": "-twopop",
         "ufrag": "-ufrag", "ffrag": "-ffrag", "photoevap": "-photoevap",
@@ -196,8 +202,9 @@ def main():
         "dr_dze_i_val": "-drdzei", "dr_dze_o_val": "-drdzeo",
         "a_mod_val": "-amod", "density_floor": "-density_floor", "dust_density_floor": "-dust_density_floor",
         "eps_val": "-eps", "ratio_val": "-ratio", "mic_val": "-mic", "onesize_val": "-onesize",
-        "pdensity_val": "-pdensity","gaussian_sigma_grid_units": "-gaussian_sigma_grid",
-        "gaussian_cutoff_sigma": "-gaussian_cutoff", "input_file": "-i", "output_dir_name": "-o",
+        "pdensity_val": "-pdensity",
+        "gaussian_smoothing_sigma_grid_units": "-gaussian_sigma_grid_units",  # <-- ITT A JAVÍTÁS!
+        "gaussian_smoothing_cutoff_sigma": "-gaussian_cutoff_sigma",         # <-- Ellenőrizd ezt is a C szerint!        "input_file": "-i", "output_dir_name": "-o",
         "output_format": "--output-format", "dust_smoothing_mode": "-dust_smoothing",
         "tStep": "-tStep", "totalTime": "-tmax", "outputFrequency": "-outfreq"
     }
@@ -206,7 +213,7 @@ def main():
         print(f"{prefix} Error: No parameters could be parsed from YAML. Exiting.")
         return
     
-    # 2. Add hozzá a logolási flaget
+    # 2. Logolási flag beállítása
     verbosity_level = full_config.get("log_parameters", {}).get("info_level", "none")
     verbosity_flag = ""
     if verbosity_level == "info":
@@ -214,7 +221,7 @@ def main():
     elif verbosity_level == "debug":
         verbosity_flag = "-vv"
 
-    # 2. Run the main C program with ONLY configured parameters
+    # 3. Futtatás
     success, return_code = run_c_program(main_executable, all_params, c_arg_mapping, verbosity_flag, "Main Simulation Program")
 
     if not success:
