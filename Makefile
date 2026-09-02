@@ -16,9 +16,18 @@ INC_FLAGS = -I$(INC_DIR) $(addprefix -I$(INC_DIR)/, $(SUBDIRS))
 UNAME_S := $(shell uname -s)
 
 ifeq ($(UNAME_S), Darwin)
-    # macOS (Apple Silicon / Homebrew) explicit paths
-    LIBOMP = /opt/homebrew/opt/libomp
-    HDF5_HOME = /opt/homebrew/opt/hdf5
+    # Automatically detect Homebrew path (handles both native Apple Silicon and migrated /usr/local setups)
+    ifneq ($(wildcard /opt/homebrew/opt/libomp),)
+        LIBOMP = /opt/homebrew/opt/libomp
+    else
+        LIBOMP = /usr/local/opt/libomp
+    endif
+
+    ifneq ($(wildcard /opt/homebrew/opt/hdf5),)
+        HDF5_HOME = /opt/homebrew/opt/hdf5
+    else
+        HDF5_HOME = /usr/local/opt/hdf5
+    endif
     
     CFLAGS = -Wall -Wextra -std=c99 -g -O0 $(INC_FLAGS) -D_GNU_SOURCE \
              -I$(LIBOMP)/include -I$(HDF5_HOME)/include -Xpreprocessor -fopenmp
@@ -29,6 +38,7 @@ ifeq ($(UNAME_S), Darwin)
                
     LDFLAGS = -lm -L$(LIBOMP)/lib -lomp \
               -L$(HDF5_HOME)/lib -lhdf5 -lhdf5_hl
+
 else
     # Linux (Ubuntu / GitHub Actions) settings
     CFLAGS = -Wall -Wextra -std=c99 -g -O0 $(INC_FLAGS) -D_GNU_SOURCE \

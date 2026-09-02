@@ -121,7 +121,7 @@ def main():
                 cmd_args.extend([c_arg_name, str(value)])
 
     # Locate embedded binary inside package or fallback to local build
-    package_dir = os.path.dirname(__file__)
+    package_dir = os.path.dirname(os.path.abspath(__file__))
     binary_path = os.path.join(package_dir, "bin", "simulation")
 
     if not os.path.exists(binary_path):

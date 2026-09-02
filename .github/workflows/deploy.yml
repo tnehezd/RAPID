@@ -57,12 +57,13 @@ jobs:
     needs: [build_wheels]
     runs-on: ubuntu-latest
     permissions:
-      id-token: write  # <-- EZ A SOR HIÁNYZOTT
+      id-token: write
     steps:
       - name: Download all wheels
         uses: actions/download-artifact@v4
         with:
           path: dist
+          pattern: wheels-*
           merge-multiple: true
 
       - name: Publish package to PyPI
