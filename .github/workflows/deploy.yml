@@ -26,11 +26,12 @@ jobs:
           pip install build twine
 
       - name: Install system dependencies (Linux)
-              if: runner.os == 'Linux'
-              run: |
-                sudo rm -f /etc/apt/sources.list.d/*
-                sudo apt-get update -y
-                sudo apt-get install -y libhdf5-dev libomp-dev
+        if: runner.os == 'Linux'
+        run: |
+          # Eltávolítjuk a gyári, akadályozó mirror listát a runneren
+          sudo rm -f /etc/apt/sources.list.d/*
+          sudo apt-get update -y
+          sudo apt-get install -y libhdf5-dev libomp-dev
 
       - name: Install system dependencies (macOS)
         if: runner.os == 'macOS'
