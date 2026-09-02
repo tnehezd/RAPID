@@ -10,20 +10,37 @@ OBJ_DIR = obj
 
 # Subdirectories for include files
 SUBDIRS = io physics utils core
-# Generate include flags for subdirectories
 INC_FLAGS = -I$(INC_DIR) $(addprefix -I$(INC_DIR)/, $(SUBDIRS))
 
-LIBOMP := /usr/local/opt/libomp
+# --- PLATFORM-FÜGGŐ BEÁLLÍTÁSOK ---
+UNAME_S := $(shell uname -s)
 
-CFLAGS = -Wall -Wextra -std=c99 -g -O0 $(INC_FLAGS) -D_GNU_SOURCE \
-         -I$(LIBOMP)/include -Xpreprocessor -fopenmp
-
-CXXFLAGS = -Wall -Wextra -std=c++17 -g -O0 $(INC_FLAGS) \
-           -I$(EXTERN_DIR)/../include -D_GNU_SOURCE \
-           -I$(LIBOMP)/include -Xpreprocessor -fopenmp
-
-LDFLAGS = -lm -L$(LIBOMP)/lib -lomp \
-          -L/usr/local/Cellar/hdf5/2.0.0_1/lib -lhdf5 -lhdf5_hl
+ifeq ($(UNAME_S), Darwin)
+    # macOS (Homebrew) beállítások
+    LIBOMP ?= /usr/local/opt/libomp
+    HDF5_HOME ?= /usr/local/opt/hdf5
+    
+    CFLAGS = -Wall -Wextra -std=c99 -g -O0 $(INC_FLAGS) -D_GNU_SOURCE \
+             -I$(LIBOMP)/include -I$(HDF5_HOME)/include -Xpreprocessor -fopenmp
+             
+    CXXFLAGS = -Wall -Wextra -std=c++17 -g -O0 $(INC_FLAGS) \
+               -I$(EXTERN_DIR)/../include -D_GNU_SOURCE \
+               -I$(LIBOMP)/include -I$(HDF5_HOME)/include -Xpreprocessor -fopenmp
+               
+    LDFLAGS = -lm -L$(LIBOMP)/lib -lomp \
+              -L$(HDF5_HOME)/lib -lhdf5 -lhdf5_hl
+else
+    # Linux (Ubuntu / GitHub Actions) beállítások
+    CFLAGS = -Wall -Wextra -std=c99 -g -O0 $(INC_FLAGS) -D_GNU_SOURCE \
+             -I/usr/include/hdf5/serial -fopenmp
+             
+    CXXFLAGS = -Wall -Wextra -std=c++17 -g -O0 $(INC_FLAGS) \
+               -I$(EXTERN_DIR)/../include -D_GNU_SOURCE \
+               -I/usr/include/hdf5/serial -fopenmp
+               
+    LDFLAGS = -lm -fopenmp \
+              -L/usr/lib/x86_64-linux-gnu/hdf5/serial -lhdf5 -lhdf5_hl
+endif
 
 # Recursively find all .c and .cpp source files in the src and extern/src directories
 # Find all .c files in src, but EXCLUDE python_interface.c
