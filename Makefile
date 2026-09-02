@@ -16,9 +16,9 @@ INC_FLAGS = -I$(INC_DIR) $(addprefix -I$(INC_DIR)/, $(SUBDIRS))
 UNAME_S := $(shell uname -s)
 
 ifeq ($(UNAME_S), Darwin)
-    # macOS (Homebrew) settings
-    LIBOMP ?= /usr/local/opt/libomp
-    HDF5_HOME ?= /usr/local/opt/hdf5
+    # macOS (Apple Silicon / Homebrew) explicit paths
+    LIBOMP = /opt/homebrew/opt/libomp
+    HDF5_HOME = /opt/homebrew/opt/hdf5
     
     CFLAGS = -Wall -Wextra -std=c99 -g -O0 $(INC_FLAGS) -D_GNU_SOURCE \
              -I$(LIBOMP)/include -I$(HDF5_HOME)/include -Xpreprocessor -fopenmp
