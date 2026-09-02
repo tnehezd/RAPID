@@ -6,13 +6,14 @@ on:
   push:
     tags:
       - 'v*'
+
 jobs:
   build_wheels:
     name: Build wheel for ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest] # Lefuttatja Linuxon és Macen is paralel!
+        os: [ubuntu-latest, macos-latest]
 
     steps:
       - uses: actions/checkout@v4
@@ -27,13 +28,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install build twine
 
-      # 1. Lokálisan lefordítjuk a C motort az adott operációs rendszeren
       - name: Compile C simulation engine
         run: |
           make clean
           make all
 
-      # 2. Összerakjuk a wheel csomagot, ami már tartalmazza a lefordított binárist
       - name: Build wheel
         run: python -m build --wheel
 
@@ -47,8 +46,6 @@ jobs:
     name: Upload to PyPI
     needs: [build_wheels]
     runs-on: ubuntu-latest
-    permissions:
-      id-token: trusted-publishing # Vagy használhatsz API tokent is
     steps:
       - name: Download all wheels
         uses: actions/download-artifact@v4
@@ -59,5 +56,4 @@ jobs:
       - name: Publish package to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          # Ide majd beállíthatod a PyPI API tokenedet secrets-ként a GitHubon
           password: ${{ secrets.PYPI_API_TOKEN }}
