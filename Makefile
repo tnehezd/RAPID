@@ -1,5 +1,13 @@
-CC = clang
-CXX = clang++
+# --- PLATFORM-SPECIFIC COMPILER CONFIGURATION ---
+UNAME_S := $(shell uname -s)
+
+ifeq ($(UNAME_S), Darwin)
+    CC = clang
+    CXX = clang++
+else
+    CC = gcc
+    CXX = g++
+endif
 
 # Directories
 INC_DIR = include

@@ -10,11 +10,11 @@ class CustomBuildPy(build_py):
         subprocess.check_call(["make", "clean"])
         subprocess.check_call(["make", "all"])
         
-        # Safe bundling inside rapidsim package data directory
-        data_dir = os.path.join("rapidsim", "data")
-        os.makedirs(data_dir, exist_ok=True)
+        # Bundle inside rapidsim/bin directory to match the wrapper expectation
+        bin_dir = os.path.join("rapidsim", "bin")
+        os.makedirs(bin_dir, exist_ok=True)
         src_bin = os.path.join("bin", "simulation")
-        dst_bin = os.path.join(data_dir, "simulation")
+        dst_bin = os.path.join(bin_dir, "simulation")
         
         if os.path.exists(src_bin):
             shutil.copy(src_bin, dst_bin)
@@ -37,9 +37,11 @@ except ImportError:
     pass
 
 setup(
+    name="rapidsim",
+    version="1.0.7",
     packages=["rapidsim"],
     package_data={
-        "rapidsim": ["data/simulation"],
+        "rapidsim": ["bin/simulation"],
     },
     include_package_data=True,
     cmdclass=cmdclass,
