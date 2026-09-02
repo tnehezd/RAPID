@@ -28,8 +28,8 @@ jobs:
       - name: Install system dependencies (Linux)
         if: runner.os == 'Linux'
         run: |
-          # Eltávolítjuk a gyári, akadályozó mirror listát a runneren
-          sudo rm -f /etc/apt/sources.list.d/*
+          # Remove problematic Microsoft/Azure mirror lists that cause timeouts, keep official sources
+          sudo rm -f /etc/apt/sources.list.d/microsoft* || true
           sudo apt-get update -y
           sudo apt-get install -y libhdf5-dev libomp-dev
 

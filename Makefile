@@ -1,7 +1,7 @@
 CC = clang
 CXX = clang++
 
-# Könyvtárak
+# Directories
 INC_DIR = include
 EXTERN_DIR = extern/src
 SRC_DIR = src
@@ -12,11 +12,11 @@ OBJ_DIR = obj
 SUBDIRS = io physics utils core
 INC_FLAGS = -I$(INC_DIR) $(addprefix -I$(INC_DIR)/, $(SUBDIRS))
 
-# --- PLATFORM-FÜGGŐ BEÁLLÍTÁSOK ---
+# --- PLATFORM-SPECIFIC CONFIGURATION ---
 UNAME_S := $(shell uname -s)
 
 ifeq ($(UNAME_S), Darwin)
-    # macOS (Homebrew) beállítások
+    # macOS (Homebrew) settings
     LIBOMP ?= /usr/local/opt/libomp
     HDF5_HOME ?= /usr/local/opt/hdf5
     
@@ -30,7 +30,7 @@ ifeq ($(UNAME_S), Darwin)
     LDFLAGS = -lm -L$(LIBOMP)/lib -lomp \
               -L$(HDF5_HOME)/lib -lhdf5 -lhdf5_hl
 else
-    # Linux (Ubuntu / GitHub Actions) beállítások
+    # Linux (Ubuntu / GitHub Actions) settings
     CFLAGS = -Wall -Wextra -std=c99 -g -O0 $(INC_FLAGS) -D_GNU_SOURCE \
              -I/usr/include/hdf5/serial -fopenmp
              
