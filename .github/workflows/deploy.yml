@@ -42,7 +42,7 @@ jobs:
           make clean
           make all
 
-      - name: Build Source Distribution (Linux) or Wheel (macOS)
+      - name: Build Source Distribution (Linux)
         if: runner.os == 'Linux'
         run: python -m build --sdist
 
