@@ -31,6 +31,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libhdf5-dev libomp-dev
 
+      - name: Install system dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install hdf5 libomp
+
       - name: Compile C simulation engine
         run: |
           make clean
