@@ -1,3 +1,5 @@
+from html import parser
+
 import yaml
 import subprocess
 import argparse
@@ -75,7 +77,7 @@ def run_c_program(executable_path, params, arg_mapping, verbosity_flag, program_
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Runs the simulation workflow with YAML configuration.")
+    parser = argparse.ArgumentParser(description="Runs the simulation with YAML configuration.")
     parser.add_argument("-c", "--config", default="config.yaml",
                         help="Path to the YAML configuration file.")
     parser.add_argument("-exec", "--executable", default="./bin/simulation",

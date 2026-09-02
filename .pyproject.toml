@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61.0.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rapidsim"
+version = "0.1.0"
+description = "A Python wrapper for RAPID code"
+readme = "README.md"
+authors = [
+    { name = "Dóra Tarczay-Nehéz" }
+]
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: C",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+]
+dependencies = [
+    "PyYAML", # Mivel a wrapper használja a yaml-t, jelöljük függőségként!
+]
+
+# EZ A VARÁZSLAT: Így lesz a wrapperből egy globális `rapidsim` parancs a terminálban!
+[project.scripts]
+rapidsim = "rapidsim.wrapper:main" 
+
+[tool.setuptools]
+packages = ["rapidsim"]
