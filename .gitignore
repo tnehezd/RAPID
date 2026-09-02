@@ -20,6 +20,18 @@ obj/
 _build/
 docs/xml/
 
+# Python / Build artefaktok
+__pycache__/
+*.py[cod]
+*$py.class
+build/
+dist/
+*.egg-info/
+.eggs/
+.pytest_cache/
+*.so
+*.pyd
+*.dylib
 
 
 *.png
