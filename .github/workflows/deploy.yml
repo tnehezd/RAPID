@@ -2,8 +2,10 @@ name: Build and Upload to PyPI
 
 on:
   release:
-    types: [published] # Akkor fut le automatikusan, ha nyomsz egy Release-t a GitHubon
-
+    types: [published]
+  push:
+    tags:
+      - 'v*'
 jobs:
   build_wheels:
     name: Build wheel for ${{ matrix.os }}
