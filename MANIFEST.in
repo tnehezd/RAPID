@@ -1,6 +1,0 @@
-include Makefile
-recursive-include include *.h
-recursive-include src *.c *.cpp
-recursive-include extern *.h *.cpp
-include README.md
-include LICENSE
