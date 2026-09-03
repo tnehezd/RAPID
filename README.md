@@ -6,7 +6,7 @@ The core of the code was originally written in C during my PhD between 2012 and 
 
 #### ⚠️ 2.2.3 Version: Stable Structure – Ongoing Feature Development
 
-The core structure of the codebase has now been finalized, and no further refactoring is planned. The architecture, naming conventions, and overall organization are stable and consistent with the [Coding Standard](docs/CodingStandard.md).
+The core structure of the codebase has now been finalized, and no further refactoring is planned. The architecture, naming conventions, and overall organization are stable and consistent with the [Coding Standard](CodingStandard.md).
 
 However, the project remains under active development in terms of features and capabilities. Please always make sure to `git pull` and stay up to date with the latest release before running simulations.
 
