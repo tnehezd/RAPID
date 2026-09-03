@@ -1,6 +1,12 @@
 name: Trigger RAPID Documentation
 
 on:
+  workflow_dispatch:
+    inputs:
+      rapid_tag:
+        description: "RAPID release tag"
+        required: true
+
   release:
     types: [published]
 
@@ -9,6 +15,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Set RAPID tag
+        id: rapid
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "tag=${{ inputs.rapid_tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${{ github.event.release.tag_name }}" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Trigger RAPID-docs
         run: |
           curl -L \
@@ -20,6 +35,6 @@ jobs:
             -d '{
               "event_type": "rapid-release",
               "client_payload": {
-                "rapid_tag": "${{ github.event.release.tag_name }}"
+                "rapid_tag": "${{ steps.rapid.outputs.tag }}"
               }
             }'
