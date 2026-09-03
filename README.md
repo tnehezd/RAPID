@@ -8,7 +8,9 @@ The core of the code was originally written in C during my PhD between 2012 and 
 
 The core structure of the codebase has now been finalized, and no further refactoring is planned. The architecture, naming conventions, and overall organization are stable and consistent with the [Coding Standard](docs/CodingStandard.md).
 
-However, the project remains under active development in terms of features and capabilities. Please always make sure to `git pull` and stay up to date with the latest release before running simulations.
+However, the project remains under active development in terms of features and capabilities. Please always make sure to use the latest release before running simulations.
+
+**Current release:** [`v2.2.3`](https://github.com/tnehezd/RAPID/releases/tag/v2.2.3)
 
 Upcoming and ongoing extensions include:
 
@@ -37,7 +39,7 @@ To build the executable, you need a C compiler (e.g., GCC or Clang) and GNU Make
 
 To compile the source code, open your terminal and run the following commands:
 
-```Bash
+```bash
 make clean
 make all
 ```
@@ -49,7 +51,7 @@ There are two primary ways to run a simulation:
 Using a configuration file:
 The `run_simulation.py` Python3 wrapper script can be used to run a series of simulations based on parameters defined in a `config.yaml` file. Simply execute the script in your terminal:
 
-```Bash
+```bash
 python run_simulation.py
 ```
 
@@ -63,32 +65,31 @@ If you use this code in your research, please cite the following papers, which p
 
 ```bibtex
 @ARTICLE{2017ApJ...851...89R,
-      author = {{Reg{\'a}ly}, Zs. and {Juh{\'a}sz}, A. and {Neh{\'e}z}, D.},
+      author = {{Reg{\\'a}ly}, Zs. and {Juh{\\'a}sz}, A. and {Neh{\\'e}z}, D.},
       title = "{Interpreting Brightness Asymmetries in Transition Disks: Vortex at Dead Zone or Planet-carved Gap Edges?}",
-    journal = {\apj},
+    journal = {\\apj},
    keywords = {accretion, accretion disks, hydrodynamics, methods: numerical, protoplanetary disks, Astrophysics - Earth and Planetary Astrophysics, Astrophysics - Solar and Stellar Astrophysics},
       year = 2017,
       month = dec,
      volume = {851},
      number = {2},
-       eid = {89},
-      pages = {89},
+     eid = {89},
+     pages = {89},
         doi = {10.3847/1538-4357/aa9a3f},
 archivePrefix = {arXiv},
      eprint = {1711.03548},
 primaryClass = {astro-ph.EP},
-     adsurl = {[https://ui.adsabs.harvard.edu/abs/2017ApJ...851...89R](https://ui.adsabs.harvard.edu/abs/2017ApJ...851...89R)},
+     adsurl = {https://ui.adsabs.harvard.edu/abs/2017ApJ...851...89R},
     adsnote = {Provided by the SAO/NASA Astrophysics Data System}
 }
 
-
 @article{TarczayNehez2026,
-    author = {Tarczay-Neh{\'e}z, D{\'o}ra},
+    author = {Tarczay-Neh{\\'e}z, D{\\'o}ra},
     date = {2026/02/03},
     date-added = {2026-02-03 12:16:24 +0100},
     date-modified = {2026-02-03 12:16:24 +0100},
     doi = {10.1007/s10569-026-10278-2},
-    id = {Tarczay-Neh{\'e}z2026},
+    id = {Tarczay-Neh{\\'e}z2026},
     isbn = {1572-9478},
     journal = {Celestial Mechanics and Dynamical Astronomy},
     number = {1},
@@ -97,6 +98,6 @@ primaryClass = {astro-ph.EP},
     url = {https://doi.org/10.1007/s10569-026-10278-2},
     volume = {138},
     year = {2026},
-    bdsk-url-1 = {https://doi.org/10.1007/s10569-026-10278-2}}
+    bdsk-url-1 = {https://doi.org/10.1007/s10569-026-10278-2}
 }
-
+```
