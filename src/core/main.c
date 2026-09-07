@@ -313,7 +313,7 @@ int main(int argc, const char **argv) {
     sim_opts.current_bc_target = 0;
     applyBoundaryConditions(disk_params.gas_surface_density_vector, &disk_params, &sim_opts);
 
-   if (def.test_mode != NULL && strcmp(def.test_mode, "mass_test") == 0) {
+    if (def.test_mode == TEST_MODE_MASS_CONSERVATION) {
         LOG_INFO(">>> TEST MODE ACTIVATED: Running Mass Conservation Test <<<");
         
         // --- OVERRIDE: TISZTÁN GÁZ MÓD KÉNYSZERÍTÉSE A TESZTHEZ ---

@@ -15,6 +15,22 @@
 #include <stdbool.h>
 #define MAX_PATH_LEN 16384 
 
+
+typedef enum {
+    SMOOTHING_CIC = 0,
+    SMOOTHING_NGP = 1,
+    SMOOTHING_TOPHAT = 2,
+    SMOOTHING_GAUSSIAN = 3
+} DustSmoothingMode;
+
+
+typedef enum {
+    TEST_MODE_NONE = 0,
+    TEST_MODE_MASS_CONSERVATION = 1,
+    TEST_RING_VISCOSITY = 2
+} TestMode;
+
+
 /**
  * @brief Physical and numerical parameters describing the protoplanetary disk.
  *
@@ -136,6 +152,7 @@ typedef struct {
     int inner_boundary_condition_type;        /**< Option for boundary condition at the inner edge */
     int outer_boundary_condition_type;        /**< Option for boundary condition at the outer edge */
     int current_bc_target;                    /**< Helper to check the current array for BC application */
+    TestMode test_mode;
 } SimulationOptions;
 
 
@@ -244,15 +261,6 @@ typedef struct {
     double total_dust_mass;      /**< Total dust mass (primary + secondary) [M_sun]. */
     int trap_id;                 /**< Unique identifier for the trap. */                     
 } PressureTrap;
-
-
-typedef enum {
-    SMOOTHING_CIC = 0,
-    SMOOTHING_NGP = 1,
-    SMOOTHING_TOPHAT = 2,
-    SMOOTHING_GAUSSIAN = 3
-} DustSmoothingMode;
-
 
 
 

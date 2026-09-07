@@ -55,7 +55,7 @@ void createDefaultOptions(ParserOptions *opt) {
     opt->onesize_val                                = 0.0; 
     opt->pdensity_val                               = 1.6; 
     opt->output_format                              = OUTPUT_ASCII;
-    opt->test_mode                                  = NULL;
+    opt->test_mode                                  = TEST_MODE_NONE;
     opt->enable_photoevaporation                    = false;       // off by default
     strncpy(opt->photoevaporation_mode, "None", sizeof(opt->photoevaporation_mode) - 1);
     opt->photoevaporation_mode[sizeof(opt->photoevaporation_mode) - 1] = '\0';
@@ -68,7 +68,6 @@ void createDefaultOptions(ParserOptions *opt) {
 
     opt->inner_boundary_condition_type          = 0;   // default: zero-gradient inner
     opt->outer_boundary_condition_type          = 1;   // default: parabolic outer
-
 
     opt->dust_smoothing_mode = SMOOTHING_CIC; 
 
@@ -332,12 +331,16 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
         }
 
         else if (strcmp(argv[i], "--test") == 0) {
-            i++;
-            if (i < argc) {
-                opt->test_mode = (char *)argv[i];
-            } else { 
-                LOG_ERROR("Missing value for --test.\n"); 
-                return 1; 
+            if (i + 1 < argc) {
+                const char *test_str = argv[i + 1];
+                if (strcmp(test_str, "mass_test") == 0 || strcmp(test_str, "mass_conservation") == 0) {
+                    opt->test_mode = TEST_MODE_MASS_CONSERVATION;
+                } else if (strcmp(test_str, "ring_viscosity") == 0) {
+                    opt->test_mode = TEST_RING_VISCOSITY;
+                } else {
+                    opt->test_mode = TEST_MODE_NONE;
+                }
+                i++; 
             }
         }
 
