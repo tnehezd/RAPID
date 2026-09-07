@@ -72,7 +72,8 @@ typedef struct {
     double n_for_cutoff;                                /**< Shape/sharpness parameter for exponential cutoff */
     int inner_boundary_condition_type;                  /**< Inner boundary condition */
     int outer_boundary_condition_type;                  /**< Outer boundary condition */
-    int verbose;                                        /**< Logging level: 0=Error/Warn, 1=Info, 2=Debug */
+    int verbose;
+    char *test_mode;                                    /**< Test mode identifier */
 
 } ParserOptions;
 

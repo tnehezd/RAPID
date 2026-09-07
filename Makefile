@@ -17,7 +17,7 @@ BIN_DIR = bin
 OBJ_DIR = obj
 
 # Subdirectories for include files
-SUBDIRS = io physics utils core
+SUBDIRS = io physics utils core benchmark_tests
 INC_FLAGS = -I$(INC_DIR) $(addprefix -I$(INC_DIR)/, $(SUBDIRS))
 
 # --- PLATFORM-SPECIFIC CONFIGURATION ---

@@ -25,14 +25,9 @@ def run_c_program(executable_path, params, arg_mapping, verbosity_flag, program_
         if c_arg_name:
             if isinstance(value, bool):
                 cmd_args.extend([c_arg_name, "1.0" if value else "0.0"])
-            elif c_arg_name == "-i":
+            elif c_arg_name == "-i" or c_arg_name == "-o" or c_arg_name == "--test":
                 if value is not None and str(value).strip() != "":
                     cmd_args.extend([c_arg_name, str(value)])
-            elif c_arg_name == "-o":
-                if value is not None and str(value).strip() != "":
-                    cmd_args.extend([c_arg_name, str(value)])
-                else:
-                    cmd_args.extend([c_arg_name, "output"])
             else:
                 cmd_args.extend([c_arg_name, str(value)])
 
@@ -70,7 +65,7 @@ def run_c_program(executable_path, params, arg_mapping, verbosity_flag, program_
         print(f"{prefix} Error: Command '{executable_path}' not found.")
         return False, 1
     except KeyboardInterrupt:
-        print(f"\n{prefix} Simulation aborted by user (Ctrl+C). Terminating process...")
+        print(f"{prefix} Simulation aborted by user (Ctrl+C). Terminating process...")
         if process:
             process.terminate()
             try:
@@ -126,8 +121,7 @@ def main():
         "enable_gas_evolution": "evol",
         "enable_photoevaporation": "photoevap",
         "enable_two_dust_populations": "twopop",
-        "fragmentation_velocity": "ufrag",
-        "fragmentation_factor": "ffrag",
+        "test_mode": "test_mode",  # <--- Hozzáadva a teszt módszerhez
 
         "inner_boundary_condition": "inner_bc",
         "outer_boundary_condition": "outer_bc",
@@ -136,9 +130,7 @@ def main():
         "number_of_dust_particles": "ndust_val",
         "inner_radius_au": "rmin_val",
         "outer_radius_au": "rmax_val",
-        "initial_gas_sigma0_msun_per_au2": "sigma0_val",
         "disk_mass": "disk_mass",                     
-        "total_disk_mass": "disk_mass",               
         "sigma_profile_exponent": "sigmap_exp_val",
         "alpha_viscosity": "alpha_visc_val",
         "star_mass_msun": "star_val",
@@ -186,10 +178,10 @@ def main():
                     if yaml_key in yaml_params:
                         all_params[c_key] = yaml_params[yaml_key]
 
-    # C program argument mapping (helyes, szinkronizált gaussian kulcsokkal)
+    # C program argument mapping
     c_arg_mapping = {
         "drift": "-drift", "growth": "-growth", "evol": "-evol", "twopop": "-twopop",
-        "ufrag": "-ufrag", "ffrag": "-ffrag", "photoevap": "-photoevap",
+        "photoevap": "-photoevap", "test_mode": "--test",  # <--- Hozzáadva a --test argumentumhoz
         "ngrid_val": "-n", "ndust_val": "-ndust", 
         "rmin_val": "-ri", "rmax_val": "-ro",
         "inner_bc": "-inner_bc", "outer_bc": "-outer_bc",
@@ -197,14 +189,15 @@ def main():
         "alpha_visc_val": "-alpha_init", "star_val": "-stellar_mass", "disk_mass": "-disk_mass",
         "hasp_val": "-h_init", "flind_val": "-flind_init", 
         "photoevap_mode": "-photoevap_mode", "xray_lum": "-xray_luminosity",
-        "cutoff": "-cutoff", "cutoff_radius": "-cutoff_radius",  "cutoff_sharpness": "-cutoff_sharpness",
+        "cutoff": "-cutoff", "cutoff_radius": "-cutoff_radius", "cutoff_sharpness": "-cutoff_sharpness",
         "r_dze_i_val": "-rdzei", "r_dze_o_val": "-rdzeo",
         "dr_dze_i_val": "-drdzei", "dr_dze_o_val": "-drdzeo",
         "a_mod_val": "-amod", "density_floor": "-density_floor", "dust_density_floor": "-dust_density_floor",
         "eps_val": "-eps", "ratio_val": "-ratio", "mic_val": "-mic", "onesize_val": "-onesize",
         "pdensity_val": "-pdensity",
-        "gaussian_smoothing_sigma_grid_units": "-gaussian_sigma_grid_units",  # <-- ITT A JAVÍTÁS!
-        "gaussian_smoothing_cutoff_sigma": "-gaussian_cutoff_sigma",         # <-- Ellenőrizd ezt is a C szerint!        "input_file": "-i", "output_dir_name": "-o",
+        "gaussian_smoothing_sigma_grid_units": "-gaussian_sigma_grid_units",
+        "gaussian_smoothing_cutoff_sigma": "-gaussian_cutoff_sigma",
+        "input_file": "-i", "output_dir_name": "-o",
         "output_format": "--output-format", "dust_smoothing_mode": "-dust_smoothing",
         "tStep": "-tStep", "totalTime": "-tmax", "outputFrequency": "-outfreq"
     }

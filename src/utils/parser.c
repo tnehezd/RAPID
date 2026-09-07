@@ -55,7 +55,7 @@ void createDefaultOptions(ParserOptions *opt) {
     opt->onesize_val                                = 0.0; 
     opt->pdensity_val                               = 1.6; 
     opt->output_format                              = OUTPUT_ASCII;
-
+    opt->test_mode                                  = NULL;
     opt->enable_photoevaporation                    = false;       // off by default
     strncpy(opt->photoevaporation_mode, "None", sizeof(opt->photoevaporation_mode) - 1);
     opt->photoevaporation_mode[sizeof(opt->photoevaporation_mode) - 1] = '\0';
@@ -153,6 +153,8 @@ void printUsageToTerminal() {
     fprintf(stderr, "  -v             Enable INFO logging level\n");
     fprintf(stderr, "  -vv            Enable DEBUG logging level (very verbose)\n\n");
 
+    fprintf(stderr, "Benchmark/Test Options:\n");
+    fprintf(stderr, "  --test <name>  Run internal benchmark or test (e.g., mass_test)\n"); 
 
 }
 
@@ -326,6 +328,16 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
             } else {
                 LOG_ERROR("Missing value for --output-format.\n");
                 return 1;
+            }
+        }
+
+        else if (strcmp(argv[i], "--test") == 0) {
+            i++;
+            if (i < argc) {
+                opt->test_mode = (char *)argv[i];
+            } else { 
+                LOG_ERROR("Missing value for --test.\n"); 
+                return 1; 
             }
         }
 

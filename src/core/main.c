@@ -1,7 +1,7 @@
 /**
  * @file main.c
  * @brief Main execution core and simulation orchestrator.
- * @date 2026-06-26
+ * @date 2026-09-07
  */
 
 #include <stdlib.h>
@@ -24,6 +24,7 @@
 #include "logger.h" 
 #include <signal.h>
 #include <stdio.h>
+#include "mass_conservation_test.h"
 
 
 extern void initializeDefaultOptions(InitializeDefaultOptions *def);
@@ -140,6 +141,7 @@ int main(int argc, const char **argv) {
     disk_params.density_floor      = def.density_floor;
     disk_params.dust_density_floor = def.dust_density_floor;
 
+    
     // --- BOUNDARY CONDITION STRING MAPPING ---
     switch (sim_opts.inner_boundary_condition_type) {
         case 0: strcpy(disk_params.inner_bc_string, "zero"); break;
@@ -311,6 +313,43 @@ int main(int argc, const char **argv) {
     sim_opts.current_bc_target = 0;
     applyBoundaryConditions(disk_params.gas_surface_density_vector, &disk_params, &sim_opts);
 
+   if (def.test_mode != NULL && strcmp(def.test_mode, "mass_test") == 0) {
+        LOG_INFO(">>> TEST MODE ACTIVATED: Running Mass Conservation Test <<<");
+        
+        // --- OVERRIDE: TISZTÁN GÁZ MÓD KÉNYSZERÍTÉSE A TESZTHEZ ---
+        sim_opts.option_for_evolution = 1.0;
+        sim_opts.option_for_dust_drift = 0.0;
+        sim_opts.option_for_dust_growth = 0.0;
+        sim_opts.option_for_dust_secondary_population = 0.0;
+        disk_params.enable_photoevaporation = false;
+        
+        LOG_INFO("[BENCHMARK OVERRIDE] Dust drift, growth, secondary pop, and photoevaporation disabled for pure gas viscosity test.");
+        // -----------------------------------------------------------
+
+        // Biztosítjuk, hogy a fotoevaporációs tömb ne legyen NULL (a biztonság kedvéért)
+        if (disk_params.sigma_dot_photoevap == NULL) {
+            disk_params.sigma_dot_photoevap = (double *)calloc((disk_params.grid_number + 2), sizeof(double));
+        }
+
+        runMassConservationTest(&disk_params, &sim_opts);
+        
+        // Takarítás és kilépés...
+        if (disk_params.radial_grid) free(disk_params.radial_grid);
+        if (disk_params.gas_surface_density_vector) free(disk_params.gas_surface_density_vector);
+        if (disk_params.gas_pressure_vector) free(disk_params.gas_pressure_vector);
+        if (disk_params.gas_pressure_gradient_vector) free(disk_params.gas_pressure_gradient_vector);
+        if (disk_params.gas_velocity_vector) free(disk_params.gas_velocity_vector);
+        if (disk_params.sigma_dot_photoevap) free(disk_params.sigma_dot_photoevap);
+        
+        free(current_inputsig_file);
+        free(current_inputdust_file);
+        free(initial_dir_path);
+        free(kLogFilesDirectory_path);
+        
+        LOG_INFO(">>> TEST MODE COMPLETED. Exiting normally. <<<");
+        return 0;
+    }
+    
     // This guarantees that the core integrator always has a valid, zeroed array for photoevaporation
     if (disk_params.sigma_dot_photoevap == NULL) {
         disk_params.sigma_dot_photoevap = (double *)calloc((disk_params.grid_number + 2), sizeof(double));

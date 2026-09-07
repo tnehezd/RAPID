@@ -37,3 +37,6 @@ dist/
 *.png
 
 rapidsim/data/
+
+plot_mass_conservation.py
+
