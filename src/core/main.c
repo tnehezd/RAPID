@@ -25,6 +25,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include "mass_conservation_test.h"
+#include "ring_viscosity.h"
 
 
 extern void initializeDefaultOptions(InitializeDefaultOptions *def);
@@ -107,7 +108,7 @@ int main(int argc, const char **argv) {
     sim_opts.gaussian_cutoff     = def.gaussian_cutoff;
     sim_opts.inner_boundary_condition_type = def.inner_boundary_condition_type;
     sim_opts.outer_boundary_condition_type = def.outer_boundary_condition_type;
-
+    sim_opts.test_mode = def.test_mode;
  
 
     LOG_DEBUG("def.output_dir_name BEFORE sim_opts population: '%s'", def.output_dir_name);
@@ -313,27 +314,36 @@ int main(int argc, const char **argv) {
     sim_opts.current_bc_target = 0;
     applyBoundaryConditions(disk_params.gas_surface_density_vector, &disk_params, &sim_opts);
 
-    if (def.test_mode == TEST_MODE_MASS_CONSERVATION) {
-        LOG_INFO(">>> TEST MODE ACTIVATED: Running Mass Conservation Test <<<");
+    if (sim_opts.test_mode == TEST_MODE_MASS_CONSERVATION || sim_opts.test_mode == TEST_RING_VISCOSITY) {
+        if (sim_opts.test_mode == TEST_MODE_MASS_CONSERVATION) {
+            LOG_INFO(">>> TEST MODE ACTIVATED: Running Mass Conservation Test <<<");
+        } else {
+            LOG_INFO(">>> TEST MODE ACTIVATED: Running Ring Viscosity Test <<<");
+        }
         
-        // --- OVERRIDE: TISZTÁN GÁZ MÓD KÉNYSZERÍTÉSE A TESZTHEZ ---
+        // --- OVERRIDE: FORCE PURE GAS MODE FOR BENCHMARK TESTS ---
         sim_opts.option_for_evolution = 1.0;
         sim_opts.option_for_dust_drift = 0.0;
         sim_opts.option_for_dust_growth = 0.0;
         sim_opts.option_for_dust_secondary_population = 0.0;
         disk_params.enable_photoevaporation = false;
         
-        LOG_INFO("[BENCHMARK OVERRIDE] Dust drift, growth, secondary pop, and photoevaporation disabled for pure gas viscosity test.");
+        LOG_INFO("[BENCHMARK OVERRIDE] Dust drift, growth, secondary pop, and photoevaporation disabled for test mode.");
         // -----------------------------------------------------------
 
-        // Biztosítjuk, hogy a fotoevaporációs tömb ne legyen NULL (a biztonság kedvéért)
+        // Ensure the photoevaporation array is not NULL (for safety)
         if (disk_params.sigma_dot_photoevap == NULL) {
             disk_params.sigma_dot_photoevap = (double *)calloc((disk_params.grid_number + 2), sizeof(double));
         }
 
-        runMassConservationTest(&disk_params, &sim_opts);
+        // Dispatch to the corresponding test routine
+        if (sim_opts.test_mode == TEST_MODE_MASS_CONSERVATION) {
+            runMassConservationTest(&disk_params, &sim_opts);
+        } else {
+            runRingViscosityTest(&disk_params, &sim_opts);
+        }
         
-        // Takarítás és kilépés...
+        // Shared cleanup and exit sequence...
         if (disk_params.radial_grid) free(disk_params.radial_grid);
         if (disk_params.gas_surface_density_vector) free(disk_params.gas_surface_density_vector);
         if (disk_params.gas_pressure_vector) free(disk_params.gas_pressure_vector);

@@ -13,7 +13,7 @@ void runMassConservationTest(DiskParameters *disk_params, SimulationOptions *sim
 
     // Construct path for mass summary inside the logs folder
     char *filepath = NULL;
-    asprintf(&filepath, "%s/test_outputs/mass_conservation_100k.dat", sim_opts->output_dir_name);
+    asprintf(&filepath, "%s/%s/mass_conservation_100k.dat", sim_opts->output_dir_name, kLogFilesDirectory);
 
     FILE *fp = fopen(filepath, "w");
     if (fp) {

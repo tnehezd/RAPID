@@ -39,4 +39,5 @@ dist/
 rapidsim/data/
 
 plot_mass_conservation.py
+plot_ring_test.py
 
