@@ -40,4 +40,5 @@ rapidsim/data/
 
 plot_mass_conservation.py
 plot_ring_test.py
+plot_steady_state_test.py
 

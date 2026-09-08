@@ -27,7 +27,8 @@ typedef enum {
 typedef enum {
     TEST_MODE_NONE = 0,
     TEST_MODE_MASS_CONSERVATION = 1,
-    TEST_RING_VISCOSITY = 2
+    TEST_RING_VISCOSITY = 2,
+    TEST_STEADY_STATE = 3
 } TestMode;
 
 

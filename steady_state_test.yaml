@@ -1,0 +1,33 @@
+simulation_parameters:
+  # Test mode identifier
+  test_mode: "steady_state"
+
+disk_parameters:
+  # Grid & Domain
+  number_of_grid_points: 500
+  inner_radius_au: 1.0
+  outer_radius_au: 100.0
+
+  # Disk Mass & Profile
+  disk_mass: 0.01          # Total gas disk mass [M_sun]
+  sigma_profile_exponent: 1.0          # Surface density power-law exponent (stacionárius illesztéshez)
+  alpha_viscosity: 0.01         # Alpha viscosity parameter
+  stellar_mass: 1.0        # Central star mass [M_sun]
+  aspect_ratio_at_1au: 0.05             # Aspect ratio at 1 AU (H/R)
+  flind_init: 0.0          # Flaring index
+
+boundary_conditions:
+  # Boundary Conditions
+  inner_boundary_condition: "zero_gradient"  # Fixed flux at the inner boundary to maintain steady-state accretion
+  outer_boundary_condition: "zero_gradient"  # Fixed flux at the outer boundary to maintain steady-state accretion
+
+output_parameters:
+  # Output & Time Control
+  output_directory_name: "output_steady_state_test"
+
+time_parameters:
+  tmax: 100000.0           # Total simulation time [years]
+  outfreq: 200.0           # Output frequency
+
+log_parameters:
+  info_level: "info"       # Logging level: "none", "info", or "debug"

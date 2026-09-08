@@ -337,6 +337,8 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
                     opt->test_mode = TEST_MODE_MASS_CONSERVATION;
                 } else if (strcmp(test_str, "ring_viscosity") == 0) {
                     opt->test_mode = TEST_RING_VISCOSITY;
+                } else if (strcmp(test_str, "steady_state") == 0 || strcmp(test_str, "steady_state_test") == 0) {
+                    opt->test_mode = TEST_STEADY_STATE;
                 } else {
                     opt->test_mode = TEST_MODE_NONE;
                 }
