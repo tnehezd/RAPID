@@ -320,6 +320,7 @@ static void simulateDustDriftStep(double *t, double deltat, double *output_time,
 
     if (isGasEvolutionEnabled(mode)) {
         refreshGasSurfaceDensityPressurePressureGradient(sim_opts, disk_params);
+        calculateGasRadialVelocity(disk_params);
     }
 
 
@@ -373,6 +374,7 @@ static void simulateGasOnlyStep(double *t, double deltat, double *output_time, D
 
 
     refreshGasSurfaceDensityPressurePressureGradient(sim_opts, disk_params);
+    calculateGasRadialVelocity(disk_params);
     *t += deltat;
 }
 

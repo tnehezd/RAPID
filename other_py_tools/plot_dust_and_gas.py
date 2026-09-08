@@ -12,7 +12,7 @@ AU = 1.495978707e13
 MSUN_PER_AU2_TO_CGS = MSUN / (AU**2)
 
 # Path settings
-logs_dir = "output/LOGS"  # Ensure this matches your actual output directory
+logs_dir = "/Users/tnehezd/Documents/Munka/dust_drift/output_0001/LOGS"  # Ensure this matches your actual output directory
 file_pattern = os.path.join(logs_dir, "snapshot_*.h5")
 
 # --- REFERENCE SNAPSHOT (t=0) ---

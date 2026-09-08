@@ -45,7 +45,7 @@ void runMassConservationTest(DiskParameters *disk_params, SimulationOptions *sim
     double dt_years = 1.0; 
     sim_opts->user_defined_time_step = dt_years * 2.0 * M_PI;
 
-    double target_time = 100000.0; // 100,000 years
+    double target_time = sim_opts->maximum_simulation_time; // 100,000 years
     double current_time = 0.0;
     long step = 0;
     double interval = sim_opts->output_frequency; // Output frequency in years

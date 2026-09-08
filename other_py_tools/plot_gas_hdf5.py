@@ -10,8 +10,8 @@ MSUN = 1.98847e33
 AU = 1.495978707e13
 MSUN_PER_AU2_TO_CGS = MSUN / (AU**2)
 
-logs_dir = "output/LOGS"
-snapshot_step = 15000
+logs_dir = "/Users/tnehezd/Documents/Munka/dust_drift/output_0001/LOGS"
+snapshot_step = 5000
 
 file_pattern = os.path.join(logs_dir, "snapshot_*.h5")
 

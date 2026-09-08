@@ -26,8 +26,8 @@ output_parameters:
   output_directory_name: "output_steady_state_test"
 
 time_parameters:
-  tmax: 100000.0           # Total simulation time [years]
-  outfreq: 200.0           # Output frequency
+  total_simulation_time: 1e5           # Total simulation time [years]
+  output_write_frequency: 5000.0           # Output frequency
 
 log_parameters:
   info_level: "info"       # Logging level: "none", "info", or "debug"
