@@ -45,3 +45,6 @@ plot_photoev_cgs_massloss.py
 plot_photoev_massloss.py
 plot_photoevaporation_test.py
 *.png
+
+ring_*.dat
+calculate_*.py

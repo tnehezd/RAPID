@@ -25,7 +25,7 @@ void runRingViscosityTest(DiskParameters *disk_params, SimulationOptions *sim_op
 
     // --- INITIALIZE A NARROW GAUSSIAN RING PROFILE ---
     double r_center = 10.0;  // Ring center [AU]
-    double ring_width = 1.5; // Width parameter [AU]
+    double ring_width = 0.5; // Width parameter [AU]
     
     // Overwrite the gas surface density vector with a localized ring profile
     for (int i = 1; i <= disk_params->grid_number; i++) {
@@ -55,10 +55,12 @@ void runRingViscosityTest(DiskParameters *disk_params, SimulationOptions *sim_op
     free(init_prof_path);
 
     // Set timestep to 1.0 year (converted to internal code units: 1 yr = 2 * PI radians)
-    double dt_years = 1.0; 
-    sim_opts->user_defined_time_step = dt_years * 2.0 * M_PI;
+    double max_drift_velocity = 0.0;  // gas-only benchmark → no dust
+    double dt_years = calculateTimeStep(disk_params, max_drift_velocity);
+    sim_opts->user_defined_time_step = dt_years;
 
-    double target_time = 50000.0; // 50,000 years for viscous spreading demonstration
+
+    double target_time = sim_opts->maximum_simulation_time;  // Total simulation time in years
     double current_time = 0.0;
     long step = 0;
     double interval = sim_opts->output_frequency; // Output frequency in years
