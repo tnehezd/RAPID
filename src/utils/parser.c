@@ -339,6 +339,8 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
                     opt->test_mode = TEST_RING_VISCOSITY;
                 } else if (strcmp(test_str, "steady_state") == 0 || strcmp(test_str, "steady_state_test") == 0) {
                     opt->test_mode = TEST_STEADY_STATE;
+                } else if (strcmp(test_str, "photoevap_flux") == 0 || strcmp(test_str, "photoevaporation_flux") == 0) {
+                    opt->test_mode = TEST_PHOTOEVAP_FLUX;
                 } else {
                     opt->test_mode = TEST_MODE_NONE;
                 }

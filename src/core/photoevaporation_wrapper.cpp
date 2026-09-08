@@ -18,12 +18,15 @@
 extern "C" {
 #endif
 
-#undef ACTUAL_SIGMA_CRIT
-#define ACTUAL_SIGMA_CRIT 1.1e-15
+
 
 void computePhotoevaporationSink(void *disk_opaque)
 {
     DiskParameters *disk = static_cast<DiskParameters*>(disk_opaque);
+    std::string model_mode(disk->photoevaporation_mode_string);
+    std::transform(model_mode.begin(), model_mode.end(), model_mode.begin(),
+                [](unsigned char c){ return std::tolower(c); });
+
     int N = disk->grid_number; // Linear grid size
 
     // 0. Early exit if photoevaporation is globally disabled
@@ -82,30 +85,12 @@ void computePhotoevaporationSink(void *disk_opaque)
         }
     }
 
-    // =========================================================================
     // 3. EXECUTE PHOTOEVAPORATION IN LOGARITHMIC SPACE
-    // =========================================================================
     std::vector<double> log_evap(N, 0.0);
-    static int gap = 0;
-    static int hole = 0;
-    static double r_hole = 0.0;
 
-    // Search hole using the log-spaced coordinates and interpolated density
-    // 1. Monitor gap/hole formation dynamically
-    Search_hole(log_r.data(), log_sigma.data(), gap, hole, r_hole, disk);
-
-    // DEBUG LOG TO CATCH THE 20,000 YR CRASH
-/*    if (gap == 1 || hole == 1) {
-        std::cerr << "[WRAPPER DETECTED HOLE]: gap=" << gap 
-                  << ", hole=" << hole 
-                  << ", r_hole=" << r_hole << " AU" << std::endl;
-        if (hole == 1 && r_hole == 0.0) {
-            std::cerr << "--> CRITICAL ERROR: Hole detected but r_hole is 0.0! Outer radius interpolation will explode." << std::endl;
-        }
-    }
-*/
-    std::string model_mode(disk->photoevaporation_mode_string);
-    std::transform(model_mode.begin(), model_mode.end(), model_mode.begin(), [](unsigned char c){ return std::tolower(c); });
+    // A lyukat NEM keressük újra
+    int hole = disk->hole_flag;
+    double r_hole = disk->r_hole;
 
     if (model_mode == "owen") 
     {
@@ -114,7 +99,7 @@ void computePhotoevaporationSink(void *disk_opaque)
     } 
     else if (model_mode == "picogna") 
     {
-        double lx_cgs = disk->xray_luminosity; 
+        double lx_cgs = disk->xray_luminosity;
         New_Photoevaporation(log_evap.data(), log_r.data(), lx_cgs, hole, r_hole, log_dr.data(), disk);
     }
     else 

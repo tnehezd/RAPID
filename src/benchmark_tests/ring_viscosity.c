@@ -8,6 +8,7 @@
 #include "simulation_core.h"
 #include "logger.h"
 
+
 void runRingViscosityTest(DiskParameters *disk_params, SimulationOptions *sim_opts) {
     MSG("=== [BENCHMARK] Starting Viscous Ring Spreading Test ===");
 
@@ -60,6 +61,7 @@ void runRingViscosityTest(DiskParameters *disk_params, SimulationOptions *sim_op
     double target_time = 50000.0; // 50,000 years for viscous spreading demonstration
     double current_time = 0.0;
     long step = 0;
+    double interval = sim_opts->output_frequency; // Output frequency in years
 
     MSG("[BENCHMARK] Running viscous ring evolution up to %.1f years with dt = %.1f yr...", target_time, dt_years);
 
@@ -89,7 +91,7 @@ void runRingViscosityTest(DiskParameters *disk_params, SimulationOptions *sim_op
         }
 
         // Console logging every 5000 years
-        if ((long)current_time % 5000 == 0 || current_time == dt_years) {
+        if (fmod(current_time, interval) < dt_years || current_time == dt_years) {
             MSG("[BENCHMARK] Time = %.0f yrs | Mass = %.10e | Max Sigma = %.4e at R = %.2f AU", 
                 current_time, current_mass, max_density, peak_radius);
         }
@@ -100,7 +102,7 @@ void runRingViscosityTest(DiskParameters *disk_params, SimulationOptions *sim_op
         }
 
         // Save radial profiles periodically (every 10,000 years)
-        if ((long)current_time % 10000 == 0) {
+        if (fmod(current_time, interval) < dt_years || current_time == dt_years) {
             char *prof_path = NULL;
             asprintf(&prof_path, "%s/%s/ring_profile_t_%06d.dat", sim_opts->output_dir_name, kLogFilesDirectory, (int)current_time);
             FILE *prof_fp = fopen(prof_path, "w");

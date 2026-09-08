@@ -48,6 +48,7 @@ void runMassConservationTest(DiskParameters *disk_params, SimulationOptions *sim
     double target_time = 100000.0; // 100,000 years
     double current_time = 0.0;
     long step = 0;
+    double interval = sim_opts->output_frequency; // Output frequency in years
 
     if (fp) {
         fprintf(fp, "%.1f\t%.10e\t0.00e+00\n", current_time, initial_mass);
@@ -74,7 +75,7 @@ void runMassConservationTest(DiskParameters *disk_params, SimulationOptions *sim
         double relative_error = fabs(current_mass - initial_mass) / initial_mass;
 
         // Console logging every 5000 years or at the first step
-        if ((long)current_time % 5000 == 0 || current_time == dt_years) {
+        if (fmod(current_time, interval) < dt_years || current_time == dt_years) {
             MSG("[BENCHMARK] Time = %.0f yrs | Mass = %.10e | Rel. Error = %.2e", 
                 current_time, current_mass, relative_error);
         }
@@ -85,7 +86,7 @@ void runMassConservationTest(DiskParameters *disk_params, SimulationOptions *sim
         }
 
         // Save radial profiles periodically (every 20,000 years) in the logs folder
-        if ((long)current_time % 20000 == 0) {
+        if (fmod(current_time, interval) < dt_years || current_time == dt_years) {
             char *prof_path = NULL;
             asprintf(&prof_path, "%s/%s/sigma_profile_t_%06d.dat", sim_opts->output_dir_name, kLogFilesDirectory, (int)current_time);
             FILE *prof_fp = fopen(prof_path, "w");

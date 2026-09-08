@@ -36,7 +36,11 @@ double Norm(double *radius_array, int hole, double r_hole, double *dr_array, con
 
   if(hole == 0){  //Primordial disk - no hole
     
-    M_dot = 6.25e-9*pow(disk_params->stellar_mass,-0.068)*pow(L_X/disk_params->xray_luminosity, 1.14);  // Total Mass-loss rate for primordial disk [M_sol/yr]
+    double Lx = disk_params->xray_luminosity;      // erg/s
+
+    M_dot = 6.25e-9 * pow(disk_params->stellar_mass, -0.068)
+                      * pow(Lx / 1e30, 1.14);      // Owen-féle (Lx/1e30)^1.14
+
 
     for(int i = 0; i < disk_params->grid_number; i++ ){
       double x = 0.85*radius_array[i]/disk_params->stellar_mass;     // Radius must be in AU, M_star in M_sol. 
@@ -118,7 +122,10 @@ void Photoevaporation_2012(double *evap_array, double *radius_array, double norm
 
 void Debug_Photoevaporation_2012(double *evap_array, double *radius_array, double norm, int b_hole, double r_hole, double *dr_array, const DiskParameters *disk_params) {
   double sum = 0.0;
-  double M_dot = 6.25e-9*pow(disk_params->stellar_mass,-0.068)*pow(L_X/disk_params->xray_luminosity, 1.14);
+  double Lx = disk_params->xray_luminosity;
+  double M_dot = 6.25e-9 * pow(disk_params->stellar_mass,-0.068)
+                            * pow(Lx / 1e30, 1.14);
+
   for(int i = 0; i < disk_params->grid_number; ++i) sum += 2*M_PI*radius_array[i]* evap_array[i]*dr_array[i];   
   double norm_check = 0.0;
   for(int i = 0; i < disk_params->grid_number; ++i) norm_check += 2*M_PI*radius_array[i]* Func_C2012(radius_array[i], norm, b_hole, r_hole,disk_params)*dr_array[i];
@@ -132,28 +139,35 @@ void Debug_Photoevaporation_2012(double *evap_array, double *radius_array, doubl
 /// @return func_c   Sigma_dot at radius r [M_sol/AU^2/day]
 double Func_C2019(double r, double L_x, bool b_hole, double r_hole)
 {
-  double f_c = 0.0;  // Unit: [M_sol/AU^2/yr]
-  double M_W_dot = 0.0;
-  double m_lx_dot = pow( 10.0, A_L * exp( pow(log(log10(L_x))-B_L, 2) / C_L ) + D_L );
-  double log_formula = ((6.0*a*pow(log(r), 5))/(pow(log(10), 5))) + ((5.0*b*pow(log(r), 4))/(pow(log(10), 4))) +
-                       ((4.0*c*pow(log(r), 3))/(pow(log(10), 3))) + ((3.0*d*pow(log(r), 2))/(pow(log(10), 2))) +
-                       ((2.0*e* log(r))    /     log(10))      +       f;
+    const double LX_REF = 1e30;
+    double lx_norm = L_x / LX_REF;      // Lx / 1e30
+    double logL10   = log10(lx_norm);   // log10(Lx / 1e30)
+    double m_lx_dot = pow(10.0,
+        A_L * exp( pow(log(logL10) - B_L, 2) / C_L ) + D_L
+    );
 
-  // Primordial disk case
-  if (!b_hole) {
-    M_W_dot = m_lx_dot * pow(10.0, a*pow(log10(r),6) + b*pow(log10(r),5) + c*pow(log10(r),4) + d*pow(log10(r),3) + e*pow(log10(r),2) + f*log10(r) + g);
-    f_c = log_formula * M_W_dot/(2.0*M_PI*r*r);
-  }
+    // polynomial
+    double x = log10(r);
+    double P = a*pow(x,6) + b*pow(x,5) + c*pow(x,4)
+             + d*pow(x,3) + e*pow(x,2) + f*x + g;
 
-  // Transition disk case (hole exists)
-  else if(b_hole){
-    double x = r-r_hole;
-    f_c = aa*pow(bb,x)*pow(x,cc-1.0)*(x*log(bb) + cc)*1.12*m_lx_dot/(2.0*M_PI*r);
-  }
+    // derivative of polynomial
+    double dPdx = 6*a*pow(x,5) + 5*b*pow(x,4) + 4*c*pow(x,3)
+                + 3*d*pow(x,2) + 2*e*x + f;
 
-  if(f_c < 1e-20) f_c = 0.0; 
-  return(f_c*DAYS_PER_YEAR_CONVERSION_FACTOR); 
+    // local profile
+    double F = pow(10.0, P);
+
+    // derivative wrt r
+    double dFdr = F * dPdx / (r * log(10.0));
+
+    // Picogna flux
+    double sigma = m_lx_dot * dFdr / (2.0 * M_PI * r * r);
+
+    return sigma * DAYS_PER_YEAR_CONVERSION_FACTOR;
 }
+
+
 
 /// @brief Calculates new photoevaporation profile into an array based on Picogna et al. 2019
 void New_Photoevaporation(double *evap_array, double *radius_array, double lx, bool b_hole, double r_hole, double *dr_array, const DiskParameters *disk_params)

@@ -88,6 +88,7 @@ void runSteadyStateTest(DiskParameters *dp, SimulationOptions *opt) {
 
     double target_time = 100000.0;
     double current_time = 0.0;
+    double interval = opt->output_frequency; // Output frequency in years
 
     MSG("[BENCHMARK] Initializing steady-state profile...");
 
@@ -122,7 +123,7 @@ void runSteadyStateTest(DiskParameters *dp, SimulationOptions *opt) {
 
         double mean_mdot = mdot_sum / dp->grid_number;
 
-        if ((long)current_time % 10000 == 0 || current_time == dt_years) {
+        if (fmod(current_time, interval) < dt_years || current_time == dt_years) {
             MSG("[STEADY] t=%.0f yrs | mean=%.4e | inner=%.4e | outer=%.4e",
                 current_time, mean_mdot, mdot_inner, mdot_outer);
         }

@@ -27,6 +27,7 @@
 #include "mass_conservation_test.h"
 #include "ring_viscosity.h"
 #include "steady_state_test.h"
+#include "photoevap_flux_test.h"
 
 
 extern void initializeDefaultOptions(InitializeDefaultOptions *def);
@@ -317,13 +318,16 @@ int main(int argc, const char **argv) {
 
     if (sim_opts.test_mode == TEST_MODE_MASS_CONSERVATION || 
         sim_opts.test_mode == TEST_RING_VISCOSITY ||
-        sim_opts.test_mode == TEST_STEADY_STATE) {
+        sim_opts.test_mode == TEST_STEADY_STATE ||
+        sim_opts.test_mode == TEST_PHOTOEVAP_FLUX) {
         if (sim_opts.test_mode == TEST_MODE_MASS_CONSERVATION) {
             LOG_INFO(">>> TEST MODE ACTIVATED: Running Mass Conservation Test <<<");
         } else if (sim_opts.test_mode == TEST_RING_VISCOSITY) {
             LOG_INFO(">>> TEST MODE ACTIVATED: Running Ring Viscosity Test <<<");
-        } else {
+        } else if (sim_opts.test_mode == TEST_STEADY_STATE) {
             LOG_INFO(">>> TEST MODE ACTIVATED: Running Steady-State Accretion Test <<<");
+        } else if (sim_opts.test_mode == TEST_PHOTOEVAP_FLUX) {
+            LOG_INFO(">>> TEST MODE ACTIVATED: Running Photoevaporation Flux Test <<<");
         }
         
         // --- OVERRIDE: FORCE PURE GAS MODE FOR BENCHMARK TESTS ---
@@ -331,9 +335,23 @@ int main(int argc, const char **argv) {
         sim_opts.option_for_dust_drift = 0.0;
         sim_opts.option_for_dust_growth = 0.0;
         sim_opts.option_for_dust_secondary_population = 0.0;
-        disk_params.enable_photoevaporation = false;
+
+        // --- OVERRIDE: FORCE PURE GAS MODE FOR BENCHMARK TESTS ---
+        sim_opts.option_for_evolution = 1.0;
+        sim_opts.option_for_dust_drift = 0.0;
+        sim_opts.option_for_dust_growth = 0.0;
+        sim_opts.option_for_dust_secondary_population = 0.0;
+
+        if (sim_opts.test_mode == TEST_PHOTOEVAP_FLUX) {
+            disk_params.enable_photoevaporation = true;
+            LOG_INFO("[BENCHMARK OVERRIDE] Photoevaporation ENABLED for flux test.");
+        } else {
+            disk_params.enable_photoevaporation = false;
+            LOG_INFO("[BENCHMARK OVERRIDE] Photoevaporation DISABLED for this test.");
+        }
+
         
-        LOG_INFO("[BENCHMARK OVERRIDE] Dust drift, growth, secondary pop, and photoevaporation disabled for test mode.");
+        LOG_INFO("[BENCHMARK OVERRIDE] Dust drift, growth, secondary population disabled for test mode.");
         // -----------------------------------------------------------
 
         // Ensure the photoevaporation array is not NULL (for safety)
@@ -344,11 +362,17 @@ int main(int argc, const char **argv) {
         // Dispatch
         if (sim_opts.test_mode == TEST_MODE_MASS_CONSERVATION) {
             runMassConservationTest(&disk_params, &sim_opts);
+
         } else if (sim_opts.test_mode == TEST_RING_VISCOSITY) {
             runRingViscosityTest(&disk_params, &sim_opts);
-        } else {
+
+        } else if (sim_opts.test_mode == TEST_STEADY_STATE) {
             runSteadyStateTest(&disk_params, &sim_opts);
+
+        } else if (sim_opts.test_mode == TEST_PHOTOEVAP_FLUX) {
+            runPhotoevapFluxTest(&disk_params, &sim_opts);
         }
+
         
         // Shared cleanup and exit sequence...
         if (disk_params.radial_grid) free(disk_params.radial_grid);

@@ -41,4 +41,7 @@ rapidsim/data/
 plot_mass_conservation.py
 plot_ring_test.py
 plot_steady_state_test.py
-
+plot_photoev_cgs_massloss.py
+plot_photoev_massloss.py
+plot_photoevaporation_test.py
+*.png
