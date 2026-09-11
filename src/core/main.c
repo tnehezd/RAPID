@@ -26,7 +26,6 @@
 #include <stdio.h>
 #include "mass_conservation_test.h"
 #include "ring_viscosity.h"
-#include "steady_state_test.h"
 #include "photoevap_flux_test.h"
 
 
@@ -318,14 +317,11 @@ int main(int argc, const char **argv) {
 
     if (sim_opts.test_mode == TEST_MODE_MASS_CONSERVATION || 
         sim_opts.test_mode == TEST_RING_VISCOSITY ||
-        sim_opts.test_mode == TEST_STEADY_STATE ||
         sim_opts.test_mode == TEST_PHOTOEVAP_FLUX) {
         if (sim_opts.test_mode == TEST_MODE_MASS_CONSERVATION) {
             LOG_INFO(">>> TEST MODE ACTIVATED: Running Mass Conservation Test <<<");
         } else if (sim_opts.test_mode == TEST_RING_VISCOSITY) {
             LOG_INFO(">>> TEST MODE ACTIVATED: Running Ring Viscosity Test <<<");
-        } else if (sim_opts.test_mode == TEST_STEADY_STATE) {
-            LOG_INFO(">>> TEST MODE ACTIVATED: Running Steady-State Accretion Test <<<");
         } else if (sim_opts.test_mode == TEST_PHOTOEVAP_FLUX) {
             LOG_INFO(">>> TEST MODE ACTIVATED: Running Photoevaporation Flux Test <<<");
         }
@@ -365,9 +361,6 @@ int main(int argc, const char **argv) {
 
         } else if (sim_opts.test_mode == TEST_RING_VISCOSITY) {
             runRingViscosityTest(&disk_params, &sim_opts);
-
-        } else if (sim_opts.test_mode == TEST_STEADY_STATE) {
-            runSteadyStateTest(&disk_params, &sim_opts);
 
         } else if (sim_opts.test_mode == TEST_PHOTOEVAP_FLUX) {
             runPhotoevapFluxTest(&disk_params, &sim_opts);

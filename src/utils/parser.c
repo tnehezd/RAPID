@@ -337,8 +337,6 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
                     opt->test_mode = TEST_MODE_MASS_CONSERVATION;
                 } else if (strcmp(test_str, "ring_viscosity") == 0) {
                     opt->test_mode = TEST_RING_VISCOSITY;
-                } else if (strcmp(test_str, "steady_state") == 0 || strcmp(test_str, "steady_state_test") == 0) {
-                    opt->test_mode = TEST_STEADY_STATE;
                 } else if (strcmp(test_str, "photoevap_flux") == 0 || strcmp(test_str, "photoevaporation_flux") == 0) {
                     opt->test_mode = TEST_PHOTOEVAP_FLUX;
                 } else {
@@ -438,8 +436,6 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
                 else if (strcmp(argv[i], "fixed_flux") == 0)            opt->inner_boundary_condition_type = 2;
                 else if (strcmp(argv[i], "absorbing") == 0)             opt->inner_boundary_condition_type = 3;
                 else if (strcmp(argv[i], "reflecting") == 0)            opt->inner_boundary_condition_type = 4;
-                else if (strcmp(argv[i], "linear_extrapolation") == 0)  opt->inner_boundary_condition_type = 5;
-                else if (strcmp(argv[i], "loggrid") == 0)               opt->inner_boundary_condition_type = 6;
                 else {
                     LOG_ERROR("Unknown inner BC '%s'.\n", argv[i]);
                     return 1;
