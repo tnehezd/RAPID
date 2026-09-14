@@ -2,13 +2,13 @@
 
 simulation_parameters:
   enable_gas_evolution: true
-  test_mode: "mass_test"             # Aktiválja a belső tömegmegmaradási benchmarkot!
+  test_mode: "mass_test"             
 
 disk_parameters:
   number_of_grid_points: 500
   inner_radius_au: 1.0
   outer_radius_au: 50.0
-  disk_mass: 0.01                    # Fizikailag reális korongtömeg (M_sun)
+  disk_mass: 0.01                    
   sigma_profile_exponent: 0.5
   alpha_viscosity: 0.01
   star_mass_msun: 1.0
@@ -16,16 +16,16 @@ disk_parameters:
   flaring_index: 0.5
 
 boundary_conditions:
-  inner_boundary_condition: "parabolic" # Nyitott belső perem a viszkózus akkrécióhoz
-  outer_boundary_condition: "reflecting" # Sima külső peremfeltétel
+  inner_boundary_condition: "parabolic" 
+  outer_boundary_condition: "reflecting"
 
 output_parameters:
   output_directory_name: "output_mass_test"
 
 time_parameters:
-  fixed_time_step: 0.0               # 0.0 = automatikus, dinamikus CFL időlépés-számítás
-  total_simulation_time: 100000.0    # 100 000 év
+  fixed_time_step: 0.0               
+  total_simulation_time: 100000.0    
   output_write_frequency: 200.0
 
 log_parameters:
-  info_level: "info"                 # "none", "info" (-v), vagy "debug" (-vv)
+  info_level: "info"                 # "none", "info" (-v), or "debug" (-vv)

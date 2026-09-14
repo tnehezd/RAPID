@@ -37,4 +37,4 @@ time_parameters:
   output_write_frequency: 50000     # Corresponds to 'outputFrequency' (-outfreq)
 
 log_parameters:
-  info_level: "info" # "none", "info", vagy "debug"
+  info_level: "info" # "none", "info", or "debug"
