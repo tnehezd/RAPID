@@ -27,7 +27,7 @@ void createDefaultOptions(ParserOptions *opt) {
     opt->alpha_visc_val                             = 0.01;
     opt->star_val                                   = 1.0;
     opt->hasp_val                                   = 0.05;
-    opt->flind_val                                  = 0.5;
+    opt->flind_val                                  = 0.0;
     opt->r_dze_i_val                                = 0.0;
     opt->r_dze_o_val                                = 0.0;
     opt->dr_dze_i_val                               = 0.0;
@@ -101,7 +101,7 @@ void printUsageToTerminal() {
     fprintf(stderr, "  -alpha_init <val> Alpha viscosity (default: 0.01)\n");
     fprintf(stderr, "  -stellar_mass <val> Star mass (M_sun, default: 1.0)\n");
     fprintf(stderr, "  -h_init <val>  Aspect ratio at 1 AU (H/R, default: 0.05)\n");
-    fprintf(stderr, "  -flind_init <val> Flaring index (default: 0.5)\n");
+    fprintf(stderr, "  -flind_init <val> Flaring index (default: 0.0)\n");
     fprintf(stderr, "  -rdzei <val>   Inner dead zone radius (AU, default: 0.0)\n");
     fprintf(stderr, "  -rdzeo <val>   Outer dead zone radius (AU, default: 0.0)\n");
     fprintf(stderr, "  -drdzei <val>  Inner dead zone transition width multiplier (default: 0.0)\n");
@@ -109,8 +109,8 @@ void printUsageToTerminal() {
     fprintf(stderr, "  -amod <val>    Alpha viscosity multiplier in dead zone (default: 0.0)\n");
     fprintf(stderr, "  -eps <val>     Dust-to-gas ratio (default: 0.01)\n");
     fprintf(stderr, "  -ratio <val>   Ratio of Pop1 dust mass to total dust mass (default: 0.85)\n");
-    fprintf(stderr, "  -mic <val>     Micro-sized particle radius (cm, default: 1e-4)\n");
-    fprintf(stderr, "  -onesize <val> Use one size particles (0 for distribution, 1 for mic_val, default: 0.0)\n");
+    fprintf(stderr, "  -micsize <val>   Micro-sized particle radius (cm, default: 1e-4)\n");
+    fprintf(stderr, "  -largesize <val>   Large-sized particle radius (cm, default: 1e-2)\n");
     fprintf(stderr, "  -ndust <val>   The number of the particles, default: 5000)\n");
     fprintf(stderr, "Other:\n");
     fprintf(stderr, "  -pdensity <val> Dust particle density (g/cm^3, default: 1.6)\n"); 
@@ -296,13 +296,13 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
             i++; 
             if (i < argc) opt->ratio_val = atof(argv[i]); else { LOG_ERROR("Missing value for -ratio.\n"); return 1; }; 
         } 
-        else if (strcmp(argv[i], "-mic") == 0) { 
+        else if (strcmp(argv[i], "-micsize") == 0) { 
             i++; 
-            if (i < argc) opt->mic_val = atof(argv[i]); else { LOG_ERROR("Missing value for -mic.\n"); return 1; }; 
+            if (i < argc) opt->mic_val = atof(argv[i]); else { LOG_ERROR("Missing value for -micsize.\n"); return 1; }; 
         } 
-        else if (strcmp(argv[i], "-onesize") == 0) { 
+        else if (strcmp(argv[i], "-largesize") == 0) { 
             i++; 
-            if (i < argc) opt->onesize_val = atof(argv[i]); else { LOG_ERROR("Missing value for -onesize.\n"); return 1; }; 
+            if (i < argc) opt->onesize_val = atof(argv[i]); else { LOG_ERROR("Missing value for -largesize.\n"); return 1; }; 
         }
         else if (strcmp(argv[i], "-pdensity") == 0) {
             i++;
@@ -313,7 +313,7 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
             return 1;
         }
 
-        else if (strcmp(argv[i], "--output-format") == 0) {
+        else if (strcmp(argv[i], "-output_format") == 0) {
             i++;
             if (i < argc) {
                 if (strcmp(argv[i], "ascii") == 0)

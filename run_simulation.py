@@ -193,12 +193,12 @@ def main():
         "r_dze_i_val": "-rdzei", "r_dze_o_val": "-rdzeo",
         "dr_dze_i_val": "-drdzei", "dr_dze_o_val": "-drdzeo",
         "a_mod_val": "-amod", "density_floor": "-density_floor", "dust_density_floor": "-dust_density_floor",
-        "eps_val": "-eps", "ratio_val": "-ratio", "mic_val": "-mic", "onesize_val": "-onesize",
+        "eps_val": "-eps", "ratio_val": "-ratio", "mic_val": "-micsize", "onesize_val": "-largesize",
         "pdensity_val": "-pdensity",
         "gaussian_smoothing_sigma_grid_units": "-gaussian_sigma_grid_units",
         "gaussian_smoothing_cutoff_sigma": "-gaussian_cutoff_sigma",
         "input_file": "-i", "output_dir_name": "-o",
-        "output_format": "--output-format", "dust_smoothing_mode": "-dust_smoothing",
+        "output_format": "-output_format", "dust_smoothing_mode": "-dust_smoothing",
         "tStep": "-tStep", "totalTime": "-tmax", "outputFrequency": "-outfreq"
     }
 
