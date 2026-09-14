@@ -1,4 +1,4 @@
-# config.yaml - Long-Term Mass Conservation Benchmark
+# config.yaml - Viscosity Test for Ring Evolution
 
 simulation_parameters:
   enable_gas_evolution: true
