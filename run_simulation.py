@@ -149,8 +149,8 @@ def main():
 
         "deadzone_inner_radius_au": "r_dze_i_val",
         "deadzone_outer_radius_au": "r_dze_o_val",
-        "deadzone_inner_transition_width_mult": "dr_dze_i_val",
-        "deadzone_outer_transition_width_mult": "dr_dze_o_val",
+        "deadzone_inner_transition_width": "dr_dze_i_val",
+        "deadzone_outer_transition_width": "dr_dze_o_val",
         "deadzone_alpha_reduction": "a_mod_val",
 
         "initial_dust_to_gas_ratio": "eps_val",
