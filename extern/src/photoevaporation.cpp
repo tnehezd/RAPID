@@ -137,7 +137,7 @@ void Debug_Photoevaporation_2012(double *evap_array, double *radius_array, doubl
 //----------------------------------  Photoevaporation 2019 Picogna et al.  -------------------------------------//
 /// @brief Calculates sigma_dot for the new photoevaporation profile from Picogna et al. 2019
 /// @return func_c   Sigma_dot at radius r [M_sol/AU^2/day]
-double Func_C2019(double r, double L_x, bool b_hole, double r_hole)
+double Func_C2019(double r, double L_x)
 {
     const double LX_REF = 1e30;
     double lx_norm = L_x / LX_REF;      // Lx / 1e30
@@ -170,10 +170,10 @@ double Func_C2019(double r, double L_x, bool b_hole, double r_hole)
 
 
 /// @brief Calculates new photoevaporation profile into an array based on Picogna et al. 2019
-void New_Photoevaporation(double *evap_array, double *radius_array, double lx, bool b_hole, double r_hole, double *dr_array, const DiskParameters *disk_params)
+void New_Photoevaporation(double *evap_array, double *radius_array, double lx, double *dr_array, const DiskParameters *disk_params)
 {
   double sum = 0.0;
-  for(int i = 0; i < disk_params->grid_number; ++i) evap_array[i] = Func_C2019(radius_array[i], lx, b_hole, r_hole);
+  for(int i = 0; i < disk_params->grid_number; ++i) evap_array[i] = Func_C2019(radius_array[i], lx);
   for(int i = 0; i < disk_params->grid_number; ++i) sum += 2*M_PI*radius_array[i]* evap_array[i]*dr_array[i];
   if(DEBUG == 1) std::cout << "Sum: " << sum << std::endl;
 }

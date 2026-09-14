@@ -82,19 +82,14 @@ void Debug_Photoevaporation_2012(double *evap_array, double *radius_array, doubl
 /// @brief Counting sigma_dot for new photoevaporation profile from Picogna et al. 2019
 /// @param r         Radius where sigma_dot is calculated [AU]
 /// @param L_x       X-ray luminosity of the star [erg/sec]--- can be constant from defines.hpp or time dependent
-/// @param b_hole    bool of hole existence
-/// @param r_hole    The hole extends up until this radius [AU]
-/// @return func_c   Sigma_dot at radius r [M_sol/AU^2/day
-double Func_C2019(double r, double L_x, bool b_hole, double r_hole);
+double Func_C2019(double r, double L_x);
 
 /// @brief Calculates new photoevaporation profile into an array based on Picogna et al. 2019, usint Func_C2019
 /// @param evap_array Photoevaporation array to be filled
 /// @param radius_array Radius array of the disk [AU] 
 /// @param lx x-ray luminosity of the star [erg/sec] --- can be constant from defines.hpp or time dependent
-/// @param b_hole bool of hole existence
-/// @param r_hole  The hole extends up until this radius [AU]
 /// @param dr Radial step size [AU] --- can be constant from defines.hpp or time dependent
-void New_Photoevaporation(double *a_evap, double *a_radius, double lx, bool b_hole, double r_hole, double *dr_array, const DiskParameters *disk_params);
+void New_Photoevaporation(double *a_evap, double *a_radius, double lx,  double *dr_array, const DiskParameters *disk_params);
 
 
 void Search_hole(double *radius_array, double *sigma_array, int &gap, int &hole, double &r_hole, const DiskParameters *disk_params);

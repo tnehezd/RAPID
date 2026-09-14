@@ -21,7 +21,7 @@ void applyCoagulationMassTransfer(ParticleData *particle_data,
     int N = disk_params->grid_number;
 
     /* 1. Frissítsük a Sigma-kat részecskékből */
-    calculateDustSurfaceDensity(particle_data, sim_opts, disk_params, SnapshotDrift);
+    calculateDustSurfaceDensity(particle_data, sim_opts, disk_params);
 
     for (int i = 0; i < N; i++) {
 
@@ -150,7 +150,7 @@ double calculateGrowthTimescale(double radial_distance, double dust_to_gas_ratio
  * @brief Iterates over all particles and updates their size based on physical barriers and growth timescales.
  */
 void updateParticleSizes(ParticleData *particle_data, int particle_number, double actual_timestep, 
-                        const DiskParameters *disk_params, const SimulationOptions *sim_opts, SnapshotMode mode) {
+                        const DiskParameters *disk_params) {
     
     #pragma omp parallel for
 
@@ -206,8 +206,7 @@ double calculateDustParticleSize(double particle_radius, double particle_density
  */
 void calculateDustSurfaceDensity(const ParticleData *particle_data,
                                  const SimulationOptions *simulation_options,
-                                 const DiskParameters *disk_params,
-                                 SnapshotMode mode)
+                                 const DiskParameters *disk_params)
 {
     int i, k;
     int grid_n = disk_params->grid_number;

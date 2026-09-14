@@ -100,7 +100,7 @@ void computePhotoevaporationSink(void *disk_opaque)
     else if (model_mode == "picogna") 
     {
         double lx_cgs = disk->xray_luminosity;
-        New_Photoevaporation(log_evap.data(), log_r.data(), lx_cgs, hole, r_hole, log_dr.data(), disk);
+        New_Photoevaporation(log_evap.data(), log_r.data(), lx_cgs, log_dr.data(), disk);
     }
     else 
     {

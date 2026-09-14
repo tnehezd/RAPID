@@ -76,8 +76,7 @@ void runMassConservationTest(DiskParameters *disk_params, SimulationOptions *sim
 
         // Console logging every 5000 years or at the first step
         if (fmod(current_time, interval) < dt_years || current_time == dt_years) {
-            MSG("[BENCHMARK] Time = %.0f yrs | Mass = %.10e | Rel. Error = %.2e", 
-                current_time, current_mass, relative_error);
+            MSG("[BENCHMARK] Step %ld | Time = %.0f yrs | Mass = %.10e | Rel. Error = %.2e",  step, current_time, current_mass, relative_error);
         }
 
         // Save data to file

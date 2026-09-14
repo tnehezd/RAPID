@@ -115,13 +115,11 @@ double calculateGrowthTimescale(double radial_distance, double dust_to_gas_ratio
  * @param particle_number Total number of particles in the simulation.
  * @param actual_timestep Current simulation timestep.
  * @param disk_params Pointer to the DiskParameters structure containing disk properties.
- * @param sim_opts Pointer to the SimulationOptions structure containing simulation settings.
- * @param mode SnapshotMode indicating the type of snapshot being processed.
  * @return Updated particle sizes.
  * 
  */
 void updateParticleSizes(ParticleData *particle_data, int particle_number, double actual_timestep, 
-                        const DiskParameters *disk_params, const SimulationOptions *sim_opts, SnapshotMode mode);
+                        const DiskParameters *disk_params);
 
 /**
  * @brief Computes the dust particle size using the Birnstiel et al. model.
@@ -150,9 +148,8 @@ double calculateDustParticleSize(double particle_radius, double particle_density
  * @param particle_data           Pointer to particle data structure.
  * @param simulation_options      Pointer to simulation options.
  * @param disk_params             Pointer to disk parameter structure.
- * @param mode                    Snapshot mode.
  */
-void calculateDustSurfaceDensity(const ParticleData *particle_data, const SimulationOptions *simulation_options, const DiskParameters *disk_params, SnapshotMode mode);
+void calculateDustSurfaceDensity(const ParticleData *particle_data, const SimulationOptions *simulation_options, const DiskParameters *disk_params);
 
 /**
  * @brief Updates and stores the new radial positions of dust particles.

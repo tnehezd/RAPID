@@ -94,8 +94,8 @@ void runRingViscosityTest(DiskParameters *disk_params, SimulationOptions *sim_op
 
         // Console logging every 5000 years
         if (fmod(current_time, interval) < dt_years || current_time == dt_years) {
-            MSG("[BENCHMARK] Time = %.0f yrs | Mass = %.10e | Max Sigma = %.4e at R = %.2f AU", 
-                current_time, current_mass, max_density, peak_radius);
+            MSG("[BENCHMARK] Step %ld | Time = %.0f yrs | Mass = %.10e | Max Sigma = %.4e at R = %.2f AU", 
+                step, current_time, current_mass, max_density, peak_radius);
         }
 
         // Save summary data to file

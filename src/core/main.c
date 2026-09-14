@@ -32,7 +32,7 @@
 extern void initializeDefaultOptions(InitializeDefaultOptions *def);
 
 // Jelkezelő függvény, ami lefut, ha lenyomod a Ctrl + C-t
-void handle_sigint(int sig) {
+void handle_sigint() {
     fprintf(stderr, "\n[C-CORE] Simulation aborted by user (Ctrl+C).\n");
     // Ittkilépés előtt megteheted a szükséges takarítást (pl. HDF5 file lezárása)
     exit(130); // A szabványos kilépési kód megszakításra
@@ -249,7 +249,6 @@ int main(int argc, const char **argv) {
         LOG_DEBUG("Copied %s to %s%s/", kDiskConfigFile,kFileNamesSuffix, initial_dir_path);
 
     } else {
-        LOG_WARN("No input file specified (-i flag not used). Generating default grid and profile.");
 
         // Map cutoff options directly from parser (def) to init_tool_params without touching disk_params struct
         init_tool_params.use_cutoff = def.use_cutoff;

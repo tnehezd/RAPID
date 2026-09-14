@@ -89,7 +89,7 @@ void printUsageToTerminal() {
     fprintf(stderr, "  -tmax <val>    Total simulation time (default: 1.0e6)\n");
     fprintf(stderr, "  -outfreq <val> Output frequency (default: 1000.0)\n");
     fprintf(stderr, "File I/O:\n");
-    fprintf(stderr, "  -i <file>      Input profile file (e.g., init_data.dat)\n");
+//    fprintf(stderr, "  -i <file>      Input profile file (e.g., init_data.dat)\n");
     fprintf(stderr, "  -o <dir>       Output directory name (default: 'output')\n");
     fprintf(stderr, "Initial profile generation options (used if -i is not provided):\n");
     fprintf(stderr, "  -n <val>       Number of grid points (default: 2000)\n"); // This is common for sim and init

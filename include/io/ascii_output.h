@@ -89,13 +89,11 @@ void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const 
  * @param particle_data Pointer to ParticleData structure.
  * @param disk_params Pointer to DiskParameters.
  * @param sim_opts Pointer to SimulationOptions.
- * @param output_files Pointer to OutputFiles.
  * @param mode SnapshotMode indicating the type of snapshot being written.
  */
 void printDustParticleSizeFile(char *size_name, char *size_name2, int step, 
                                ParticleData *particle_data, 
                                const DiskParameters *disk_params, 
-                               OutputFiles *output_files, 
                                SnapshotMode mode);
 
 /**
