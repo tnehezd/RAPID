@@ -156,7 +156,7 @@ def main():
         "initial_dust_to_gas_ratio": "eps_val",
         "population_one_mass_ratio": "ratio_val",
         "micro_particle_size_cm": "mic_val",
-        "one_size_particle_value_cm": "onesize_val",
+        "large_size_particle_value_cm": "onesize_val",
         "dust_particle_density_g_cm3": "pdensity_val",
 
         "input_file_path": "input_file",

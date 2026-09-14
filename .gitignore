@@ -48,3 +48,4 @@ plot_photoevaporation_test.py
 
 ring_*.dat
 calculate_*.py
+sig.py
