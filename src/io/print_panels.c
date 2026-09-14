@@ -99,7 +99,7 @@ void printDustSmoothingStatus(const SimulationOptions *sim_opts, const DiskParam
 
 
 
-void printInitializationParameters(const InitializeDefaultOptions *default_options, long double current_sigma0_gas) {
+void printInitializationParameters(const InitializeDefaultOptions *default_options, long double current_sigma0_gas, SimulationOptions *sim_opts) {
     printHeader("INITIALIZATION PARAMETERS");
     fprintf(stderr, "  Stellar mass (Solar Mass):          %lg\n", default_options->star_mass);
     fprintf(stderr, "  Disk aspect ratio (H/R):            %lg\n", default_options->aspect_ratio);
@@ -117,9 +117,14 @@ void printInitializationParameters(const InitializeDefaultOptions *default_optio
     }
     fprintf(stderr, "  Surface density profile exponent:   %lg\n", fabs(default_options->sigma_exponent));
     fprintf(stderr, "  Gas surface density at 1 AU:        %Lg M_Sun/AU^2\n", current_sigma0_gas);
-    fprintf(stderr, "  Dust to gas ratio:                  %lg\n", default_options->dust_to_gas_ratio);
     fprintf(stderr, "  Number of gas grid points:          %d\n", default_options->n_grid_points); 
-    fprintf(stderr, "  Number of dust particles:           %d\n", default_options->n_dust_particles);
+    if (sim_opts->option_for_dust_drift ||
+        sim_opts->option_for_dust_growth ||
+        sim_opts->option_for_dust_secondary_population) {
+        fprintf(stderr, "  Number of dust particles:           %d\n", default_options->n_dust_particles);
+        fprintf(stderr, "  Dust to gas ratio:                  %lg\n", default_options->dust_to_gas_ratio);
+    }
+
     printLine();
 }
 

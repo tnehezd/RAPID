@@ -22,8 +22,7 @@ boundary_conditions:
 output_parameters:
   output_directory_name: "output_mass_test"
 
-time_parameters:
-  fixed_time_step: 0.0               
+time_parameters:               
   total_simulation_time: 100000.0    
   output_write_frequency: 200.0
 

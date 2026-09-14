@@ -472,8 +472,6 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
             }
             opt->verbose = 2; // Debug szint
         }
-
-
         else {
             LOG_ERROR("ERROR [parseCLIOptions]: Invalid switch on command-line: %s!\n", argv[i]);
   //          printUsageToTerminal(); 
@@ -493,6 +491,17 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
     if (!flag_has_disk_mass && !flag_has_sigma0) {
         opt->sigma0_val = 1.0; // Apply the safe default fallback to Sigma0
     }
+
+    // --- AUTO-DISABLE DUST MODULES FOR TEST MODES ---
+    if (opt->test_mode == TEST_MODE_MASS_CONSERVATION ||
+        opt->test_mode == TEST_RING_VISCOSITY ||
+        opt->test_mode == TEST_PHOTOEVAP_FLUX) {
+
+        opt->option_for_dust_drift = 0.0;
+        opt->option_for_dust_growth = 0.0;
+        opt->option_for_dust_secondary_population = 0.0;
+    }
+
 
 
     LOG_DEBUG("Command-line parsing complete.\n");
