@@ -7,9 +7,10 @@
 #include "gas_physics.h"
 #include "simulation_core.h"
 #include "logger.h"
+#include "print_panels.h"
+#include "print_terminal.h"
 
 void runMassConservationTest(DiskParameters *disk_params, SimulationOptions *sim_opts) {
-    MSG("=== [BENCHMARK] Starting Pure Gas Mass Conservation Test (100k yrs) ===");
 
     // Construct path for mass summary inside the logs folder
     char *filepath = NULL;
@@ -22,11 +23,13 @@ void runMassConservationTest(DiskParameters *disk_params, SimulationOptions *sim
         LOG_ERROR("Could not open file %s for writing mass conservation report.", filepath);
     }
 
+    double interval = sim_opts->output_frequency; // Output frequency in years
+    double last_snapshot_time = 0.0; // Track the last snapshot time for progress calculation
     double initial_mass = 0.0;
+    double output_time = interval; // Initialize output time for snapshot tracking
     for (int i = 1; i <= disk_params->grid_number; i++) {
         initial_mass += 2.0 * M_PI * disk_params->radial_grid[i] * disk_params->gas_surface_density_vector[i] * disk_params->delta_r;
     }
-    MSG("[BENCHMARK] Initial total disk mass: %.10e M_sun", initial_mass);
 
     // Save initial profile at t = 0 yrs in the logs folder
     char *init_prof_path = NULL;
@@ -48,13 +51,11 @@ void runMassConservationTest(DiskParameters *disk_params, SimulationOptions *sim
     double target_time = sim_opts->maximum_simulation_time; // 100,000 years
     double current_time = 0.0;
     long step = 0;
-    double interval = sim_opts->output_frequency; // Output frequency in years
 
     if (fp) {
         fprintf(fp, "%.1f\t%.10e\t0.00e+00\n", current_time, initial_mass);
     }
 
-    MSG("[BENCHMARK] Running evolution up to %.1f years with dt = %.1f yr...", target_time, dt_years);
 
     while (current_time < target_time) {
         // Refresh gas surface density and pressure gradient for one yearly step
@@ -73,11 +74,19 @@ void runMassConservationTest(DiskParameters *disk_params, SimulationOptions *sim
         }
 
         double relative_error = fabs(current_mass - initial_mass) / initial_mass;
+        int was_snapshot = (fmod(current_time, interval) < dt_years || current_time == dt_years);
+        printBenchmarkStatus("Mass Conservation Test",
+                            current_time,
+                            target_time,
+                            current_mass,
+                            initial_mass,
+                            was_snapshot,
+                            step,
+                            dt_years,
+                            output_time,
+                            last_snapshot_time,
+                            interval);
 
-        // Console logging every 5000 years or at the first step
-        if (fmod(current_time, interval) < dt_years || current_time == dt_years) {
-            MSG("[BENCHMARK] Step %ld | Time = %.0f yrs | Mass = %.10e | Rel. Error = %.2e",  step, current_time, current_mass, relative_error);
-        }
 
         // Save data to file
         if (fp) {
@@ -97,17 +106,18 @@ void runMassConservationTest(DiskParameters *disk_params, SimulationOptions *sim
                 fclose(prof_fp);
             }
             free(prof_path);
+
+            last_snapshot_time = current_time;
+            output_time += interval;
         }
     }
 
     if (fp) {
         fclose(fp);
-        MSG("[BENCHMARK] Data saved to '%s'.", filepath);
     }
 
     if (filepath) {
         free(filepath);
     }
 
-    MSG("=== [BENCHMARK] Long-Term Mass Conservation Test Completed ===");
 }

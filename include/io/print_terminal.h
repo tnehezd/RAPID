@@ -18,4 +18,18 @@ void printStatus(int step,
                       double interval,
                       SimulationOptions *sim_opts);
 
+void printBenchmarkStatus(const char *test_name,
+                          double current_time,
+                          double target_time,
+                          double current_mass,
+                          double initial_mass,
+                          int was_snapshot,
+                          int step,
+                          double deltat,
+                          double output_time,
+                          double last_snapshot_time,
+                          double interval);
+
+                     
+
 #endif // SIMULATION_IO_H

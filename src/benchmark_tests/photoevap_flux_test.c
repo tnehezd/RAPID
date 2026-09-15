@@ -8,12 +8,13 @@
 #include "photoevap_flux_test.h"
 #include "photoevaporation_wrapper.h"
 #include "simulation_core.h"
+#include "print_panels.h"
+#include "print_terminal.h"
 
 void runPhotoevapFluxTest(DiskParameters *dp, SimulationOptions *opt)
 {
-    MSG("=== [BENCHMARK] Starting Photoevaporation Flux Test ===");
-
     // --- Create flux output file ---
+    int step = 0;
     char *filepath = NULL;
     asprintf(&filepath, "%s/%s/photoevap_flux_test.dat",
              opt->output_dir_name, kLogFilesDirectory);
@@ -26,16 +27,11 @@ void runPhotoevapFluxTest(DiskParameters *dp, SimulationOptions *opt)
     double max_drift_velocity = 0.0;  // gas-only benchmark → no dust
     double dt = calculateTimeStep(dp, max_drift_velocity);
 
+    double interval = opt->output_frequency;
+    double output_time = 0.0;
+    double last_snapshot_time = 0.0;
     double current_time = 0.0;
     double target_time = opt->maximum_simulation_time;
-
-    // --- Snapshot timing identical to main solver ---
-    double output_time = 0.0;
-    double interval =  opt->output_frequency;
-
-    LOG_INFO("[PHOTOEVAP FLUX] Running photoevaporation flux test up to %.1f years with interval %.1f years and initial dt = %.3e (code units).",
-             target_time, interval, dt);
-
     // --- Initial disk mass ---
     double initial_mass = 0.0;
     for (int i = 1; i <= dp->grid_number; i++) {
@@ -74,18 +70,27 @@ void runPhotoevapFluxTest(DiskParameters *dp, SimulationOptions *opt)
         // --- Accumulate expected mass loss ---
         integrated_mass_loss += sigma_dot_integral * dt;
 
+
         // --- Snapshot logic identical to main solver ---
         int periodic_output_time = (fmod(current_time, interval) < dt);
         int initial_output_time  = (current_time == 0.0);
         int output_time_sync     = ((output_time - current_time) < dt);
 
-        if ((periodic_output_time || initial_output_time) && output_time_sync) {
+        int was_snapshot = (periodic_output_time || initial_output_time) && output_time_sync;
 
-            MSG("[PHOTOEVAP FLUX] t = %.1f yr | M_disk = %.6e | dM = %.6e | dM_int = %.6e",
-                current_time,
-                current_mass,
-                initial_mass - current_mass,
-                integrated_mass_loss);
+        printBenchmarkStatus("Photoevaporation Flux Test",
+                            current_time,
+                            target_time,
+                            current_mass,
+                            initial_mass,
+                            was_snapshot,
+                            step,
+                            dt,
+                            output_time,
+                            last_snapshot_time,
+                            interval);
+
+        if ((periodic_output_time || initial_output_time) && output_time_sync) {
 
             // --- Save sigma profile ---
             char *prof_path = NULL;
@@ -134,13 +139,17 @@ void runPhotoevapFluxTest(DiskParameters *dp, SimulationOptions *opt)
                     integrated_mass_loss);
         }
 
+        if(was_snapshot) {
+            last_snapshot_time = current_time;
+        }
+
         // --- Advance time ---
         current_time += dt;
+        step++;
         dt = calculateTimeStep(dp, max_drift_velocity);  // recalc dt each step
     }
 
     if (fp) fclose(fp);
     if (filepath) free(filepath);
 
-    MSG("=== [BENCHMARK] Photoevaporation Flux Test Completed ===");
 }

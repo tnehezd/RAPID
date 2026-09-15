@@ -16,5 +16,9 @@ void printBoundaryConditionsStatus(const DiskParameters *disk_params);
 void printDustSmoothingStatus(const SimulationOptions *sim_opts, const DiskParameters *disk_params);
 void printInitializationParameters(const InitializeDefaultOptions *default_options, long double current_sigma0_gas, SimulationOptions *sim_opts);
 void printFatalErrorMessageForDiskMass();
+void printBenchmarkingHeader(TestMode mode, const DiskParameters *disk_params);
+void printBenchmarkOverridesPanel(const SimulationOptions *sim_opts);
+void printStartBenchmarkingPanel(TestMode mode);
+void finishBenchmarkingPanel(SimulationOptions *sim_opts);
 
 #endif // PRINT_PANELS_H

@@ -317,13 +317,9 @@ int main(int argc, const char **argv) {
     if (sim_opts.test_mode == TEST_MODE_MASS_CONSERVATION || 
         sim_opts.test_mode == TEST_RING_VISCOSITY ||
         sim_opts.test_mode == TEST_PHOTOEVAP_FLUX) {
-        if (sim_opts.test_mode == TEST_MODE_MASS_CONSERVATION) {
-            LOG_INFO(">>> TEST MODE ACTIVATED: Running Mass Conservation Test <<<");
-        } else if (sim_opts.test_mode == TEST_RING_VISCOSITY) {
-            LOG_INFO(">>> TEST MODE ACTIVATED: Running Ring Viscosity Test <<<");
-        } else if (sim_opts.test_mode == TEST_PHOTOEVAP_FLUX) {
-            LOG_INFO(">>> TEST MODE ACTIVATED: Running Photoevaporation Flux Test <<<");
-        }
+
+        printBenchmarkingHeader(sim_opts.test_mode, &disk_params);
+
         
         // --- OVERRIDE: FORCE PURE GAS MODE FOR BENCHMARK TESTS ---
         sim_opts.option_for_evolution = 1.0;
@@ -339,20 +335,21 @@ int main(int argc, const char **argv) {
 
         if (sim_opts.test_mode == TEST_PHOTOEVAP_FLUX) {
             disk_params.enable_photoevaporation = true;
-            LOG_INFO("[BENCHMARK OVERRIDE] Photoevaporation ENABLED for flux test.");
         } else {
             disk_params.enable_photoevaporation = false;
-            LOG_INFO("[BENCHMARK OVERRIDE] Photoevaporation DISABLED for this test.");
         }
 
         
-        LOG_INFO("[BENCHMARK OVERRIDE] Dust drift, growth, secondary population disabled for test mode.");
+        printBenchmarkOverridesPanel(&sim_opts);
+
         // -----------------------------------------------------------
 
         // Ensure the photoevaporation array is not NULL (for safety)
         if (disk_params.sigma_dot_photoevap == NULL) {
             disk_params.sigma_dot_photoevap = (double *)calloc((disk_params.grid_number + 2), sizeof(double));
         }
+
+        printStartBenchmarkingPanel(sim_opts.test_mode);
 
         // Dispatch
         if (sim_opts.test_mode == TEST_MODE_MASS_CONSERVATION) {
@@ -378,8 +375,8 @@ int main(int argc, const char **argv) {
         free(current_inputdust_file);
         free(initial_dir_path);
         free(kLogFilesDirectory_path);
-        
-        LOG_INFO(">>> TEST MODE COMPLETED. Exiting normally. <<<");
+
+        finishBenchmarkingPanel(&sim_opts);
         return 0;
     }
     

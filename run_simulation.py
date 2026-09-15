@@ -121,7 +121,8 @@ def main():
         "enable_gas_evolution": "evol",
         "enable_photoevaporation": "photoevap",
         "enable_two_dust_populations": "twopop",
-        "test_mode": "test_mode",  # <--- Hozzáadva a teszt módszerhez
+        "test_mode": "test_mode", 
+        "initial_gas_sigma0_msun_per_au2": "sigma0_val",
 
         "inner_boundary_condition": "inner_bc",
         "outer_boundary_condition": "outer_bc",

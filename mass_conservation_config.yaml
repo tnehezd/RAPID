@@ -24,7 +24,7 @@ output_parameters:
 
 time_parameters:               
   total_simulation_time: 100000.0    
-  output_write_frequency: 200.0
+  output_write_frequency: 2000.0
 
 log_parameters:
   info_level: "info"                 # "none", "info" (-v), or "debug" (-vv)

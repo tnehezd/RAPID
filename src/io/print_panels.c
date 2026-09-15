@@ -26,9 +26,18 @@ static void printLine(void) {
 void printHeader(const char *title) {
     fprintf(stderr, "\n");
     printLine();
-    fprintf(stderr, "|| %-68s ||\n", title);
+
+    int len = strlen(title);
+    int padding = (kTerminalWidth - len) / 2;
+
+    fprintf(stderr, "||%*s%s%*s||\n",
+            padding, "",
+            title,
+            padding + (kTerminalWidth - len) % 2, "");
+
     printLine();
 }
+
 
 
 void printSimulationWelcomeBanner(void) {
@@ -131,9 +140,88 @@ void printInitializationParameters(const InitializeDefaultOptions *default_optio
 
 void printFatalErrorMessageForDiskMass(void) {
     printHeader("FATAL RUNTIME ERROR");
-    fprintf(stderr, "Overdetermined initial conditions detected.\n");
-    fprintf(stderr, "You provided BOTH '-disk_mass' and '-sigma0_init'.\n");
-    fprintf(stderr, "Please specify only one method to define the disk's initial scale.\n");
+    LOG_ERROR("Overdetermined initial conditions detected.\n");
+    LOG_ERROR("You provided BOTH '-disk_mass' and '-sigma0_init'.\n");
+    LOG_ERROR("Please specify only one method to define the disk's initial scale.\n");
     printLine();
 
+}
+
+void printBenchmarkingHeader(TestMode mode, const DiskParameters *disk_params) {
+
+    printLine();
+    printCenteredTerminal(">>> BENCHMARK MODE ACTIVATED <<<");
+    printCenteredTerminal("RUNNING BENCHMARK:");
+    if (mode == TEST_MODE_MASS_CONSERVATION) {
+        printCenteredTerminal("Mass Conservation Test");
+    }
+    else if (mode == TEST_RING_VISCOSITY) {
+        printCenteredTerminal("Ring Viscosity Test");
+    }
+    else if (mode == TEST_PHOTOEVAP_FLUX) {
+
+        if (disk_params && disk_params->photoevaporation_mode_string[0] != '\0') {
+            char buffer[256];
+            snprintf(buffer, sizeof(buffer),
+                    "Photoevaporation Flux Test with Model: %s",
+                    disk_params->photoevaporation_mode_string);
+
+            printCenteredTerminal(buffer);
+        }
+    }
+
+    else {
+        printCenteredTerminal("Unknown Test Mode");
+    }
+
+
+}
+
+void printBenchmarkOverridesPanel(const SimulationOptions *sim_opts)
+{
+    printLine();
+    printCenteredTerminal(">>> BENCHMARK OVERRIDES APPLIED <<<");
+    printLine();
+
+    // Pure gas mode
+    printCenteredText("Gas evolution: ENABLED");
+    printCenteredText("Dust drift: DISABLED");
+    printCenteredText("Dust growth: DISABLED");
+    printCenteredText("Secondary dust population: DISABLED");
+
+    if (sim_opts->test_mode == TEST_PHOTOEVAP_FLUX) {
+        printCenteredText("Photoevaporation: ENABLED");
+    } else {
+        printCenteredText("Photoevaporation: DISABLED");
+    }
+
+    printLine();
+    fprintf(stderr, "\n");
+}
+
+
+void printStartBenchmarkingPanel(TestMode mode) {
+
+    if (mode == TEST_MODE_MASS_CONSERVATION) {
+        MSG("=== [BENCHMARK] Starting Mass Conservation Test ===");
+    }
+    else if (mode == TEST_RING_VISCOSITY) {
+        MSG("=== [BENCHMARK] Starting Ring Viscosity Test ===");
+    }
+    else if (mode == TEST_PHOTOEVAP_FLUX) {
+        MSG("=== [BENCHMARK] Starting Photoevaporation Flux Test ===");
+    }
+    else {
+        MSG("=== [BENCHMARK] Unknown Benchmark Test Mode: Exiting... ===");
+    }
+}
+
+
+void finishBenchmarkingPanel(SimulationOptions *sim_opts) {
+    fprintf(stderr, "\n");
+    printLine();
+    printCenteredTerminal(">>> BENCHMARKING COMPLETE <<<");
+    printCenteredTerminal("All files are saved to the output directory:");
+    printCenteredTerminal(sim_opts->output_dir_name);
+    printLine();
 }

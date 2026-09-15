@@ -13,6 +13,8 @@
 #define ANSI_GRAY    "\x1b[90m"
 
 #define BOX_LINES 7
+#define BENCHMARK_BOX_LINES 7
+
 
 typedef enum {
     STATUS_IDLE = 0,
@@ -119,5 +121,111 @@ void printStatus(int step,
     }
 
     renderBox(step, deltat, current_time_years, output_time, mode, current_mass, target_mass, initial_mass, last_snapshot_time, interval);
+    fflush(stderr);
+}
+
+
+typedef enum {
+    BENCHMARK_IDLE = 0,
+    BENCHMARK_BOX  = 1
+} BenchmarkState;
+
+static BenchmarkState benchmark_state = BENCHMARK_IDLE;
+static int benchmark_box_printed_once = 0;
+
+static void renderBenchmarkBox(const char *test_name,
+                               double current_time,
+                               double target_time,
+                               double current_mass,
+                               double initial_mass,
+                               int step,
+                               double deltat,
+                               double current_time_years,
+                               double output_time,
+                               double last_snapshot_time,
+                               double interval)
+{
+    (void)current_time; // Unused parameter, but kept for consistency
+    (void)target_time;  // Unused parameter, but kept for consistency
+    double mass_loss = initial_mass - current_mass;
+    double mass_loss_pct = (initial_mass > 0.0)
+                           ? (mass_loss / initial_mass) * 100.0
+                           : 0.0;
+
+    if (mass_loss_pct < 0.0) mass_loss_pct = 0.0;
+    if (mass_loss_pct > 100.0) mass_loss_pct = 100.0;
+
+    double time_in_interval = current_time_years - last_snapshot_time;
+    double time_progress = (interval > 0.0) ? (time_in_interval / interval) * 100.0 : 0.0;
+
+    int bar_width = 20;
+    int pos = (int)(time_progress * bar_width / 100.0);
+
+    char bar_str[64];
+    int p = 0;
+    for (int i = 0; i < bar_width; i++)
+        p += sprintf(bar_str + p, "%c", (i < pos) ? '#' : '.');
+
+    fprintf(stderr, ANSI_GRAY "==========================================================================" ANSI_RESET "\n");
+    fprintf(stderr, " | " ANSI_MAGENTA "BENCHMARK:" ANSI_RESET "   %s\n", test_name);
+    fprintf(stderr, " | " ANSI_BLUE "STEP:" ANSI_RESET "        %-8d \n", step);
+    fprintf(stderr, " | " ANSI_BLUE "TIME:" ANSI_RESET "        %.4e / %.4e yr  " ANSI_GRAY "[" ANSI_GREEN "%s" ANSI_GRAY "] " ANSI_GREEN "%5.1f%%" ANSI_RESET "\n",
+            current_time_years, output_time, bar_str, time_progress);
+    fprintf(stderr, " | " ANSI_BLUE "DT:" ANSI_RESET "          %.4e yr\n", deltat);
+
+    fprintf(stderr, ANSI_GRAY "==========================================================================" ANSI_RESET "\n");
+}
+
+void printBenchmarkStatus(const char *test_name,
+                          double current_time,
+                          double target_time,
+                          double current_mass,
+                          double initial_mass,
+                          int was_snapshot,
+                          int step,
+                          double deltat,
+                          double output_time, 
+                          double last_snapshot_time,
+                          double interval)
+{
+    if (was_snapshot) {
+        if (benchmark_state == BENCHMARK_BOX) {
+            moveCursorDown(BENCHMARK_BOX_LINES);
+            clearCurrentLine();
+        }
+
+        fprintf(stderr,
+                "[BENCHMARK SAVE] t = %.2e yr | M_disk = %.6e M_sun | Test: %s\n",
+                current_time, current_mass, test_name);
+        fflush(stderr);
+
+        benchmark_state = BENCHMARK_IDLE;
+        benchmark_box_printed_once = 0;
+        return;
+    }
+
+    if (benchmark_state == BENCHMARK_BOX && benchmark_box_printed_once) {
+        moveCursorUp(BENCHMARK_BOX_LINES);
+        clearCurrentLine();
+    } else {
+        if (benchmark_box_printed_once) {
+            fprintf(stderr, "\n");
+        }
+        benchmark_state = BENCHMARK_BOX;
+        benchmark_box_printed_once = 1;
+    }
+
+    renderBenchmarkBox(test_name,
+                       current_time,
+                       target_time,
+                       current_mass,
+                       initial_mass,
+                       step,
+                       deltat,
+                       current_time,
+                       output_time,
+                       last_snapshot_time,
+                       interval);
+
     fflush(stderr);
 }

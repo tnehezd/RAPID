@@ -481,15 +481,10 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
     }
 
 
-        // --- CRITICAL CONFLICT RESOLUTION GUARD ---
-        if (flag_has_disk_mass && flag_has_sigma0) {
-            printFatalErrorMessageForDiskMass();
-            return 1;
-        }
-
-    // Fallback fall-throughs if neither was explicitly set by the user
-    if (!flag_has_disk_mass && !flag_has_sigma0) {
-        opt->sigma0_val = 1.0; // Apply the safe default fallback to Sigma0
+    // --- CRITICAL CONFLICT RESOLUTION GUARD ---
+    if (flag_has_disk_mass && flag_has_sigma0) {
+        printFatalErrorMessageForDiskMass();
+        return 1;
     }
 
     // --- AUTO-DISABLE DUST MODULES FOR TEST MODES ---

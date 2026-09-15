@@ -7,11 +7,11 @@
 #include "gas_physics.h"
 #include "simulation_core.h"
 #include "logger.h"
+#include "print_panels.h"
+#include "print_terminal.h"
 
 
 void runRingViscosityTest(DiskParameters *disk_params, SimulationOptions *sim_opts) {
-    MSG("=== [BENCHMARK] Starting Viscous Ring Spreading Test ===");
-
     // Construct path for the summary output inside the logs/test folder
     char *filepath = NULL;
     asprintf(&filepath, "%s/%s/ring_viscosity_summary.dat", sim_opts->output_dir_name, kLogFilesDirectory);
@@ -39,7 +39,6 @@ void runRingViscosityTest(DiskParameters *disk_params, SimulationOptions *sim_op
     for (int i = 1; i <= disk_params->grid_number; i++) {
         initial_mass += 2.0 * M_PI * disk_params->radial_grid[i] * disk_params->gas_surface_density_vector[i] * disk_params->delta_r;
     }
-    MSG("[BENCHMARK] Initial ring total mass: %.10e M_sun", initial_mass);
 
     // Save initial profile at t = 0 yrs
     char *init_prof_path = NULL;
@@ -64,8 +63,8 @@ void runRingViscosityTest(DiskParameters *disk_params, SimulationOptions *sim_op
     double current_time = 0.0;
     long step = 0;
     double interval = sim_opts->output_frequency; // Output frequency in years
-
-    MSG("[BENCHMARK] Running viscous ring evolution up to %.1f years with dt = %.1f yr...", target_time, dt_years);
+    double output_time = interval; // Initialize output time for snapshot tracking
+    double last_snapshot_time = 0.0; // Track the last snapshot time for progress calculation
 
     while (current_time < target_time) {
         // Evolve/refresh gas surface density profile for one yearly step
@@ -91,12 +90,20 @@ void runRingViscosityTest(DiskParameters *disk_params, SimulationOptions *sim_op
                 peak_radius = disk_params->radial_grid[i];
             }
         }
+        int was_snapshot = (fmod(current_time, interval) < dt_years || current_time == dt_years);
 
-        // Console logging every 5000 years
-        if (fmod(current_time, interval) < dt_years || current_time == dt_years) {
-            MSG("[BENCHMARK] Step %ld | Time = %.0f yrs | Mass = %.10e | Max Sigma = %.4e at R = %.2f AU", 
-                step, current_time, current_mass, max_density, peak_radius);
-        }
+        // --- Interaktív terminál doboz frissítése ---
+        printBenchmarkStatus("Viscous Ring Spreading Test",
+                            current_time,
+                            target_time,
+                            current_mass,
+                            initial_mass,
+                            was_snapshot,
+                            step,
+                            dt_years,
+                            output_time,
+                            last_snapshot_time,
+                            interval);
 
         // Save summary data to file
         if (fp) {
@@ -116,17 +123,18 @@ void runRingViscosityTest(DiskParameters *disk_params, SimulationOptions *sim_op
                 fclose(prof_fp);
             }
             free(prof_path);
+
+            last_snapshot_time = current_time;
+            output_time += interval;
         }
     }
 
     if (fp) {
         fclose(fp);
-        MSG("[BENCHMARK] Ring viscosity summary saved to '%s'.", filepath);
     }
 
     if (filepath) {
         free(filepath);
     }
 
-    MSG("=== [BENCHMARK] Viscous Ring Spreading Test Completed ===");
 }
