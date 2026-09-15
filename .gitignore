@@ -53,3 +53,6 @@ notebooks/mass*/mass*/config/
 notebooks/mass*/mass*/LOGS/sigma*.dat
 notebooks/ring*/ring*/config/
 notebooks/ring*/ring*/LOGS/*_summary.dat
+notebooks/conver*/conver*/config/
+notebooks/conver*/conver*/LOGS/*_summary.dat
+notebooks/conver*/conver*/LOGS/*002.dat
