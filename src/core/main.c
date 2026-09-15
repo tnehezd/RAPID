@@ -110,6 +110,8 @@ int main(int argc, const char **argv) {
     sim_opts.inner_boundary_condition_type = def.inner_boundary_condition_type;
     sim_opts.outer_boundary_condition_type = def.outer_boundary_condition_type;
     sim_opts.test_mode = def.test_mode;
+    sim_opts.disable_panels = def.disable_panels;
+
  
 
     LOG_DEBUG("def.output_dir_name BEFORE sim_opts population: '%s'", def.output_dir_name);

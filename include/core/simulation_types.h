@@ -154,6 +154,7 @@ typedef struct {
     int outer_boundary_condition_type;        /**< Option for boundary condition at the outer edge */
     int current_bc_target;                    /**< Helper to check the current array for BC application */
     TestMode test_mode;
+    bool disable_panels;                        
 } SimulationOptions;
 
 

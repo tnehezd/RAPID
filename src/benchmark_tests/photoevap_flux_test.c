@@ -88,7 +88,8 @@ void runPhotoevapFluxTest(DiskParameters *dp, SimulationOptions *opt)
                             dt,
                             output_time,
                             last_snapshot_time,
-                            interval);
+                            interval,
+                            opt);
 
         if ((periodic_output_time || initial_output_time) && output_time_sync) {
 

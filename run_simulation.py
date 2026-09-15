@@ -7,7 +7,7 @@ import datetime
 prefix = "[PY-WRAPPER]"
 
 
-def run_c_program(executable_path, params, arg_mapping, verbosity_flag, program_name="C Program"):
+def run_c_program(executable_path, params, arg_mapping, verbosity_flag, disable_panels, program_name="C Program"):
     """
     Runs a C program with the given parameters.
     """
@@ -20,12 +20,18 @@ def run_c_program(executable_path, params, arg_mapping, verbosity_flag, program_
     if verbosity_flag:
         cmd_args.append(verbosity_flag)
 
+    # YAML-based panel disable
+    if disable_panels:
+        cmd_args.append("-no_panels")
+        print(f"{prefix} Terminal panels disabled (YAML setting).")
+
+
     for py_key, value in params.items():
         c_arg_name = arg_mapping.get(py_key)
         if c_arg_name:
             if isinstance(value, bool):
                 cmd_args.extend([c_arg_name, "1.0" if value else "0.0"])
-            elif c_arg_name == "-i" or c_arg_name == "-o" or c_arg_name == "--test":
+            elif c_arg_name == "-i" or c_arg_name == "-o" or c_arg_name == "-test":
                 if value is not None and str(value).strip() != "":
                     cmd_args.extend([c_arg_name, str(value)])
             else:
@@ -121,8 +127,7 @@ def main():
         "enable_gas_evolution": "evol",
         "enable_photoevaporation": "photoevap",
         "enable_two_dust_populations": "twopop",
-        "test_mode": "test_mode", 
-        "initial_gas_sigma0_msun_per_au2": "sigma0_val",
+        "test_mode": "test_mode",  # <--- Hozzáadva a teszt módszerhez
 
         "inner_boundary_condition": "inner_bc",
         "outer_boundary_condition": "outer_bc",
@@ -150,14 +155,14 @@ def main():
 
         "deadzone_inner_radius_au": "r_dze_i_val",
         "deadzone_outer_radius_au": "r_dze_o_val",
-        "deadzone_inner_transition_width": "dr_dze_i_val",
-        "deadzone_outer_transition_width": "dr_dze_o_val",
+        "deadzone_inner_transition_width_mult": "dr_dze_i_val",
+        "deadzone_outer_transition_width_mult": "dr_dze_o_val",
         "deadzone_alpha_reduction": "a_mod_val",
 
         "initial_dust_to_gas_ratio": "eps_val",
         "population_one_mass_ratio": "ratio_val",
         "micro_particle_size_cm": "mic_val",
-        "large_size_particle_value_cm": "onesize_val",
+        "one_size_particle_value_cm": "onesize_val",
         "dust_particle_density_g_cm3": "pdensity_val",
 
         "input_file_path": "input_file",
@@ -182,7 +187,7 @@ def main():
     # C program argument mapping
     c_arg_mapping = {
         "drift": "-drift", "growth": "-growth", "evol": "-evol", "twopop": "-twopop",
-        "photoevap": "-photoevap", "test_mode": "--test",  # <--- Hozzáadva a --test argumentumhoz
+        "photoevap": "-photoevap", "test_mode": "-test",  # <--- Hozzáadva a --test argumentumhoz
         "ngrid_val": "-n", "ndust_val": "-ndust", 
         "rmin_val": "-ri", "rmax_val": "-ro",
         "inner_bc": "-inner_bc", "outer_bc": "-outer_bc",
@@ -207,7 +212,7 @@ def main():
         print(f"{prefix} Error: No parameters could be parsed from YAML. Exiting.")
         return
     
-    # 2. Logolási flag beállítása
+    # 2. Flag for loggin
     verbosity_level = full_config.get("log_parameters", {}).get("info_level", "none")
     verbosity_flag = ""
     if verbosity_level == "info":
@@ -215,8 +220,11 @@ def main():
     elif verbosity_level == "debug":
         verbosity_flag = "-vv"
 
-    # 3. Futtatás
-    success, return_code = run_c_program(main_executable, all_params, c_arg_mapping, verbosity_flag, "Main Simulation Program")
+    # 3. Panel disable flag (YAML)
+    disable_panels = full_config.get("log_parameters", {}).get("disable_terminal_panels", False)
+
+    # 3. Run
+    success, return_code = run_c_program(main_executable, all_params, c_arg_mapping, verbosity_flag, disable_panels, "Main Simulation Program")
 
     if not success:
         print(f"{prefix} The C program exited with an error (error code: {return_code}) with the Python wrapper.")

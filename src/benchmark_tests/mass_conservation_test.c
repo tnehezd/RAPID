@@ -85,7 +85,8 @@ void runMassConservationTest(DiskParameters *disk_params, SimulationOptions *sim
                             dt_years,
                             output_time,
                             last_snapshot_time,
-                            interval);
+                            interval,
+                            sim_opts);
 
 
         // Save data to file

@@ -91,6 +91,7 @@ void printStatus(int step,
 {
     (void)internal_time;
 
+    if (sim_opts->disable_panels) return; 
 
     const char *out = (sim_opts->output_format == OUTPUT_HDF5) ? "HDF5" : "ASCII";
     
@@ -166,6 +167,7 @@ static void renderBenchmarkBox(const char *test_name,
     for (int i = 0; i < bar_width; i++)
         p += sprintf(bar_str + p, "%c", (i < pos) ? '#' : '.');
 
+
     fprintf(stderr, ANSI_GRAY "==========================================================================" ANSI_RESET "\n");
     fprintf(stderr, " | " ANSI_MAGENTA "BENCHMARK:" ANSI_RESET "   %s\n", test_name);
     fprintf(stderr, " | " ANSI_BLUE "STEP:" ANSI_RESET "        %-8d \n", step);
@@ -186,8 +188,19 @@ void printBenchmarkStatus(const char *test_name,
                           double deltat,
                           double output_time, 
                           double last_snapshot_time,
-                          double interval)
+                          double interval,
+                          SimulationOptions *sim_opts)
 {
+
+    static int printed_disable_notice = 0;
+
+    if (sim_opts->disable_panels) {
+        if (!printed_disable_notice) {
+            LOG_INFO("DISABLED REAL-TIME STATUS UPDATE PRINT\n");
+            printed_disable_notice = 1;
+        }
+        return;
+    }       
     if (was_snapshot) {
         if (benchmark_state == BENCHMARK_BOX) {
             moveCursorDown(BENCHMARK_BOX_LINES);

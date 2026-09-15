@@ -49,3 +49,28 @@ plot_photoevaporation_test.py
 ring_*.dat
 calculate_*.py
 sig.py
+
+# Ignore all raw simulation outputs
+output_mass_test_*/LOGS/sigma_profile_t_*.dat
+output_mass_test_*/LOGS/sigma_profile_t_*.txt
+
+# Ignore initial profiles and configs
+output_mass_test_*/config/
+output_mass_test_*/config/*.dat
+
+# Ignore generated initial gas/dust profiles
+output_mass_test_*/LOGS/initial_gas_profile.dat
+output_mass_test_*/LOGS/initial_dust_profile.dat
+output_mass_test_*/LOGS/disk_config.dat
+
+# Keep ONLY the summary file
+!output_mass_test_*/LOGS/mass_conservation_100k.dat
+
+# Ignore any other LOGS raw dumps
+output_mass_test_*/LOGS/*.dat
+!output_mass_test_*/LOGS/mass_conservation_100k.dat
+
+# Ignore temporary files
+*.tmp
+*.bak
+*.swp

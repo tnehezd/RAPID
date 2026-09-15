@@ -74,6 +74,7 @@ typedef struct {
     int outer_boundary_condition_type;                  /**< Outer boundary condition */
     int verbose;
     TestMode test_mode;                                 /**< Test mode identifier */
+    bool disable_panels;                                /**< Enable terminal-based live status panel (useful for Jupyter/VSCode) */
 } ParserOptions;
 
 /**

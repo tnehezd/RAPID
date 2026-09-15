@@ -28,7 +28,8 @@ void printBenchmarkStatus(const char *test_name,
                           double deltat,
                           double output_time,
                           double last_snapshot_time,
-                          double interval);
+                          double interval,
+                          SimulationOptions *sim_opts);
 
                      
 

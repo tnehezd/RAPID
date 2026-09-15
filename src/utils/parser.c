@@ -69,7 +69,8 @@ void createDefaultOptions(ParserOptions *opt) {
     opt->inner_boundary_condition_type          = 0;   // default: zero-gradient inner
     opt->outer_boundary_condition_type          = 1;   // default: parabolic outer
 
-    opt->dust_smoothing_mode = SMOOTHING_CIC; 
+    opt->dust_smoothing_mode                    = SMOOTHING_CIC; 
+    opt->disable_panels                         = false;
 
     LOG_DEBUG("Default options setting complete.\n");
 }
@@ -151,9 +152,10 @@ void printUsageToTerminal() {
     fprintf(stderr, "Log control:\n");
     fprintf(stderr, "  -v             Enable INFO logging level\n");
     fprintf(stderr, "  -vv            Enable DEBUG logging level (very verbose)\n\n");
+    fprintf(stderr, "  -no_panels     Disable live printing status panel (default: false)\n");
 
     fprintf(stderr, "Benchmark/Test Options:\n");
-    fprintf(stderr, "  --test <name>  Run internal benchmark or test (e.g., mass_test)\n"); 
+    fprintf(stderr, "  -test <name>  Run internal benchmark or test (e.g., mass_test)\n"); 
 
 }
 
@@ -330,7 +332,7 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
             }
         }
 
-        else if (strcmp(argv[i], "--test") == 0) {
+        else if (strcmp(argv[i], "-test") == 0) {
             if (i + 1 < argc) {
                 const char *test_str = argv[i + 1];
                 if (strcmp(test_str, "mass_test") == 0 || strcmp(test_str, "mass_conservation") == 0) {
@@ -391,6 +393,10 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
         else if (strcmp(argv[i], "-gaussian_sigma_grid_units") == 0) {
             i++;
             if (i < argc) opt->gaussian_sigma = atof(argv[i]);
+        }
+
+        else if (strcmp(argv[i], "-no_panels") == 0) {
+            opt->disable_panels = true;
         }
 
         else if (strcmp(argv[i], "-gaussian_cutoff_sigma") == 0) {

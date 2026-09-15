@@ -103,7 +103,8 @@ void runRingViscosityTest(DiskParameters *disk_params, SimulationOptions *sim_op
                             dt_years,
                             output_time,
                             last_snapshot_time,
-                            interval);
+                            interval,
+                            sim_opts);
 
         // Save summary data to file
         if (fp) {
