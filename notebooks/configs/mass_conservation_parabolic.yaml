@@ -20,7 +20,7 @@ boundary_conditions:
   outer_boundary_condition: "parabolic"
 
 output_parameters:
-  output_directory_name: "notebooks/mass_conservation_test_outputs/output_mass_test_parabolic"
+  output_directory_name: "notebooks/mass_conservation_test_outputs/mass_test_parabolic"
 
 time_parameters:               
   total_simulation_time: 100000.0    
