@@ -16,6 +16,13 @@ jobs:
     steps:
       - name: Checkout RAPID
         uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .
+            !notebooks
+            !defaults
+            !other_py_tools
+          sparse-checkout-cone-mode: false
 
       - name: Install system dependencies (Linux)
         if: runner.os == 'Linux'
