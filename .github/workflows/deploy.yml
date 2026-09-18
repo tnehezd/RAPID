@@ -19,7 +19,7 @@ jobs:
         with:
           sparse-checkout: |
             .
-            !notebooks
+            notebooks
             !defaults
             !other_py_tools
           sparse-checkout-cone-mode: false
