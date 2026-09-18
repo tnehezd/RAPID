@@ -10,6 +10,10 @@ on:
   release:
     types: [published]
 
+  push:
+    paths:
+      - "notebooks/**"
+
 jobs:
   trigger-docs:
     runs-on: ubuntu-latest
