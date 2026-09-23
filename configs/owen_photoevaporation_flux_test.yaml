@@ -20,7 +20,7 @@ disk_parameters:
   # PHOTOEVAPORATION SELECTION
   # Options: "Owen", "Picogna"
   photoevaporation_mode: "Owen"
-  xray_luminosity_erg_s: 1.0e30
+  xray_luminosity_erg_s: 2.0e30
 
 
 boundary_conditions:

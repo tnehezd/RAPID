@@ -103,8 +103,8 @@ double PhotoevapNormOwen2012(const double *radius_array,
 
         M_dot = 6.25e-9 * pow(M_star, -0.068) * pow(Lx / 1e30, 1.14);
 
-        for (int i = 0; i < N; i++) {
-            double r = radius_array[i + 1];
+        for (int i = 1; i <= N; i++) {
+            double r = radius_array[i];
             double x = 0.85 * r / M_star;
 
             double func_c = 0.0;
@@ -142,8 +142,8 @@ double PhotoevapNormOwen2012(const double *radius_array,
 
         M_dot = 4.8e-9 * pow(M_star, -0.148) * pow(Lx / 1e30, 1.14);
 
-        for (int i = 0; i < N; i++) {
-            double r = radius_array[i + 1];
+        for (int i = 1; i <= N; i++) {
+            double r = radius_array[i];
             double y = 0.95 * (r - r_hole) / M_star;
 
             double func_c = 0.0;

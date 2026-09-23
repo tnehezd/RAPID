@@ -44,6 +44,7 @@ plot_steady_state_test.py
 plot_photoev_cgs_massloss.py
 plot_photoev_massloss.py
 plot_photoevaporation_test.py
+plot_convergence_compare.py
 *.png
 
 plot_out*.py
