@@ -133,7 +133,7 @@ def main():
         "outer_boundary_condition": "outer_bc",
 
         "number_of_grid_points": "ngrid_val",
-        "logarithmic_radial_grid": "log_grid",
+        "radial_grid_type": "grid_type",
         "number_of_dust_particles": "ndust_val",
         "inner_radius_au": "rmin_val",
         "outer_radius_au": "rmax_val",
@@ -191,7 +191,7 @@ def main():
         "drift": "-drift", "growth": "-growth", "evol": "-evol", "twopop": "-twopop",
         "photoevap": "-photoevap", "test_mode": "-test",  # <--- Hozzáadva a --test argumentumhoz
         "ngrid_val": "-n", "ndust_val": "-ndust", 
-        "log_grid": "-log_grid",
+        "grid_type": "-grid_type",
         "rmin_val": "-ri", "rmax_val": "-ro",
         "inner_bc": "-inner_bc", "outer_bc": "-outer_bc",
         "sigma0_val": "-sigma0_init", "sigmap_exp_val": "-index_init",

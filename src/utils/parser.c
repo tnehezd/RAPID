@@ -95,6 +95,7 @@ void printUsageToTerminal() {
     fprintf(stderr, "  -o <dir>       Output directory name (default: 'output')\n");
     fprintf(stderr, "Initial profile generation options (used if -i is not provided):\n");
     fprintf(stderr, "  -n <val>       Number of grid points (default: 2000)\n"); // This is common for sim and init
+    fprintf(stderr, "  -grid_type <linear|logarithmic> Radial grid type (default: linear)\n");
     fprintf(stderr, "  -ri <val>      Inner radius (AU, default: 1.0)\n");
     fprintf(stderr, "  -ro <val>      Outer radius (AU, default: 100.0)\n");
     fprintf(stderr, "  -disk_mass <val>   Total gas disk mass in Solar Masses (Alternative to -sigma0_init)\n");
@@ -145,7 +146,7 @@ void printUsageToTerminal() {
     fprintf(stderr, "                     absorbing   = Dust sink (ghost cell = 0)\n");
     fprintf(stderr, "                     reflecting  = Mirror boundary (non-physical)\n");
     fprintf(stderr, "                     linear      = Linear extrapolation outflow\n");
-    fprintf(stderr, "                     loggrid     = Logarithmic-grid extrapolation\n\n");
+    fprintf(stderr, "\n");
 
     fprintf(stderr, "  -outer_bc <name>   Outer boundary type. Same names as inner_bc.\n");
     fprintf(stderr, "                     Recommended: parabolic or linear for smooth outflow.\n\n");
@@ -201,10 +202,19 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
             i++;
             if (i < argc) opt->number_of_grid_points = atoi(argv[i]); else { LOG_ERROR("Missing value for -n.\n"); return 1; }
         }
-        else if (strcmp(argv[i], "-log_grid") == 0) {
+        else if (strcmp(argv[i], "-grid_type") == 0) {
             i++;
-            if (i < argc) opt->logarithmic_radial_grid = (atoi(argv[i]) != 0);
-            else { LOG_ERROR("Missing value for -log_grid.\n"); return 1; }
+            if (i < argc) {
+                if (strcmp(argv[i], "linear") == 0) {
+                    opt->logarithmic_radial_grid = false;
+                } else if (strcmp(argv[i], "logarithmic") == 0 ||
+                           strcmp(argv[i], "log") == 0) {
+                    opt->logarithmic_radial_grid = true;
+                } else {
+                    LOG_ERROR("Unknown radial grid type '%s'. Use linear or logarithmic.\n", argv[i]);
+                    return 1;
+                }
+            } else { LOG_ERROR("Missing value for -grid_type.\n"); return 1; }
         }
         else if (strcmp(argv[i], "-ndust") == 0) { 
             i++;
@@ -463,8 +473,6 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
                 else if (strcmp(argv[i], "fixed_flux") == 0)            opt->outer_boundary_condition_type = 2;
                 else if (strcmp(argv[i], "absorbing") == 0)             opt->outer_boundary_condition_type = 3;
                 else if (strcmp(argv[i], "reflecting") == 0)            opt->outer_boundary_condition_type = 4;
-                else if (strcmp(argv[i], "linear_extrapolation") == 0)  opt->outer_boundary_condition_type = 5;
-                else if (strcmp(argv[i], "loggrid") == 0)               opt->outer_boundary_condition_type = 6;
                 else {
                     LOG_ERROR("Unknown outer BC '%s'.\n", argv[i]);
                     return 1;

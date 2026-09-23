@@ -212,11 +212,11 @@ static void snapshotDustSurfacedensity(double output_time, ParticleData *particl
 }
 
 static void snapshotAdvance(double *output_time, const SimulationOptions *sim_opts) {
-    *output_time += (double)(sim_opts->maximum_simulation_time / sim_opts->output_frequency);
+    *output_time += sim_opts->output_frequency;
 }
 
 static int isSnapshotDue(double current_time_years, double output_time, double deltat,const SimulationOptions *sim_opts) {
-    double interval = sim_opts->maximum_simulation_time / sim_opts->output_frequency;
+    double interval = sim_opts->output_frequency;
     int periodic_output_time = (fmod(current_time_years, interval) < deltat);
     int initial_output_time  = (current_time_years == 0.0);
     int output_time_sync = ((output_time - current_time_years) < deltat);
@@ -452,13 +452,13 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
     double target_termination_mass = initial_disk_mass * 0.001;
 
     static double last_snapshot_time = 0.0; // static, hogy megjegyezze két lépés között
-    double snapshot_interval = sim_opts->maximum_simulation_time / sim_opts->output_frequency;
+    double snapshot_interval = sim_opts->output_frequency;
 
     do {
         static double dt_old = 0.0;
 
         double max_drift_velocity = getMaximumDriftVelocity(&particle_data, particle_number, disk_params, mode);        
-        double dt_new = calculateTimeStep(disk_params, max_drift_velocity) / 5.0;
+        double dt_new = calculateTimeStep(disk_params, max_drift_velocity);
 
         if (dt_old == 0.0) dt_old = dt_new;
 
