@@ -34,6 +34,27 @@ static void writeSigmaProfile(const DiskParameters *dp,
     free(prof_path);
 }
 
+static void writeSigmaDotProfile(const DiskParameters *dp,
+                                 const SimulationOptions *opt,
+                                 double output_time)
+{
+    char *dot_path = NULL;
+    asprintf(&dot_path, "%s/%s/sigma_dot_profile_t_%06d.dat",
+             opt->output_dir_name, kLogFilesDirectory, (int)output_time);
+
+    FILE *dot_fp = fopen(dot_path, "w");
+    if (dot_fp) {
+        fprintf(dot_fp, "# Radius_AU   SigmaDot_Msun_per_AU2_per_year\n");
+        for (int i = 1; i <= dp->grid_number; i++) {
+            fprintf(dot_fp, "%.6e %.6e\n",
+                    dp->radial_grid[i],
+                    dp->sigma_dot_photoevap[i]);
+        }
+        fclose(dot_fp);
+    }
+    free(dot_path);
+}
+
 static void syncSigmaFromViscousState(DiskParameters *dp,
                                       const double *viscous_sigma)
 {
@@ -117,6 +138,10 @@ void runPhotoevapFluxTest(DiskParameters *dp, SimulationOptions *opt)
         // --- Compute photoevap sink ---
         computePhotoevaporationSink(dp);
 
+        if (current_time == 0.0) {
+            writeSigmaDotProfile(dp, opt, 0.0);
+        }
+
         // --- Integrate sigma_dot over radius ---
         double sigma_dot_integral = 0.0;
         for (int i = 1; i <= dp->grid_number; i++) {
@@ -177,21 +202,7 @@ void runPhotoevapFluxTest(DiskParameters *dp, SimulationOptions *opt)
             writeSigmaProfile(dp, opt, output_time);
 
 
-            char *dot_path = NULL;
-            asprintf(&dot_path, "%s/%s/sigma_dot_profile_t_%06d.dat",
-                    opt->output_dir_name, kLogFilesDirectory, (int)output_time);
-
-            FILE *dot_fp = fopen(dot_path, "w");
-            if (dot_fp) {
-                fprintf(dot_fp, "# Radius_AU   SigmaDot_Msun_per_AU2_per_day\n");
-                for (int i = 1; i <= dp->grid_number; i++) {
-                    fprintf(dot_fp, "%.6e %.6e\n",
-                            dp->radial_grid[i],
-                            dp->sigma_dot_photoevap[i]);
-                }
-                fclose(dot_fp);
-            }
-            free(dot_path);
+            writeSigmaDotProfile(dp, opt, output_time);
 
             // --- Advance snapshot time ---
             output_time += interval;
