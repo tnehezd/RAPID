@@ -6,12 +6,12 @@ simulation_parameters:
 
 disk_parameters:
   # Grid and Disk Initial Parameters (used if no input_file is provided)
-  number_of_grid_points: 1000    # Corresponds to 'ngrid_val' (-n)
-  inner_radius_au: 1.0           # Corresponds to 'rmin_val' (-ri)
-  outer_radius_au: 100.0           # Corresponds to 'rmax_val' (-ro)
+  number_of_grid_points: 4000    # Corresponds to 'ngrid_val' (-n)
+  inner_radius_au: 0.5           # Corresponds to 'rmin_val' (-ri)
+  outer_radius_au: 300.0           # Corresponds to 'rmax_val' (-ro)
   disk_mass: 0.01                    # Mass of the disk (M_sun)
-  sigma_profile_exponent: -0.5    # Corresponds to 'sigmap_exp_val' (-index_init)
-  alpha_viscosity: 0.01          # Corresponds to 'alpha_visc_val' (-alpha_init)
+  sigma_profile_exponent: -1    # Corresponds to 'sigmap_exp_val' (-index_init)
+  alpha_viscosity: 0.0001          # Corresponds to 'alpha_visc_val' (-alpha_init)
   star_mass_msun: 1.0            # Corresponds to 'star_val' (-m0_init)
   aspect_ratio_at_1au: 0.05      # Corresponds to 'hasp_val' (-h_init)
   flaring_index: 0.0             # Corresponds to 'flind_val' (-flind_init)
@@ -33,8 +33,8 @@ output_parameters:
 
 time_parameters:
   # Time Parameters
-  total_simulation_time: 10e6       # Corresponds to 'totalTime' (-tmax)
-  output_write_frequency: 500000     # Corresponds to 'outputFrequency' (-outfreq)
+  total_simulation_time: 1e6       # Corresponds to 'totalTime' (-tmax)
+  output_write_frequency: 50000     # Corresponds to 'outputFrequency' (-outfreq)
 
 log_parameters:
   info_level: "info" # "none", "info", or "debug"
