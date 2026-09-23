@@ -90,8 +90,8 @@
  *   4 = Reflecting inner
  *       Ghost cell mirrors interior. Non-physical; test only.
  *
- *   5 = Linear extrapolation inner
- *       v0 = 2*v1 - v2. Simple, stable continuation.
+ *   5 = Free outflow / diode inner
+ *       Allows outflow while suppressing artificial inflow.
  *
  *   6 = Log-grid extrapolation inner
  *       Extrapolation respecting logarithmic spacing.
@@ -157,8 +157,7 @@ void applyParabolicInner(double *v, const DiskParameters *dp);
 void applyFixedFluxInner(double *v, const DiskParameters *dp);
 void applyAbsorbingInner(double *v, const DiskParameters *dp);
 void applyReflectingInner(double *v, const DiskParameters *dp);
-void applyLinearExtrapolationInner(double *v, const DiskParameters *dp);
-void applyLogGridExtrapolationInner(double *v, const DiskParameters *dp);
+void applyFreeOutflowInner(double *v, const DiskParameters *dp);
 
 /* OUTER BCs */
 void applyZeroGradientOuter(double *v, const DiskParameters *dp);
@@ -166,7 +165,5 @@ void applyParabolicOuter(double *v, const DiskParameters *dp);
 void applyFixedFluxOuter(double *v, const DiskParameters *dp);
 void applyAbsorbingOuter(double *v, const DiskParameters *dp);
 void applyReflectingOuter(double *v, const DiskParameters *dp);
-void applyLinearExtrapolationOuter(double *v, const DiskParameters *dp);
-void applyLogGridExtrapolationOuter(double *v, const DiskParameters *dp);
 
 #endif

@@ -81,18 +81,35 @@ int isDustGrowthEnabled(SnapshotMode mode) {
 }
 
 void linearInterpolation(double *input_value, double *radial_grid, double actual_position, double *interpolated_value, double grid_spacing, const DiskParameters *disk_params) {
+    int left_cell_index;
+    int right_cell_index;
 
-	double relative_grid_position, left_cell_radius, linear_slope, interpolated_result;
-	int left_cell_index; 
+    (void)grid_spacing;
 
-    relative_grid_position = actual_position - disk_params->r_min;
-	relative_grid_position = relative_grid_position / grid_spacing;     					
-	left_cell_index = (int) floor(relative_grid_position);				
-	left_cell_radius = radial_grid[left_cell_index];       		
- 	linear_slope = (input_value[left_cell_index + 1] - input_value[left_cell_index]) / grid_spacing; 
-	interpolated_result = input_value[left_cell_index] + linear_slope * (actual_position - left_cell_radius);   
+    if (actual_position <= radial_grid[1]) {
+        *interpolated_value = input_value[1];
+        return;
+    }
+    if (actual_position >= radial_grid[disk_params->grid_number]) {
+        *interpolated_value = input_value[disk_params->grid_number];
+        return;
+    }
 
-	*interpolated_value = interpolated_result;
+    left_cell_index = 1;
+    right_cell_index = disk_params->grid_number;
+    while (right_cell_index - left_cell_index > 1) {
+        int middle_index = (left_cell_index + right_cell_index) / 2;
+        if (radial_grid[middle_index] <= actual_position) {
+            left_cell_index = middle_index;
+        } else {
+            right_cell_index = middle_index;
+        }
+    }
+
+    double radius_span = radial_grid[right_cell_index] - radial_grid[left_cell_index];
+    double value_slope = (input_value[right_cell_index] - input_value[left_cell_index]) / radius_span;
+    *interpolated_value = input_value[left_cell_index] +
+                          value_slope * (actual_position - radial_grid[left_cell_index]);
 }
 
 double findMinimumOfAnArray(double value_1, double value_2, double value_3) {
@@ -246,11 +263,15 @@ void updateParticleGridIndices(ParticleData *particle_data, double current_time,
     for (particle_index = 0; particle_index < particle_count; particle_index++) {
 
         // --- Primary Population ---
-        relative_grid_position = (particle_data->particle_distance_array[particle_index][0] - disk_params->r_min) / disk_params->delta_r;
-        grid_index = (int)floor(relative_grid_position + 0.5);
-
-        if (relative_grid_position < 0 || isnan(relative_grid_position)) {
-            grid_index = 0;
+        relative_grid_position = particle_data->particle_distance_array[particle_index][0];
+        grid_index = 0;
+        double nearest_distance = HUGE_VAL;
+        for (int grid_cell = 1; grid_cell <= disk_params->grid_number; grid_cell++) {
+            double distance = fabs(disk_params->radial_grid[grid_cell] - relative_grid_position);
+            if (distance < nearest_distance) {
+                nearest_distance = distance;
+                grid_index = grid_cell - 1;
+            }
         }
 
         // Update mass info for primary population
@@ -267,11 +288,15 @@ void updateParticleGridIndices(ParticleData *particle_data, double current_time,
 
         // --- Secondary Population (only if enabled and allocated) ---
         if (is_twopop && particle_data->micron_particle_distance_array != NULL) {
-            double rel_pos_mic = (particle_data->micron_particle_distance_array[particle_index][0] - disk_params->r_min) / disk_params->delta_r;
-            int grid_index_mic = (int)floor(rel_pos_mic + 0.5);
-
-            if (rel_pos_mic < 0 || isnan(rel_pos_mic)) {
-                grid_index_mic = 0;
+            double rel_pos_mic = particle_data->micron_particle_distance_array[particle_index][0];
+            int grid_index_mic = 0;
+            double nearest_distance_mic = HUGE_VAL;
+            for (int grid_cell = 1; grid_cell <= disk_params->grid_number; grid_cell++) {
+                double distance = fabs(disk_params->radial_grid[grid_cell] - rel_pos_mic);
+                if (distance < nearest_distance_mic) {
+                    nearest_distance_mic = distance;
+                    grid_index_mic = grid_cell - 1;
+                }
             }
 
             particle_data->micron_dust_particle_mass_array[particle_index][1] = grid_index_mic;

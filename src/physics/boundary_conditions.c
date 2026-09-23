@@ -47,9 +47,10 @@ void parabolicExtrapolationToGhostCells(double *input_vector,
                                         double dr,
                                         const DiskParameters *dp)
 {
-    double x1 = dp->r_min + (i1 - 1) * dr;
-    double x2 = dp->r_min + (i2 - 1) * dr;
-    double x3 = dp->r_min + (i3 - 1) * dr;
+    (void)dr;
+    double x1 = dp->radial_grid[i1];
+    double x2 = dp->radial_grid[i2];
+    double x3 = dp->radial_grid[i3];
 
     double v1 = input_vector[i1];
     double v2 = input_vector[i2];
@@ -85,8 +86,7 @@ void applyBoundaryConditions(double *v,
         case 2: applyFixedFluxInner(v, dp); break;
         case 3: applyAbsorbingInner(v, dp); break;
         case 4: applyReflectingInner(v, dp); break;
-        case 5: applyLinearExtrapolationInner(v, dp); break;
-        case 6: applyLogGridExtrapolationInner(v, dp); break;
+        case 5: applyFreeOutflowInner(v, dp); break;
         default: applyZeroGradientInner(v, dp); break;
     }
 
@@ -97,8 +97,6 @@ void applyBoundaryConditions(double *v,
         case 2: applyFixedFluxOuter(v, dp); break;
         case 3: applyAbsorbingOuter(v, dp); break;
         case 4: applyReflectingOuter(v, dp); break;
-        case 5: applyLinearExtrapolationOuter(v, dp); break;
-        case 6: applyLogGridExtrapolationOuter(v, dp); break;
         default: applyZeroGradientOuter(v, dp); break;
     }
 }
@@ -117,7 +115,7 @@ void applyParabolicInner(double *v, const DiskParameters *dp)
 {
     double a,b,c;
     parabolicExtrapolationToGhostCells(v, 1, 2, 3, &a, &b, &c, dp->delta_r, dp);
-    double xg = dp->r_min - dp->delta_r;
+    double xg = dp->radial_grid[0];
     v[0] = a*xg*xg + b*xg + c;
 }
 
@@ -140,18 +138,16 @@ void applyReflectingInner(double *v, const DiskParameters *dp)
     v[0] = v[2];
 }
 
-void applyLinearExtrapolationInner(double *v, const DiskParameters *dp)
+void applyFreeOutflowInner(double *v, const DiskParameters *dp)
 {
-    (void)dp; // Unused parameter
-    v[0] = 2*v[1] - v[2];
+    (void)dp;
+    if (v[1] < v[2]) {
+        v[0] = v[1];
+    } else {
+        v[0] = 2.0 * v[1] - v[2];
+    }
 }
 
-void applyLogGridExtrapolationInner(double *v, const DiskParameters *dp)
-{
-    double dr_left = dp->radial_grid[1] - dp->radial_grid[0];
-    double dr_right = dp->radial_grid[2] - dp->radial_grid[1];
-    v[0] = v[1] + dr_left/dr_right * (v[1] - v[2]);
-}
 
 /************************************************************
  * OUTER BC IMPLEMENTATIONS
@@ -167,7 +163,7 @@ void applyParabolicOuter(double *v, const DiskParameters *dp)
     int N = dp->grid_number;
     double a,b,c;
     parabolicExtrapolationToGhostCells(v, N-2, N-1, N, &a, &b, &c, dp->delta_r, dp);
-    double xg = dp->r_max + dp->delta_r;
+    double xg = dp->radial_grid[N + 1];
     v[N+1] = a*xg*xg + b*xg + c;
 }
 
@@ -189,16 +185,4 @@ void applyReflectingOuter(double *v, const DiskParameters *dp)
     v[N+1] = v[N-1];
 }
 
-void applyLinearExtrapolationOuter(double *v, const DiskParameters *dp)
-{
-    int N = dp->grid_number;
-    v[N+1] = 2*v[N] - v[N-1];
-}
 
-void applyLogGridExtrapolationOuter(double *v, const DiskParameters *dp)
-{
-    int N = dp->grid_number;
-    double dr_left  = dp->radial_grid[N]   - dp->radial_grid[N-1];
-    double dr_right = dp->radial_grid[N-1] - dp->radial_grid[N-2];
-    v[N+1] = v[N] + dr_left/dr_right * (v[N] - v[N-1]);
-}

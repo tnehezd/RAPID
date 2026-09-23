@@ -48,7 +48,8 @@ typedef struct {
  * @param is_twopop_enabled Non‑zero if the micron‑dust population should also be allocated.
  * @return 0 on success, non‑zero on allocation failure.
  */
-int allocateParticleData(ParticleData *particle_data, size_t particle_count, int is_twopop_enabled);
+int allocateParticleData(ParticleData *particle_data, size_t particle_count,
+                         size_t grid_number, int is_twopop_enabled);
 
 /**
  * @brief Frees all memory allocated inside a ParticleData structure.

@@ -18,6 +18,7 @@
 void initializeDefaultOptions(InitializeDefaultOptions *def) {
     def->use_cutoff             = false; 
     def->n_grid_points          = 1000; 
+    def->logarithmic_radial_grid = false;
     def->n_dust_particles       = 2000;
     def->r_inner                = 0.1;
     def->r_outer                = 5.0;
@@ -154,6 +155,11 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
     FILE *disk_parameters_output_file = NULL; 
     FILE *gas_parameters_output_file = NULL; 
 
+    disk_params->gap_flag = 0;
+    disk_params->hole_flag = 0;
+    disk_params->r_hole = 0.0;
+
+
     long double current_sigma0_gas;
 
     if (validateInitializationInputs(default_options) != 0) { 
@@ -233,6 +239,7 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
         disk_params->delta_r = 0.0;
     }
 
+    
     disk_params->radial_grid = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
     disk_params->gas_surface_density_vector = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
     disk_params->gas_pressure_vector = (double *)malloc((disk_params->grid_number + 2) * sizeof(double));
@@ -256,6 +263,20 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
     createInitialGasPressure(disk_params,sim_opts);
     createInitialGasPressureGradient(disk_params,sim_opts);
     createInitialGasVelocity(disk_params,sim_opts);
+
+    disk_params->delta_r_array = malloc((disk_params->grid_number + 2) * sizeof(double));
+
+    for (int i = 1; i <= disk_params->grid_number; i++) {
+        disk_params->delta_r_array[i] =
+            disk_params->radial_grid[i+1] - disk_params->radial_grid[i];
+    }
+
+    disk_params->delta_r_array[0] = disk_params->radial_grid[1] -
+                                     disk_params->radial_grid[0];
+    disk_params->delta_r_array[disk_params->grid_number+1] =
+        disk_params->radial_grid[disk_params->grid_number+1] -
+        disk_params->radial_grid[disk_params->grid_number];
+
 
     for (int i_loop = 0; i_loop < default_options->n_grid_points; i_loop++) {
         double r_gas_grid_au = disk_params->radial_grid[i_loop + 1];

@@ -28,7 +28,7 @@ void runMassConservationTest(DiskParameters *disk_params, SimulationOptions *sim
     double initial_mass = 0.0;
     double output_time = interval; // Initialize output time for snapshot tracking
     for (int i = 1; i <= disk_params->grid_number; i++) {
-        initial_mass += 2.0 * M_PI * disk_params->radial_grid[i] * disk_params->gas_surface_density_vector[i] * disk_params->delta_r;
+        initial_mass += 2.0 * M_PI * disk_params->radial_grid[i] * disk_params->gas_surface_density_vector[i] * (disk_params->radial_grid[i + 1] - disk_params->radial_grid[i]);
     }
 
     // Save initial profile at t = 0 yrs in the logs folder
@@ -70,7 +70,7 @@ void runMassConservationTest(DiskParameters *disk_params, SimulationOptions *sim
             if (disk_params->gas_surface_density_vector[i] < 0.0) {
                 disk_params->gas_surface_density_vector[i] = 0.0;
             }
-            current_mass += 2.0 * M_PI * disk_params->radial_grid[i] * disk_params->gas_surface_density_vector[i] * disk_params->delta_r;
+            current_mass += 2.0 * M_PI * disk_params->radial_grid[i] * disk_params->gas_surface_density_vector[i] * (disk_params->radial_grid[i + 1] - disk_params->radial_grid[i]);
         }
 
         double relative_error = fabs(current_mass - initial_mass) / initial_mass;

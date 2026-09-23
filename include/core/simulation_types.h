@@ -45,6 +45,7 @@ typedef struct {
     double r_max;                         /**< Outer radius of the simulation domain [AU]. */
     int    grid_number;                   /**< Number of radial grid points. */
     double delta_r;                       /**< Radial grid spacing [AU]. */
+    bool   logarithmic_radial_grid;       /**< Use geometric rather than linear radial spacing. */
     double sigma_0;                       /**< Gas surface density normalization at 1 AU. */
     double sigma_power_law_index;         /**< Exponent of the gas surface density power law. */
     double alpha_parameter;               /**< Shakura–Sunyaev viscosity parameter α. */
@@ -75,10 +76,8 @@ typedef struct {
     double *sigma_dot_photoevap;           /**< Sink term for photoevaporation */
     double *photoevap_sink;
     double *dr_array;
-    int    hole_flag;
     double density_floor;   /**< Minimum allowed gas surface density */
     double dust_density_floor;
-    double r_hole;
     double *sink_photoevap;
     bool   enable_photoevaporation;       /**< Global switch to turn photoevaporation ON/OFF. */
     char   photoevaporation_mode_string[32]; /**< Model selection: "Owen" or "Picogna" */
@@ -88,6 +87,14 @@ typedef struct {
     char inner_bc_string[32];
     char outer_bc_string[32];
     char dust_smoothing_mode_string[32];
+    // --- Photoevaporation dynamic cavity tracking ---
+    int gap_flag;        // 0 = no gap, 1 = gap detected
+    int hole_flag;       // 0 = no hole, 1 = inner cavity exists
+    double r_hole;       // radius of the cavity [AU]
+
+    // --- Radial cell widths (linear grid) ---
+    double *delta_r_array;   // size = grid_number + 2
+
 
 } DiskParameters;
 

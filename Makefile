@@ -11,7 +11,6 @@ endif
 
 # Directories
 INC_DIR = include
-EXTERN_DIR = extern/src
 SRC_DIR = src
 BIN_DIR = bin
 OBJ_DIR = obj
@@ -41,7 +40,6 @@ ifeq ($(UNAME_S), Darwin)
              -I$(LIBOMP)/include -I$(HDF5_HOME)/include -Xpreprocessor -fopenmp
              
     CXXFLAGS = -Wall -Wextra -std=c++17 -g -O0 $(INC_FLAGS) \
-               -I$(EXTERN_DIR)/../include -D_GNU_SOURCE \
                -I$(LIBOMP)/include -I$(HDF5_HOME)/include -Xpreprocessor -fopenmp
                
     LDFLAGS = -lm -L$(LIBOMP)/lib -lomp \
@@ -56,23 +54,18 @@ else
              -I/usr/include/hdf5/serial -fopenmp
              
     CXXFLAGS = -Wall -Wextra -std=c++17 -g -O0 $(INC_FLAGS) \
-               -I$(EXTERN_DIR)/../include -D_GNU_SOURCE \
                -I/usr/include/hdf5/serial -fopenmp
                
     LDFLAGS = -lm -fopenmp \
               -L/usr/lib/x86_64-linux-gnu/hdf5/serial -lhdf5 -lhdf5_hl
 endif
 
-# Recursively find all .c and .cpp source files in the src and extern/src directories
+# Recursively find all .c files in the src direcotry
 # Find all .c files in src, but EXCLUDE python_interface.c
 SRCS_C = $(shell find $(SRC_DIR) -name "*.c" ! -name "python_interface.c")
-SRCS_CPP = $(shell find $(SRC_DIR) -name "*.cpp")
-EXTERN_CPP = $(wildcard $(EXTERN_DIR)/*.cpp)
 
 # Generate object file names based on source files
-OBJS = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRCS_C)) \
-       $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.opp, $(SRCS_CPP)) \
-       $(patsubst $(EXTERN_DIR)/%.cpp, $(OBJ_DIR)/%.opp, $(EXTERN_CPP))
+OBJS = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRCS_C)) 
 
 # Dependency files (.d)
 DEPS = $(OBJS:.o=.d)
@@ -92,15 +85,6 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -MMD -MP -c $< -o $@
 
-# C++ translation (from src folder) -- for cpp wrappers and other C++ files
-$(OBJ_DIR)/%.opp: $(SRC_DIR)/%.cpp
-	@mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
-
-# C++ translation (from extern folder)
-$(OBJ_DIR)/%.opp: $(EXTERN_DIR)/%.cpp
-	@mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
 
 -include $(DEPS)
 

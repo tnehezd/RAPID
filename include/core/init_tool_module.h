@@ -21,6 +21,7 @@
 typedef struct {
     bool    use_cutoff;                     /**< Initial condition profile type: false = Normal Power-Law, true = Exponential Cutoff. */
     int     n_grid_points;                  /**< Number of radial grid cells. */
+    bool    logarithmic_radial_grid;         /**< Use geometric rather than linear radial spacing. */
     int     n_dust_particles;               /**< Total number of Lagrangian dust particles. */
     double  r_inner;                        /**< Inner disk boundary in AU. */
     double  r_outer;                        /**< Outer disk boundary in AU. */

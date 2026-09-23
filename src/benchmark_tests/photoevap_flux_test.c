@@ -6,10 +6,31 @@
 #include "gas_physics.h"
 #include "logger.h"
 #include "photoevap_flux_test.h"
-#include "photoevaporation_wrapper.h"
+#include "photoevaporation.h"
 #include "simulation_core.h"
 #include "print_panels.h"
 #include "print_terminal.h"
+
+static void writeSigmaProfile(const DiskParameters *dp,
+                              const SimulationOptions *opt,
+                              double output_time)
+{
+    char *prof_path = NULL;
+    asprintf(&prof_path, "%s/%s/sigma_profile_t_%06d.dat",
+             opt->output_dir_name, kLogFilesDirectory, (int)output_time);
+
+    FILE *prof_fp = fopen(prof_path, "w");
+    if (prof_fp) {
+        fprintf(prof_fp, "# Radius_AU\tGas_Surface_Density_Msun_per_AU2\n");
+        for (int i = 1; i <= dp->grid_number; i++) {
+            fprintf(prof_fp, "%.6e\t%.6e\n",
+                    dp->radial_grid[i],
+                    dp->gas_surface_density_vector[i]);
+        }
+        fclose(prof_fp);
+    }
+    free(prof_path);
+}
 
 void runPhotoevapFluxTest(DiskParameters *dp, SimulationOptions *opt)
 {
@@ -36,10 +57,15 @@ void runPhotoevapFluxTest(DiskParameters *dp, SimulationOptions *opt)
     double initial_mass = 0.0;
     for (int i = 1; i <= dp->grid_number; i++) {
         initial_mass += dp->gas_surface_density_vector[i] *
-                        2.0 * M_PI * dp->radial_grid[i] * dp->delta_r;
+                        2.0 * M_PI * dp->radial_grid[i] *
+                        (dp->radial_grid[i + 1] - dp->radial_grid[i]);
     }
 
     double integrated_mass_loss = 0.0;
+
+    // Save the untouched initial condition before the first evolution step.
+    writeSigmaProfile(dp, opt, output_time);
+    output_time += interval;
 
     while (current_time < target_time) {
 
@@ -50,11 +76,13 @@ void runPhotoevapFluxTest(DiskParameters *dp, SimulationOptions *opt)
         double sigma_dot_integral = 0.0;
         for (int i = 1; i <= dp->grid_number; i++) {
             sigma_dot_integral += dp->sigma_dot_photoevap[i] *
-                                  2.0 * M_PI * dp->radial_grid[i] * dp->delta_r;
+                                  2.0 * M_PI * dp->radial_grid[i] *
+                                  (dp->radial_grid[i + 1] - dp->radial_grid[i]);
         }
 
         // --- Update gas surface density ---
         for (int i = 1; i <= dp->grid_number; i++) {
+
             dp->gas_surface_density_vector[i] -= dt * dp->sigma_dot_photoevap[i];
             if (dp->gas_surface_density_vector[i] < dp->density_floor)
                 dp->gas_surface_density_vector[i] = dp->density_floor;
@@ -64,7 +92,8 @@ void runPhotoevapFluxTest(DiskParameters *dp, SimulationOptions *opt)
         double current_mass = 0.0;
         for (int i = 1; i <= dp->grid_number; i++) {
             current_mass += dp->gas_surface_density_vector[i] *
-                            2.0 * M_PI * dp->radial_grid[i] * dp->delta_r;
+                            2.0 * M_PI * dp->radial_grid[i] *
+                            (dp->radial_grid[i + 1] - dp->radial_grid[i]);
         }
 
         // --- Accumulate expected mass loss ---
@@ -73,10 +102,9 @@ void runPhotoevapFluxTest(DiskParameters *dp, SimulationOptions *opt)
 
         // --- Snapshot logic identical to main solver ---
         int periodic_output_time = (fmod(current_time, interval) < dt);
-        int initial_output_time  = (current_time == 0.0);
         int output_time_sync     = ((output_time - current_time) < dt);
 
-        int was_snapshot = (periodic_output_time || initial_output_time) && output_time_sync;
+        int was_snapshot = periodic_output_time && output_time_sync;
 
         printBenchmarkStatus("Photoevaporation Flux Test",
                             current_time,
@@ -91,29 +119,14 @@ void runPhotoevapFluxTest(DiskParameters *dp, SimulationOptions *opt)
                             interval,
                             opt);
 
-        if ((periodic_output_time || initial_output_time) && output_time_sync) {
+        if (periodic_output_time && output_time_sync) {
 
-            // --- Save sigma profile ---
-            char *prof_path = NULL;
-            asprintf(&prof_path, "%s/%s/sigma_profile_t_%06d.dat",
-                     opt->output_dir_name, kLogFilesDirectory, (int)output_time);
-
-            FILE *prof_fp = fopen(prof_path, "w");
-            if (prof_fp) {
-                fprintf(prof_fp, "# Radius_AU\tGas_Surface_Density_Msun_per_AU2\n");
-                for (int i = 1; i <= dp->grid_number; i++) {
-                    fprintf(prof_fp, "%.6e\t%.6e\n",
-                            dp->radial_grid[i],
-                            dp->gas_surface_density_vector[i]);
-                }
-                fclose(prof_fp);
-            }
-            free(prof_path);
+            writeSigmaProfile(dp, opt, output_time);
 
 
             char *dot_path = NULL;
             asprintf(&dot_path, "%s/%s/sigma_dot_profile_t_%06d.dat",
-                    opt->output_dir_name, kLogFilesDirectory, (int)current_time);
+                    opt->output_dir_name, kLogFilesDirectory, (int)output_time);
 
             FILE *dot_fp = fopen(dot_path, "w");
             if (dot_fp) {

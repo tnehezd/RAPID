@@ -15,7 +15,8 @@
  * Uses memset to ensure all pointers are initialized to NULL before allocation.
  * If two-population mode is disabled, secondary arrays remain NULL.
  */
-int allocateParticleData(ParticleData *particle_data, size_t particle_count, int is_twopop_enabled) {
+int allocateParticleData(ParticleData *particle_data, size_t particle_count,
+                         size_t grid_number, int is_twopop_enabled) {
 
     if (particle_data == NULL) {
         LOG_ERROR("ParticleData pointer is NULL.\n");
@@ -34,7 +35,7 @@ int allocateParticleData(ParticleData *particle_data, size_t particle_count, int
     particle_data->particle_distance_array     = calloc(particle_count, sizeof(*particle_data->particle_distance_array));
     particle_data->dust_particle_mass_grid     = calloc(particle_count, sizeof(double));
     particle_data->dust_particle_mass_array    = calloc(particle_count, sizeof(*particle_data->dust_particle_mass_array));
-    particle_data->dust_surfacedensity         = calloc(particle_count, sizeof(double));
+    particle_data->dust_surfacedensity         = calloc(grid_number, sizeof(double));
     particle_data->particle_distance_grid      = calloc(particle_count, sizeof(double));
 
     // 2. Secondary population arrays (only if enabled)
@@ -42,7 +43,7 @@ int allocateParticleData(ParticleData *particle_data, size_t particle_count, int
         particle_data->micron_particle_distance_array = calloc(particle_count, sizeof(*particle_data->micron_particle_distance_array));
         particle_data->massmicradial_grid            = calloc(particle_count, sizeof(double));
         particle_data->micron_dust_particle_mass_array = calloc(particle_count, sizeof(*particle_data->micron_dust_particle_mass_array));
-        particle_data->micron_dust_surfacedensity      = calloc(particle_count, sizeof(double));
+        particle_data->micron_dust_surfacedensity      = calloc(grid_number, sizeof(double));
         particle_data->micron_particle_distance_grid   = calloc(particle_count, sizeof(double));
     }
 

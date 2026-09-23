@@ -10,7 +10,7 @@
 #include <math.h>
 #include <omp.h>       
 
-#include "photoevaporation_wrapper.h"
+#include "photoevaporation.h"
 
 #define WIND_CRIT 1e-20  // Critical value for wind profile (below this value, wind is considered zero) [M_sol/AU^2/day]
 
@@ -68,7 +68,11 @@ void calculateGasPressureGradient(DiskParameters *disk_params) {
     double temporary_gas_pressure, calculated_pressure_gradient[disk_params->grid_number + 2];
 
     for (i = 1; i <= disk_params->grid_number; i++) {
-        temporary_gas_pressure = (disk_params->gas_pressure_vector[i + 1] - disk_params->gas_pressure_vector[i - 1]) / (2.0 * disk_params->delta_r);
+        double left_dr = disk_params->radial_grid[i] - disk_params->radial_grid[i - 1];
+        double right_dr = disk_params->radial_grid[i + 1] - disk_params->radial_grid[i];
+        temporary_gas_pressure = (disk_params->gas_pressure_vector[i + 1] -
+                                  disk_params->gas_pressure_vector[i - 1]) /
+                                 (left_dr + right_dr);
         calculated_pressure_gradient[i] = temporary_gas_pressure;
 
     }
@@ -99,7 +103,11 @@ void calculateGasRadialVelocity(DiskParameters *disk_params) {
 
     #pragma omp parallel for private(i, temporary_gas_velocity)
     for (i = 1; i <= disk_params->grid_number; i++) { 
-        temporary_gas_velocity = (gas_velocity_vector[i + 1] - gas_velocity_vector[i - 1]) / (2.0 * disk_params->delta_r); 
+        double left_dr = disk_params->radial_grid[i] - disk_params->radial_grid[i - 1];
+        double right_dr = disk_params->radial_grid[i + 1] - disk_params->radial_grid[i];
+        temporary_gas_velocity = (gas_velocity_vector[i + 1] -
+                                  gas_velocity_vector[i - 1]) /
+                                 (left_dr + right_dr);
         gas_velocity_vectortemp[i] = coefficientForGasRadialVelocity(disk_params->gas_surface_density_vector[i], disk_params->radial_grid[i]) * temporary_gas_velocity;
     }
 
@@ -134,13 +142,25 @@ void refreshGasSurfaceDensityPressurePressureGradient(SimulationOptions *sim_opt
         gas_sigma_dot_viscosity_backwards = gas_velocity_array[i - 1];
         gas_sigma_dot_viscosity_forward   = gas_velocity_array[i + 1];
 
-        // This calculates dSigma/dt
-        double gas_sigma_dot_viscosity_temporary = 
-            ftcsSecondDerivativeCoefficient(disk_params->radial_grid[i], disk_params) * (gas_sigma_dot_viscosity_forward - 2.0 * gas_sigma_dot_viscosity + gas_sigma_dot_viscosity_backwards) / (disk_params->delta_r * disk_params->delta_r) +
-            ftcsFirstDerivativeCoefficient(disk_params->radial_grid[i], disk_params) * (gas_sigma_dot_viscosity_forward - gas_sigma_dot_viscosity_backwards) / (2.0 * disk_params->delta_r);
-        
-        // CRITICAL FIX: Add (dSigma/dt * dt) to the ACTUAL surface density vector, NOT to gas_velocity_array!
-        gas_surface_density_temp[i] = disk_params->gas_surface_density_vector[i] + dt * gas_sigma_dot_viscosity_temporary; 
+        // The FTCS operator acts on viscous_sigma = nu * Sigma.
+        double left_dr = disk_params->radial_grid[i] - disk_params->radial_grid[i - 1];
+        double right_dr = disk_params->radial_grid[i + 1] - disk_params->radial_grid[i];
+        double span_dr = left_dr + right_dr;
+        double first_derivative = (gas_sigma_dot_viscosity_forward -
+                                   gas_sigma_dot_viscosity_backwards) / span_dr;
+        double second_derivative = 2.0 *    
+            (gas_sigma_dot_viscosity_backwards / (left_dr * span_dr) -
+             gas_sigma_dot_viscosity / (left_dr * right_dr) +
+             gas_sigma_dot_viscosity_forward / (right_dr * span_dr));
+
+        double viscous_sigma_dot =
+            ftcsSecondDerivativeCoefficient(disk_params->radial_grid[i], disk_params) * second_derivative +
+            ftcsFirstDerivativeCoefficient(disk_params->radial_grid[i], disk_params) * first_derivative;
+        double local_viscosity = calculateKinematicViscosity(disk_params->radial_grid[i], disk_params);
+
+        // Convert d(nu*Sigma)/dt back to dSigma/dt before updating Sigma.
+        gas_surface_density_temp[i] = disk_params->gas_surface_density_vector[i] +
+                                      dt * viscous_sigma_dot / local_viscosity;
     }
 
     // =========================================================================
@@ -170,8 +190,8 @@ void refreshGasSurfaceDensityPressurePressureGradient(SimulationOptions *sim_opt
         disk_params->gas_surface_density_vector[i] = gas_surface_density_temp[i] - (dt * disk_params->sigma_dot_photoevap[i]);
 
         // Numerical floor protection: prevent density from flipping to negative values
-        if (disk_params->gas_surface_density_vector[i] < WIND_CRIT) {
-            disk_params->gas_surface_density_vector[i] = WIND_CRIT; 
+        if (disk_params->gas_surface_density_vector[i] < disk_params->density_floor) {
+            disk_params->gas_surface_density_vector[i] = disk_params->density_floor; 
         }
 
         // Calculate the updated pressure vector using the synchronized density

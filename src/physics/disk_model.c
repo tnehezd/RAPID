@@ -33,10 +33,25 @@ void readDiskParameters(DiskParameters *disk_params) {
 
 
 void createRadialGrid(DiskParameters *disk_params) {
-    
     int i;
-    for(i = 0; i <= disk_params->grid_number+1; i++) {                      
-        disk_params->radial_grid[i] = disk_params->r_min + (i-1) * disk_params->delta_r;
+
+    if (disk_params->logarithmic_radial_grid &&
+        disk_params->r_min > 0.0 && disk_params->grid_number > 1) {
+        double ratio = pow(disk_params->r_max / disk_params->r_min,
+                           1.0 / (disk_params->grid_number - 1.0));
+
+        for (i = 0; i <= disk_params->grid_number + 1; i++) {
+            disk_params->radial_grid[i] = disk_params->r_min *
+                                          pow(ratio, i - 1);
+        }
+        disk_params->delta_r = disk_params->radial_grid[2] -
+                               disk_params->radial_grid[1];
+        return;
+    }
+
+    for (i = 0; i <= disk_params->grid_number + 1; i++) {
+        disk_params->radial_grid[i] = disk_params->r_min +
+                                      (i - 1) * disk_params->delta_r;
     }
 }
 
@@ -58,7 +73,8 @@ void createInitialGasSurfaceDensity(DiskParameters *disk_params, SimulationOptio
         for(i = 1; i <= disk_params->grid_number; i++) {
             double r = disk_params->radial_grid[i];
             double profile_shape = pow(r, -gamma) * exp(-pow(r / r_c, n_c));
-            current_integral += 2.0 * M_PI * r * profile_shape * disk_params->delta_r;
+            double local_dr = disk_params->radial_grid[i + 1] - disk_params->radial_grid[i];
+            current_integral += 2.0 * M_PI * r * profile_shape * local_dr;
         }
 
         // Calculate the mathematically exact sigma_0 required to match the total disk mass

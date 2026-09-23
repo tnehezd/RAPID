@@ -123,6 +123,7 @@ int main(int argc, const char **argv) {
     disk_params.r_min = def.rmin_val;
     disk_params.r_max = def.rmax_val;
     disk_params.grid_number = def.number_of_grid_points; 
+    disk_params.logarithmic_radial_grid = def.logarithmic_radial_grid;
     disk_params.sigma_0 = def.sigma0_val;
     disk_params.sigma_power_law_index = def.sigmap_exp_val;
     disk_params.alpha_parameter = def.alpha_visc_val;
@@ -153,7 +154,7 @@ int main(int argc, const char **argv) {
         case 2: strcpy(disk_params.inner_bc_string, "fixed_flux"); break;
         case 3: strcpy(disk_params.inner_bc_string, "absorbing"); break;
         case 4: strcpy(disk_params.inner_bc_string, "reflecting"); break;
-        case 5: strcpy(disk_params.inner_bc_string, "linear"); break;
+        case 5: strcpy(disk_params.inner_bc_string, "free_outflow"); break;
         case 6: strcpy(disk_params.inner_bc_string, "loggrid"); break;
     }
 
@@ -258,6 +259,7 @@ int main(int argc, const char **argv) {
         init_tool_params.n_for_cutoff = def.n_for_cutoff;
 
         init_tool_params.n_grid_points = disk_params.grid_number; 
+        init_tool_params.logarithmic_radial_grid = disk_params.logarithmic_radial_grid;
         init_tool_params.r_inner= disk_params.r_min;
         init_tool_params.r_outer = disk_params.r_max;
         init_tool_params.sigma0_gas_au = disk_params.sigma_0;

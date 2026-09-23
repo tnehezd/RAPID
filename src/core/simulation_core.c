@@ -90,20 +90,24 @@ double getMaximumDriftVelocity(const ParticleData *particle_data, int particle_n
 }
 
 double calculateTimeStep(const DiskParameters *disk_params, double max_drift_v) {
-    double max_viscosity = -1e10;
     double min_photo_dt = 1e10; 
+    double viscous_dt = 1e10;
     int i;
     int N = disk_params->grid_number;
-    double WIND_CRIT = 1e-20;
     
     // 1. Gas/Viscous and Photoevaporation loops (already existing)
-    for(i = 1; i <= N; i++) {
+    for(i = 1; i < N; i++) {
         double current_nu = calculateKinematicViscosity(disk_params->radial_grid[i], disk_params);
-        if(current_nu > max_viscosity) {
-            max_viscosity = current_nu;
+        double left_dr = disk_params->radial_grid[i] - disk_params->radial_grid[i - 1];
+        double right_dr = disk_params->radial_grid[i + 1] - disk_params->radial_grid[i];
+        double local_dr = fmin(left_dr, right_dr);
+        double local_dt = 0.35 * local_dr * local_dr / (2.0 * current_nu);
+
+        if (local_dt < viscous_dt) {
+            viscous_dt = local_dt;
         }
 
-        if (disk_params->enable_photoevaporation && disk_params->sigma_dot_photoevap != NULL) {
+/*        if (disk_params->enable_photoevaporation && disk_params->sigma_dot_photoevap != NULL) {
             double sigma = disk_params->gas_surface_density_vector[i];
             double sigma_dot = disk_params->sigma_dot_photoevap[i];
             
@@ -114,16 +118,21 @@ double calculateTimeStep(const DiskParameters *disk_params, double max_drift_v) 
                 }
             }
         }
+            */
     }
 
-    double safety_factor = 0.35;
-    double viscous_dt = safety_factor * (disk_params->delta_r * disk_params->delta_r) / (2.0 * max_viscosity);
-    
     // 2. Dust Drift CFL condition (The "Brake" you wanted)
     double dust_dt = 1e10; // Default: effectively infinity
     if (max_drift_v > 1e-15) { // Avoid division by zero
         double dust_safety_factor = 0.4;
-        dust_dt = dust_safety_factor * disk_params->delta_r / max_drift_v;
+        double minimum_dr = disk_params->radial_grid[2] - disk_params->radial_grid[1];
+        for (i = 1; i < N; i++) {
+            double local_dr = disk_params->radial_grid[i + 1] - disk_params->radial_grid[i];
+            if (local_dr < minimum_dr) {
+                minimum_dr = local_dr;
+            }
+        }
+        dust_dt = dust_safety_factor * minimum_dr / max_drift_v;
     }
     
     // 3. Select the most restrictive timestep
@@ -385,7 +394,7 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
     double output_time = 0.; 
     double initial_disk_mass = 0.0;
     for (int i = 1; i <= disk_params->grid_number; i++) {
-        initial_disk_mass += 2.0 * M_PI * disk_params->radial_grid[i] * disk_params->delta_r * disk_params->gas_surface_density_vector[i];
+        initial_disk_mass += 2.0 * M_PI * disk_params->radial_grid[i] * (disk_params->radial_grid[i + 1] - disk_params->radial_grid[i]) * disk_params->gas_surface_density_vector[i];
     }
     LOG_INFO("Numerically integrated initial disk mass is: %.5e M_Sun\n", initial_disk_mass);
     LOG_INFO("YAML provided initial disk mass is: %.5e M_Sun\n", disk_params->total_disk_mass);
@@ -405,7 +414,10 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
         particle_number = 0;
     }
 
-    if (particle_number > 0 && allocateParticleData(&particle_data, particle_number, (int)sim_opts->option_for_dust_secondary_population) != 0) {
+    if (particle_number > 0 && allocateParticleData(&particle_data,
+                                                     particle_number,
+                                                     disk_params->grid_number,
+                                                     (int)sim_opts->option_for_dust_secondary_population) != 0) {
         LOG_ERROR("Failed to allocate particle data. Exiting.\n");
         exit(EXIT_FAILURE);
     }
@@ -486,7 +498,7 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
                 fully_evaporated_cells++;
             }
 
-            double cell_mass = 2.0 * M_PI * disk_params->radial_grid[i] * disk_params->delta_r * disk_params->gas_surface_density_vector[i];
+            double cell_mass = 2.0 * M_PI * disk_params->radial_grid[i] * (disk_params->radial_grid[i + 1] - disk_params->radial_grid[i]) * disk_params->gas_surface_density_vector[i];
             current_disk_mass += cell_mass;
         }
 

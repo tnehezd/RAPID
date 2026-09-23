@@ -18,6 +18,7 @@ void createDefaultOptions(ParserOptions *opt) {
     opt->fragmenatation_velocity                    = 1000.0;
     opt->fragmenatation_factor                      = 0.37;
     opt->number_of_grid_points                      = 2000;
+    opt->logarithmic_radial_grid                    = false;
     opt->number_of_dust_particles                   = 5000;
     opt->rmin_val                                   = 1.0;
     opt->rmax_val                                   = 100.0;
@@ -199,6 +200,11 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
         else if (strcmp(argv[i], "-n") == 0) {
             i++;
             if (i < argc) opt->number_of_grid_points = atoi(argv[i]); else { LOG_ERROR("Missing value for -n.\n"); return 1; }
+        }
+        else if (strcmp(argv[i], "-log_grid") == 0) {
+            i++;
+            if (i < argc) opt->logarithmic_radial_grid = (atoi(argv[i]) != 0);
+            else { LOG_ERROR("Missing value for -log_grid.\n"); return 1; }
         }
         else if (strcmp(argv[i], "-ndust") == 0) { 
             i++;
@@ -442,6 +448,7 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
                 else if (strcmp(argv[i], "fixed_flux") == 0)            opt->inner_boundary_condition_type = 2;
                 else if (strcmp(argv[i], "absorbing") == 0)             opt->inner_boundary_condition_type = 3;
                 else if (strcmp(argv[i], "reflecting") == 0)            opt->inner_boundary_condition_type = 4;
+                else if (strcmp(argv[i], "free_outflow") == 0)          opt->inner_boundary_condition_type = 5;
                 else {
                     LOG_ERROR("Unknown inner BC '%s'.\n", argv[i]);
                     return 1;

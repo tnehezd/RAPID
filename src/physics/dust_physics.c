@@ -13,6 +13,56 @@
 #include <omp.h>     
 #include "logger.h"        
 
+static int findNearestDustGridIndex(double radius, const DiskParameters *disk_params)
+{
+    int low = 1;
+    int high = disk_params->grid_number;
+
+    if (radius <= disk_params->radial_grid[1]) return 0;
+    if (radius >= disk_params->radial_grid[high]) return high - 1;
+
+    while (high - low > 1) {
+        int middle = (low + high) / 2;
+        if (disk_params->radial_grid[middle] <= radius) {
+            low = middle;
+        } else {
+            high = middle;
+        }
+    }
+
+    return (radius - disk_params->radial_grid[low] <=
+            disk_params->radial_grid[high] - radius) ? low - 1 : high - 1;
+}
+
+static int findDustLeftCell(double radius, const DiskParameters *disk_params,
+                            double *fraction)
+{
+    int low = 1;
+    int high = disk_params->grid_number;
+
+    if (radius <= disk_params->radial_grid[1]) {
+        *fraction = 0.0;
+        return 0;
+    }
+    if (radius >= disk_params->radial_grid[high]) {
+        *fraction = 1.0;
+        return high - 2;
+    }
+
+    while (high - low > 1) {
+        int middle = (low + high) / 2;
+        if (disk_params->radial_grid[middle] <= radius) {
+            low = middle;
+        } else {
+            high = middle;
+        }
+    }
+
+    *fraction = (radius - disk_params->radial_grid[low]) /
+                (disk_params->radial_grid[high] - disk_params->radial_grid[low]);
+    return low - 1;
+}
+
 void applyCoagulationMassTransfer(ParticleData *particle_data,
                                   DiskParameters *disk_params,
                                   SimulationOptions *sim_opts,
@@ -42,7 +92,8 @@ void applyCoagulationMassTransfer(ParticleData *particle_data,
         double sigma_dot = dust_sigma_mic / tau;
         double dSigma    = sigma_dot * dt;
 
-        double area   = 2.0 * M_PI * disk_params->radial_grid[i] * disk_params->delta_r;
+        double local_dr = disk_params->radial_grid[i + 1] - disk_params->radial_grid[i];
+        double area   = 2.0 * M_PI * disk_params->radial_grid[i] * local_dr;
 
         double dM_cell = dSigma * area;
 
@@ -224,33 +275,29 @@ void calculateDustSurfaceDensity(const ParticleData *particle_data,
     int mode_type = simulation_options->dust_smoothing_mode;
     for (k = 0; k < particle_number; k++) {
         double r = particle_data->particle_distance_array[k][0];
-        double rel_pos = (r - disk_params->r_min) / disk_params->delta_r;
-        
         double r_mic = 0.0;
-        double rel_pos_mic = 0.0;
         if (is_twopop) {
             r_mic = particle_data->micron_particle_distance_array[k][0];
-            rel_pos_mic = (r_mic - disk_params->r_min) / disk_params->delta_r;
         }
 
         if (mode_type == 1) { // NGP
-            int idx = (int)round(rel_pos);
+            int idx = findNearestDustGridIndex(r, disk_params);
             if (idx >= 0 && idx < grid_n) particle_data->dust_surfacedensity[idx] += particle_data->dust_particle_mass_grid[k];
             if (is_twopop) {
-                int idx_m = (int)round(rel_pos_mic);
+                int idx_m = findNearestDustGridIndex(r_mic, disk_params);
                 if (idx_m >= 0 && idx_m < grid_n) particle_data->micron_dust_surfacedensity[idx_m] += particle_data->massmicradial_grid[k];
             }
         } else { // CIC
-            int idx = (int)floor(rel_pos);
-            double x = rel_pos - (double)idx;
+            double x;
+            int idx = findDustLeftCell(r, disk_params, &x);
             if (idx >= 0 && idx < grid_n - 1) {
                 double m = particle_data->dust_particle_mass_grid[k];
                 particle_data->dust_surfacedensity[idx]   += m * (1.0 - x);
                 particle_data->dust_surfacedensity[idx+1] += m * x;
             }
             if (is_twopop) {
-                int idx_m = (int)floor(rel_pos_mic);
-                double x_m = rel_pos_mic - (double)idx_m;
+                double x_m;
+                int idx_m = findDustLeftCell(r_mic, disk_params, &x_m);
                 if (idx_m >= 0 && idx_m < grid_n - 1) {
                     double m_m = particle_data->massmicradial_grid[k];
                     particle_data->micron_dust_surfacedensity[idx_m]   += m_m * (1.0 - x_m);
@@ -277,16 +324,19 @@ void calculateDustSurfaceDensity(const ParticleData *particle_data,
         free(tmp_cm); free(tmp_mic);
     }
     else if (simulation_options->dust_smoothing_mode == 3) { // Gaussian
-        double sigma = simulation_options->gaussian_sigma * disk_params->delta_r;
-        int cutoff_cells = (int)(simulation_options->gaussian_cutoff * sigma / disk_params->delta_r);
         double *tmp_cm = calloc(grid_n, sizeof(double));
         double *tmp_mic = calloc(grid_n, sizeof(double));
         for (i = 0; i < grid_n; i++) {
+            double center_radius = disk_params->radial_grid[i + 1];
+            double local_dr = disk_params->radial_grid[i + 2] - center_radius;
+            double sigma = simulation_options->gaussian_sigma * local_dr;
+            double cutoff_radius = simulation_options->gaussian_cutoff * sigma;
             double sum_w = 0.0, s_cm = 0.0, s_mic = 0.0;
-            for (int j = i - cutoff_cells; j <= i + cutoff_cells; j++) {
-                if (j < 0 || j >= grid_n) continue;
-                double dr = fabs(disk_params->radial_grid[j] - disk_params->radial_grid[i]);
-                double w = exp(-(dr * dr) / (2.0 * sigma * sigma));
+            for (int j = 0; j < grid_n; j++) {
+                double radial_distance = fabs(disk_params->radial_grid[j + 1] - center_radius);
+                if (radial_distance > cutoff_radius) continue;
+                double w = exp(-(radial_distance * radial_distance) /
+                               (2.0 * sigma * sigma));
                 s_cm += w * particle_data->dust_surfacedensity[j];
                 if (is_twopop) s_mic += w * particle_data->micron_dust_surfacedensity[j];
                 sum_w += w;
@@ -303,8 +353,9 @@ void calculateDustSurfaceDensity(const ParticleData *particle_data,
 
     // 4. Normalization and Density Floor
     for (i = 0; i < grid_n; i++) {
-        double r_i = disk_params->radial_grid[i];
-        double area = 2.0 * M_PI * r_i * disk_params->delta_r;
+        double r_i = disk_params->radial_grid[i + 1];
+        double local_dr = disk_params->radial_grid[i + 2] - disk_params->radial_grid[i + 1];
+        double area = 2.0 * M_PI * r_i * local_dr;
 
         // Perform normalization only if area is valid
         if (area > 1e-20) {

@@ -46,6 +46,8 @@ plot_photoev_massloss.py
 plot_photoevaporation_test.py
 *.png
 
+plot_out*.py
+
 calculate_*.py
 sig.py
 
