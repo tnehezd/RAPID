@@ -51,6 +51,8 @@ plot_out*.py
 calculate_*.py
 sig.py
 
+Photoevaporation_O*/
+
 notebooks/mass*/mass*/config/
 notebooks/mass*/mass*/LOGS/sigma*.dat
 notebooks/ring*/ring*/config/

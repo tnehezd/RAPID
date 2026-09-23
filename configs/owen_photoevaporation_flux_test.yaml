@@ -24,7 +24,7 @@ disk_parameters:
 
 
 boundary_conditions:
-  inner_boundary_condition: "free_outflow"  # Original BC_IN == 5 diode/free-outflow
+  inner_boundary_condition: "zero_gradient" # Reference BC_IN == 1
   outer_boundary_condition: "zero_gradient"     # Options: "zero_gradient", "parabolic", "fixed_flux", "absorbing", "reflecting", "linear_extrapolation"
 
 output_parameters:

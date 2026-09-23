@@ -10,6 +10,8 @@
 #include "simulation_core.h"
 #include "print_panels.h"
 #include "print_terminal.h"
+#include "boundary_conditions.h"
+#include "utils.h"
 
 static void writeSigmaProfile(const DiskParameters *dp,
                               const SimulationOptions *opt,
@@ -30,6 +32,37 @@ static void writeSigmaProfile(const DiskParameters *dp,
         fclose(prof_fp);
     }
     free(prof_path);
+}
+
+static void syncSigmaFromViscousState(DiskParameters *dp,
+                                      const double *viscous_sigma)
+{
+    for (int i = 1; i <= dp->grid_number; i++) {
+        double viscosity = calculateKinematicViscosity(dp->radial_grid[i], dp);
+        double sigma = viscous_sigma[i] / viscosity;
+        dp->gas_surface_density_vector[i] =
+            (sigma < dp->density_floor) ? dp->density_floor : sigma;
+    }
+}
+
+static double viscousSigmaOperator(const DiskParameters *dp,
+                                   const double *viscous_sigma,
+                                   int i)
+{
+    double left_dr = dp->radial_grid[i] - dp->radial_grid[i - 1];
+    double right_dr = dp->radial_grid[i + 1] - dp->radial_grid[i];
+    double span_dr = left_dr + right_dr;
+    double first_derivative = (viscous_sigma[i + 1] - viscous_sigma[i - 1]) /
+                              span_dr;
+    double second_derivative = 2.0 *
+        (viscous_sigma[i - 1] / (left_dr * span_dr) -
+         viscous_sigma[i] / (left_dr * right_dr) +
+         viscous_sigma[i + 1] / (right_dr * span_dr));
+
+    return ftcsSecondDerivativeCoefficient(dp->radial_grid[i], dp) *
+               second_derivative +
+           ftcsFirstDerivativeCoefficient(dp->radial_grid[i], dp) *
+               first_derivative;
 }
 
 void runPhotoevapFluxTest(DiskParameters *dp, SimulationOptions *opt)
@@ -63,11 +96,23 @@ void runPhotoevapFluxTest(DiskParameters *dp, SimulationOptions *opt)
 
     double integrated_mass_loss = 0.0;
 
+    double viscous_sigma[dp->grid_number + 2];
+    double viscous_sigma_next[dp->grid_number + 2];
+    for (int i = 0; i <= dp->grid_number + 1; i++) {
+        viscous_sigma[i] = dp->gas_surface_density_vector[i] *
+                           calculateKinematicViscosity(dp->radial_grid[i], dp);
+    }
+    opt->current_bc_target = 0;
+    applyBoundaryConditions(viscous_sigma, dp, opt);
+    syncSigmaFromViscousState(dp, viscous_sigma);
+
     // Save the untouched initial condition before the first evolution step.
     writeSigmaProfile(dp, opt, output_time);
     output_time += interval;
 
     while (current_time < target_time) {
+
+        syncSigmaFromViscousState(dp, viscous_sigma);
 
         // --- Compute photoevap sink ---
         computePhotoevaporationSink(dp);
@@ -80,13 +125,21 @@ void runPhotoevapFluxTest(DiskParameters *dp, SimulationOptions *opt)
                                   (dp->radial_grid[i + 1] - dp->radial_grid[i]);
         }
 
-        // --- Update gas surface density ---
+        // Evolve viscous_sigma = nu*Sigma, including the photoevaporation sink.
         for (int i = 1; i <= dp->grid_number; i++) {
-
-            dp->gas_surface_density_vector[i] -= dt * dp->sigma_dot_photoevap[i];
-            if (dp->gas_surface_density_vector[i] < dp->density_floor)
-                dp->gas_surface_density_vector[i] = dp->density_floor;
+            double viscosity = calculateKinematicViscosity(dp->radial_grid[i], dp);
+            viscous_sigma_next[i] = viscous_sigma[i] + dt *
+                (viscousSigmaOperator(dp, viscous_sigma, i) -
+                 viscosity * dp->sigma_dot_photoevap[i]);
         }
+
+        for (int i = 1; i <= dp->grid_number; i++) {
+            viscous_sigma[i] = viscous_sigma_next[i];
+        }
+
+        opt->current_bc_target = 0;
+        applyBoundaryConditions(viscous_sigma, dp, opt);
+        syncSigmaFromViscousState(dp, viscous_sigma);
 
         // --- Compute new disk mass ---
         double current_mass = 0.0;
