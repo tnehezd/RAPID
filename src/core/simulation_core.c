@@ -107,18 +107,19 @@ double calculateTimeStep(const DiskParameters *disk_params, double max_drift_v) 
             viscous_dt = local_dt;
         }
 
-/*        if (disk_params->enable_photoevaporation && disk_params->sigma_dot_photoevap != NULL) {
+        if (disk_params->enable_photoevaporation && disk_params->sigma_dot_photoevap != NULL) {
             double sigma = disk_params->gas_surface_density_vector[i];
             double sigma_dot = disk_params->sigma_dot_photoevap[i];
             
-            if (sigma_dot > 1e-20 && sigma > WIND_CRIT) {
+            if (sigma_dot > 1e-20 && sigma > disk_params->density_floor) {
                 double cell_photo_dt = 0.15 * (sigma / sigma_dot);
                 if (cell_photo_dt < min_photo_dt) {
                     min_photo_dt = cell_photo_dt;
                 }
             }
         }
-            */
+            
+
     }
 
     // 2. Dust Drift CFL condition (The "Brake" you wanted)

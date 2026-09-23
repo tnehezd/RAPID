@@ -86,7 +86,7 @@ void applyBoundaryConditions(double *v,
         case 2: applyFixedFluxInner(v, dp); break;
         case 3: applyAbsorbingInner(v, dp); break;
         case 4: applyReflectingInner(v, dp); break;
-        case 5: applyFreeOutflowInner(v, dp); break;
+//        case 5: applyFreeOutflowInner(v, dp); break;
         default: applyZeroGradientInner(v, dp); break;
     }
 
@@ -138,7 +138,7 @@ void applyReflectingInner(double *v, const DiskParameters *dp)
     v[0] = v[2];
 }
 
-void applyFreeOutflowInner(double *v, const DiskParameters *dp)
+/*void applyFreeOutflowInner(double *v, const DiskParameters *dp)
 {
     (void)dp;
     if (v[1] < v[2]) {
@@ -146,7 +146,7 @@ void applyFreeOutflowInner(double *v, const DiskParameters *dp)
     } else {
         v[0] = 2.0 * v[1] - v[2];
     }
-}
+}*/
 
 
 /************************************************************

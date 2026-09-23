@@ -458,7 +458,7 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
                 else if (strcmp(argv[i], "fixed_flux") == 0)            opt->inner_boundary_condition_type = 2;
                 else if (strcmp(argv[i], "absorbing") == 0)             opt->inner_boundary_condition_type = 3;
                 else if (strcmp(argv[i], "reflecting") == 0)            opt->inner_boundary_condition_type = 4;
-                else if (strcmp(argv[i], "free_outflow") == 0)          opt->inner_boundary_condition_type = 5;
+//                else if (strcmp(argv[i], "free_outflow") == 0)          opt->inner_boundary_condition_type = 5;
                 else {
                     LOG_ERROR("Unknown inner BC '%s'.\n", argv[i]);
                     return 1;

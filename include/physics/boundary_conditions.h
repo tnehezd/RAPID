@@ -157,7 +157,7 @@ void applyParabolicInner(double *v, const DiskParameters *dp);
 void applyFixedFluxInner(double *v, const DiskParameters *dp);
 void applyAbsorbingInner(double *v, const DiskParameters *dp);
 void applyReflectingInner(double *v, const DiskParameters *dp);
-void applyFreeOutflowInner(double *v, const DiskParameters *dp);
+//void applyFreeOutflowInner(double *v, const DiskParameters *dp);
 
 /* OUTER BCs */
 void applyZeroGradientOuter(double *v, const DiskParameters *dp);
