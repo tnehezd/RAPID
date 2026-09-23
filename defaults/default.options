@@ -54,6 +54,11 @@ Number of grid points
   YAML:      number_of_grid_points
   Default:   2000
 
+Radial grid type
+  CLI:      -grid_type <linear|logarithmic>
+  YAML:     radial_grid_type
+  Default:  linear
+
 Inner radius (AU)
   CLI:       -ri <val>
   YAML:      inner_radius_au

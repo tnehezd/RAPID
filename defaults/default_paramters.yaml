@@ -62,6 +62,10 @@ disk_parameters:
   # Number of radial grid cells.
   # CLI: -n
 
+  radial_grid_type: logarithmic
+  # Type of radial grid: "linear" or "logarithmic".
+  # CLI: -grid_type
+
   inner_radius_au: 1.0
   # Inner boundary of the disk (AU).
   # CLI: -ri
