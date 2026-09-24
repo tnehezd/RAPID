@@ -119,8 +119,8 @@ void calculateGasRadialVelocity(DiskParameters *disk_params) {
 void refreshGasSurfaceDensityPressurePressureGradient(SimulationOptions *sim_opts, DiskParameters *disk_params) { 
 
     double gas_sigma_dot_viscosity, gas_sigma_dot_viscosity_backwards, gas_sigma_dot_viscosity_forward;
+    double gas_surface_density_temp[disk_params->grid_number + 2];
     double gas_velocity_array[disk_params->grid_number + 2]; 
-    double viscous_sigma_temp[disk_params->grid_number + 2];
     double dt = sim_opts->user_defined_time_step; // dt is in [years]
 
     int i;
@@ -128,9 +128,6 @@ void refreshGasSurfaceDensityPressurePressureGradient(SimulationOptions *sim_opt
     // Boundary ghost cells setup for the viscous flux array (\Sigma * \nu)
     gas_velocity_array[0] = disk_params->gas_surface_density_vector[0] * calculateKinematicViscosity(disk_params->radial_grid[0], disk_params); 
     gas_velocity_array[disk_params->grid_number + 1] = disk_params->gas_surface_density_vector[disk_params->grid_number + 1] * calculateKinematicViscosity(disk_params->radial_grid[disk_params->grid_number + 1], disk_params); 
-    viscous_sigma_temp[0] = gas_velocity_array[0];
-    viscous_sigma_temp[disk_params->grid_number + 1] = gas_velocity_array[disk_params->grid_number + 1];
-    
     #pragma omp parallel for
     for(i = 1; i <= disk_params->grid_number; i++) { 
         gas_velocity_array[i] = disk_params->gas_surface_density_vector[i] * calculateKinematicViscosity(disk_params->radial_grid[i], disk_params); 
@@ -158,9 +155,10 @@ void refreshGasSurfaceDensityPressurePressureGradient(SimulationOptions *sim_opt
         double viscous_sigma_dot =
             ftcsSecondDerivativeCoefficient(disk_params->radial_grid[i], disk_params) * second_derivative +
             ftcsFirstDerivativeCoefficient(disk_params->radial_grid[i], disk_params) * first_derivative;
-        // Keep the evolved state as viscous_sigma = nu * Sigma.
-        viscous_sigma_temp[i] = gas_velocity_array[i] +
-                    dt * viscous_sigma_dot;
+
+        // Preserve the original Sigma update used by the working scheme.
+        gas_surface_density_temp[i] = disk_params->gas_surface_density_vector[i] +
+                                      dt * viscous_sigma_dot;
     }
 
     // =========================================================================
@@ -174,21 +172,19 @@ void refreshGasSurfaceDensityPressurePressureGradient(SimulationOptions *sim_opt
     // 3. APPLY BOTH VISCOUS EVOLUTION AND PHOTOEVAPORATION LOSS COHERENTLY
     // =========================================================================
     for (i = 1; i <= disk_params->grid_number; i++) { 
-        double local_viscosity = calculateKinematicViscosity(disk_params->radial_grid[i], disk_params);
-        viscous_sigma_temp[i] -= dt * local_viscosity * disk_params->sigma_dot_photoevap[i];
-        if (viscous_sigma_temp[i] < local_viscosity * disk_params->density_floor) {
-            viscous_sigma_temp[i] = local_viscosity * disk_params->density_floor;
+        gas_surface_density_temp[i] -= dt * disk_params->sigma_dot_photoevap[i];
+        if (gas_surface_density_temp[i] < disk_params->density_floor) {
+            gas_surface_density_temp[i] = disk_params->density_floor;
         }
     }
 
-    // Apply the configured gas boundary to the evolved nu*Sigma state.
+    // Boundary conditions are defined for the physical surface density Sigma.
     sim_opts->current_bc_target = 0;
-    applyBoundaryConditions(viscous_sigma_temp, disk_params, sim_opts);
+    applyBoundaryConditions(gas_surface_density_temp, disk_params, sim_opts);
 
-    // Convert the evolved viscous state back to physical surface density.
+    // Commit the physical surface-density state and update gas pressure.
     for (i = 1; i <= disk_params->grid_number; i++) {
-        double local_viscosity = calculateKinematicViscosity(disk_params->radial_grid[i], disk_params);
-        disk_params->gas_surface_density_vector[i] = viscous_sigma_temp[i] / local_viscosity;
+        disk_params->gas_surface_density_vector[i] = gas_surface_density_temp[i];
 
         // Calculate the updated pressure vector using the synchronized density
         disk_params->gas_pressure_vector[i] = calculateGasPressure(disk_params->gas_surface_density_vector[i], disk_params->radial_grid[i], disk_params);

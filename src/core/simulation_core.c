@@ -459,7 +459,7 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
         static double dt_old = 0.0;
 
         double max_drift_velocity = getMaximumDriftVelocity(&particle_data, particle_number, disk_params, mode);        
-        double dt_new = calculateTimeStep(disk_params, max_drift_velocity);
+        double dt_new = calculateTimeStep(disk_params, max_drift_velocity)/5.0;
 
         if (dt_old == 0.0) dt_old = dt_new;
 
