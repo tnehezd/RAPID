@@ -46,19 +46,27 @@ ifeq ($(UNAME_S), Darwin)
               -L$(HDF5_HOME)/lib -lhdf5 -lhdf5_hl
 
 else
-    # Linux (Ubuntu) settings - use gcc/g++ for native OpenMP (libgomp) support
     CC = gcc
     CXX = g++
-    
-    CFLAGS = -Wall -Wextra -std=c99 -g -O0 $(INC_FLAGS) -D_GNU_SOURCE \
-             -I/usr/include/hdf5/serial -fopenmp
-             
-    CXXFLAGS = -Wall -Wextra -std=c++17 -g -O0 $(INC_FLAGS) \
-               -I/usr/include/hdf5/serial -fopenmp
-               
-    LDFLAGS = -lm -fopenmp \
-              -L/usr/lib/x86_64-linux-gnu/hdf5/serial -lhdf5 -lhdf5_hl
+
+    # Base flags
+    CFLAGS = -Wall -Wextra -std=c99 -g -O0 $(INC_FLAGS) -D_GNU_SOURCE -fopenmp
+    CXXFLAGS = -Wall -Wextra -std=c++17 -g -O0 $(INC_FLAGS) -fopenmp
+
+    # Optional HDF5 paths (user-provided)
+    ifdef HDF5_INCLUDE
+        CFLAGS += -I$(HDF5_INCLUDE)
+        CXXFLAGS += -I$(HDF5_INCLUDE)
+    endif
+
+    ifdef HDF5_LIB
+        LDFLAGS += -L$(HDF5_LIB)
+    endif
+
+    # Always link HDF5
+    LDFLAGS += -lm -fopenmp -lhdf5 -lhdf5_hl
 endif
+
 
 # Recursively find all .c files in the src direcotry
 # Find all .c files in src, but EXCLUDE python_interface.c
