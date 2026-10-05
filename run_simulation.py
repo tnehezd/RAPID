@@ -41,7 +41,7 @@ def run_c_program(executable_path, params, arg_mapping, verbosity_flag, disable_
     print(f"{prefix} The current command-line arguments are:\n {' '.join(cmd_args)}")
 
     current_env = os.environ.copy()
-    current_env["OMP_NUM_THREADS"] = "1"
+    #current_env["OMP_NUM_THREADS"] = "1"
     print(f"{prefix} Setting OMP_NUM_THREADS={current_env['OMP_NUM_THREADS']} for this run.")
     print(f"{prefix} Start running the binary ({executable_path}) at {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}...\n")
 
