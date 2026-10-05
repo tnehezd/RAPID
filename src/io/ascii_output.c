@@ -171,6 +171,23 @@ void loadGasSurfaceDensityFromFile(DiskParameters *disk_params, const char *disk
         }
     }
 
+    // Reconstruct ghost-cell radii after loading an active-grid profile.
+    // The outer viscous stencil uses radial_grid[N + 1] explicitly.
+    int N = disk_params->grid_number;
+    if (disk_params->logarithmic_radial_grid &&
+        disk_params->radial_grid[1] > 0.0 &&
+        disk_params->radial_grid[N] > disk_params->radial_grid[N - 1]) {
+        double ratio = disk_params->radial_grid[N] /
+                       disk_params->radial_grid[N - 1];
+        disk_params->radial_grid[0] = disk_params->radial_grid[1] / ratio;
+        disk_params->radial_grid[N + 1] = disk_params->radial_grid[N] * ratio;
+    } else {
+        double inner_dr = disk_params->radial_grid[2] - disk_params->radial_grid[1];
+        double outer_dr = disk_params->radial_grid[N] - disk_params->radial_grid[N - 1];
+        disk_params->radial_grid[0] = disk_params->radial_grid[1] - inner_dr;
+        disk_params->radial_grid[N + 1] = disk_params->radial_grid[N] + outer_dr;
+    }
+
     fclose(input_file);
 }
 

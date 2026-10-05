@@ -388,6 +388,50 @@ static void simulateGasOnlyStep(double *t, double deltat, double *output_time, D
     *t += deltat;
 }
 
+static void writeFinalSnapshot(double t, ParticleData *particle_data, int particle_number,
+                               DiskParameters *disk_params, SimulationOptions *sim_opts,
+                               OutputFiles *output_files, char *dens_name, char *dust_name,
+                               char *dust_name2, char *size_name, char *size_name2,
+                               SnapshotMode mode)
+{
+    double final_output_time = sim_opts->maximum_simulation_time;
+    double current_time_years = t / (2.0 * M_PI);
+
+    if (!isDustEnabled(mode) && sim_opts->output_format == OUTPUT_ASCII) {
+        char final_density_name[MAX_PATH_LEN];
+        snprintf(final_density_name, sizeof(final_density_name),
+                 "%s/%s/%s_%08d%s", sim_opts->output_dir_name,
+                 kLogFilesDirectory, kGasDensityProfileFilePrefix,
+                 (int)final_output_time, kFileNamesSuffix);
+
+        output_files->surface_file = fopen(final_density_name, "w");
+        if (!output_files->surface_file) {
+            LOG_ERROR("Could not open final gas snapshot %s for writing.\n",
+                      final_density_name);
+            return;
+        }
+
+        HeaderData gas_header_data = {
+            .current_time = current_time_years,
+            .is_initial_data = 0
+        };
+        printFileHeader(output_files->surface_file, FILE_TYPE_GAS_DENSITY,
+                        &gas_header_data);
+        printGasSurfaceDensityPressurePressureDerivateFile(disk_params,
+                                                            output_files);
+        fclose(output_files->surface_file);
+        output_files->surface_file = NULL;
+    } else if (sim_opts->output_format == OUTPUT_ASCII) {
+        handleSnapshotASCII(t, current_time_years, &final_output_time,
+                            particle_data, particle_number, disk_params, sim_opts,
+                            output_files, dens_name, dust_name, dust_name2,
+                            size_name, size_name2, mode);
+    } else {
+        handleSnapshotHDF5(final_output_time, sim_opts, output_files,
+                           disk_params, particle_data);
+    }
+}
+
 void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params, SimulationOptions *sim_opts, OutputFiles *output_files) {
     ParticleData particle_data;
     HeaderData header_data_for_files;     
@@ -454,6 +498,7 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
 
     static double last_snapshot_time = 0.0; // static, hogy megjegyezze két lépés között
     double snapshot_interval = sim_opts->output_frequency;
+    int final_snapshot_written = 0;
 
     do {
         static double dt_old = 0.0;
@@ -465,6 +510,12 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
 
         /* smoothing */
         double deltat = 0.7 * dt_old + 0.3 * dt_new;
+
+        // End exactly at tmax so the final snapshot represents the requested time.
+        double remaining_time = t_integration_in_internal_units - t;
+        if (remaining_time > 0.0 && deltat > remaining_time) {
+            deltat = remaining_time;
+        }
 
         dt_old = deltat;
 
@@ -479,6 +530,13 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
             simulateGasOnlyStep(&t, deltat, &output_time, disk_params, sim_opts, output_files, dens_name);
         }    
         step_counter++;
+
+        if (!final_snapshot_written && t >= t_integration_in_internal_units) {
+            writeFinalSnapshot(t, &particle_data, particle_number, disk_params,
+                               sim_opts, output_files, dens_name, dust_name,
+                               dust_name2, size_name, size_name2, mode);
+            final_snapshot_written = 1;
+        }
 
         // --- Calcualte mass in each step for termination ---
         current_disk_mass = 0.0;
