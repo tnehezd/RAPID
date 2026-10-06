@@ -7,7 +7,7 @@ import datetime
 prefix = "[PY-WRAPPER]"
 
 
-def run_c_program(executable_path, params, arg_mapping, verbosity_flag, disable_panels, program_name="C Program"):
+def run_c_program(executable_path, params, arg_mapping, verbosity_flag, disable_panels, program_name="C Program", omp_threads=None):
     """
     Runs a C program with the given parameters.
     """
@@ -41,7 +41,11 @@ def run_c_program(executable_path, params, arg_mapping, verbosity_flag, disable_
     print(f"{prefix} The current command-line arguments are:\n {' '.join(cmd_args)}")
 
     current_env = os.environ.copy()
-    #current_env["OMP_NUM_THREADS"] = "1"
+    current_env["OMP_NUM_THREADS"] = (
+        str(omp_threads)
+        if omp_threads is not None
+        else os.environ.get("OMP_NUM_THREADS", "1")
+    )
     print(f"{prefix} Setting OMP_NUM_THREADS={current_env['OMP_NUM_THREADS']} for this run.")
     print(f"{prefix} Start running the binary ({executable_path}) at {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}...\n")
 
@@ -105,6 +109,11 @@ def main():
     except yaml.YAMLError as exc:
         print(f"{prefix} Error parsing YAML file '{config_file}': {exc}")
         return
+
+    # --- OMP threads from YAML (optional) ---
+    omp_threads = full_config.get("simulation_parameters", {}).get("omp_num_threads", None)
+
+
 
     all_params = {}
 
@@ -227,7 +236,7 @@ def main():
     disable_panels = full_config.get("log_parameters", {}).get("disable_terminal_panels", False)
 
     # 3. Run
-    success, return_code = run_c_program(main_executable, all_params, c_arg_mapping, verbosity_flag, disable_panels, "Main Simulation Program")
+    success, return_code = run_c_program(main_executable, all_params, c_arg_mapping, verbosity_flag, disable_panels, "Main Simulation Program", omp_threads)
 
     if not success:
         print(f"{prefix} The C program exited with an error (error code: {return_code}) with the Python wrapper.")

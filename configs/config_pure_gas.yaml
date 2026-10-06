@@ -9,6 +9,7 @@ simulation_parameters:
   enable_gas_evolution: true        # Corresponds to 'evol' in C
   enable_two_dust_populations: false # Corresponds to 'twopop' in C
   enable_photoevaporation: false      #
+  omp_num_threads: 3                  # Number of OpenMP threads to use for parallel sections in the C program
 
   
 disk_parameters:
@@ -42,4 +43,4 @@ output_parameters:
 time_parameters:
   # Time Parameters
   total_simulation_time: 1e5       # Corresponds to 'totalTime' (-tmax)
-  output_write_frequency: 10     # Corresponds to 'outputFrequency' (-outfreq)
+  output_write_frequency: 10000     # Corresponds to 'outputFrequency' (-outfreq)
