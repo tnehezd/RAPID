@@ -6,7 +6,7 @@ simulation_parameters:
   enable_dust_growth: false           # Corresponds to 'growth' in C
   enable_gas_evolution: true        # Corresponds to 'evol' in C
   enable_two_dust_populations: false # Corresponds to 'twopop' in C
-  enable_photoevaporation: false      #
+  enable_photoevaporation: true      #
 
   
   
