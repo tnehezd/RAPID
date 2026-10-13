@@ -53,7 +53,24 @@ else
     CFLAGS = -Wall -Wextra -std=c99 -g -O0 $(INC_FLAGS) -D_GNU_SOURCE -fopenmp
     CXXFLAGS = -Wall -Wextra -std=c++17 -g -O0 $(INC_FLAGS) -fopenmp
 
-    # Optional HDF5 paths (user-provided)
+    # HDF5 discovery: user override > pkg-config > Ubuntu serial paths
+    ifndef HDF5_INCLUDE
+    ifndef HDF5_LIB
+        HDF5_PC_CFLAGS := $(shell pkg-config --cflags hdf5 2>/dev/null || pkg-config --cflags hdf5-serial 2>/dev/null)
+        HDF5_PC_LIBS := $(shell pkg-config --libs-only-L hdf5 2>/dev/null || pkg-config --libs-only-L hdf5-serial 2>/dev/null)
+        ifneq ($(strip $(HDF5_PC_CFLAGS)),)
+            CFLAGS += $(HDF5_PC_CFLAGS)
+            CXXFLAGS += $(HDF5_PC_CFLAGS)
+            LDFLAGS += $(HDF5_PC_LIBS)
+        else
+            ifneq ($(wildcard /usr/include/hdf5/serial/hdf5.h),)
+                HDF5_INCLUDE = /usr/include/hdf5/serial
+                HDF5_LIB = /usr/lib/$(shell $(CC) -dumpmachine)/hdf5/serial
+            endif
+        endif
+    endif
+    endif
+
     ifdef HDF5_INCLUDE
         CFLAGS += -I$(HDF5_INCLUDE)
         CXXFLAGS += -I$(HDF5_INCLUDE)
