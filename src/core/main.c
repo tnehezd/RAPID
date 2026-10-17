@@ -212,6 +212,8 @@ int main(int argc, const char **argv) {
 
     int dummy_sys_ret; 
     disk_params.sigma_dot_photoevap = NULL;
+    disk_params.selfgravity_omega2_extra = NULL;
+    disk_params.enable_selfgravity = def.enable_selfgravity;
 
     if (def.input_file != NULL && strcmp(def.input_file, "") != 0) {
         strncpy(current_inputsig_file, def.input_file, MAX_PATH_LEN - 1);
@@ -317,6 +319,7 @@ int main(int argc, const char **argv) {
     LOG_DEBUG("loadGasSurfaceDensityFromFile completed. Calling applyBoundaryConditions for disk_params.radial_grid and disk_params.gas_surface_density_vector...");
     sim_opts.current_bc_target = 0;
     applyBoundaryConditions(disk_params.gas_surface_density_vector, &disk_params, &sim_opts);
+    updateSelfGravity(&disk_params);
 
     if (sim_opts.test_mode == TEST_MODE_MASS_CONSERVATION || 
         sim_opts.test_mode == TEST_RING_VISCOSITY ||
@@ -374,6 +377,8 @@ int main(int argc, const char **argv) {
         if (disk_params.gas_pressure_gradient_vector) free(disk_params.gas_pressure_gradient_vector);
         if (disk_params.gas_velocity_vector) free(disk_params.gas_velocity_vector);
         if (disk_params.sigma_dot_photoevap) free(disk_params.sigma_dot_photoevap);
+        if (disk_params.selfgravity_omega2_extra) free(disk_params.selfgravity_omega2_extra);
+    if (disk_params.selfgravity_omega2_extra) free(disk_params.selfgravity_omega2_extra);
         
         free(current_inputsig_file);
         free(current_inputdust_file);
@@ -432,7 +437,7 @@ int main(int argc, const char **argv) {
 
         printHeader("STARTING MAIN SIMULATION LOOP...");
 
-        LOG_DEBUG("Disk evolution is ON (mode: %s). Starting main simulation loop.", snapshotModeToString(mode));
+        LOG_DEBUG("Disk evolution is ON (mode: %s). Starting main simulation loop.", snapshotModeLabel(mode, disk_params.enable_selfgravity));
         LOG_DEBUG("Calling timeIntegrationForTheSystem...");
         timeIntegrationForTheSystem(mode,&disk_params, &sim_opts, &output_files);
         LOG_DEBUG("timeIntegrationForTheSystem completed. Program finished normally.");
@@ -444,6 +449,7 @@ int main(int argc, const char **argv) {
     if (disk_params.gas_pressure_gradient_vector) free(disk_params.gas_pressure_gradient_vector);
     if (disk_params.gas_velocity_vector) free(disk_params.gas_velocity_vector);
     if (disk_params.sigma_dot_photoevap) free(disk_params.sigma_dot_photoevap);
+    if (disk_params.selfgravity_omega2_extra) free(disk_params.selfgravity_omega2_extra);
     LOG_DEBUG("Dynamically allocated disk arrays freed.");
     free(current_inputsig_file);
     free(current_inputdust_file);

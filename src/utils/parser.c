@@ -58,6 +58,7 @@ void createDefaultOptions(ParserOptions *opt) {
     opt->output_format                              = OUTPUT_ASCII;
     opt->test_mode                                  = TEST_MODE_NONE;
     opt->enable_photoevaporation                    = false;       // off by default
+    opt->enable_selfgravity                         = false;       // off by default
     strncpy(opt->photoevaporation_mode, "None", sizeof(opt->photoevaporation_mode) - 1);
     opt->photoevaporation_mode[sizeof(opt->photoevaporation_mode) - 1] = '\0';
     opt->xray_luminosity                            = 1.0e30;      // Standard X-ray luminosity [erg/s]
@@ -131,6 +132,7 @@ void printUsageToTerminal() {
     fprintf(stderr, "  -ascii                        Shortcut for --output-format ascii\n");
     fprintf(stderr, "  -hdf5                       Shortcut for --output-format hdf5\n");
     fprintf(stderr, "Photoevaporation options:\n");
+    fprintf(stderr, "  -selfgravity <0|1>  Include axisymmetric disk self-gravity in the rotation curve (default: 0 = false)\n");
     fprintf(stderr, "  -photoevap <0|1>  Enable/disable photoevaporation globally (default: 0 = false)\n");
     fprintf(stderr, "  -photoevap_mode <string>  Model selection: 'Owen' or 'Picogna' (default: 'None')\n");
     fprintf(stderr, "  -xray_lumosity <val>         Stellar X-ray luminosity in erg/s (default: 1.0e30)\n");
@@ -364,6 +366,12 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
             }
         }
 
+        else if (strcmp(argv[i], "-selfgravity") == 0) {
+            i++;
+            if (i < argc) {
+                opt->enable_selfgravity = (atoi(argv[i]) != 0);
+            } else { LOG_ERROR("Missing value for -selfgravity.\n"); return 1; }
+        }
         else if (strcmp(argv[i], "-photoevap") == 0) {
             i++;
             if (i < argc) {

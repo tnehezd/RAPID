@@ -135,6 +135,7 @@ def main():
         "enable_dust_growth": "growth",
         "enable_gas_evolution": "evol",
         "enable_photoevaporation": "photoevap",
+        "enable_selfgravity": "selfgravity",
         "enable_two_dust_populations": "twopop",
         "test_mode": "test_mode",  # <--- Hozzáadva a teszt módszerhez
 
@@ -198,7 +199,7 @@ def main():
     # C program argument mapping
     c_arg_mapping = {
         "drift": "-drift", "growth": "-growth", "evol": "-evol", "twopop": "-twopop",
-        "photoevap": "-photoevap", "test_mode": "-test",  # <--- Hozzáadva a --test argumentumhoz
+        "photoevap": "-photoevap", "selfgravity": "-selfgravity", "test_mode": "-test",  # <--- Hozzáadva a --test argumentumhoz
         "ngrid_val": "-n", "ndust_val": "-ndust", 
         "grid_type": "-grid_type",
         "rmin_val": "-ri", "rmax_val": "-ro",

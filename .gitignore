@@ -48,6 +48,7 @@ plot_convergence_compare.py
 *.png
 
 plot_out*.py
+plot_gas.py
 
 calculate_*.py
 sig.py

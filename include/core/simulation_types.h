@@ -80,6 +80,8 @@ typedef struct {
     double dust_density_floor;
     double *sink_photoevap;
     bool   enable_photoevaporation;       /**< Global switch to turn photoevaporation ON/OFF. */
+    bool   enable_selfgravity;            /**< Include axisymmetric disk self-gravity in the rotation curve. */
+    double *selfgravity_omega2_extra;     /**< Disk self-gravity contribution to Omega^2 at each grid point (NULL if unused). */
     char   photoevaporation_mode_string[32]; /**< Model selection: "Owen" or "Picogna" */
     double xray_luminosity;               /**< Stellar X-ray luminosity [erg/s]. */
     double gaussian_sigma;
@@ -252,6 +254,15 @@ SnapshotMode determineSnapshotMode(const SimulationOptions *sim_opts);
  * @return String representation of the mode.
  */
 const char* snapshotModeToString(SnapshotMode mode);
+
+/**
+ * @brief Like snapshotModeToString(), but appends " + SELF-GRAVITY" when self-gravity is enabled.
+ *
+ * @param mode Snapshot mode enumeration value.
+ * @param selfgravity_enabled Non-zero if disk self-gravity is active.
+ * @return String valid until the next call (static buffer, not thread-safe).
+ */
+const char* snapshotModeLabel(SnapshotMode mode, int selfgravity_enabled);
 
 /**
  * @struct PressureTrap

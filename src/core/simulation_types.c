@@ -1,4 +1,5 @@
 #include "simulation_types.h"
+#include <stdio.h>
 
 SnapshotMode determineSnapshotMode(const SimulationOptions *sim_opts) {
     // 1. Legelső ellenőrzés: Egyáltalán van-e evolúció?
@@ -39,4 +40,11 @@ const char* snapshotModeToString(SnapshotMode mode) {
         case SnapshotGrowthStaticGasTwoPop: return "DUST SIZE EVOLUTION IN STATIC GAS FOR TWOPOP";
         default:                            return "UNKNOWN";
     }
+}
+
+const char* snapshotModeLabel(SnapshotMode mode, int selfgravity_enabled) {
+    static char label[96];
+    snprintf(label, sizeof(label), "%s%s", snapshotModeToString(mode),
+             selfgravity_enabled ? " + SELF-GRAVITY" : "");
+    return label;
 }

@@ -4,7 +4,7 @@ This repository contains the source code for `RAPID` (Representative Approach fo
 
 The core of the code was originally written in C during my PhD between 2012 and 2015. It has since been restructured into a more modular form to improve its functionality and maintainability.
 
-#### ⚠️ 2.2.7 Version: Stable Structure – Ongoing Feature Development
+#### ⚠️ 2.3.0 Version: Stable Structure – Ongoing Feature Development
 
 The core structure of the codebase has now been finalized, and no further refactoring is planned. The architecture, naming conventions, and overall organization are stable and consistent with the [Coding Standard](CodingStandard.md).
 
@@ -56,6 +56,14 @@ python run_simulation.py
 Using command-line arguments:
 Alternatively, you can run the executable directly from the command line by specifying the parameters. A detailed list of all available command-line flags and their corresponding parameters will be provided here shortly.
 
+Gas profile snapshots (`LOGS/density_profile_*.dat`) write radius, surface density,
+pressure, and pressure gradient with 10 significant digits. Rebuild and rerun
+simulations to obtain this precision; existing snapshots are unchanged.
+
+Gas viscous evolution advances `nu * Sigma` and divides by the same local
+viscosity to recover `Sigma` before applying photoevaporation and the density
+floor. Results generated without this conversion must be rerun.
+
 ----
 ### References
 
@@ -99,4 +107,3 @@ primaryClass = {astro-ph.EP},
     year = {2026},
     bdsk-url-1 = {https://doi.org/10.1007/s10569-026-10278-2}}
 }
-

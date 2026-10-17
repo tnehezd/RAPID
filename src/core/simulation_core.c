@@ -563,7 +563,7 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
 
         // --- Diagnostic output ---
         if (step_counter % 10 == 0 || snapshot_done) {
-            const char *mode_str = snapshotModeToString(mode);
+            const char *mode_str = snapshotModeLabel(mode, disk_params->enable_selfgravity);
             printStatus(step_counter, deltat, current_time_years, t, output_time, mode_str, snapshot_done,
                         current_disk_mass, target_termination_mass, initial_disk_mass, last_snapshot_time, snapshot_interval, sim_opts);
         }

@@ -47,6 +47,13 @@ simulation_parameters:
   #   Enables photoevaporative mass-loss from the disk.
   # CLI flag: -photoevap <0|1>
 
+  enable_selfgravity: false
+  # Physical meaning:
+  #   Adds the axisymmetric (radial) self-gravity of the gas disk to the
+  #   rotation curve used for dust dynamics: Omega^2 = Omega_K^2 + g_sg/r.
+  #   The same Omega enters the sound speed (c_s = Omega*H), hence viscosity and pressure.
+  # CLI flag: -selfgravity <0|1>
+
   test_mode: none
   # Physical meaning:
   #   Activates internal benchmark modes (mass conservation, ring viscosity, etc.)

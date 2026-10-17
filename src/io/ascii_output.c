@@ -319,8 +319,11 @@ void printCurrentInformationAboutRun(const char *directory_name, const DiskParam
     fprintf(info_file, "  Inner BC:          %s\n", disk_params->inner_bc_string);
     fprintf(info_file, "  Outer BC:          %s\n\n", disk_params->outer_bc_string);
 
+    fprintf(info_file, "\n--- [ Self-gravity ] ---\n");
+    fprintf(info_file, "  Status:            %s\n\n", disk_params->enable_selfgravity ? "ENABLED" : "DISABLED");
+
     fprintf(info_file, "\n--- [ Photoevaporation ] ---\n");
-    if (strcmp(disk_params->photoevaporation_mode_string, "none") != 0) {
+    if (!disk_params->enable_photoevaporation) {
         fprintf(info_file, "  Mode:              DISABLED\n");
     } else {
         fprintf(info_file, "  Mode:              %s\n", disk_params->photoevaporation_mode_string);
@@ -383,7 +386,7 @@ void printGasSurfaceDensityPressurePressureDerivateFile(const DiskParameters *di
     }
 
     for(i = 1; i <= disk_params->grid_number; i++) { 
-        fprintf(output_files->surface_file, "%-5d %-15.6e %-15.6le %-15.6e %15.6e\n",i, disk_params->radial_grid[i], disk_params->gas_surface_density_vector[i], disk_params->gas_pressure_vector[i], disk_params->gas_pressure_gradient_vector[i]);
+        fprintf(output_files->surface_file, "%-5d %-18.9e %-18.9e %-18.9e %18.9e\n",i, disk_params->radial_grid[i], disk_params->gas_surface_density_vector[i], disk_params->gas_pressure_vector[i], disk_params->gas_pressure_gradient_vector[i]);
     }
 
     fflush(output_files->surface_file);
