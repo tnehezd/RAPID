@@ -122,7 +122,12 @@ typedef enum {
     FILE_TYPE_INTIIAL_DUST_PROFILE,     /**< Initial dust distribution profile. */
     FILE_TYPE_PARTICLE_SIZE,            /**< Dust particle size distribution file. */
     FILE_TYPE_MICRON_PARTICLE_SIZE,     /**< Micron-sized dust particle size distribution file. */
-    FILE_TYPE_DISK_PARAM                /**< Disk parameter summary file. */
+    FILE_TYPE_DISK_PARAM,               /**< Disk parameter summary file. */
+    FILE_TYPE_INITIAL_DRIFT_TIMESCALES, /**< Initial local radial drift timescales. */
+    FILE_TYPE_THERMAL_PROFILE,
+    FILE_TYPE_IRRADIATION_PROFILE,
+    FILE_TYPE_THERMAL_TIMESCALES,
+    FILE_TYPE_ENERGY_BUDGET
 } FileType_e;
 
 /**
@@ -134,6 +139,7 @@ typedef enum {
  * state at the time of writing.
  */
 typedef struct {
+    const DiskParameters *disk_params; /**< Optional thermal snapshot metadata. */
     double current_time;          /**< Current simulation time (in years or code units). */
     int    is_initial_data;       /**< Flag indicating whether this is initial-condition output. */
     double R_in;                  /**< Inner radius of the simulation domain. */
@@ -225,4 +231,3 @@ void printFinalSimulationSummary(const char *directory_name, double elapsed_seco
 void buildSnapshotFilenames(char *dens_name, char *dust_name, char *dust_name2, char *size_name, char *size_name2, const SimulationOptions *sim_opts, int snapshot_id, SnapshotMode mode);
 
 #endif // ASCII_OUTPUT_H
-

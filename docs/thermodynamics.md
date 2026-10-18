@@ -271,6 +271,15 @@ non-convergence remains an explicit error, never a locally isothermal fallback.
 
 ## Opacity and limitations
 
+Thermal ASCII diagnostics (`temperature_profile`, `irradiation_profile`,
+`thermal_timescales`, and `energy_budget`) use the shared RAPID header writer
+with version/build information, physical snapshot time, descriptive metadata,
+and aligned column labels and data. Column order, units, and 15-digit
+scientific precision are unchanged; all header lines begin with `#`.
+Readers should skip comment lines rather than assume a fixed header length.
+This formatting also applies to the ASCII diagnostics emitted during HDF5
+runs; it does not add HDF5 dataset attributes.
+
 The log-space opacity implementation uses smoothed Lin-Papaloizou power laws,
 cross-checked against the
 [FARGO-CPT Lin implementation](https://github.com/rometsch/fargocpt/blob/master/src/opacity.cpp).

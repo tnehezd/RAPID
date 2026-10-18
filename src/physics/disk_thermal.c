@@ -1,6 +1,7 @@
 #include "disk_thermal.h"
 
 #include "config.h"
+#include "ascii_output.h"
 #include "boundary_conditions.h"
 #include "disk_model.h"
 #include "gas_physics.h"
@@ -132,10 +133,8 @@ static void writeThermalTimescales(const DiskParameters *disk, const SimulationO
     double cv = BOLTZMANN_CONSTANT_CGS /
         (disk->thermal_mean_molecular_weight * HYDROGEN_MASS_IN_GRAMS * (disk->thermal_gamma - 1.0));
     double year = YEARS_PER_DAY_CONVERSION_FACTOR * 86400.0;
-    fprintf(file, "# Thermal timescales at %.15g years; E in erg/cm^2, times in years\n", time_years);
-    fprintf(file, "# Zero time with flag=0 means undefined; relaxation holds Sigma, Omega, alpha, shear and irradiation fixed\n");
-    fprintf(file, "# dnet_dT = d(Qminus-Qplus)/dT; sign +1 restoring, -1 locally unstable, 0 neutral\n");
-    fprintf(file, "# r_AU E_area t_cool_yr cool_valid t_relax_yr restoring_sign dnet_dT\n");
+    HeaderData header = {.current_time = time_years};
+    printFileHeader(file, FILE_TYPE_THERMAL_TIMESCALES, &header);
     for (int i = 1; i <= disk->grid_number; ++i) {
         ThermalParameters parameters = cellThermalParameters(i, disk->gas_surface_density_vector[i], disk);
         const ThermalState *state = &disk->thermal_states[i];
@@ -161,7 +160,7 @@ static void writeThermalTimescales(const DiskParameters *disk, const SimulationO
             fclose(file);
             exit(EXIT_FAILURE);
         }
-        fprintf(file, "%.15e %.15e %.15e %d %.15e %d %.15e\n",
+        fprintf(file, "  %-23.15e %-23.15e %-23.15e %-23d %-23.15e %-23d %-23.15e\n",
                 disk->radial_grid[i], energy, cooling_time, state->cooling > 0.0,
                 relaxation_time, sign, derivative);
     }
@@ -333,12 +332,11 @@ static void writeIrradiationSnapshot(const DiskParameters *disk, const Simulatio
         LOG_ERROR("Could not open irradiation snapshot '%s'.\n", filename);
         exit(EXIT_FAILURE);
     }
-    fprintf(file, "# Geometric irradiation at %.15g years; chi=%.15g; R_star=%.15g R_sun\n",
-            time_years, disk->irradiation_surface_height, disk->irradiation_stellar_radius_rsun);
-    fprintf(file, "# r_AU surface_AU effective_factor visible_stellar_fraction Tirr_K\n");
+    HeaderData header = {.current_time = time_years, .disk_params = disk};
+    printFileHeader(file, FILE_TYPE_IRRADIATION_PROFILE, &header);
     for (int i = 1; i <= disk->grid_number; ++i) {
         const ThermalState *state = &disk->thermal_states[i];
-        fprintf(file, "%.15e %.15e %.15e %.15e %.15e\n", disk->radial_grid[i],
+        fprintf(file, "  %-25.15e %-25.15e %-25.15e %-25.15e %-25.15e\n", disk->radial_grid[i],
                 disk->irradiation_surface_height * state->scale_height / AU_IN_CM,
                 state->irradiation_factor, state->stellar_visibility, state->irradiation_temperature);
     }
@@ -366,18 +364,11 @@ void writeThermalSnapshot(const DiskParameters *disk, const SimulationOptions *o
         LOG_ERROR("Could not open thermal snapshot '%s'.\n", filename);
         exit(EXIT_FAILURE);
     }
-    fprintf(file, "# Radiative %s at %.15g years; SG=%s; gamma=%.15g\n",
-            disk->thermodynamics_model == THERMODYNAMICS_RADIATIVE_ENERGY ?
-            "energy evolution" : "equilibrium",
-            time_years, disk->enable_selfgravity ? "on" : "off", disk->thermal_gamma);
-    fprintf(file, "# Irradiation: L_star=%.15g L_sun; factor=%.15g; model=%s; "
-                  "Qminus is net of background and irradiation\n",
-            disk->irradiation_luminosity_lsun, disk->irradiation_factor,
-            disk->irradiation_model == IRRADIATION_GEOMETRY ? "geometry" : "prescribed");
-    fprintf(file, "# r_AU T_K H_over_r rho_g_cm3 nu_cm2_s kappa_cm2_g tau Qplus Qminus\n");
+    HeaderData header = {.current_time = time_years, .disk_params = disk};
+    printFileHeader(file, FILE_TYPE_THERMAL_PROFILE, &header);
     for (int i = 1; i <= disk->grid_number; ++i) {
         const ThermalState *state = &disk->thermal_states[i];
-        fprintf(file, "%.15e %.15e %.15e %.15e %.15e %.15e %.15e %.15e %.15e\n",
+        fprintf(file, "  %-23.15e %-23.15e %-23.15e %-23.15e %-23.15e %-23.15e %-23.15e %-23.15e %-23.15e\n",
                 disk->radial_grid[i], state->temperature,
                 state->scale_height / (disk->radial_grid[i] * AU_IN_CM),
                 state->midplane_density, state->viscosity, state->opacity,

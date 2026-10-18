@@ -622,6 +622,68 @@ void printFileHeader(FILE *file, FileType_e file_type, const HeaderData *header_
             fprintf(file, "#--------------------------------------------------------------------------\n");
             break;
 
+        case FILE_TYPE_INITIAL_DRIFT_TIMESCALES:
+            fprintf(file, "# Initial local radial dust-motion timescales at t=0; not integrated arrival times\n");
+            fprintf(file, "# Velocity includes pressure-driven drift and gas advection\n");
+            fprintf(file, "# Population: 1 primary, 2 micron; particle Index is zero-based\n");
+            fprintf(file, "# Direction: -1 inward (toward star), 0 stationary, +1 outward (away from star)\n");
+            fprintf(file, "# Drift_time_yr = Radius_AU / abs(V_radial_AU_yr); inf for stationary particles\n");
+            fprintf(file, "#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
+            fprintf(file, "# %-10s %-10s %-23s %-23s %-23s %-23s %-23s %-10s\n",
+                    "Population", "Index", "Radius_AU", "Particle_size_cm", "Stokes",
+                    "V_radial_AU_yr", "Drift_time_yr", "Direction");
+            fprintf(file, "#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
+            break;
+
+        case FILE_TYPE_THERMAL_PROFILE: {
+            const DiskParameters *disk = header_data->disk_params;
+            fprintf(file, "# Radiative %s at %.15g years; SG=%s; gamma=%.15g\n",
+                    disk->thermodynamics_model == THERMODYNAMICS_RADIATIVE_ENERGY ?
+                    "energy evolution" : "equilibrium", header_data->current_time,
+                    disk->enable_selfgravity ? "on" : "off", disk->thermal_gamma);
+            fprintf(file, "# Irradiation: L_star=%.15g L_sun; factor=%.15g; model=%s; "
+                          "Qminus is net of background and irradiation\n",
+                    disk->irradiation_luminosity_lsun, disk->irradiation_factor,
+                    disk->irradiation_model == IRRADIATION_GEOMETRY ? "geometry" : "prescribed");
+            fprintf(file, "# H/r and tau are dimensionless; rho, nu, kappa and Q are CGS\n");
+            fprintf(file, "#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
+            fprintf(file, "# %-23s %-23s %-23s %-23s %-23s %-23s %-23s %-23s %-23s\n",
+                    "r_AU", "T_K", "H_over_r", "rho_g_cm3", "nu_cm2_s", "kappa_cm2_g", "tau", "Qplus", "Qminus");
+            fprintf(file, "#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
+            break;
+        }
+        case FILE_TYPE_IRRADIATION_PROFILE: {
+            const DiskParameters *disk = header_data->disk_params;
+            fprintf(file, "# Geometric irradiation at %.15g years; chi=%.15g; R_star=%.15g R_sun\n",
+                    header_data->current_time, disk->irradiation_surface_height,
+                    disk->irradiation_stellar_radius_rsun);
+            fprintf(file, "#-----------------------------------------------------------------------------------------------------------------------\n");
+            fprintf(file, "# %-25s %-25s %-25s %-25s %-25s\n",
+                    "r_AU", "surface_AU", "effective_factor", "visible_stellar_fraction", "Tirr_K");
+            fprintf(file, "#-----------------------------------------------------------------------------------------------------------------------\n");
+            break;
+        }
+        case FILE_TYPE_THERMAL_TIMESCALES:
+            fprintf(file, "# Thermal timescales at %.15g years; E in erg/cm^2, times in years\n",
+                    header_data->current_time);
+            fprintf(file, "# Zero time with flag=0 means undefined; relaxation holds Sigma, Omega, alpha, shear and irradiation fixed\n");
+            fprintf(file, "# dnet_dT = d(Qminus-Qplus)/dT; sign +1 restoring, -1 locally unstable, 0 neutral\n");
+            fprintf(file, "#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
+            fprintf(file, "# %-23s %-23s %-23s %-23s %-23s %-23s %-23s\n",
+                    "r_AU", "E_area", "t_cool_yr", "cool_valid", "t_relax_yr", "restoring_sign", "dnet_dT");
+            fprintf(file, "#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
+            break;
+        case FILE_TYPE_ENERGY_BUDGET:
+            fprintf(file, "# Cumulative internal-energy budget at %.15g years; all energies in erg\n",
+                    header_data->current_time);
+            fprintf(file, "# Positive boundary/work add energy; cooling and wind are subtracted; cooling can be negative\n");
+            fprintf(file, "#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
+            fprintf(file, "# %-23s %-23s %-23s %-23s %-23s %-23s %-23s %-23s %-23s %-23s %-23s\n",
+                    "time_yr", "E_initial", "E_current", "heating", "cooling", "pressure_work",
+                    "boundary", "wind_loss", "floor_added", "residual", "relative_residual");
+            fprintf(file, "#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
+            break;
+
         case FILE_TYPE_DISK_PARAM:
             fprintf(file, "# Disk Parameters\n");
             fprintf(file, "#-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");

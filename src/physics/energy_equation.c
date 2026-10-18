@@ -1,4 +1,5 @@
 #include "disk_thermal.h"
+#include "ascii_output.h"
 
 #include "boundary_conditions.h"
 #include "config.h"
@@ -49,10 +50,9 @@ void writeEnergyBudget(const DiskParameters *disk, const SimulationOptions *opti
         disk->energy_budget.wind + disk->energy_budget.floor;
     double residual = total - initial - expected;
     double scale = fmax(fabs(initial), fabs(total));
-    fprintf(file, "# Cumulative internal-energy budget at %.15g years; all energies in erg\n", time_years);
-    fprintf(file, "# Positive boundary/work add energy; cooling and wind are subtracted; cooling can be negative\n");
-    fprintf(file, "# time_yr E_initial E_current heating cooling pressure_work boundary wind_loss floor_added residual relative_residual\n");
-    fprintf(file, "%.15e %.15e %.15e %.15e %.15e %.15e %.15e %.15e %.15e %.15e %.15e\n",
+    HeaderData header = {.current_time = time_years};
+    printFileHeader(file, FILE_TYPE_ENERGY_BUDGET, &header);
+    fprintf(file, "  %-23.15e %-23.15e %-23.15e %-23.15e %-23.15e %-23.15e %-23.15e %-23.15e %-23.15e %-23.15e %-23.15e\n",
             time_years, initial * conversion, total * conversion,
             disk->energy_budget.heating * conversion, disk->energy_budget.cooling * conversion,
             disk->energy_budget.work * conversion, disk->energy_budget.boundary * conversion,

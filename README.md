@@ -100,7 +100,8 @@ contention; use `--jobs 1` for isolated timing comparisons.
 
 ### Initial dust drift diagnostic
 
-Dust runs write `drift_timecale.dat` (historical filename retained) in the
+Dust runs write `drift_timecale.dat` (historical filename retained), with the
+standard RAPID version/build header and aligned numeric columns, in the
 output root, for both ASCII and HDF5 output. It contains the initial population
 and particle IDs, distance in AU, grain radius in cm, Stokes number, signed
 radial velocity in AU/year, local `r/abs(v_r)` in years, and direction

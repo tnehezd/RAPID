@@ -6,6 +6,7 @@
 #include "simulation_core.h" 
 #include "boundary_conditions.h"
 #include "integrator.h"
+#include "ascii_output.h"
 #include "utils.h"          
 #include <stdio.h>
 #include <stdlib.h>
@@ -405,10 +406,7 @@ void writeInitialDriftTimescales(const ParticleData *particles, int count,
         LOG_ERROR("Could not open initial drift timescales '%s'.\n", path);
         exit(EXIT_FAILURE);
     }
-    fprintf(file, "# Initial local radial dust-motion timescales at t=0; not integrated arrival times\n");
-    fprintf(file, "# Velocity includes pressure-driven drift and gas advection; outward is positive\n");
-    fprintf(file, "# t_drift=r/abs(v_r); inf at zero velocity; direction: -1 inward, 0 stationary, +1 outward\n");
-    fprintf(file, "# population particle_id r_AU size_cm Stokes v_r_AU_yr t_drift_yr direction\n");
+    printFileHeader(file, FILE_TYPE_INITIAL_DRIFT_TIMESCALES, NULL);
     int populations = options->option_for_dust_secondary_population == 1 ? 2 : 1;
     for (int population = 0; population < populations; ++population) {
         for (int i = 0; i < count; ++i) {
@@ -438,7 +436,7 @@ void writeInitialDriftTimescales(const ParticleData *particles, int count,
                 exit(EXIT_FAILURE);
             }
             double time = velocity == 0.0 ? INFINITY : radius / fabs(velocity);
-            fprintf(file, "%d %d %.15e %.15e %.15e %.15e %.15e %d\n",
+            fprintf(file, "  %-10d %-10d %-23.15e %-23.15e %-23.15e %-23.15e %-23.15e %-10d\n",
                     population + 1, i, radius, size * AU_IN_CM, stokes, velocity, time,
                     velocity > 0.0 ? 1 : (velocity < 0.0 ? -1 : 0));
         }
