@@ -22,6 +22,7 @@ typedef struct {
     double mean_molecular_weight; /* in hydrogen-atom masses */
     double background_temperature;
     double shear_parameter;       /* |d ln Omega/d ln r|; Keplerian = 1.5 */
+    double irradiation_temperature; /* prescribed effective irradiation T in K; 0 disables */
 } ThermalParameters;
 
 typedef struct {
@@ -41,7 +42,7 @@ typedef struct {
     double optical_depth;         /* midplane to one surface */
     double effective_optical_depth;
     double heating;               /* erg cm^-2 s^-1, both surfaces */
-    double cooling;               /* net of background, both surfaces */
+    double cooling;               /* net of background and irradiation, both surfaces */
     int iterations;
 } ThermalState;
 
@@ -59,7 +60,8 @@ ThermalStatus calculateThermalState(const ThermalParameters *parameters,
 ThermalSolverOptions defaultThermalSolverOptions(void);
 
 /* Solve cooling = heating within an explicit sign-changing bracket.
- * The lower bound is raised to T_bg. Multiple roots are not enumerated and
+ * The lower bound is raised to (T_bg^4 + T_irr^4)^(1/4).
+ * Multiple roots are not enumerated and
  * thermal stability is not inferred. State is unchanged on any failure. */
 ThermalStatus solveMidplaneTemperature(const ThermalParameters *parameters,
                                       const ThermalSolverOptions *options,

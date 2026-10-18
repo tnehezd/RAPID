@@ -32,6 +32,8 @@ void createDefaultOptions(ParserOptions *opt) {
     opt->thermodynamics_model = THERMODYNAMICS_LOCALLY_ISOTHERMAL;
     opt->thermal_mean_molecular_weight = 2.34;
     opt->thermal_background_temperature = 10.0;
+    opt->irradiation_luminosity_lsun = 0.0;
+    opt->irradiation_factor = 0.05;
     opt->thermal_solver_options = defaultThermalSolverOptions();
     opt->r_dze_i_val                                = 0.0;
     opt->r_dze_o_val                                = 0.0;
@@ -96,6 +98,8 @@ void printUsageToTerminal() {
     fprintf(stderr, "  -thermal_mu <val> Mean molecular weight in hydrogen masses (default: 2.34)\n");
     fprintf(stderr, "  -thermal_background <val> Background temperature in K (default: 10)\n");
     fprintf(stderr, "  -thermal_tmin <val> -thermal_tmax <val> Temperature bracket in K (default: 1, 1500)\n");
+    fprintf(stderr, "  -irradiation_luminosity <val> Stellar luminosity in L_sun (default: 0, off)\n");
+    fprintf(stderr, "  -irradiation_factor <val> Effective irradiation factor in [0,1] (default: 0.05)\n");
     fprintf(stderr, "Time parameters:\n");
     fprintf(stderr, "  -tStep <val>   Fixed time step (default: 0.0)\n");
     fprintf(stderr, "  -tmax <val>    Total simulation time (default: 1.0e6)\n");
@@ -209,7 +213,24 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
             else if (strcmp(flag, "-thermal_tmin") == 0) opt->thermal_solver_options.minimum_temperature = value;
             else opt->thermal_solver_options.maximum_temperature = value;
         }
-        else if(strcmp(argv[i], "-drift") == 0) {
+        else if (strcmp(argv[i], "-irradiation_luminosity") == 0 ||
+                 strcmp(argv[i], "-irradiation_factor") == 0) {
+            const char *flag = argv[i];
+            if (++i >= argc) { LOG_ERROR("Missing value for %s.\n", flag); return 1; }
+            char *end;
+            double value = strtod(argv[i], &end);
+            if (end == argv[i] || *end != '\0' || !isfinite(value) || value < 0.0 ||
+                (strcmp(flag, "-irradiation_factor") == 0 && value > 1.0)) {
+                LOG_ERROR("Invalid irradiation value for %s: '%s'.\n", flag, argv[i]);
+                return 1;
+            }
+            if (strcmp(flag, "-irradiation_luminosity") == 0) {
+                opt->irradiation_luminosity_lsun = value;
+            } else {
+                opt->irradiation_factor = value;
+            }
+        }
+        else if (strcmp(argv[i], "-drift") == 0) {
             i++;
             if (i < argc) opt->option_for_dust_drift = atof(argv[i]); else { LOG_ERROR("Missing value for -drift.\n"); return 1; }
         }
@@ -548,6 +569,10 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
 
 
     // --- CRITICAL CONFLICT RESOLUTION GUARD ---
+    if (opt->thermodynamics_model == THERMODYNAMICS_LOCALLY_ISOTHERMAL &&
+        opt->irradiation_luminosity_lsun > 0.0) {
+        LOG_WARN("Stellar irradiation is inactive in locally isothermal mode.");
+    }
     if (opt->thermal_solver_options.maximum_temperature >= 1e9 ||
         opt->thermal_solver_options.maximum_temperature <= opt->thermal_solver_options.minimum_temperature ||
         opt->thermal_background_temperature > opt->thermal_solver_options.maximum_temperature) {

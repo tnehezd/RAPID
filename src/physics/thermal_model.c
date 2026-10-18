@@ -84,7 +84,17 @@ static int validParameters(const ThermalParameters *parameters)
            isfinite(parameters->mean_molecular_weight) && parameters->mean_molecular_weight > 0.0 &&
            isfinite(parameters->shear_parameter) && parameters->shear_parameter >= 0.0 &&
            isfinite(parameters->background_temperature) && parameters->background_temperature > 0.0 &&
-           parameters->background_temperature < 1e9;
+           parameters->background_temperature < 1e9 &&
+           isfinite(parameters->irradiation_temperature) &&
+           parameters->irradiation_temperature >= 0.0 &&
+           parameters->irradiation_temperature < 1e9;
+}
+
+static double radiationTemperature(const ThermalParameters *parameters)
+{
+    if (parameters->irradiation_temperature == 0.0) return parameters->background_temperature;
+    return sqrt(hypot(parameters->background_temperature * parameters->background_temperature,
+                      parameters->irradiation_temperature * parameters->irradiation_temperature));
 }
 
 ThermalStatus calculateThermalState(const ThermalParameters *parameters,
@@ -120,8 +130,8 @@ ThermalStatus calculateThermalState(const ThermalParameters *parameters,
     value.heating = parameters->shear_parameter * parameters->shear_parameter *
                     value.viscosity * parameters->surface_density *
                     parameters->orbital_frequency * parameters->orbital_frequency;
-    double background = parameters->background_temperature;
-    /* Factored T^4 - T_bg^4 avoids cancellation near the background limit. */
+    double background = radiationTemperature(parameters);
+    /* Factored T^4 - T_rad^4 avoids cancellation near the irradiation floor. */
     value.cooling = 2.0 * kStefanBoltzmann * (temperature - background) *
                     (temperature + background) *
                     (temperature * temperature + background * background) /
@@ -163,7 +173,7 @@ ThermalStatus solveMidplaneTemperature(const ThermalParameters *parameters,
         return THERMAL_INVALID_INPUT;
     }
 
-    double lower = fmax(options->minimum_temperature, parameters->background_temperature);
+    double lower = fmax(options->minimum_temperature, radiationTemperature(parameters));
     double upper = options->maximum_temperature;
     if (lower > upper) {
         return THERMAL_NOT_BRACKETED;

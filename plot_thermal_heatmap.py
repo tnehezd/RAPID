@@ -100,7 +100,7 @@ def plot_heatmaps(run, linthresh=1e-12):
             norm = SymLogNorm(linthresh=linthresh, vmin=-limit, vmax=limit, base=10)
             cmap = "RdBu_r"
         elif index in (2, 8):
-            norm = Normalize(vmin=-2.0, vmax=2.0, clip=True)
+            norm = Normalize(vmin=-0.1, vmax=0.1, clip=True)
             cmap = "RdBu_r"
         elif index in (6, 7):
             norm = flux_norm

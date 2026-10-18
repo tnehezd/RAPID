@@ -231,7 +231,7 @@ void refreshGasSurfaceDensityPressurePressureGradient(SimulationOptions *sim_opt
 
     // Boundary conditions are defined for the physical surface density Sigma.
     sim_opts->current_bc_target = 0;
-    applyBoundaryConditions(gas_surface_density_temp, disk_params, sim_opts);
+    applySurfaceDensityBoundaryConditions(gas_surface_density_temp, disk_params, sim_opts);
 
     if (disk_params->thermodynamics_model == THERMODYNAMICS_RADIATIVE) {
         for (i = 0; i <= disk_params->grid_number + 1; ++i) {

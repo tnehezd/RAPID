@@ -134,6 +134,8 @@ int main(int argc, const char **argv) {
     disk_params.thermodynamics_model = def.thermodynamics_model;
     disk_params.thermal_mean_molecular_weight = def.thermal_mean_molecular_weight;
     disk_params.thermal_background_temperature = def.thermal_background_temperature;
+    disk_params.irradiation_luminosity_lsun = def.irradiation_luminosity_lsun;
+    disk_params.irradiation_factor = def.irradiation_factor;
     disk_params.thermal_solver_options = def.thermal_solver_options;
     disk_params.r_dze_i = def.r_dze_i_val;
     disk_params.r_dze_o = def.r_dze_o_val;
@@ -329,13 +331,9 @@ int main(int argc, const char **argv) {
     loadGasSurfaceDensityFromFile(&disk_params, current_inputsig_file); 
     LOG_DEBUG("loadGasSurfaceDensityFromFile completed. Calling applyBoundaryConditions for disk_params.radial_grid and disk_params.gas_surface_density_vector...");
     sim_opts.current_bc_target = 0;
-    applyBoundaryConditions(disk_params.gas_surface_density_vector, &disk_params, &sim_opts);
+    applySurfaceDensityBoundaryConditions(disk_params.gas_surface_density_vector, &disk_params, &sim_opts);
     if (disk_params.thermodynamics_model == THERMODYNAMICS_RADIATIVE) {
         refreshRadiativeDisk(&disk_params, &sim_opts);
-        MSG("Thermodynamics: radiative equilibrium; mu=%.6g, T_bg=%.6g K, SG=%s\n",
-            disk_params.thermal_mean_molecular_weight,
-            disk_params.thermal_background_temperature,
-            disk_params.enable_selfgravity ? "on" : "off");
         writeThermalSnapshot(&disk_params, &sim_opts, 0.0, 0.0);
     } else {
         updateSelfGravity(&disk_params);
@@ -425,6 +423,8 @@ int main(int argc, const char **argv) {
     // --- PRINT COMPREHENSIVE RUN STATUS INFO PANEL ---
     printRunConfigurationHeader(&def, &disk_params);
     printBoundaryConditionsStatus(&disk_params);
+    printThermodynamicsStatus(&disk_params);
+    printSelfGravityStatus(&disk_params);
     printDustSmoothingStatus(&sim_opts, &disk_params);
 
     if(mode == SnapshotNonevolving) {

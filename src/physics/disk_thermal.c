@@ -139,6 +139,13 @@ void refreshRadiativeDisk(DiskParameters *disk, SimulationOptions *options)
                 .background_temperature = disk->thermal_background_temperature,
                 .shear_parameter = shearParameter(i, disk)
             };
+            if (disk->irradiation_luminosity_lsun > 0.0 && disk->irradiation_factor > 0.0) {
+                double radius_cm = disk->radial_grid[i] * AU_IN_CM;
+                parameters.irradiation_temperature = exp(0.25 * (
+                    log(disk->irradiation_luminosity_lsun) + log(3.828e33) +
+                    log(disk->irradiation_factor) - log(4.0 * M_PI * 5.670374419e-5) -
+                    2.0 * log(radius_cm)));
+            }
             ThermalStatus status = solveMidplaneTemperature(
                 &parameters, &disk->thermal_solver_options, &next[i]);
             if (status != THERMAL_SUCCESS) {
@@ -190,6 +197,9 @@ void writeThermalSnapshot(const DiskParameters *disk, const SimulationOptions *o
     }
     fprintf(file, "# Radiative equilibrium at %.15g years; SG=%s\n",
             time_years, disk->enable_selfgravity ? "on" : "off");
+    fprintf(file, "# Irradiation: L_star=%.15g L_sun; factor=%.15g; "
+                  "Qminus is net of background and prescribed irradiation\n",
+            disk->irradiation_luminosity_lsun, disk->irradiation_factor);
     fprintf(file, "# r_AU T_K H_over_r rho_g_cm3 nu_cm2_s kappa_cm2_g tau Qplus Qminus\n");
     for (int i = 1; i <= disk->grid_number; ++i) {
         const ThermalState *state = &disk->thermal_states[i];

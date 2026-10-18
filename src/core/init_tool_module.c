@@ -259,7 +259,7 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
         disk_params->gas_surface_density_vector[i] = (double)calculateGasSurfaceDensityInitTool(disk_params->radial_grid[i], default_options, current_sigma0_gas);
     }
     sim_opts->current_bc_target = 0;
-    applyBoundaryConditions(disk_params->gas_surface_density_vector, disk_params, sim_opts);
+    applySurfaceDensityBoundaryConditions(disk_params->gas_surface_density_vector, disk_params, sim_opts);
 
     refreshRadiativeDisk(disk_params, sim_opts);
     createInitialGasPressure(disk_params,sim_opts);

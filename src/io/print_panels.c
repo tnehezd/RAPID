@@ -92,6 +92,54 @@ void printBoundaryConditionsStatus(const DiskParameters *disk_params) {
     printLine();
 }
 
+void printThermodynamicsStatus(const DiskParameters *disk_params) {
+    printHeader("THERMODYNAMICS");
+    if (disk_params->thermodynamics_model == THERMODYNAMICS_RADIATIVE) {
+        fprintf(stderr, "   MODEL:          [Radiative equilibrium]\n");
+        fprintf(stderr, "   RESPONSE:       [Instantaneous; no energy evolution]\n");
+        fprintf(stderr, "   HEATING:        [Viscous]\n");
+        fprintf(stderr, "   COOLING:        [Opacity-dependent radiation]\n");
+        fprintf(stderr, "   OPACITY:        [Smoothed Lin-Papaloizou]\n");
+        int irradiated = disk_params->irradiation_luminosity_lsun > 0.0 &&
+                         disk_params->irradiation_factor > 0.0;
+        fprintf(stderr, "   STELLAR IRRAD.: [%s]\n",
+                irradiated ? "ON / prescribed effective temperature" : "OFF");
+        if (irradiated) {
+            fprintf(stderr, "   STELLAR LUM.:   [%.6g L_sun]\n",
+                    disk_params->irradiation_luminosity_lsun);
+            fprintf(stderr, "   IRRAD. FACTOR:  [%.6g]\n", disk_params->irradiation_factor);
+        }
+        fprintf(stderr, "   MEAN MOL. WT.:  [%.6g m_H]\n",
+                disk_params->thermal_mean_molecular_weight);
+        fprintf(stderr, "   BACKGROUND T:   [%.6g K]\n",
+                disk_params->thermal_background_temperature);
+        fprintf(stderr, "   SOLVER BRACKET: [%.6g -- %.6g K]\n",
+                disk_params->thermal_solver_options.minimum_temperature,
+                disk_params->thermal_solver_options.maximum_temperature);
+    } else {
+        fprintf(stderr, "   MODEL:          [Locally isothermal]\n");
+        fprintf(stderr, "   CLOSURE:        [Prescribed H/r; no energy evolution]\n");
+        fprintf(stderr, "   H/R AT 1 AU:    [%.6g]\n", disk_params->h_aspect_ratio);
+        fprintf(stderr, "   FLARING INDEX:  [%.6g]\n", disk_params->flaring_index);
+        fprintf(stderr, "   THERMAL SOLVER: [OFF]\n");
+    }
+    printLine();
+}
+
+void printSelfGravityStatus(const DiskParameters *disk_params) {
+    printHeader("SELF-GRAVITY");
+    fprintf(stderr, "   SELF-GRAVITY:   [%s]\n",
+            disk_params->enable_selfgravity ? "ON" : "OFF");
+    if (disk_params->enable_selfgravity) {
+        fprintf(stderr, "   MODEL:          [Axisymmetric disk rotation correction]\n");
+        if (disk_params->thermodynamics_model == THERMODYNAMICS_RADIATIVE) {
+            fprintf(stderr, "   THERMAL COUPL.: [Rotation and shear; H-dependent softening]\n");
+        }
+        fprintf(stderr, "   VERTICAL SG:    [Not included]\n");
+    }
+    printLine();
+}
+
 void printDustSmoothingStatus(const SimulationOptions *sim_opts, const DiskParameters *disk_params) {
     if (sim_opts->option_for_dust_drift) {
         printHeader("DUST SMOOTHING METHOD");

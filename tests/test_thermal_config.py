@@ -64,6 +64,24 @@ class ThermalConfigTests(unittest.TestCase):
             main()
             return run.call_args
 
+    def test_irradiation_settings(self):
+        for settings in (
+            {"irradiation_luminosity_lsun": 0, "irradiation_factor": 0},
+            {"irradiation_luminosity_lsun": 1, "irradiation_factor": 0.05},
+            {"irradiation_factor": 1},
+        ):
+            self.assertEqual(validate_thermal_config({
+                "thermodynamics_parameters": {"model": "radiative", **settings}
+            }), "radiative")
+        for key in ("irradiation_luminosity_lsun", "irradiation_factor"):
+            for value in (-1, True, None, "1", float("nan"), float("inf")):
+                with self.subTest(key=key, value=value), self.assertRaises(ValueError):
+                    validate_thermal_config({
+                        "thermodynamics_parameters": {"model": "radiative", key: value}
+                    })
+        with self.assertRaises(ValueError):
+            validate_thermal_config({"thermodynamics_parameters": {"irradiation_factor": 1.1}})
+
     def test_lociso_preserves_binary_arguments(self):
         config = "disk_parameters:\n  star_mass_msun: 1.0\n"
         original = self.run_wrapper(config)
@@ -78,6 +96,7 @@ class ThermalConfigTests(unittest.TestCase):
                 with_radiative_settings = self.run_wrapper(
                     config + f"thermodynamics_parameters:\n  model: {model}\n"
                     "  mean_molecular_weight: 2.34\n  background_temperature_k: 10\n"
+                    "  irradiation_luminosity_lsun: 1\n  irradiation_factor: 0.05\n"
                 )
                 self.assertEqual(original, with_radiative_settings)
 
@@ -102,6 +121,7 @@ class ThermalConfigTests(unittest.TestCase):
             "thermodynamics_parameters:\n  model: radiative\n"
             "  mean_molecular_weight: 2.34\n  background_temperature_k: 20\n"
             "  minimum_temperature_k: 10\n  maximum_temperature_k: 1200\n"
+            "  irradiation_luminosity_lsun: 1\n  irradiation_factor: 0.05\n"
         )
         self.assertEqual(call.args[1]["thermal_model"], "radiative")
         for key, flag in (
@@ -110,6 +130,8 @@ class ThermalConfigTests(unittest.TestCase):
             ("background_temperature_k", "-thermal_background"),
             ("minimum_temperature_k", "-thermal_tmin"),
             ("maximum_temperature_k", "-thermal_tmax"),
+            ("irradiation_luminosity_lsun", "-irradiation_luminosity"),
+            ("irradiation_factor", "-irradiation_factor"),
         ):
             self.assertIn(key, call.args[1])
             self.assertEqual(call.args[2][key], flag)

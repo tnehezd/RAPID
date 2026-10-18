@@ -66,6 +66,11 @@
  *       all other BCs:
  *           valid for all fields
  *
+ *    Surface density uses applySurfaceDensityBoundaryConditions(): a
+ *    parabolic ghost below density_floor uses the adjacent physical density
+ *    (zero gradient), with a warning on first activation at each boundary.
+ *    Pressure, gradient and velocity keep the unmodified dispatcher.
+ *
  *
  * ============================================================
  *  INNER BOUNDARY CONDITION TYPES
@@ -143,6 +148,12 @@
 void applyBoundaryConditions(double *v,
                              const DiskParameters *dp,
                              const SimulationOptions *opt);
+
+/* Density-only dispatcher: use zero gradient if parabolic ghosts undershoot the floor.
+ * Absorbing boundaries retain their prescribed zero density. */
+void applySurfaceDensityBoundaryConditions(double *v,
+                                          const DiskParameters *dp,
+                                          const SimulationOptions *opt);
 
 /* Parabolic helper */
 void parabolicExtrapolationToGhostCells(double *input_vector,

@@ -94,7 +94,8 @@ void createInitialGasSurfaceDensity(DiskParameters *disk_params, SimulationOptio
         }
     }
 
-    applyBoundaryConditions(disk_params->gas_surface_density_vector, disk_params,sim_opts);
+    applySurfaceDensityBoundaryConditions(
+        disk_params->gas_surface_density_vector, disk_params, sim_opts);
 }
 
 void createInitialGasPressure(DiskParameters *disk_params, SimulationOptions *sim_opts){ 

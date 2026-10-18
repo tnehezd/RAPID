@@ -13,6 +13,8 @@ void printHeader(const char *title);
 void printWarningPanelForPhotoevaporation(const DiskParameters *disk_params);
 void printRunConfigurationHeader(const ParserOptions *def, const DiskParameters *disk_params);
 void printBoundaryConditionsStatus(const DiskParameters *disk_params);
+void printThermodynamicsStatus(const DiskParameters *disk_params);
+void printSelfGravityStatus(const DiskParameters *disk_params);
 void printDustSmoothingStatus(const SimulationOptions *sim_opts, const DiskParameters *disk_params);
 void printInitializationParameters(const InitializeDefaultOptions *default_options, long double current_sigma0_gas, SimulationOptions *sim_opts);
 void printFatalErrorMessageForDiskMass();

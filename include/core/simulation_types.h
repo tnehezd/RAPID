@@ -57,6 +57,8 @@ typedef struct {
     ThermodynamicsModel thermodynamics_model;
     double thermal_mean_molecular_weight;
     double thermal_background_temperature;
+    double irradiation_luminosity_lsun;
+    double irradiation_factor;
     ThermalSolverOptions thermal_solver_options;
     ThermalState *thermal_states;         /**< CGS equilibrium states, including ghost cells. */
     double r_dze_i;                       /**< Inner dead‑zone edge radius [AU]. */

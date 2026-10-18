@@ -46,6 +46,8 @@ typedef struct {
     ThermodynamicsModel thermodynamics_model;
     double thermal_mean_molecular_weight;
     double thermal_background_temperature;
+    double irradiation_luminosity_lsun;
+    double irradiation_factor;
     ThermalSolverOptions thermal_solver_options;
     double r_dze_i_val;                                 /**< Inner dead-zone edge radius. */
     double r_dze_o_val;                                 /**< Outer dead-zone edge radius. */

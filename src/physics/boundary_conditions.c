@@ -6,7 +6,9 @@
 
 
 #include "boundary_conditions.h"
+#include "logger.h"
 #include <math.h>
+#include <stdlib.h>
 
 
 /**
@@ -105,6 +107,45 @@ void applyBoundaryConditions(double *v,
 /************************************************************
  * INNER BC IMPLEMENTATIONS
  ************************************************************/
+void applySurfaceDensityBoundaryConditions(double *v,
+                                          const DiskParameters *dp,
+                                          const SimulationOptions *opt)
+{
+    SimulationOptions density_options = *opt;
+    density_options.current_bc_target = 0;
+    applyBoundaryConditions(v, dp, &density_options);
+
+    static int warned[2] = {0, 0};
+    const int indices[2] = {0, dp->grid_number + 1};
+    const int types[2] = {opt->inner_boundary_condition_type,
+                          opt->outer_boundary_condition_type};
+    for (int side = 0; side < 2; ++side) {
+        if (types[side] != 1) continue;
+        int i = indices[side];
+        if (!isfinite(v[i]) || !isfinite(dp->density_floor) || dp->density_floor <= 0.0) {
+            LOG_ERROR("Invalid parabolic density boundary or density floor at ghost cell %d.", i);
+            exit(EXIT_FAILURE);
+        }
+        if (v[i] < dp->density_floor) {
+            int adjacent = side == 0 ? 1 : dp->grid_number;
+            if (!isfinite(v[adjacent]) || v[adjacent] < dp->density_floor) {
+                LOG_ERROR("Invalid physical density %.9g next to ghost cell %d.",
+                          v[adjacent], i);
+                exit(EXIT_FAILURE);
+            }
+            if (!warned[side]) {
+                LOG_WARN("%s parabolic density ghost %.9g undershoots floor %.9g at r=%.9g AU; "
+                         "using adjacent density %.9g (zero gradient). "
+                         "subsequent activations on this side will not repeat this warning.",
+                         side == 0 ? "Inner" : "Outer", v[i], dp->density_floor,
+                         dp->radial_grid[i], v[adjacent]);
+                warned[side] = 1;
+            }
+            v[i] = v[adjacent];
+        }
+    }
+}
+
 void applyZeroGradientInner(double *v, const DiskParameters *dp)
 {
 	(void)dp; // Unused parameter
@@ -184,5 +225,3 @@ void applyReflectingOuter(double *v, const DiskParameters *dp)
     int N = dp->grid_number;
     v[N+1] = v[N-1];
 }
-
-

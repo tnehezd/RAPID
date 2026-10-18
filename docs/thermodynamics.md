@@ -17,6 +17,8 @@ thermodynamics_parameters:
   background_temperature_k: 10.0
   minimum_temperature_k: 1.0
   maximum_temperature_k: 1500.0
+  irradiation_luminosity_lsun: 0.0   # default: off; use e.g. 1.0 for irradiation
+  irradiation_factor: 0.05          # effective geometry/absorption factor, [0, 1]
 ```
 
 Numerical parameters are optional, with the defaults above. They may remain
@@ -35,7 +37,28 @@ locally isothermal thermodynamics. Linear and logarithmic grids work, but ghost
 radii must be positive; the example uses a logarithmic grid at its 0.1 AU inner
 edge.
 
+The startup terminal summary includes a `THERMODYNAMICS` panel next to the
+boundary-condition summary. It reports the active model, prescribed geometry
+for locally isothermal runs, or heating/cooling, opacity, molecular weight,
+background temperature and solver bracket for radiative runs.
+It also identifies instantaneous equilibrium and whether prescribed stellar
+irradiation is active, including luminosity and irradiation factor when active.
+A separate `SELF-GRAVITY` panel reports whether SG is enabled, its axisymmetric
+rotation model and, for radiative runs with SG, the thermal coupling.
+
 ## Equations and integration
+
+Parabolic surface-density boundary extrapolation uses the adjacent physical
+density (zero gradient) when a ghost value would undershoot `density_floor`.
+A warning is printed on the
+first activation at each boundary. This applies during initialization and
+evolution, in both thermodynamic modes, without changing physical cells or
+the extrapolation of pressure, pressure gradient or velocity. Absorbing density
+boundaries still prescribe zero. This limiter changes the boundary flux when
+active; boundary sensitivity must still be checked for scientific results.
+Run `make test-boundary` for regression tests covering negative extrapolated
+ghosts, both grid types and boundaries, thermal closure and unchanged other
+fields/boundary types.
 
 The independent [CGS solver](../src/physics/thermal_model.c) is connected to gas
 evolution through [disk_thermal.c](../src/physics/disk_thermal.c). Each trial
@@ -51,9 +74,42 @@ q = |d ln Omega / d ln r|
 Qplus = nu*Sigma*(q*Omega)^2
 tau = kappa*Sigma/2
 tau_eff = 3*tau/8 + sqrt(3)/4 + 1/(4*tau)
-Qminus = 2*sigma_SB*(T^4 - T_bg^4)/tau_eff
+T_irr^4 = irradiation_factor * L_star/(4*pi*sigma_SB*r^2)
+T_rad^4 = T_bg^4 + T_irr^4
+Qminus = 2*sigma_SB*(T^4 - T_rad^4)/tau_eff
 Qminus = Qplus
 ```
+
+### Prescribed stellar irradiation
+
+Set `irradiation_luminosity_lsun` to the stellar luminosity in solar units
+(`L_sun = 3.828e33 erg/s`); zero disables irradiation and preserves the
+previous model. `irradiation_factor` defaults to 0.05, must be in [0, 1],
+and combines the prescribed geometry, absorption and reprocessing efficiency.
+Setting it to zero also disables irradiation. Both settings are inactive in
+locally isothermal mode. Direct CLI equivalents are `-irradiation_luminosity`
+and `-irradiation_factor`.
+
+This is an **effective midplane radiation-temperature prescription**, not a
+calculation of where stellar photons are absorbed. Its normalization is defined
+by the equation above: no additional factor of two or albedo is applied.
+With constant luminosity/factor, T_irr scales as r^(-1/2). The background and
+irradiation temperatures add in fourth powers, not linearly. Viscous heating
+raises T above this radiation floor; with zero viscosity T equals T_rad.
+The thermal/SG iteration uses this same temperature, so irradiation affects
+pressure, scale height, viscosity, gas evolution and dust dynamics.
+
+`Qplus` remains **viscous heating only** and `Qminus` is cooling **net of both
+background and irradiation**. Thus the existing nine-column snapshots and
+energy-balance plots retain Qplus = Qminus; they do not separately plot the
+intercepted stellar luminosity. Thermal snapshot headers and run metadata
+record the irradiation parameters.
+
+There is no self-shadowing, evolving grazing angle, separate stellar-wavelength
+opacity or vertical radiative transfer. In particular, this prescription does
+not reduce stellar absorption when the disk becomes transparent; use caution
+for depleted/optically thin disks. It is a controlled first approximation,
+not a photon-energy-conserving irradiation solver.
 
 Fluxes include both disk faces. The bridge uses RAPID's AU, solar-mass and
 `year/(2*pi)` units for conversion to CGS and back. The standalone example uses
@@ -76,7 +132,8 @@ under-relaxation, relative H tolerance 1e-8 and at most 64 iterations.
 The temperature solve uses bounded bisection, relative temperature and
 heating/cooling tolerances of 1e-8, and at most 128 iterations. An already
 balanced bracket endpoint is also accepted. The lower bound is raised to
-`T_bg`. A missing sign change or non-convergence is an explicit error, not a
+`T_rad` (or `T_bg` without irradiation). The upper bound must accommodate
+the irradiated temperature, including ghost radii. A missing sign change or non-convergence is an explicit error, not a
 fallback to locally isothermal behavior. Multiple equilibria are possible:
 callers must isolate the desired branch with the bounds; the solver neither
 enumerates roots nor determines thermal stability.
@@ -93,7 +150,7 @@ The blends soften transitions; branch switches are not guaranteed exactly
 continuous.
 
 This is instantaneous local equilibrium, not an energy-evolution or full
-radiative-transfer solver. There is no stellar irradiation geometry, radial
+radiative-transfer solver. There is no self-consistent stellar irradiation geometry, radial
 thermal transport or temperature-dependent molecular weight. The bridge uses
 the same opacity for thick/thin terms, rather than separate Rosseland/Planck
 means. Its numerical domain (`rho > 0`, `0 < T < 1e9 K`) does not imply physical
@@ -146,6 +203,18 @@ They can be plotted directly:
 python plot_temperature.py output_thermal/LOGS/temperature_profile_00000000.dat
 MPLBACKEND=Agg python plot_temperature.py temperature_profile.dat -o temperature_profile.png
 ```
+
+For line plots of T(r) at all saved times and the percentage change from the
+earliest profile, with a shared time colorbar:
+
+```bash
+python plot_temperature_evolution.py output_thermal_sg
+python plot_temperature_evolution.py output_thermal_sg -o temperature_evolution.png
+```
+
+This uses thermal snapshots only. The upper panel shows absolute temperature;
+the lower panel shows 100*(T/T(initial)-1) [%], without clipping at +/-3%.
+Dashed black curves identify the initial profile and thick curves the final one.
 
 Combined time-radius heatmaps from matching gas and thermal ASCII snapshots:
 

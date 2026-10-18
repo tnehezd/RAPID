@@ -21,7 +21,7 @@ static int closeRelative(double actual, double expected, double tolerance)
 
 static ThermalParameters referenceParameters(void)
 {
-    ThermalParameters parameters = {100.0, 1.991013777793097e-7, 1e-3, 2.34, 10.0, 1.5};
+    ThermalParameters parameters = {100.0, 1.991013777793097e-7, 1e-3, 2.34, 10.0, 1.5, 0.0};
     return parameters;
 }
 
@@ -177,6 +177,33 @@ static void testSolver(void)
     CHECK(solveMidplaneTemperature(&parameters, &options, NULL) == THERMAL_INVALID_INPUT);
 }
 
+static void testIrradiation(void)
+{
+    ThermalParameters parameters = referenceParameters();
+    parameters.irradiation_temperature = 100.0;
+    ThermalSolverOptions options = defaultThermalSolverOptions();
+    double floor = pow(pow(10.0, 4) + pow(100.0, 4), 0.25);
+    ThermalState state;
+    CHECK(calculateThermalState(&parameters, 200.0, &state) == THERMAL_SUCCESS);
+    double expected = 2.0 * 5.670374419e-5 *
+        (pow(200.0, 4) - pow(10.0, 4) - pow(100.0, 4)) / state.effective_optical_depth;
+    CHECK(closeRelative(state.cooling, expected, 1e-14));
+    CHECK(solveMidplaneTemperature(&parameters, &options, &state) == THERMAL_SUCCESS);
+    CHECK(state.temperature > floor);
+    CHECK(closeRelative(state.cooling, state.heating, options.relative_tolerance));
+    parameters.alpha = 0.0;
+    CHECK(solveMidplaneTemperature(&parameters, &options, &state) == THERMAL_SUCCESS);
+    CHECK(closeRelative(state.temperature, floor, 1e-14));
+    CHECK(state.heating == 0.0 && state.cooling == 0.0);
+    options.maximum_temperature = 50.0;
+    CHECK(solveMidplaneTemperature(&parameters, &options, &state) == THERMAL_NOT_BRACKETED);
+    for (int i = 0; i < 3; ++i) {
+        const double invalid[] = {-1.0, NAN, INFINITY};
+        parameters.irradiation_temperature = invalid[i];
+        CHECK(calculateThermalState(&parameters, 100.0, &state) == THERMAL_INVALID_INPUT);
+    }
+}
+
 static int printProfile(void)
 {
     ThermalSolverOptions options = defaultThermalSolverOptions();
@@ -214,6 +241,7 @@ int main(int argc, char **argv)
     testOpacity();
     testState();
     testSolver();
+    testIrradiation();
     if (failures != 0) {
         fprintf(stderr, "%d thermal checks failed\n", failures);
         return 1;

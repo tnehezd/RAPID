@@ -50,11 +50,60 @@ class RadiativeSimulationTests(unittest.TestCase):
             self.assertEqual(data.shape, (48, 9))
             self.assertTrue(np.all(np.isfinite(data)))
             self.assertTrue(np.all(data[:, 1] >= 10.0))
-            self.assertTrue(np.all(data[:, 2:7] > 0.0))
+            self.assertTrue(np.all(data[:, [2, 3, 5, 6]] > 0.0))
+            self.assertTrue(np.all(data[:, 4] >= 0.0))
             np.testing.assert_allclose(data[:, 7], data[:, 8], rtol=1e-8, atol=1e-20)
         for path in thermal_files:
             self.assertRegex(path.name, r"^temperature_profile_\d{8}\.dat$")
         return np.loadtxt(output / "LOGS" / "temperature_profile_00000000.dat")
+
+    def test_thermodynamics_startup_panel(self):
+        for model, sg in (("lociso", "0"), ("lociso", "1"),
+                          ("radiative", "0"), ("radiative", "1")):
+            with self.subTest(model=model, sg=sg):
+                output = self.directory / f"panel_{model}_{sg}"
+                process = subprocess.run(
+                    [str(BINARY), "-drift", "0", "-growth", "0", "-twopop", "0",
+                     "-n", "16", "-ri", "1", "-ro", "10", "-sigma0_init", "1e-5",
+                     "-tmax", "0", "-o", str(output),
+                     "-thermal_model", model, "-selfgravity", sg,
+                     "-thermal_mu", "2.5", "-thermal_background", "12",
+                     "-thermal_tmin", "2", "-thermal_tmax", "1400"],
+                    cwd=ROOT, env={**os.environ, "OMP_NUM_THREADS": "2"},
+                    capture_output=True, text=True, timeout=120,
+                )
+                self.assertEqual(process.returncode, 0, process.stdout + process.stderr)
+                panel = process.stderr.split("THERMODYNAMICS", 1)[1].split(
+                    "SELF-GRAVITY", 1
+                )[0]
+                self.assertNotIn("SG COUPLING", panel)
+                sg_panel = process.stderr.split("SELF-GRAVITY", 1)[1].split(
+                    "DUST SMOOTHING METHOD", 1
+                )[0]
+                self.assertIn(f"SELF-GRAVITY:   [{'ON' if sg == '1' else 'OFF'}]",
+                              sg_panel)
+                if sg == "1":
+                    self.assertIn("[Axisymmetric disk rotation correction]", sg_panel)
+                    self.assertIn("VERTICAL SG:    [Not included]", sg_panel)
+                if sg == "1" and model == "radiative":
+                    self.assertIn("[Rotation and shear; H-dependent softening]", sg_panel)
+                else:
+                    self.assertNotIn("THERMAL COUPL.", sg_panel)
+                if model == "radiative":
+                    for text in (
+                        "[Radiative equilibrium]", "[Instantaneous; no energy evolution]",
+                        "[Viscous]", "[Opacity-dependent radiation]",
+                        "[Smoothed Lin-Papaloizou]", "STELLAR IRRAD.: [OFF]",
+                        "[2.5 m_H]", "[12 K]", "[2 -- 1400 K]",
+                    ):
+                        self.assertIn(text, panel)
+                    self.assertNotIn("H/R AT 1 AU", panel)
+                else:
+                    self.assertIn("[Locally isothermal]", panel)
+                    self.assertIn("H/R AT 1 AU", panel)
+                    self.assertIn("FLARING INDEX", panel)
+                    self.assertIn("THERMAL SOLVER: [OFF]", panel)
+                    self.assertNotIn("BACKGROUND T", panel)
 
     def test_radiative_evolves_on_both_grids_with_and_without_sg(self):
         for grid in ("linear", "logarithmic"):
@@ -126,6 +175,54 @@ class RadiativeSimulationTests(unittest.TestCase):
             np.testing.assert_array_equal(data[:, 4], 0.0)
             np.testing.assert_array_equal(data[:, 7:9], 0.0)
 
+    def test_irradiation_only_matches_prescribed_temperature(self):
+        for grid in ("linear", "logarithmic"):
+            for sg in ("0", "1"):
+                with self.subTest(grid=grid, sg=sg):
+                    output = self.run_simulation(
+                        "-thermal_model", "radiative", "-alpha_init", "0",
+                        "-irradiation_luminosity", "1", "-irradiation_factor", "0.05",
+                        "-grid_type", grid, "-selfgravity", sg,
+                    )
+                    data = self.check_thermal_snapshots(output)
+                    irradiated_t4 = .05 * 3.828e33 / (
+                        4 * math.pi * 5.670374419e-5 * (data[:, 0] * 1.496e13)**2
+                    )
+                    expected = (10**4 + irradiated_t4)**.25
+                    np.testing.assert_allclose(data[:, 1], expected, rtol=1e-14)
+                    np.testing.assert_array_equal(data[:, 7:9], 0.0)
+                    self.assertIn("Irradiation:", (
+                        output / "LOGS" / "temperature_profile_00000000.dat"
+                    ).read_text())
+
+    def test_irradiated_viscous_equilibrium_and_off_compatibility(self):
+        baseline = self.run_simulation("-thermal_model", "radiative")
+        for disabled in (("-irradiation_luminosity", "0"),
+                         ("-irradiation_luminosity", "1", "-irradiation_factor", "0")):
+            output = self.run_simulation("-thermal_model", "radiative", *disabled)
+            for name in ("density_profile_00000010.dat", "temperature_profile_00000010.dat"):
+                np.testing.assert_array_equal(
+                    np.loadtxt(baseline / "LOGS" / name),
+                    np.loadtxt(output / "LOGS" / name),
+                )
+        for sg in ("0", "1"):
+            output = self.run_simulation(
+                "-thermal_model", "radiative", "-selfgravity", sg,
+                "-irradiation_luminosity", "1", "-irradiation_factor", "0.05",
+            )
+            data = self.check_thermal_snapshots(output)
+            t_rad4 = 10**4 + .05 * 3.828e33 / (
+                4 * math.pi * 5.670374419e-5 * (data[:, 0] * 1.496e13)**2
+            )
+            self.assertTrue(np.all(data[:, 1] > t_rad4**.25))
+            tau = data[:, 6]
+            tau_eff = .375 * tau + math.sqrt(3) / 4 + .25 / tau
+            emitted_net = 2 * 5.670374419e-5 * (data[:, 1]**4 - t_rad4) / tau_eff
+            np.testing.assert_allclose(data[:, 7], emitted_net, rtol=1e-5)
+            self.assertTrue(np.all(data[:, 1] > np.loadtxt(
+                baseline / "LOGS" / "temperature_profile_00000000.dat"
+            )[:, 1]))
+
     def test_lociso_aliases_are_identical(self):
         outputs = [self.run_simulation(*args) for args in (
             (), ("-thermal_model", "lociso"), ("-thermal_model", "locally_isotherm"),
@@ -164,6 +261,8 @@ class RadiativeSimulationTests(unittest.TestCase):
         output = self.directory / "yaml_run"
         config["output_parameters"]["output_directory_name"] = str(output)
         config["log_parameters"] = {"disable_terminal_panels": True}
+        config["thermodynamics_parameters"]["irradiation_luminosity_lsun"] = 1
+        config["thermodynamics_parameters"]["irradiation_factor"] = 0.05
         filename = self.directory / "radiative.yaml"
         filename.write_text(yaml.safe_dump(config))
         process = subprocess.run(
@@ -173,6 +272,9 @@ class RadiativeSimulationTests(unittest.TestCase):
         self.assertEqual(process.returncode, 0, process.stdout + process.stderr)
         data = np.loadtxt(output / "LOGS" / "temperature_profile_00000002.dat")
         self.assertEqual(data.shape, (64, 9))
+        self.assertIn("STELLAR IRRAD.: [ON / prescribed effective temperature]",
+                      process.stdout + process.stderr)
+        self.assertIn("Irradiation:       ENABLED", (output / "current_run_info.dat").read_text())
 
     def test_bad_cli_and_unbracketed_equilibrium_fail(self):
         for arguments in (
@@ -183,6 +285,12 @@ class RadiativeSimulationTests(unittest.TestCase):
             ("-thermal_background", "2000"),
             ("-thermal_tmin", "1500"),
             ("-thermal_model", "radiative", "-alpha_init", "-1"),
+            ("-irradiation_luminosity", "-1"),
+            ("-irradiation_luminosity", "nan"),
+            ("-irradiation_factor", "1.1"),
+            ("-irradiation_factor", "0.1junk"),
+            ("-irradiation_factor", "-0.05"),
+            ("-irradiation_luminosity",),
         ):
             with self.subTest(arguments=arguments):
                 process = subprocess.run(

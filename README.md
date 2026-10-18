@@ -42,6 +42,19 @@ make clean
 make all
 ```
 
+`make all` defaults to the optimized **release** build (`-O2 -g`), without
+`-ffast-math`. For a non-optimized debug build, use `make debug-build`
+(`-O0 -g`); `make release` switches back. Equivalently, use
+`make BUILD=debug all` or `make BUILD=release all`.
+
+Objects and executables are kept separately under `obj/debug`, `obj/release`,
+`bin/debug` and `bin/release`, so switching profiles does not require
+`make clean`. Each build selects its executable at `bin/simulation`, preserving
+the Python wrapper's default path. Use the profile-specific executables to run
+both versions without switching. Do not select different profiles concurrently
+in the same worktree. `make debug` builds the debug profile and opens LLDB.
+`make test-thermal` uses the selected `BUILD` profile as well.
+
 ### Running a Simulation
 
 There are two primary ways to run a simulation:

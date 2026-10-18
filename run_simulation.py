@@ -21,6 +21,8 @@ def validate_thermal_config(config: object) -> str:
         "background_temperature_k": 10.0,
         "minimum_temperature_k": 1.0,
         "maximum_temperature_k": 1500.0,
+        "irradiation_luminosity_lsun": 0.0,
+        "irradiation_factor": 0.05,
     }
     for key in thermal:
         if key not in ("model", *numeric_settings):
@@ -40,9 +42,13 @@ def validate_thermal_config(config: object) -> str:
         )
     for key, default in numeric_settings.items():
         value = thermal.get(key, default)
+        irradiation = key in ("irradiation_luminosity_lsun", "irradiation_factor")
         if (isinstance(value, bool) or not isinstance(value, (int, float)) or
-                not math.isfinite(value) or value <= 0):
-            raise ValueError(f"thermodynamics_parameters.{key} must be a finite positive number.")
+                not math.isfinite(value) or (value < 0 if irradiation else value <= 0)):
+            requirement = "nonnegative" if irradiation else "positive"
+            raise ValueError(f"thermodynamics_parameters.{key} must be a finite {requirement} number.")
+        if key == "irradiation_factor" and value > 1:
+            raise ValueError("thermodynamics_parameters.irradiation_factor must be in [0, 1].")
     lower = thermal.get("minimum_temperature_k", 1.0)
     upper = thermal.get("maximum_temperature_k", 1500.0)
     background = thermal.get("background_temperature_k", 10.0)
@@ -284,6 +290,8 @@ def main():
             "background_temperature_k": "-thermal_background",
             "minimum_temperature_k": "-thermal_tmin",
             "maximum_temperature_k": "-thermal_tmax",
+            "irradiation_luminosity_lsun": "-irradiation_luminosity",
+            "irradiation_factor": "-irradiation_factor",
         }
         thermal = full_config["thermodynamics_parameters"]
         for key, flag in thermal_flags.items():

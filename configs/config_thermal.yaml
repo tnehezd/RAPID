@@ -28,6 +28,8 @@ thermodynamics_parameters:
   background_temperature_k: 10.0
   minimum_temperature_k: 1.0
   maximum_temperature_k: 1500.0
+  irradiation_luminosity_lsun: 1.0  # omitted/default 0.0: irradiation off
+  irradiation_factor: 0.05         # effective geometry/absorption factor
 
 deadzone_parameters:
   deadzone_inner_radius_au: 2.7

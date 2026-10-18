@@ -329,6 +329,12 @@ void printCurrentInformationAboutRun(const char *directory_name, const DiskParam
     if (disk_params->thermodynamics_model == THERMODYNAMICS_RADIATIVE) {
         fprintf(info_file, "  Mean mol. weight:  %.9g\n", disk_params->thermal_mean_molecular_weight);
         fprintf(info_file, "  Background:        %.9g K\n", disk_params->thermal_background_temperature);
+        fprintf(info_file, "  Irradiation:       %s (prescribed effective temperature)\n",
+                disk_params->irradiation_luminosity_lsun > 0.0 &&
+                disk_params->irradiation_factor > 0.0 ? "ENABLED" : "DISABLED");
+        fprintf(info_file, "  Stellar luminosity: %.9g L_sun\n",
+                disk_params->irradiation_luminosity_lsun);
+        fprintf(info_file, "  Irradiation factor: %.9g\n", disk_params->irradiation_factor);
         fprintf(info_file, "  T bracket:         %.9g -- %.9g K\n",
                 disk_params->thermal_solver_options.minimum_temperature,
                 disk_params->thermal_solver_options.maximum_temperature);
