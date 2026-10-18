@@ -42,15 +42,6 @@ double calculateKinematicViscosity(double radial_distance, const DiskParameters 
     return gas_viscosity;
 }
 
-double calculatePressureScaleHeight(double radial_distance, const DiskParameters *disk_params) {
-
-    if (disk_params->thermodynamics_model == THERMODYNAMICS_RADIATIVE) {
-        return interpolateThermalScaleHeight(radial_distance, disk_params);
-    }
-    double local_pressure_scaleheight = pow(radial_distance, 1. + disk_params->flaring_index) * disk_params->h_aspect_ratio;
-    return local_pressure_scaleheight;
-}
-
 double calculateKeplerianVelocity(double radial_distance, const DiskParameters *disk_params) {
 
     return calculateKeplerianFrequency(radial_distance, disk_params) * radial_distance;
@@ -83,26 +74,6 @@ double calculateKeplerianFrequency(double radial_distance, const DiskParameters 
         if (omega_squared <= 0.0) omega_squared = 1e-30;
     }
     return sqrt(omega_squared);
-}
-
-// c_s = Omega * H with the prescribed H(r); with self-gravity Omega includes the disk contribution,
-// so viscosity, pressure and the midplane density feel the modified rotation curve.
-double calculateLocalSoundSpeed(double radial_distance, const DiskParameters *disk_params) {
-    
-    if (disk_params->thermodynamics_model == THERMODYNAMICS_RADIATIVE) {
-        return interpolateThermalSoundSpeed(radial_distance, disk_params);
-    }
-    return calculateKeplerianFrequency(radial_distance,disk_params) * calculatePressureScaleHeight(radial_distance,disk_params);
-}
-
-double calcualteMidplaneGasDensity(double gas_surface_density, double radial_distance, const DiskParameters *disk_params) {
-   
-    return 1. / sqrt(2.0 * M_PI) * gas_surface_density / calculatePressureScaleHeight(radial_distance,disk_params);
-}
-
-double calculateGasPressure(double gas_surface_density, double radial_distance, const DiskParameters *disk_params) {
-  
-    return calcualteMidplaneGasDensity(gas_surface_density, radial_distance, disk_params) * calculateLocalSoundSpeed(radial_distance,disk_params) * calculateLocalSoundSpeed(radial_distance, disk_params);
 }
 
 void calculateGasPressureGradient(DiskParameters *disk_params) {
@@ -246,7 +217,7 @@ void refreshGasSurfaceDensityPressurePressureGradient(SimulationOptions *sim_opt
         disk_params->gas_surface_density_vector[i] = gas_surface_density_temp[i];
 
         // Calculate the updated pressure vector using the synchronized density
-        disk_params->gas_pressure_vector[i] = calculateGasPressure(disk_params->gas_surface_density_vector[i], disk_params->radial_grid[i], disk_params);
+        disk_params->gas_pressure_vector[i] = calculateEOS(disk_params->gas_surface_density_vector[i], disk_params->radial_grid[i], disk_params);
     }
 
     // =========================================================================

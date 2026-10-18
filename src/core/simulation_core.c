@@ -28,7 +28,7 @@ void calculate1DDustDrift(double particle_radius, double pressure_gradient, doub
       
     stokes_number = calculateStokesNumber(particle_radius,gas_surface_density,disk_params);
     local_pressure_scaleheight = calculatePressureScaleHeight(radial_distance,disk_params);   
-    local_pressure = calculateGasPressure(gas_surface_density,radial_distance,disk_params);
+    local_pressure = calculateEOS(gas_surface_density,radial_distance,disk_params);
     local_pressure_gradient = pressure_gradient;
     local_soundspeed = calculateLocalSoundSpeed(radial_distance,disk_params); 
 

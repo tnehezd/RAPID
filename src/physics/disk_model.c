@@ -103,7 +103,7 @@ void createInitialGasPressure(DiskParameters *disk_params, SimulationOptions *si
     int i;
   
     for(i = 1; i <= disk_params->grid_number; i++) {
-            disk_params->gas_pressure_vector[i] = calculateGasPressure(disk_params->gas_surface_density_vector[i],disk_params->radial_grid[i],disk_params);
+            disk_params->gas_pressure_vector[i] = calculateEOS(disk_params->gas_surface_density_vector[i],disk_params->radial_grid[i],disk_params);
     }
     sim_opts->current_bc_target = 1;
     applyBoundaryConditions(disk_params->gas_pressure_vector,disk_params,sim_opts);
