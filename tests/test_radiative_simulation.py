@@ -42,6 +42,33 @@ class RadiativeSimulationTests(unittest.TestCase):
         self.assertEqual(process.returncode, 0, process.stdout + process.stderr)
         return output
 
+    def test_dust_growth_and_initial_drift_diagnostic(self):
+        for model in ("lociso", "radiative_energy"):
+            for grid in ("linear", "logarithmic"):
+                for count in (24, 48, 96):
+                    with self.subTest(model=model, grid=grid, count=count):
+                        output = self.run_simulation(
+                            "-thermal_model", model, "-grid_type", grid,
+                            "-drift", "1", "-growth", "1", "-ndust", str(count),
+                            "-largesize", "0.01", "-tmax", "1", "-outfreq", "1",
+                        )
+                        initial = np.loadtxt(output / "drift_timecale.dat")
+                        self.assertEqual(initial.shape, (count, 8))
+                        np.testing.assert_array_equal(initial[:, 0], 1)
+                        np.testing.assert_array_equal(initial[:, 1], np.arange(count))
+                        np.testing.assert_allclose(initial[:, 3], .01, rtol=1e-12)
+                        self.assertTrue(np.all(initial[:, 4] >= 0))
+                        moving = initial[:, 5] != 0
+                        np.testing.assert_allclose(initial[moving, 6],
+                                                   initial[moving, 2] / abs(initial[moving, 5]))
+                        np.testing.assert_array_equal(initial[:, 7], np.sign(initial[:, 5]))
+                        self.assertTrue(np.all(np.isinf(initial[~moving, 6])))
+                        snapshots = sorted((output / "LOGS").glob("dust_size_evolution_*.dat"))
+                        self.assertGreaterEqual(len(snapshots), 2)
+                        sizes = np.loadtxt(snapshots[-1])
+                        self.assertTrue(np.all(np.isfinite(sizes)))
+                        self.assertTrue(np.all(sizes[:, -1] > 0))
+
     def check_thermal_snapshots(self, output):
         thermal_files = sorted((output / "LOGS").glob("temperature_profile_*.dat"))
         self.assertGreaterEqual(len(thermal_files), 2)

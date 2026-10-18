@@ -1,6 +1,7 @@
 #include "thermal_model.h"
 #include "config.h"
 
+#include <float.h>
 #include <math.h>
 #include <stddef.h>
 
@@ -165,10 +166,17 @@ ThermalSolverOptions defaultThermalSolverOptions(void)
     return options;
 }
 
-static int isBalanced(const ThermalState *state, double tolerance)
+static int isBalanced(const ThermalParameters *parameters, const ThermalState *state,
+                      double tolerance)
 {
+    /* Net cooling subtracts large emitted/absorbed fluxes near irradiation
+     * equilibrium. Do not demand residuals below their floating-point noise. */
+    double radiative_scale = 2.0 * STEFAN_BOLTZMANN_CONSTANT_CGS *
+        (pow(state->temperature, 4) + pow(parameters->background_temperature, 4) +
+         pow(state->irradiation_temperature, 4)) / state->effective_optical_depth;
+    double roundoff = 64.0 * DBL_EPSILON * radiative_scale;
     return fabs(state->cooling - state->heating) <=
-           tolerance * fmax(fabs(state->cooling), state->heating);
+           tolerance * fmax(fabs(state->cooling), state->heating) + roundoff;
 }
 
 ThermalStatus solveMidplaneTemperature(const ThermalParameters *parameters,
@@ -200,11 +208,11 @@ ThermalStatus solveMidplaneTemperature(const ThermalParameters *parameters,
     if (status != THERMAL_SUCCESS) {
         return status;
     }
-    if (isBalanced(&left, options->relative_tolerance)) {
+    if (isBalanced(parameters, &left, options->relative_tolerance)) {
         *state = left;
         return THERMAL_SUCCESS;
     }
-    if (isBalanced(&right, options->relative_tolerance)) {
+    if (isBalanced(parameters, &right, options->relative_tolerance)) {
         *state = right;
         return THERMAL_SUCCESS;
     }
@@ -222,7 +230,7 @@ ThermalStatus solveMidplaneTemperature(const ThermalParameters *parameters,
             return status;
         }
         middle.iterations = iteration;
-        if (isBalanced(&middle, options->relative_tolerance) &&
+        if (isBalanced(parameters, &middle, options->relative_tolerance) &&
             upper - lower <= options->relative_tolerance * temperature) {
             *state = middle;
             return THERMAL_SUCCESS;

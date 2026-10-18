@@ -245,7 +245,14 @@ in [self_gravity.c](../src/physics/self_gravity.c), with their public interface 
 orbital-frequency calculation and adds the cached SG contribution when enabled.
 
 The temperature solve uses bounded bisection, relative temperature and
-heating/cooling tolerances of 1e-8, and at most 128 iterations. An already
+heating/cooling tolerances of 1e-8, and at most 128 iterations. The energy
+residual additionally permits a floating-point roundoff allowance of
+`64 * DBL_EPSILON * (emitted flux + absorbed flux)`, evaluated with the
+effective optical depth. Near irradiation equilibrium the net cooling can
+be many orders smaller than either flux; a tolerance relative only to the
+small viscous heating can otherwise be unattainable even at adjacent
+representable temperatures. This allowance does not relax the temperature
+bracket criterion or suppress genuine non-convergence. An already
 balanced bracket endpoint is also accepted. The lower bound is raised to
 `T_rad` (or `T_bg` without irradiation). The upper bound must accommodate
 the irradiated temperature, including ghost radii. A missing sign change or non-convergence is an explicit error, not a

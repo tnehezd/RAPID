@@ -273,6 +273,49 @@ static void testShadowHull(void)
     }
 }
 
+static void testIrradiatedRoundoffConvergence(void)
+{
+    /* Captured from the 500-cell, no-SG geometry benchmark at 18.28257 AU.
+     * Adjacent representable temperatures straddle zero without meeting the
+     * old tolerance relative to the very small viscous heating alone. */
+    double radii[] = {0.0, 272038175200000.03, 273507247200000.0};
+    double heights[] = {0.0, 7314364778711.2256, 0.0};
+    IrradiationGeometry geometry = {
+        .radii = radii, .heights = heights, .index = 2,
+        .surface_height_factor = 4.0, .stellar_radius = 139140000000.0
+    };
+    ThermalParameters parameters = referenceParameters();
+    parameters.surface_density = 3.4858959208663229;
+    parameters.orbital_frequency = 2.5470021387347557e-9;
+    parameters.alpha = 3.0032111097972327e-5;
+    parameters.irradiation_geometry = &geometry;
+    parameters.irradiation_luminosity = 3.8280000000000003e33;
+    ThermalSolverOptions options = defaultThermalSolverOptions();
+    ThermalState state;
+    ThermalStatus status = solveMidplaneTemperature(&parameters, &options, &state);
+    CHECK(status == THERMAL_SUCCESS);
+    if (status != THERMAL_SUCCESS) return;
+    CHECK(closeRelative(state.temperature, 76.42769629842784, 1e-12));
+    CHECK(state.stellar_visibility == 1.0);
+    double flux = 2.0 * 5.670374419e-5 *
+        (pow(state.temperature, 4) + pow(parameters.background_temperature, 4) +
+         pow(state.irradiation_temperature, 4)) / state.effective_optical_depth;
+    CHECK(fabs(state.cooling - state.heating) <=
+          options.relative_tolerance * fmax(fabs(state.cooling), state.heating) +
+          64.0 * DBL_EPSILON * flux);
+    for (int i = 0; i < 257; ++i) {
+        parameters.surface_density = 3.0 + i / 256.0;
+        heights[1] = 7314364778711.2256 * (0.5 + i / 256.0);
+        CHECK(solveMidplaneTemperature(&parameters, &options, &state) == THERMAL_SUCCESS);
+    }
+    parameters.surface_density = 3.4858959208663229;
+    heights[1] = 7314364778711.2256;
+    options.maximum_iterations = 1;
+    CHECK(solveMidplaneTemperature(&parameters, &options, &state) == THERMAL_NO_CONVERGENCE);
+    options.maximum_temperature = 20.0;
+    CHECK(solveMidplaneTemperature(&parameters, &options, &state) == THERMAL_NOT_BRACKETED);
+}
+
 static int printProfile(void)
 {
     ThermalSolverOptions options = defaultThermalSolverOptions();
@@ -313,6 +356,7 @@ int main(int argc, char **argv)
     testIrradiation();
     testIrradiationGeometry();
     testShadowHull();
+    testIrradiatedRoundoffConvergence();
     if (failures != 0) {
         fprintf(stderr, "%d thermal checks failed\n", failures);
         return 1;

@@ -49,6 +49,11 @@ static void testGrowth(int count, int logarithmic)
         assert(isfinite(next_r));
         assert(next_size == positions[i][1]);
     }
+    SimulationOptions options = {.option_for_dust_growth = 1};
+    calculateDustDistance("", &particles, dt, 0, count, &options, &disk);
+    for (int i = 0; i < count; ++i) {
+        assert(positions[i][1] == expected[i]);
+    }
 }
 
 int main(void)
