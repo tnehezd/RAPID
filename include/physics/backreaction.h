@@ -7,7 +7,7 @@
 typedef struct BackreactionState {
     int cells;
     double *loading_a, *loading_b;
-    double *radial, *azimuthal, *flux, *viscous;
+    double *radial, *azimuthal, *flux, *viscous; /* flux transports only u_g - u_nu. */
     double values[];
 } BackreactionState;
 

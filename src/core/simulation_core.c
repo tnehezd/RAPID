@@ -45,64 +45,26 @@ double getMaximumDriftVelocity(const ParticleData *particle_data, int particle_n
     double max_v = 0.0;
     double v_drift = 0.0;
 
-    if (disk_params->enable_backreaction) {
+    int populations = isSecondaryPopulationEnabled(mode) ? 2 : 1;
+    for (int population = 0; population < populations; ++population) {
+        double (*positions)[2] = population == 0 ? particle_data->particle_distance_array :
+                                                  particle_data->micron_particle_distance_array;
         for (int i = 0; i < particle_number; ++i) {
-            double r = particle_data->particle_distance_array[i][0], sigma;
-            if (r < disk_params->r_min || r > disk_params->r_max) continue;
+            double r = positions[i][0], sigma, gradient, velocity;
+            if (r <= disk_params->r_min || r >= disk_params->r_max) continue;
             linearInterpolation(disk_params->gas_surface_density_vector, disk_params->radial_grid,
                                 r, &sigma, disk_params->delta_r, disk_params);
-            v_drift = backreactionDustVelocity(r, particle_data->particle_distance_array[i][1],
-                                               sigma, disk_params);
+            linearInterpolation(disk_params->gas_pressure_gradient_vector, disk_params->radial_grid,
+                                r, &gradient, disk_params->delta_r, disk_params);
+            linearInterpolation(disk_params->gas_velocity_vector, disk_params->radial_grid,
+                                r, &velocity, disk_params->delta_r, disk_params);
+            calculate1DDustDrift(positions[i][1], gradient, sigma, velocity, r, &v_drift, disk_params);
+            if (!isfinite(v_drift)) {
+                LOG_ERROR("Non-finite drift in timestep estimate at particle %d, population %d.\n",
+                          i, population);
+                exit(EXIT_FAILURE);
+            }
             max_v = fmax(max_v, fabs(v_drift));
-        }
-        return max_v;
-    }
-
-    // 1. Iterate over the primary (cm-sized) dust population
-    for (int i = 0; i < particle_number; i++) {
-        double r = particle_data->particle_distance_array[i][0];
-        if (r < disk_params->r_min || r > disk_params->r_max) continue;
-
-        int idx = (int)particle_data->dust_particle_mass_array[i][1]; // Grid index
-        // Boundary safety check to prevent segmentation faults
-        if (idx < 0) {
-            idx = 0;
-        } else if (idx >= disk_params->grid_number) {
-            idx = disk_params->grid_number - 1;
-        }
-        
-        calculate1DDustDrift(
-            particle_data->particle_distance_array[i][1], // Particle radius
-            disk_params->gas_pressure_gradient_vector[idx],
-            disk_params->gas_surface_density_vector[idx],
-            disk_params->gas_velocity_vector[idx],
-            r,
-            &v_drift,
-            disk_params
-        );
-
-        if (fabs(v_drift) > max_v) max_v = fabs(v_drift);
-    }
-
-    // 2. Iterate over the secondary (micron-sized) dust population if enabled
-    if (isSecondaryPopulationEnabled(mode)) {
-        for (int i = 0; i < particle_number; i++) {
-            double r_mic = particle_data->micron_particle_distance_array[i][0];
-            if (r_mic < disk_params->r_min || r_mic > disk_params->r_max) continue;
-
-            int idx_mic = (int)particle_data->micron_dust_particle_mass_array[i][1]; // Micron grid index
-            
-            calculate1DDustDrift(
-                particle_data->micron_particle_distance_array[i][1], // Micron radius
-                disk_params->gas_pressure_gradient_vector[idx_mic],
-                disk_params->gas_surface_density_vector[idx_mic],
-                disk_params->gas_velocity_vector[idx_mic],
-                r_mic,
-                &v_drift,
-                disk_params
-            );
-
-            if (fabs(v_drift) > max_v) max_v = fabs(v_drift);
         }
     }
 

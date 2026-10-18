@@ -234,6 +234,17 @@ local viscosity without division by zero. Timesteps, dust drift/growth and
 pressure-trap widths use the thermally determined sound speed and scale height.
 Dead-zone widths retain their prescribed values.
 
+Dust RK4 trial positions are checked before evaluating the radiative EOS.
+The dust transport uses local crossing-limited substeps, halving trials that
+leave the domain, move beyond half a local cell, or cross a drift root in
+the frozen one-dimensional velocity field. Absorbing exits are localized
+to floating-point radial precision and mark the particle inactive. This
+prevents oversized intermediate stages from querying thermal quantities
+at negative radii without relaxing thermal-state validation. The global
+drift timestep estimate also interpolates at the actual particle positions.
+Local substeps remain necessary because gas evolution and grain growth
+can change the velocities after the global timestep is selected.
+
 With `simulation_parameters.enable_selfgravity: true`, the local frequency and
 shear include the radial SG field. Without SG, heating reduces to
 `(9/4)*nu*Sigma*Omega_K^2`. The stellar shear is differentiated analytically.

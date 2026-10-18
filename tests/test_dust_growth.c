@@ -1,6 +1,7 @@
 #include "config.h"
 #include "dust_physics.h"
 #include "integrator.h"
+#include "simulation_core.h"
 
 #include <assert.h>
 #include <math.h>
@@ -56,13 +57,76 @@ static void testGrowth(int count, int logarithmic)
     }
 }
 
+static void testRadiativeBoundaryCrossing(int logarithmic, int outward)
+{
+    enum { N = 8 };
+    double radii[N + 2], gas[N + 2], gradient[N + 2], velocity[N + 2];
+    ThermalState thermal[N + 2] = {0};
+    DiskParameters disk = {
+        .grid_number = N, .r_min = 1, .r_max = 4, .delta_r = 3.0 / (N - 1),
+        .thermodynamics_model = THERMODYNAMICS_RADIATIVE_ENERGY,
+        .thermal_states = thermal, .radial_grid = radii,
+        .gas_surface_density_vector = gas, .gas_pressure_gradient_vector = gradient,
+        .gas_velocity_vector = velocity
+    };
+    for (int i = 0; i < N + 2; ++i) {
+        radii[i] = logarithmic ? pow(4, (i - 1.0) / (N - 1)) : 1 + (i - 1) * disk.delta_r;
+        gas[i] = 1e-20;
+        gradient[i] = 0;
+        velocity[i] = outward ? 1e8 : -1e8;
+        thermal[i].sound_speed = 1e5;
+        thermal[i].scale_height = .05 * AU_IN_CM;
+    }
+    double radius, size;
+    integrateParticleRungeKutta4(1e-10 / AU_IN_CM, 1, outward ? 3.99 : 1.01,
+                                &radius, &size, &disk);
+    assert(radius == 0 && size == 0);
+    for (int i = 0; i < N + 2; ++i) velocity[i] = outward ? .01 : -.01;
+    double initial = outward ? 3.9 : 1.1;
+    integrateParticleRungeKutta4(1e-10 / AU_IN_CM, .1, initial, &radius, &size, &disk);
+    assert(fabs(radius - (initial + .1 * velocity[1])) < 1e-14);
+    assert(size == 1e-10 / AU_IN_CM);
+
+    /* A steep spatial velocity change must be sampled, not jumped over. */
+    for (int i = 0; i < N + 2; ++i) velocity[i] = -100 * (radii[i] - 2);
+    double coarse, fine, exact = 2 + .8 * exp(-.1);
+    integrateParticleRungeKutta4(1e-10 / AU_IN_CM, .001, 2.8, &coarse, &size, &disk);
+    integrateParticleRungeKutta4(1e-10 / AU_IN_CM, .0005, 2.8, &fine, &size, &disk);
+    integrateParticleRungeKutta4(size, .0005, fine, &fine, &size, &disk);
+    double error_ratio = fabs(coarse - exact) / fabs(fine - exact);
+    assert(error_ratio > 12 && error_ratio < 20);
+    integrateParticleRungeKutta4(1e-10 / AU_IN_CM, .2, 2.8, &radius, &size, &disk);
+    assert(fabs(radius - 2) < .01);
+    assert(size > 0);
+}
+
+static void testDriftTimeStepSampling(void)
+{
+    enum { N = 4 };
+    double r[] = {.5, 1, 2, 3, 4, 5};
+    double sigma[] = {1, 1, 1, 1, 1, 1}, gradient[N + 2] = {0};
+    double velocity[] = {1e8, 1, 3, 5, 7, 1e8};
+    double positions[][2] = {{1.5, 1e-10}}, micron[][2] = {{3.5, 1e-10}};
+    DiskParameters disk = {.grid_number = N, .r_min = 1, .r_max = 4,
+        .stellar_mass = 1, .h_aspect_ratio = .05, .radial_grid = r,
+        .gas_surface_density_vector = sigma, .gas_pressure_gradient_vector = gradient,
+        .gas_velocity_vector = velocity};
+    ParticleData particles = {.particle_distance_array = positions,
+                              .micron_particle_distance_array = micron};
+    assert(getMaximumDriftVelocity(&particles, 1, &disk, SnapshotDrift) == 2);
+    assert(getMaximumDriftVelocity(&particles, 1, &disk, SnapshotDriftTwoPop) == 6);
+}
+
 int main(void)
 {
+    testDriftTimeStepSampling();
     for (int grid = 0; grid < 2; ++grid) {
         testGrowth(4, grid);
         testGrowth(8, grid);
         testGrowth(24, grid);
+        testRadiativeBoundaryCrossing(grid, 0);
+        testRadiativeBoundaryCrossing(grid, 1);
     }
-    puts("Dust growth: gas-grid interpolation and single size update checks passed");
+    puts("Dust: growth, interpolated timestep velocities, bounded RK4 and radiative absorbing exits passed");
     return 0;
 }

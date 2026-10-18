@@ -16,13 +16,18 @@
  * @brief Performs a fourth-order Runge-Kutta (RK4) integration step for a single dust particle.
  *
  * Evolves radial position at fixed grain size using interpolated gas properties.
- * Growth/fragmentation is applied once by updateParticleSizes before transport.
+ * Growth/fragmentation is applied separately by updateParticleSizes.
+ * Local crossing-limited RK4 substeps use the frozen gas fields. Trial stages
+ * outside the physical domain, beyond half a local cell or across a drift
+ * root are retried at half dt.
+ * Absorbing exits return zero position and size, without evaluating EOS outside
+ * the physical domain. Grain size otherwise remains unchanged.
  *
  * @param[in]  particle_radius        Current physical radius (grain size) of the dust particle.
  * @param[in]  actual_timestep        The time step size (dt) for the integration.
  * @param[in]  particle_distance      Current radial distance of the particle from the central star.
  * @param[out] particle_distance_new  Pointer to store the updated radial distance after the RK4 step.
- * @param[out] particle_radius_new    Unchanged grain size.
+ * @param[out] particle_radius_new    Unchanged grain size, or zero after escape.
  * @param[in]  disk_params            Pointer to the structure containing physical disk parameters and gas arrays.
  *
  * @note The function uses four intermediate slope calculations (k1, k2, k3, k4) to ensure 

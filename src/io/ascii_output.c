@@ -304,7 +304,7 @@ void printCurrentInformationAboutRun(const char *directory_name, const DiskParam
     fprintf(info_file, "  Status:            %s\n", disk_params->enable_backreaction ? "ENABLED" : "DISABLED");
     if (disk_params->enable_backreaction) {
         fprintf(info_file, "  Closure:           Stationary mutual drag; surface-density loading; CIC\n");
-        fprintf(info_file, "  Gas transport:     Conservative upwind face fluxes (not legacy FTCS)\n");
+        fprintf(info_file, "  Gas transport:     Original viscous FTCS + conservative drag-only flux correction\n");
     }
 
     fprintf(info_file, "\n--- [ Gas Cutoff Profile ] ---\n");

@@ -8,6 +8,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 static void testDragBalance(void)
 {
@@ -61,7 +62,7 @@ static void testTransport(int logarithmic, int count, int reflecting)
 {
     enum { N = 8, P = 26 };
     double r[N + 2], sigma[N + 2], pressure[N + 2], grad[N + 2], velocity[N + 2];
-    double positions[P][2], masses[P], density[N];
+    double positions[P][2], masses[P], density[N], sink[N + 2] = {0};
     DiskParameters disk = {
         .grid_number = N, .stellar_mass = 1, .r_min = 1, .r_max = 4, .delta_r = 3.0 / (N - 1),
         .h_aspect_ratio = .05, .alpha_parameter = .003, .alpha_parameter_modification = 1,
@@ -69,7 +70,7 @@ static void testTransport(int logarithmic, int count, int reflecting)
         .radial_grid = r, .gas_surface_density_vector = sigma, .gas_pressure_vector = pressure,
         .gas_pressure_gradient_vector = grad, .gas_velocity_vector = velocity,
         .particle_density_dimensionless = 1.6 * pow(AU_IN_CM, 3) / SOLAR_MASS_IN_GRAMS,
-        .density_floor = 1e-20, .enable_backreaction = true
+        .density_floor = 1e-20, .enable_backreaction = true, .sigma_dot_photoevap = sink
     };
     ParticleData particles = {.particle_distance_array = positions, .dust_particle_mass_grid = masses,
                                .dust_surfacedensity = density};
@@ -117,6 +118,16 @@ static void testTransport(int logarithmic, int count, int reflecting)
         assert(fabs(expected_a[i] - disk.backreaction->loading_a[i]) < 1e-15);
         assert(fabs(expected_b[i] - disk.backreaction->loading_b[i]) < 1e-15);
     }
+    for (int j = 0; j <= N; ++j) {
+        double correction_velocity = .5 * (
+            disk.backreaction->radial[j] - disk.backreaction->viscous[j] +
+            disk.backreaction->radial[j + 1] - disk.backreaction->viscous[j + 1]);
+        int donor = correction_velocity >= 0 ? j : j + 1;
+        double expected_flux = 2 * M_PI * .5 * (r[j] + r[j + 1]) *
+                               correction_velocity * sigma[donor];
+        if (reflecting && (j == 0 || j == N)) expected_flux = 0;
+        assert(fabs(expected_flux - disk.backreaction->flux[j]) < 1e-20);
+    }
     if (count == 0) {
         double expected[N + 2];
         calculateGasRadialVelocity(&disk);
@@ -141,34 +152,63 @@ static void testTransport(int logarithmic, int count, int reflecting)
     double dt = fmin(1, backreactionTimeStep(&particles, total_count, &disk, &options));
     for (int i = 1; i <= N; ++i) {
         double a = disk.backreaction->loading_a[i], b = disk.backreaction->loading_b[i];
-        double diffusion = (3 * calculateKinematicViscosity(r[i], &disk) * (1 + a) +
-            calculateLocalSoundSpeed(r[i], &disk) * calculatePressureScaleHeight(r[i], &disk) * b) /
-            ((1 + a) * (1 + a) + b * b);
+        double denominator = (1 + a) * (1 + a) + b * b;
+        double diffusion = 3 * calculateKinematicViscosity(r[i], &disk) *
+            (1 + fabs((1 + a) / denominator - 1)) +
+            calculateLocalSoundSpeed(r[i], &disk) * calculatePressureScaleHeight(r[i], &disk) * b /
+            denominator;
         double dr = fmin(r[i] - r[i - 1], r[i + 1] - r[i]);
         assert(dt <= .2 * dr * dr / (2 * diffusion));
     }
     double boundary = dt * (disk.backreaction->flux[0] - disk.backreaction->flux[N]);
     if (reflecting) assert(boundary == 0);
+    double reference_sigma[N + 2], reference_pressure[N + 2], reference_gradient[N + 2];
+    DiskParameters reference = disk;
+    reference.enable_backreaction = false;
+    reference.gas_surface_density_vector = reference_sigma;
+    reference.gas_pressure_vector = reference_pressure;
+    reference.gas_pressure_gradient_vector = reference_gradient;
+    memcpy(reference_sigma, sigma, sizeof(sigma));
+    memcpy(reference_pressure, pressure, sizeof(pressure));
+    memcpy(reference_gradient, grad, sizeof(grad));
+    options.user_defined_time_step = dt;
+    refreshGasSurfaceDensityPressurePressureGradient(&options, &reference);
+    double reference_mass = 0;
+    for (int i = 1; i <= N; ++i) reference_mass += area(i, &disk) * reference_sigma[i];
     advanceBackreactionGas(dt, &disk, &options);
     double final_mass = 0;
     for (int i = 1; i <= N; ++i) {
         final_mass += area(i, &disk) * sigma[i];
         assert(sigma[i] >= disk.density_floor);
+        double expected = reference_sigma[i] -
+            dt * (disk.backreaction->flux[i] - disk.backreaction->flux[i - 1]) / area(i, &disk);
+        assert(sigma[i] == expected);
     }
-    assert(fabs(final_mass - total_mass - boundary) < 1e-15 * total_mass);
+    assert(fabs(final_mass - reference_mass - boundary) < 1e-15 * total_mass);
+    if (count == 0) {
+        for (int step = 0; step < 10; ++step) {
+            refreshBackreaction(&particles, total_count, &disk, &options);
+            for (int i = 0; i <= N; ++i) assert(disk.backreaction->flux[i] == 0);
+            refreshGasSurfaceDensityPressurePressureGradient(&options, &reference);
+            advanceBackreactionGas(dt, &disk, &options);
+            for (int i = 0; i < N + 2; ++i) assert(sigma[i] == reference_sigma[i]);
+        }
+    }
     free(disk.backreaction);
 }
 
 static double viscousContinuumError(int n, int logarithmic)
 {
     double r[n + 2], sigma[n + 2], pressure[n + 2], gradient[n + 2], velocity[n + 2];
+    double original[n + 2], sink[n + 2];
+    memset(sink, 0, sizeof(sink));
     DiskParameters disk = {
         .grid_number = n, .stellar_mass = 1, .r_min = 1, .r_max = 4, .delta_r = 3.0 / (n - 1),
         .h_aspect_ratio = .05, .alpha_parameter = .003, .alpha_parameter_modification = 1,
         .r_dze_i = 2, .r_dze_o = 3, .dr_dze_i = .1, .dr_dze_o = .1,
         .radial_grid = r, .gas_surface_density_vector = sigma, .gas_pressure_vector = pressure,
         .gas_pressure_gradient_vector = gradient, .gas_velocity_vector = velocity,
-        .density_floor = 1e-20, .enable_backreaction = true
+        .density_floor = 1e-20, .enable_backreaction = true, .sigma_dot_photoevap = sink
     };
     ParticleData particles = {0};
     SimulationOptions options = {0};
@@ -177,13 +217,15 @@ static double viscousContinuumError(int n, int logarithmic)
         sigma[i] = 1e-5 * pow(r[i], -.25);
     }
     refreshBackreaction(&particles, 0, &disk, &options);
+    memcpy(original, sigma, sizeof(sigma));
+    const double dt = .01;
+    advanceBackreactionGas(dt, &disk, &options);
     double error = 0, reference = 0;
     for (int i = 2; i < n; ++i) {
         if (r[i] < 1.5 || r[i] > 3.5) continue;
-        double exact = 3 * calculateKinematicViscosity(r[i], &disk) * sigma[i] *
+        double exact = 3 * calculateKinematicViscosity(r[i], &disk) * original[i] *
                        .25 * .75 / (r[i] * r[i]);
-        double numerical = -(disk.backreaction->flux[i] - disk.backreaction->flux[i - 1]) /
-                           area(i, &disk);
+        double numerical = (sigma[i] - original[i]) / dt;
         error += fabs(numerical - exact) * area(i, &disk);
         reference += exact * area(i, &disk);
     }
@@ -208,6 +250,6 @@ int main(void)
             testTransport(grid, 24, boundary);
         }
     }
-    puts("Backreaction: drag balance, CIC mass/moments, passive limit, mass conservation and viscous convergence passed");
+    puts("Backreaction: drag balance, CIC, exact FTCS limit, conservative drag correction and viscous convergence passed");
     return 0;
 }

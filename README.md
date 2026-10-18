@@ -24,7 +24,8 @@ Stay tuned for regular feature updates.
 
 Experimental opt-in [stationary dust backreaction](docs/backreaction.md) is
 available for evolved lociso gas with one CIC-mapped dust population.
-It changes gas mass transport as well as particle drift; see
+It retains viscous FTCS and adds a drag-only gas mass-flux correction,
+as well as coupled particle drift; see
 [the example configuration](configs/config_backreaction.yaml) and the documented
 restrictions before enabling it.
 
@@ -132,8 +133,20 @@ fields are interpolated at the particle radius on their gas-grid coordinates;
 the dust density's zero-based physical-cell array excludes gas ghost cells.
 RK4 holds that size fixed. The secondary micron population is not grown by
 this update. This split scheme is not a fourth-order coupled growth solver.
+The global drift bound samples the physical gas fields at each particle
+position, not a cached zero-based cell index. Since gas evolution and growth
+can change drift after that bound is chosen, particle RK4 also uses local
+crossing-limited substeps on the updated, frozen gas state. Trial stages
+outside the domain, beyond half a cell, or reversing the initial drift
+direction are retried with half the substep. Absorbing exits are localized
+to floating-point radial precision and use the existing zero-position/size
+inactive marker; EOS is never evaluated at a negative trial radius.
+This is a transport safety bound, not an embedded RK error estimator or a
+change to the gas integrator. Feedback runs keep their documented post-transport
+growth split.
 `make test-dust` tests linear/log grids with particle counts below, equal to
-and above the gas-cell count.
+and above the gas-cell count, interpolated timestep velocities for both
+populations, radiative absorbing exits, and steep drift-root trapping.
 
 Gas viscous evolution advances `nu * Sigma` and divides by the same local
 viscosity to recover `Sigma` before applying photoevaporation and the density

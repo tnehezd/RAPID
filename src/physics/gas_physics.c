@@ -13,6 +13,8 @@
 #include "photoevaporation.h"
 #include "disk_thermal.h"
 #include "self_gravity.h"
+#include "backreaction.h"
+#include "logger.h"
 
 #define WIND_CRIT 1e-20  // Critical value for wind profile (below this value, wind is considered zero) [M_sol/AU^2/day]
 
@@ -158,8 +160,7 @@ void refreshGasSurfaceDensityPressurePressureGradient(SimulationOptions *sim_opt
             ftcsFirstDerivativeCoefficient(disk_params->radial_grid[i], disk_params) * first_derivative;
 
         // Convert the evolved nu * Sigma back to physical Sigma before applying sinks.
-        if (disk_params->thermodynamics_model == THERMODYNAMICS_RADIATIVE &&
-            viscosity == 0.0) {
+        if (viscosity == 0.0) {
             gas_surface_density_temp[i] = disk_params->gas_surface_density_vector[i] +
                 dt * (3.0 * second_derivative +
                       4.5 / disk_params->radial_grid[i] * first_derivative);
@@ -181,6 +182,23 @@ void refreshGasSurfaceDensityPressurePressureGradient(SimulationOptions *sim_opt
     // =========================================================================
     for (i = 1; i <= disk_params->grid_number; i++) { 
         gas_surface_density_temp[i] -= dt * disk_params->sigma_dot_photoevap[i];
+        if (disk_params->enable_backreaction) {
+            if (disk_params->backreaction == NULL) {
+                LOG_ERROR("FTCS backreaction correction requested before drag initialization.\n");
+                exit(EXIT_FAILURE);
+            }
+            /* Cached flux contains only u_g - u_nu, on the same old state as FTCS. */
+            double correction = disk_params->backreaction->flux[i] -
+                                disk_params->backreaction->flux[i - 1];
+            if (correction != 0.0) {
+                gas_surface_density_temp[i] -= dt * correction / backreactionCellArea(i, disk_params);
+            }
+            if (!isfinite(gas_surface_density_temp[i]) ||
+                gas_surface_density_temp[i] < disk_params->density_floor) {
+                LOG_ERROR("Invalid FTCS plus backreaction density at cell %d; reduce timestep.\n", i);
+                exit(EXIT_FAILURE);
+            }
+        }
         if (gas_surface_density_temp[i] < disk_params->density_floor) {
             gas_surface_density_temp[i] = disk_params->density_floor;
         }

@@ -59,8 +59,7 @@ void refreshBackreaction(const ParticleData *particles, int count,
         LOG_ERROR("Backreaction grid changed after allocation.\n");
         exit(EXIT_FAILURE);
     }
-    options->current_bc_target = 0;
-    applySurfaceDensityBoundaryConditions(disk->gas_surface_density_vector, disk, options);
+    /* Do not alter Sigma/ghosts here: the original FTCS routine owns its BCs. */
     for (int i = 0; i < m; ++i) {
         double r = disk->radial_grid[i], sigma = disk->gas_surface_density_vector[i];
         if (!isfinite(r) || r <= 0 || !isfinite(sigma) || sigma <= 0) {
@@ -127,7 +126,8 @@ void refreshBackreaction(const ParticleData *particles, int count,
     for (int i = 0; i < m; ++i) disk->gas_velocity_vector[i] = state->radial[i];
     for (int j = 0; j <= n; ++j) {
         double face = .5 * (disk->radial_grid[j] + disk->radial_grid[j + 1]);
-        double velocity = .5 * (state->radial[j] + state->radial[j + 1]);
+        double velocity = .5 * ((state->radial[j] - state->viscous[j]) +
+                                (state->radial[j + 1] - state->viscous[j + 1]));
         int donor = velocity >= 0 ? j : j + 1;
         state->flux[j] = 2 * M_PI * face * velocity * disk->gas_surface_density_vector[donor];
         if ((j == 0 && options->inner_boundary_condition_type == 4) ||
@@ -175,9 +175,11 @@ double backreactionTimeStep(const ParticleData *particles, int count,
     for (int i = 1; i <= disk->grid_number; ++i) {
         double r = disk->radial_grid[i], a = state->loading_a[i], b = state->loading_b[i];
         double denominator = (1 + a) * (1 + a) + b * b;
-        /* Both viscous drift and pressure feedback contain density gradients. */
-        double diffusivity = (3 * calculateKinematicViscosity(r, disk) * (1 + a) +
-            calculateLocalSoundSpeed(r, disk) * calculatePressureScaleHeight(r, disk) * b) /
+        /* Bound the original FTCS operator plus the explicit drag correction,
+         * without relying on cancellation between their viscous contributions. */
+        double diffusivity = 3 * calculateKinematicViscosity(r, disk) *
+            (1 + fabs((1 + a) / denominator - 1)) +
+            calculateLocalSoundSpeed(r, disk) * calculatePressureScaleHeight(r, disk) * b /
             denominator;
         if (!isfinite(diffusivity) || diffusivity < 0) {
             LOG_ERROR("Invalid backreaction diffusivity at cell %d.\n", i);
@@ -216,17 +218,6 @@ double backreactionTimeStep(const ParticleData *particles, int count,
 
 void advanceBackreactionGas(double dt, DiskParameters *disk, SimulationOptions *options)
 {
-    double next[disk->grid_number + 2];
-    for (int i = 1; i <= disk->grid_number; ++i) {
-        next[i] = disk->gas_surface_density_vector[i] -
-            dt * (disk->backreaction->flux[i] - disk->backreaction->flux[i - 1]) /
-            backreactionCellArea(i, disk);
-        if (!isfinite(next[i]) || next[i] < disk->density_floor) {
-            LOG_ERROR("Invalid backreaction density update at cell %d; reduce timestep.\n", i);
-            exit(EXIT_FAILURE);
-        }
-    }
-    for (int i = 1; i <= disk->grid_number; ++i) disk->gas_surface_density_vector[i] = next[i];
-    options->current_bc_target = 0;
-    applySurfaceDensityBoundaryConditions(disk->gas_surface_density_vector, disk, options);
+    options->user_defined_time_step = dt;
+    refreshGasSurfaceDensityPressurePressureGradient(options, disk);
 }

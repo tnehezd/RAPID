@@ -79,6 +79,19 @@ class BackreactionSimulationTests(unittest.TestCase):
                 info = (loaded / "current_run_info.dat").read_text()
                 self.assertIn("Dust Backreaction", info)
                 self.assertIn("Stationary mutual drag", info)
+                self.assertIn("Original viscous FTCS + conservative drag-only flux correction", info)
+
+    def test_zero_loading_recovers_ftcs_single_step(self):
+        for grid in ("linear", "logarithmic"):
+            for boundary in ("zero_gradient", "reflecting"):
+                with self.subTest(grid=grid, boundary=boundary):
+                    args = ("-eps", "0", "-grid_type", grid, "-inner_bc", boundary,
+                            "-outer_bc", boundary, "-tmax", "1",
+                            "-largesize", "1e-10", "-alpha_init", "1e-6")
+                    passive = self.run_case(*args, enabled=False)
+                    feedback = self.run_case(*args)
+                    np.testing.assert_array_equal(self.final_gas(passive)[:, :3],
+                                                  self.final_gas(feedback)[:, :3])
 
     def test_dust_free_velocity_limit(self):
         passive = self.run_case("-eps", "1e-10", enabled=False)

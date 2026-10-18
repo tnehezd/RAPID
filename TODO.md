@@ -43,7 +43,8 @@
 - [ ] Add dust backreaction on the gas through mutual drag, with consistent
   momentum exchange between gas and dust.
   - [x] Experimental stationary Keplerian closure for lociso, one CIC-mapped
-    population, with coupled dust velocities and conservative gas mass flux.
+    population, with coupled dust velocities and a conservative drag-only
+    gas flux correction on the original viscous FTCS update.
     See [scope and limitations](docs/backreaction.md).
   - [ ] Extend beyond the vertically averaged stationary closure: settled dust,
     radiative/SG coupling and time-dependent momentum conservation.
