@@ -4,6 +4,7 @@
 #include "boundary_conditions.h"
 #include "disk_model.h"
 #include "gas_physics.h"
+#include "self_gravity.h"
 #include "logger.h"
 
 #include <math.h>

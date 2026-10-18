@@ -20,6 +20,7 @@
 
 #include "simulation_types.h" 
 #include "eos.h"
+#include "self_gravity.h"
 
 /**
  * @brief Calculates the turbulent alpha parameter \f$\alpha(r)\f$.
@@ -116,18 +117,5 @@ void calculateGasPressureGradient(DiskParameters *disk_params);
  * @param disk_params  Pointer to disk parameter structure.
  */
 void refreshGasSurfaceDensityPressurePressureGradient(SimulationOptions *sim_opts, DiskParameters *disk_params);
-
-/**
- * @brief Updates the disk self-gravity contribution to the rotation curve.
- *
- * Sums the softened radial gravitational pull of all gas rings (complete elliptic
- * integral kernel, softening 0.6 H) and stores \f$g_{sg}/r\f$ in
- * DiskParameters::selfgravity_omega2_extra, so that
- * \f$\Omega^2 = \Omega_K^2 + g_{sg}/r\f$ in calculateKeplerianFrequency().
- * Does nothing if self-gravity is disabled.
- *
- * @param disk_params Pointer to disk parameter structure.
- */
-void updateSelfGravity(DiskParameters *disk_params);
 
 #endif // GAS_PHYSICS_H

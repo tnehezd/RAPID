@@ -68,4 +68,3 @@
   outputs and limitations.
 - [ ] Update rapidsim to support the new simulation capabilities.
 - [ ] Particle data into one consolidated structure? 
-- [ ] Move self-gravity session to a different module.

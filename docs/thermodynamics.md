@@ -145,6 +145,10 @@ shear include the radial SG field. Without SG, heating reduces to
 `(9/4)*nu*Sigma*Omega_K^2`. The stellar shear is differentiated analytically.
 SG softening depends on H, so SG and thermal states are iterated with
 under-relaxation, relative H tolerance 1e-8 and at most 64 iterations.
+The softened ring kernel, SG cache update and cache interpolation are implemented
+in [self_gravity.c](../src/physics/self_gravity.c), with their public interface in
+[self_gravity.h](../include/physics/self_gravity.h). The gas module retains the
+orbital-frequency calculation and adds the cached SG contribution when enabled.
 
 The temperature solve uses bounded bisection, relative temperature and
 heating/cooling tolerances of 1e-8, and at most 128 iterations. An already

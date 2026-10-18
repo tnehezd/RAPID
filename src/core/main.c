@@ -16,6 +16,7 @@
 #include "simulation_core.h" 
 #include "utils.h"           
 #include "gas_physics.h"
+#include "self_gravity.h"
 #include "boundary_conditions.h"
 #include "integrator.h"
 #include "simulation_types.h"
