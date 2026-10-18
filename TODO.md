@@ -46,8 +46,24 @@
     population, with coupled dust velocities and a conservative drag-only
     gas flux correction on the original viscous FTCS update.
     See [scope and limitations](docs/backreaction.md).
-  - [ ] Extend beyond the vertically averaged stationary closure: settled dust,
-    radiative/SG coupling and time-dependent momentum conservation.
+  - [ ] Support NGP, TopHat and Gaussian mapping with backreaction, or explicitly
+    retain and document the CIC-only BR limitation. If extended, use common
+    mass-conserving kernel weights for dust density and drag moments, including
+    boundary normalization; do not silently change existing passive-run smoothing.
+  - [ ] Couple backreaction to photoevaporation, with consistent gas removal,
+    dust loading, timestep limits and treatment of depleted cells.
+  - [ ] Couple backreaction to radiative equilibrium and radiative energy
+    evolution, including irradiation. Refresh thermal/drag quantities consistently
+    and include energy transport/losses associated with drag-driven gas transport
+    and photoevaporation in energy mode.
+  - [ ] Extend backreaction compatibility to self-gravity, two dust populations
+    and the remaining gas boundary conditions. Validate each combination before
+    lifting its explicit restriction.
+  - [ ] Keep each model's existing gas evolution scheme shared between BR-off
+    and BR-on controls; assess numerical-scheme changes separately from adding
+    physics. Test zero-loading limits, relevant budgets and grid/time convergence.
+  - [ ] Extend beyond the vertically averaged stationary closure: settled dust
+    and time-dependent momentum conservation.
 - [ ] Extend collisional dust evolution with a Smoluchowski solver and/or
   Monte Carlo collisions, including coagulation and fragmentation.
 - [ ] Explore a finite-width inner accretion sink with a stellar-distance-dependent
