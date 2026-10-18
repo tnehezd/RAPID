@@ -21,9 +21,15 @@
 #include "print_terminal.h"
 #include "logger.h"
 #include "disk_thermal.h"
+#include "backreaction.h"
 
 
 void calculate1DDustDrift(double particle_radius, double pressure_gradient, double gas_surface_density, double gas_velocity, double radial_distance, double *drift_velocity, const DiskParameters *disk_params) {
+    if (disk_params->enable_backreaction) {
+        *drift_velocity = backreactionDustVelocity(radial_distance, particle_radius,
+                                                  gas_surface_density, disk_params);
+        return;
+    }
     double local_pressure, local_pressure_scaleheight, local_pressure_gradient, stokes_number, local_soundspeed;
       
     stokes_number = calculateStokesNumber(particle_radius,gas_surface_density,disk_params);
@@ -38,6 +44,19 @@ void calculate1DDustDrift(double particle_radius, double pressure_gradient, doub
 double getMaximumDriftVelocity(const ParticleData *particle_data, int particle_number, const DiskParameters *disk_params, SnapshotMode mode) {
     double max_v = 0.0;
     double v_drift = 0.0;
+
+    if (disk_params->enable_backreaction) {
+        for (int i = 0; i < particle_number; ++i) {
+            double r = particle_data->particle_distance_array[i][0], sigma;
+            if (r < disk_params->r_min || r > disk_params->r_max) continue;
+            linearInterpolation(disk_params->gas_surface_density_vector, disk_params->radial_grid,
+                                r, &sigma, disk_params->delta_r, disk_params);
+            v_drift = backreactionDustVelocity(r, particle_data->particle_distance_array[i][1],
+                                               sigma, disk_params);
+            max_v = fmax(max_v, fabs(v_drift));
+        }
+        return max_v;
+    }
 
     // 1. Iterate over the primary (cm-sized) dust population
     for (int i = 0; i < particle_number; i++) {
@@ -329,6 +348,23 @@ static void simulateDustDriftStep(double *t, double deltat, double *output_time,
         }
     }
 
+    if (disk_params->enable_backreaction) {
+        /* Both transports use the same frozen beginning-of-step drag state.
+         * Growth is split after transport, never applied early to the full step. */
+        calculateDustDistance(sim_opts->output_dir_name, particle_data, deltat, *t,
+                              particle_number, sim_opts, disk_params);
+        advanceBackreactionGas(deltat, disk_params, sim_opts);
+        updateParticleGridIndices(particle_data, *t + deltat, particle_number, disk_params, 0);
+        calculateDustSurfaceDensity(particle_data, sim_opts, disk_params);
+        refreshBackreaction(particle_data, particle_number, disk_params, sim_opts);
+        if (isDustGrowthEnabled(mode)) {
+            updateParticleSizes(particle_data, particle_number, deltat, disk_params);
+            refreshBackreaction(particle_data, particle_number, disk_params, sim_opts);
+        }
+        *t += deltat;
+        return;
+    }
+
     if (isGasEvolutionEnabled(mode)) {
         refreshGasSurfaceDensityPressurePressureGradient(sim_opts, disk_params);
         calculateGasRadialVelocity(disk_params);
@@ -441,7 +477,9 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
     double output_time = 0.; 
     double initial_disk_mass = 0.0;
     for (int i = 1; i <= disk_params->grid_number; i++) {
-        initial_disk_mass += 2.0 * M_PI * disk_params->radial_grid[i] * (disk_params->radial_grid[i + 1] - disk_params->radial_grid[i]) * disk_params->gas_surface_density_vector[i];
+        double area = disk_params->enable_backreaction ? backreactionCellArea(i, disk_params) :
+            2.0 * M_PI * disk_params->radial_grid[i] * (disk_params->radial_grid[i + 1] - disk_params->radial_grid[i]);
+        initial_disk_mass += area * disk_params->gas_surface_density_vector[i];
     }
     LOG_INFO("Numerically integrated initial disk mass is: %.5e M_Sun\n", initial_disk_mass);
     LOG_INFO("YAML provided initial disk mass is: %.5e M_Sun\n", disk_params->total_disk_mass);
@@ -475,6 +513,11 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
             exit(EXIT_FAILURE);
         }
         loadDustParticlesFromFile(&particle_data, sim_opts->dust_input_filename);
+        if (disk_params->enable_backreaction) {
+            updateParticleGridIndices(&particle_data, 0, particle_number, disk_params, 0);
+            calculateDustSurfaceDensity(&particle_data, sim_opts, disk_params);
+            refreshBackreaction(&particle_data, particle_number, disk_params, sim_opts);
+        }
         writeInitialDriftTimescales(&particle_data, particle_number, sim_opts, disk_params);
     }
 
@@ -515,6 +558,14 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
         double deltat = 0.7 * dt_old + 0.3 * dt_new;
         if (isRadiativeThermodynamics(disk_params->thermodynamics_model)) {
             deltat = fmin(deltat, dt_new);
+        }
+        if (disk_params->enable_backreaction) {
+            deltat = fmin(deltat, fmin(dt_new,
+                backreactionTimeStep(&particle_data, particle_number, disk_params, sim_opts)));
+            if (!isfinite(deltat) || deltat <= 0 || t + deltat == t) {
+                LOG_ERROR("Backreaction timestep cannot advance time.\n");
+                exit(EXIT_FAILURE);
+            }
         }
 
         // End exactly at tmax so the final snapshot represents the requested time.
@@ -566,7 +617,9 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
                 fully_evaporated_cells++;
             }
 
-            double cell_mass = 2.0 * M_PI * disk_params->radial_grid[i] * (disk_params->radial_grid[i + 1] - disk_params->radial_grid[i]) * disk_params->gas_surface_density_vector[i];
+            double area = disk_params->enable_backreaction ? backreactionCellArea(i, disk_params) :
+                2.0 * M_PI * disk_params->radial_grid[i] * (disk_params->radial_grid[i + 1] - disk_params->radial_grid[i]);
+            double cell_mass = area * disk_params->gas_surface_density_vector[i];
             current_disk_mass += cell_mass;
         }
 

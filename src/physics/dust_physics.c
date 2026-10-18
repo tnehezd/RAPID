@@ -13,6 +13,7 @@
 #include <math.h>
 #include <omp.h>     
 #include "logger.h"        
+#include "backreaction.h"
 
 static int findNearestDustGridIndex(double radius, const DiskParameters *disk_params)
 {
@@ -35,7 +36,7 @@ static int findNearestDustGridIndex(double radius, const DiskParameters *disk_pa
             disk_params->radial_grid[high] - radius) ? low - 1 : high - 1;
 }
 
-static int findDustLeftCell(double radius, const DiskParameters *disk_params,
+int findDustLeftCell(double radius, const DiskParameters *disk_params,
                             double *fraction)
 {
     int low = 1;
@@ -278,6 +279,8 @@ void calculateDustSurfaceDensity(const ParticleData *particle_data,
     int mode_type = simulation_options->dust_smoothing_mode;
     for (k = 0; k < particle_number; k++) {
         double r = particle_data->particle_distance_array[k][0];
+        if (disk_params->enable_backreaction &&
+            (r < disk_params->r_min || r > disk_params->r_max)) continue;
         double r_mic = 0.0;
         if (is_twopop) {
             r_mic = particle_data->micron_particle_distance_array[k][0];
@@ -359,6 +362,9 @@ void calculateDustSurfaceDensity(const ParticleData *particle_data,
         double r_i = disk_params->radial_grid[i + 1];
         double local_dr = disk_params->radial_grid[i + 2] - disk_params->radial_grid[i + 1];
         double area = 2.0 * M_PI * r_i * local_dr;
+        if (disk_params->enable_backreaction) {
+            area = backreactionCellArea(i + 1, disk_params);
+        }
 
         // Perform normalization only if area is valid
         if (area > 1e-20) {

@@ -300,6 +300,13 @@ void printCurrentInformationAboutRun(const char *directory_name, const DiskParam
     fprintf(info_file, "  Total Disk Mass:   %.4e M_Sun\n\n", disk_params->total_disk_mass);
 
 
+    fprintf(info_file, "\n--- [ Dust Backreaction ] ---\n");
+    fprintf(info_file, "  Status:            %s\n", disk_params->enable_backreaction ? "ENABLED" : "DISABLED");
+    if (disk_params->enable_backreaction) {
+        fprintf(info_file, "  Closure:           Stationary mutual drag; surface-density loading; CIC\n");
+        fprintf(info_file, "  Gas transport:     Conservative upwind face fluxes (not legacy FTCS)\n");
+    }
+
     fprintf(info_file, "\n--- [ Gas Cutoff Profile ] ---\n");
     fprintf(info_file, "  Use Cutoff:        %s\n", disk_params->cutoff ? "YES" : "NO");
     if (disk_params->cutoff) {
@@ -442,15 +449,15 @@ void printDustSurfaceDensityPressurePressureDerivateFile(const double *r, const 
         return;
     }
 
-    for(i=0;i<particle_number;i++){
+    for(i=0;i<disk_params->grid_number;i++){
 
-        if (r[i] >= disk_params->r_min) { 
-            fprintf(output_files->dust_file,"%-16lg %-23.5f %-20.6e\n",(double)step,r[i],dust_surfacedensity[i]);
+        if (r[i + 1] >= disk_params->r_min) {
+            fprintf(output_files->dust_file,"%-16lg %-23.5f %-20.6e\n",(double)step,r[i + 1],dust_surfacedensity[i]);
         }
 
         if(sim_opts->option_for_dust_secondary_population == 1.0 && output_files->micron_dust_file != NULL) {
-            if (rm[i] >= disk_params->r_min) {
-                fprintf(output_files->micron_dust_file,"%-16lg %-23.5f %-20.6e\n",(double)step,rm[i],micron_dust_surfacedensity[i]);
+            if (rm[i + 1] >= disk_params->r_min) {
+                fprintf(output_files->micron_dust_file,"%-16lg %-23.5f %-20.6e\n",(double)step,rm[i + 1],micron_dust_surfacedensity[i]);
             }
         }
     }

@@ -22,8 +22,22 @@ Stay tuned for regular feature updates.
 
 ## Model Description
 
+Experimental opt-in [stationary dust backreaction](docs/backreaction.md) is
+available for evolved lociso gas with one CIC-mapped dust population.
+It changes gas mass transport as well as particle drift; see
+[the example configuration](configs/config_backreaction.yaml) and the documented
+restrictions before enabling it.
+
 See [disk geometry and flaring](docs/geometry.md) for which geometry parameters
 are active in each thermal mode. Prescribed flaring is lociso-only.
+
+Quick ASCII gas/dust overview: `python plot_dust.py RUN_DIR -o overview.png`.
+The three panels show gas and dust surface-density profiles coloured by time,
+and particle radius versus time coloured consistently by particle ID.
+Omit `-o` for an interactive window; `--linear` selects linear axes.
+This reads the primary dust population and requires matching ASCII snapshots.
+Old dust-density files with shifted/truncated grids must be regenerated with
+the corrected writer; the plotter rejects them rather than guessing a mapping.
 
 RAPID is a trajectory-based Lagrangian model that tracks the motion of representative dust particles in the radial direction within an evolving 1D Eulerian gaseous disk. A key feature of this model is that the pressure maximum, which acts as a dust trap, is not a static element but a dynamically evolving phenomenon arising naturally in the vicinity of the embedded dead zone's inner and outer edges.
 

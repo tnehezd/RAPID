@@ -97,6 +97,8 @@ typedef struct {
     double *sink_photoevap;
     bool   enable_photoevaporation;       /**< Global switch to turn photoevaporation ON/OFF. */
     bool   enable_selfgravity;            /**< Include axisymmetric disk self-gravity in the rotation curve. */
+    bool   enable_backreaction;           /**< Opt-in stationary, vertically averaged mutual drag. */
+    struct BackreactionState *backreaction;
     double *selfgravity_omega2_extra;     /**< Disk self-gravity contribution to Omega^2 at each grid point (NULL if unused). */
     char   photoevaporation_mode_string[32]; /**< Model selection: "Owen" or "Picogna" */
     double xray_luminosity;               /**< Stellar X-ray luminosity [erg/s]. */

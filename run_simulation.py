@@ -87,7 +87,8 @@ def run_c_program(executable_path, params, arg_mapping, verbosity_flag, disable_
         c_arg_name = arg_mapping.get(py_key)
         if c_arg_name:
             if isinstance(value, bool):
-                cmd_args.extend([c_arg_name, "1.0" if value else "0.0"])
+                cmd_args.extend([c_arg_name, str(int(value)) if c_arg_name == "-backreaction"
+                                 else "1.0" if value else "0.0"])
             elif c_arg_name == "-i" or c_arg_name == "-o" or c_arg_name == "-test":
                 if value is not None and str(value).strip() != "":
                     cmd_args.extend([c_arg_name, str(value)])
@@ -204,6 +205,7 @@ def main():
         "enable_gas_evolution": "evol",
         "enable_photoevaporation": "photoevap",
         "enable_selfgravity": "selfgravity",
+        "enable_backreaction": "backreaction",
         "enable_two_dust_populations": "twopop",
         "test_mode": "test_mode",  # <--- Hozzáadva a teszt módszerhez
 
@@ -267,7 +269,7 @@ def main():
     # C program argument mapping
     c_arg_mapping = {
         "drift": "-drift", "growth": "-growth", "evol": "-evol", "twopop": "-twopop",
-        "photoevap": "-photoevap", "selfgravity": "-selfgravity", "test_mode": "-test",  # <--- Hozzáadva a --test argumentumhoz
+        "photoevap": "-photoevap", "selfgravity": "-selfgravity", "backreaction": "-backreaction", "test_mode": "-test",
         "ngrid_val": "-n", "ndust_val": "-ndust", 
         "grid_type": "-grid_type",
         "rmin_val": "-ri", "rmax_val": "-ro",

@@ -226,6 +226,7 @@ int main(int argc, const char **argv) {
     disk_params.sigma_dot_photoevap = NULL;
     disk_params.selfgravity_omega2_extra = NULL;
     disk_params.enable_selfgravity = def.enable_selfgravity;
+    disk_params.enable_backreaction = def.enable_backreaction;
 
     if (def.input_file != NULL && strcmp(def.input_file, "") != 0) {
         current_inputsig_file = strdup(def.input_file);
@@ -402,6 +403,7 @@ int main(int argc, const char **argv) {
         if (disk_params.sigma_dot_photoevap) free(disk_params.sigma_dot_photoevap);
         if (disk_params.selfgravity_omega2_extra) free(disk_params.selfgravity_omega2_extra);
         free(disk_params.thermal_states);
+        free(disk_params.backreaction);
         
         free(current_inputsig_file);
         free(current_inputdust_file);
@@ -476,6 +478,7 @@ int main(int argc, const char **argv) {
     if (disk_params.sigma_dot_photoevap) free(disk_params.sigma_dot_photoevap);
     if (disk_params.selfgravity_omega2_extra) free(disk_params.selfgravity_omega2_extra);
     free(disk_params.thermal_states);
+    free(disk_params.backreaction);
     LOG_DEBUG("Dynamically allocated disk arrays freed.");
     free(current_inputsig_file);
     free(current_inputdust_file);

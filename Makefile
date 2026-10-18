@@ -183,3 +183,12 @@ $(BUILD_BIN_DIR)/test_dust_growth: tests/test_dust_growth.c $(filter-out $(OBJ_D
 .PHONY: test-dust
 test-dust: $(BUILD_BIN_DIR)/test_dust_growth
 	./$(BUILD_BIN_DIR)/test_dust_growth
+
+$(BUILD_BIN_DIR)/test_backreaction: tests/test_backreaction.c $(filter-out $(OBJ_DIR)/core/main.o,$(OBJS))
+	@mkdir -p $(BUILD_BIN_DIR)
+	$(CC) $(CFLAGS) -c $< -o $(OBJ_DIR)/test_backreaction.o
+	$(CXX) $(OBJ_DIR)/test_backreaction.o $(filter-out $(OBJ_DIR)/core/main.o,$(OBJS)) $(LDFLAGS) -o $@
+
+.PHONY: test-backreaction
+test-backreaction: $(BUILD_BIN_DIR)/test_backreaction
+	./$(BUILD_BIN_DIR)/test_backreaction

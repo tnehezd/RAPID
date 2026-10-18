@@ -27,6 +27,9 @@
 #include "simulation_types.h"
 #include "particle_data.h"
 
+/* Physical-cell CIC left index (zero-based, excluding ghosts), with endpoint clamping. */
+int findDustLeftCell(double radius, const DiskParameters *disk_params, double *fraction);
+
 /**
  * @brief 
  */

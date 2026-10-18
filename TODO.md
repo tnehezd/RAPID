@@ -42,6 +42,11 @@
 - [ ] Add a two-fluid gas/dust model.
 - [ ] Add dust backreaction on the gas through mutual drag, with consistent
   momentum exchange between gas and dust.
+  - [x] Experimental stationary Keplerian closure for lociso, one CIC-mapped
+    population, with coupled dust velocities and conservative gas mass flux.
+    See [scope and limitations](docs/backreaction.md).
+  - [ ] Extend beyond the vertically averaged stationary closure: settled dust,
+    radiative/SG coupling and time-dependent momentum conservation.
 - [ ] Extend collisional dust evolution with a Smoluchowski solver and/or
   Monte Carlo collisions, including coagulation and fragmentation.
 - [ ] Explore a finite-width inner accretion sink with a stellar-distance-dependent

@@ -74,6 +74,7 @@ typedef struct {
     double gaussian_cutoff;                             /**< Kernel cutoff in multiples of sigma. Contributions beyond cutoff*sigma are ignored. */
     bool enable_photoevaporation;                       /**< Option for enabling photoevaporation */
     bool enable_selfgravity;                            /**< Option for enabling axisymmetric disk self-gravity */
+    bool enable_backreaction;
     char photoevaporation_mode[32];                     /**< Switch between Picogna, or Owen model */
     double xray_luminosity;                             /**< X-ray luminosity of the central star */
     double density_floor;                               /**< Minimum allowed gas surface density */
