@@ -512,7 +512,7 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
 
         /* smoothing */
         double deltat = 0.7 * dt_old + 0.3 * dt_new;
-        if (disk_params->thermodynamics_model == THERMODYNAMICS_RADIATIVE) {
+        if (isRadiativeThermodynamics(disk_params->thermodynamics_model)) {
             deltat = fmin(deltat, dt_new);
         }
 

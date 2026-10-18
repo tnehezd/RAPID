@@ -133,6 +133,7 @@ int main(int argc, const char **argv) {
     disk_params.flaring_index = def.flind_val;
     disk_params.thermodynamics_model = def.thermodynamics_model;
     disk_params.thermal_mean_molecular_weight = def.thermal_mean_molecular_weight;
+    disk_params.thermal_gamma = def.thermal_gamma;
     disk_params.thermal_background_temperature = def.thermal_background_temperature;
     disk_params.irradiation_luminosity_lsun = def.irradiation_luminosity_lsun;
     disk_params.irradiation_factor = def.irradiation_factor;
@@ -161,7 +162,7 @@ int main(int argc, const char **argv) {
         case 2: strcpy(disk_params.inner_bc_string, "fixed_flux"); break;
         case 3: strcpy(disk_params.inner_bc_string, "absorbing"); break;
         case 4: strcpy(disk_params.inner_bc_string, "reflecting"); break;
-        case 5: strcpy(disk_params.inner_bc_string, "free_outflow"); break;
+        case 5: strcpy(disk_params.inner_bc_string, "outflow"); break;
         case 6: strcpy(disk_params.inner_bc_string, "loggrid"); break;
     }
 
@@ -171,7 +172,7 @@ int main(int argc, const char **argv) {
         case 2: strcpy(disk_params.outer_bc_string, "fixed_flux"); break;
         case 3: strcpy(disk_params.outer_bc_string, "absorbing"); break;
         case 4: strcpy(disk_params.outer_bc_string, "reflecting"); break;
-        case 5: strcpy(disk_params.outer_bc_string, "linear"); break;
+        case 5: strcpy(disk_params.outer_bc_string, "outflow"); break;
         case 6: strcpy(disk_params.outer_bc_string, "loggrid"); break;
     }
 
@@ -332,7 +333,7 @@ int main(int argc, const char **argv) {
     LOG_DEBUG("loadGasSurfaceDensityFromFile completed. Calling applyBoundaryConditions for disk_params.radial_grid and disk_params.gas_surface_density_vector...");
     sim_opts.current_bc_target = 0;
     applySurfaceDensityBoundaryConditions(disk_params.gas_surface_density_vector, &disk_params, &sim_opts);
-    if (disk_params.thermodynamics_model == THERMODYNAMICS_RADIATIVE) {
+    if (isRadiativeThermodynamics(disk_params.thermodynamics_model)) {
         refreshRadiativeDisk(&disk_params, &sim_opts);
         writeThermalSnapshot(&disk_params, &sim_opts, 0.0, 0.0);
     } else {

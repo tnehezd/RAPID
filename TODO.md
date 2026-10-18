@@ -5,15 +5,9 @@
 - [ ] Add central-star irradiation to the thermal model, with consistent
   absorption geometry and midplane heating.
   - [ ] Stellar irradiation is connected to mass? 
-  - [ ] Typical TTauri star parameters?
   - [ ] Connect irradiation angle to disk geometry and stellar position.
-  - [x] Prescribed effective irradiation temperature from luminosity and a
-    fixed geometry/absorption factor (optional, off by default).
   - [ ] Self-consistent absorption/vertical geometry, including shadowing and
     reduced absorption in optically thin regions.
-- [ ] Add a time-dependent internal-energy equation with gas-consistent energy
-  transport, compressional heating/expansion cooling, viscous heating and
-  radiative cooling. Retain the instantaneous-equilibrium mode for comparison.
 - [ ] Add vertical dust settling, initially using an equilibrium dust scale height.
 - [ ] Extend the disk model to 1+1D with a local vertical structure.
 - [ ] Make alpha respond to temperature and ionization.
@@ -73,6 +67,5 @@
 - [ ] Update the documentation to match the implemented physics, configuration,
   outputs and limitations.
 - [ ] Update rapidsim to support the new simulation capabilities.
-- [ ] Info files containing SG and thermal model details for each simulation run.
-- [ ] Move constants to config.h.
 - [ ] Particle data into one consolidated structure? 
+- [ ] Move self-gravity session to a different module.

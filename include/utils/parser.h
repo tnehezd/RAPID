@@ -45,6 +45,7 @@ typedef struct {
     double flind_val;                                   /**< Disk flaring index. */
     ThermodynamicsModel thermodynamics_model;
     double thermal_mean_molecular_weight;
+    double thermal_gamma;
     double thermal_background_temperature;
     double irradiation_luminosity_lsun;
     double irradiation_factor;

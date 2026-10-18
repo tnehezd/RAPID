@@ -324,9 +324,15 @@ void printCurrentInformationAboutRun(const char *directory_name, const DiskParam
 
     fprintf(info_file, "\n--- [ Thermodynamics ] ---\n");
     fprintf(info_file, "  Model:             %s\n",
+            disk_params->thermodynamics_model == THERMODYNAMICS_RADIATIVE_ENERGY ?
+            "radiative_energy (time-dependent internal energy)" :
             disk_params->thermodynamics_model == THERMODYNAMICS_RADIATIVE ?
             "radiative equilibrium" : "locally_isotherm (lociso)");
-    if (disk_params->thermodynamics_model == THERMODYNAMICS_RADIATIVE) {
+    if (isRadiativeThermodynamics(disk_params->thermodynamics_model)) {
+        if (disk_params->thermodynamics_model == THERMODYNAMICS_RADIATIVE_ENERGY) {
+            fprintf(info_file, "  Gamma:             %.9g\n", disk_params->thermal_gamma);
+            fprintf(info_file, "  Energy transport:  upwind, shared finite-volume mass flux; explicit subcycling\n");
+        }
         fprintf(info_file, "  Mean mol. weight:  %.9g\n", disk_params->thermal_mean_molecular_weight);
         fprintf(info_file, "  Background:        %.9g K\n", disk_params->thermal_background_temperature);
         fprintf(info_file, "  Irradiation:       %s (prescribed effective temperature)\n",

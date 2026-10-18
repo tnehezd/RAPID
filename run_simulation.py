@@ -18,6 +18,7 @@ def validate_thermal_config(config: object) -> str:
         raise ValueError("'thermodynamics_parameters' must be a YAML mapping with a 'model' field.")
     numeric_settings = {
         "mean_molecular_weight": 2.34,
+        "gamma": 1.4,
         "background_temperature_k": 10.0,
         "minimum_temperature_k": 1.0,
         "maximum_temperature_k": 1500.0,
@@ -30,10 +31,10 @@ def validate_thermal_config(config: object) -> str:
     model = thermal.get("model", "lociso")
     if model == "locally_isotherm":
         model = "lociso"
-    if not isinstance(model, str) or model not in ("lociso", "radiative", "polytropic"):
+    if not isinstance(model, str) or model not in ("lociso", "radiative", "radiative_energy", "polytropic"):
         raise ValueError(
             "thermodynamics_parameters.model must be 'lociso' (or 'locally_isotherm'), "
-            "'radiative', or 'polytropic'."
+            "'radiative', 'radiative_energy', or 'polytropic'."
         )
     if model == "polytropic":
         raise ValueError(
@@ -49,6 +50,8 @@ def validate_thermal_config(config: object) -> str:
             raise ValueError(f"thermodynamics_parameters.{key} must be a finite {requirement} number.")
         if key == "irradiation_factor" and value > 1:
             raise ValueError("thermodynamics_parameters.irradiation_factor must be in [0, 1].")
+        if key == "gamma" and value <= 1:
+            raise ValueError("thermodynamics_parameters.gamma must be greater than 1.")
     lower = thermal.get("minimum_temperature_k", 1.0)
     upper = thermal.get("maximum_temperature_k", 1500.0)
     background = thermal.get("background_temperature_k", 10.0)
@@ -282,11 +285,12 @@ def main():
         "tStep": "-tStep", "totalTime": "-tmax", "outputFrequency": "-outfreq"
     }
 
-    if thermal_model == "radiative":
+    if thermal_model in ("radiative", "radiative_energy"):
         all_params["thermal_model"] = thermal_model
         c_arg_mapping["thermal_model"] = "-thermal_model"
         thermal_flags = {
             "mean_molecular_weight": "-thermal_mu",
+            "gamma": "-thermal_gamma",
             "background_temperature_k": "-thermal_background",
             "minimum_temperature_k": "-thermal_tmin",
             "maximum_temperature_k": "-thermal_tmax",

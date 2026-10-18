@@ -11,8 +11,15 @@ typedef enum {
 
 typedef enum {
     THERMODYNAMICS_LOCALLY_ISOTHERMAL = 0,
-    THERMODYNAMICS_RADIATIVE
+    THERMODYNAMICS_RADIATIVE,
+    THERMODYNAMICS_RADIATIVE_ENERGY
 } ThermodynamicsModel;
+
+static inline int isRadiativeThermodynamics(ThermodynamicsModel model)
+{
+    return model == THERMODYNAMICS_RADIATIVE ||
+           model == THERMODYNAMICS_RADIATIVE_ENERGY;
+}
 
 /* All dimensional quantities in this API use CGS, except temperature (K). */
 typedef struct {

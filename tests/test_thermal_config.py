@@ -56,6 +56,20 @@ class ThermalConfigTests(unittest.TestCase):
                     "thermodynamics_parameters": {"model": "radiative", **settings}
                 })
 
+    def test_energy_mode_and_gamma(self):
+        call = self.run_wrapper(
+            "disk_parameters:\n  star_mass_msun: 1\n"
+            "thermodynamics_parameters:\n  model: radiative_energy\n  gamma: 1.6\n"
+        )
+        self.assertEqual(call.args[1]["thermal_model"], "radiative_energy")
+        self.assertEqual(call.args[1]["gamma"], 1.6)
+        self.assertEqual(call.args[2]["gamma"], "-thermal_gamma")
+        for value in (0, 1, -1, True, "1.4", float("nan"), float("inf")):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                validate_thermal_config({
+                    "thermodynamics_parameters": {"model": "radiative_energy", "gamma": value}
+                })
+
     def run_wrapper(self, yaml_text):
         with patch("builtins.open", mock_open(read_data=yaml_text)), \
              patch("sys.argv", ["run_simulation.py", "-c", "test.yaml"]), \

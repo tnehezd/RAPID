@@ -62,7 +62,7 @@ static void checkParabolicDensity(int logarithmic, int inner)
     applySurfaceDensityBoundaryConditions(density, &disk, &options);
     assert(fabs(density[ghost] - 1.0) < 1e-12);
 
-    for (int type = 0; type <= 4; ++type) {
+    for (int type = 0; type <= 5; ++type) {
         if (type == 1) continue;
         options.inner_boundary_condition_type = type;
         options.outer_boundary_condition_type = type;
@@ -72,6 +72,7 @@ static void checkParabolicDensity(int logarithmic, int inner)
         applySurfaceDensityBoundaryConditions(density, &disk, &options);
         assert(memcmp(raw, density, sizeof(raw)) == 0);
         if (type == 3) assert(density[0] == 0.0 && density[4] == 0.0);
+        if (type == 5) assert(density[0] == density[1] && density[4] == density[3]);
     }
 }
 

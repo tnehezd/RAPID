@@ -17,7 +17,7 @@
 
 double calculateTurbulentAlpha(double radial_distance, const DiskParameters *disk_params) {
     
-    if (disk_params->thermodynamics_model == THERMODYNAMICS_RADIATIVE) {
+    if (isRadiativeThermodynamics(disk_params->thermodynamics_model)) {
         double inner = disk_params->dr_dze_i > 0.0 ?
             tanh((radial_distance - disk_params->r_dze_i) / disk_params->dr_dze_i) :
             (radial_distance >= disk_params->r_dze_i ? 1.0 : -1.0);
@@ -131,6 +131,10 @@ void calculateGasRadialVelocity(DiskParameters *disk_params) {
 }
 
 void refreshGasSurfaceDensityPressurePressureGradient(SimulationOptions *sim_opts, DiskParameters *disk_params) { 
+    if (disk_params->thermodynamics_model == THERMODYNAMICS_RADIATIVE_ENERGY) {
+        evolveRadiativeEnergy(disk_params, sim_opts);
+        return;
+    }
 
     double gas_sigma_dot_viscosity, gas_sigma_dot_viscosity_backwards, gas_sigma_dot_viscosity_forward;
     double gas_surface_density_temp[disk_params->grid_number + 2];

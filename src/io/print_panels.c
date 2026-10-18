@@ -94,9 +94,16 @@ void printBoundaryConditionsStatus(const DiskParameters *disk_params) {
 
 void printThermodynamicsStatus(const DiskParameters *disk_params) {
     printHeader("THERMODYNAMICS");
-    if (disk_params->thermodynamics_model == THERMODYNAMICS_RADIATIVE) {
-        fprintf(stderr, "   MODEL:          [Radiative equilibrium]\n");
-        fprintf(stderr, "   RESPONSE:       [Instantaneous; no energy evolution]\n");
+    if (isRadiativeThermodynamics(disk_params->thermodynamics_model)) {
+        if (disk_params->thermodynamics_model == THERMODYNAMICS_RADIATIVE_ENERGY) {
+            fprintf(stderr, "   MODEL:          [Radiative energy evolution]\n");
+            fprintf(stderr, "   RESPONSE:       [Time-dependent internal energy]\n");
+            fprintf(stderr, "   TRANSPORT:      [Conservative mass/energy face fluxes]\n");
+            fprintf(stderr, "   GAMMA:          [%.6g]\n", disk_params->thermal_gamma);
+        } else {
+            fprintf(stderr, "   MODEL:          [Radiative equilibrium]\n");
+            fprintf(stderr, "   RESPONSE:       [Instantaneous; no energy evolution]\n");
+        }
         fprintf(stderr, "   HEATING:        [Viscous]\n");
         fprintf(stderr, "   COOLING:        [Opacity-dependent radiation]\n");
         fprintf(stderr, "   OPACITY:        [Smoothed Lin-Papaloizou]\n");
@@ -132,7 +139,7 @@ void printSelfGravityStatus(const DiskParameters *disk_params) {
             disk_params->enable_selfgravity ? "ON" : "OFF");
     if (disk_params->enable_selfgravity) {
         fprintf(stderr, "   MODEL:          [Axisymmetric disk rotation correction]\n");
-        if (disk_params->thermodynamics_model == THERMODYNAMICS_RADIATIVE) {
+        if (isRadiativeThermodynamics(disk_params->thermodynamics_model)) {
             fprintf(stderr, "   THERMAL COUPL.: [Rotation and shear; H-dependent softening]\n");
         }
         fprintf(stderr, "   VERTICAL SG:    [Not included]\n");

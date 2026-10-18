@@ -59,7 +59,8 @@ class RadiativeSimulationTests(unittest.TestCase):
 
     def test_thermodynamics_startup_panel(self):
         for model, sg in (("lociso", "0"), ("lociso", "1"),
-                          ("radiative", "0"), ("radiative", "1")):
+                          ("radiative", "0"), ("radiative", "1"),
+                          ("radiative_energy", "0"), ("radiative_energy", "1")):
             with self.subTest(model=model, sg=sg):
                 output = self.directory / f"panel_{model}_{sg}"
                 process = subprocess.run(
@@ -85,13 +86,19 @@ class RadiativeSimulationTests(unittest.TestCase):
                 if sg == "1":
                     self.assertIn("[Axisymmetric disk rotation correction]", sg_panel)
                     self.assertIn("VERTICAL SG:    [Not included]", sg_panel)
-                if sg == "1" and model == "radiative":
+                if sg == "1" and model != "lociso":
                     self.assertIn("[Rotation and shear; H-dependent softening]", sg_panel)
                 else:
                     self.assertNotIn("THERMAL COUPL.", sg_panel)
-                if model == "radiative":
+                if model != "lociso":
+                    if model == "radiative_energy":
+                        self.assertIn("[Radiative energy evolution]", panel)
+                        self.assertIn("[Time-dependent internal energy]", panel)
+                        self.assertIn("GAMMA:          [1.4]", panel)
+                    else:
+                        self.assertIn("[Radiative equilibrium]", panel)
+                        self.assertIn("[Instantaneous; no energy evolution]", panel)
                     for text in (
-                        "[Radiative equilibrium]", "[Instantaneous; no energy evolution]",
                         "[Viscous]", "[Opacity-dependent radiation]",
                         "[Smoothed Lin-Papaloizou]", "STELLAR IRRAD.: [OFF]",
                         "[2.5 m_H]", "[12 K]", "[2 -- 1400 K]",
@@ -152,6 +159,108 @@ class RadiativeSimulationTests(unittest.TestCase):
                     np.testing.assert_allclose(
                         initial[1:-1, 7], expected_heating[1:-1], rtol=1e-10
                     )
+
+    def test_energy_evolves_with_and_without_sg(self):
+        for grid in ("linear", "logarithmic"):
+            for sg in ("0", "1"):
+                with self.subTest(grid=grid, sg=sg):
+                    output = self.run_simulation(
+                        "-thermal_model", "radiative_energy", "-grid_type", grid,
+                        "-selfgravity", sg, "-thermal_gamma", "1.6",
+                        "-irradiation_luminosity", "1", "-irradiation_factor", "0.05",
+                    )
+                    logs = output / "LOGS"
+                    initial = np.loadtxt(logs / "temperature_profile_00000000.dat")
+                    final = np.loadtxt(logs / "temperature_profile_00000010.dat")
+                    gas = np.loadtxt(logs / "density_profile_00000010.dat")
+                    self.assertEqual(final.shape, (48, 9))
+                    self.assertTrue(np.all(np.isfinite(final)))
+                    self.assertTrue(np.all(final[:, 1:7] > 0))
+                    self.assertTrue(np.all(gas[:, 2:4] > 0))
+                    self.assertGreater(np.max(np.abs(final[:, 1] / initial[:, 1] - 1)), 1e-9)
+                    # A time-dependent state must not be forced back to Q+ = Q-.
+                    self.assertGreater(np.max(np.abs(final[:, 7] - final[:, 8])), 1e-8)
+                    cs2 = (1.380649e-16 * final[:, 1] / (2.34 * 1.6735575e-24) *
+                           (365.242199 * 86400 / (2 * math.pi) / 1.496e13) ** 2)
+                    np.testing.assert_allclose(
+                        gas[:, 3], gas[:, 2] * cs2 /
+                        (math.sqrt(2 * math.pi) * final[:, 0] * final[:, 2]), rtol=2e-9
+                    )
+                    info = (output / "current_run_info.dat").read_text()
+                    self.assertIn("radiative_energy", info)
+                    self.assertIn("1.6", info)
+
+    def test_energy_invalid_gamma_cli(self):
+        for value in ("1", "0", "-1", "nan", "inf", "bad"):
+            with self.subTest(value=value):
+                process = subprocess.run(
+                    [str(BINARY), "-thermal_model", "radiative_energy", "-thermal_gamma", value],
+                    cwd=ROOT, capture_output=True, text=True, timeout=10,
+                )
+                self.assertNotEqual(process.returncode, 0)
+                self.assertIn("ERROR", process.stdout + process.stderr)
+
+    def test_outflow_prevents_mass_supply_in_energy_example(self):
+        config = yaml.safe_load((ROOT / "configs" / "config_radiative_energy.yaml").read_text())
+        self.assertEqual(config["boundary_conditions"], {
+            "inner_boundary_condition": "outflow", "outer_boundary_condition": "outflow"
+        })
+        config["time_parameters"] = {"total_simulation_time": 100, "output_write_frequency": 50}
+        config["simulation_parameters"]["omp_num_threads"] = 2
+        config["log_parameters"] = {"disable_terminal_panels": True}
+        for grid in ("linear", "logarithmic"):
+            with self.subTest(grid=grid):
+                config["disk_parameters"]["radial_grid_type"] = grid
+                output = self.directory / f"outflow_{grid}"
+                config["output_parameters"]["output_directory_name"] = str(output)
+                filename = self.directory / f"outflow_{grid}.yaml"
+                filename.write_text(yaml.safe_dump(config))
+                process = subprocess.run(
+                    [sys.executable, str(ROOT / "run_simulation.py"), "-c", str(filename)],
+                    cwd=ROOT, capture_output=True, text=True, timeout=120,
+                )
+                self.assertEqual(process.returncode, 0, process.stdout + process.stderr)
+                masses = []
+                n = config["disk_parameters"]["number_of_grid_points"]
+                # Reconstruct the exact grid including ghosts, not rounded output radii.
+                r_min = config["disk_parameters"]["inner_radius_au"]
+                r_max = config["disk_parameters"]["outer_radius_au"]
+                radii = (np.geomspace(r_min, r_max, n) if grid == "logarithmic" else
+                         np.linspace(r_min, r_max, n))
+                ghosts = ([radii[0]**2 / radii[1], radii[-1]**2 / radii[-2]]
+                          if grid == "logarithmic" else
+                          [2*radii[0] - radii[1], 2*radii[-1] - radii[-2]])
+                centers = np.r_[ghosts[0], radii, ghosts[1]]
+                faces = (centers[1:] + centers[:-1]) / 2
+                for time in (0, 50, 100):
+                    data = np.loadtxt(output / "LOGS" / f"density_profile_{time:08d}.dat")
+                    masses.append(np.sum(np.pi * np.diff(faces**2) * data[:, 2]))
+                self.assertTrue(np.all(np.diff(masses) <= masses[0] * 1e-9), masses)
+                self.assertLess(masses[-1], masses[0])
+                self.assertIn("Outer BC:          outflow", (output / "current_run_info.dat").read_text())
+
+    def test_outflow_rejected_for_non_flux_modes(self):
+        for model in ("lociso", "radiative"):
+            process = subprocess.run(
+                [str(BINARY), "-thermal_model", model, "-outer_bc", "outflow"],
+                cwd=ROOT, capture_output=True, text=True, timeout=10,
+            )
+            self.assertNotEqual(process.returncode, 0)
+            self.assertIn("outflow boundary requires radiative_energy", process.stderr)
+
+    def test_energy_dust_wind_and_hdf5(self):
+        for extra in (
+            ("-drift", "1", "-growth", "1", "-ndust", "32", "-largesize", "0.01"),
+            ("-photoevap", "1", "-photoevap_mode", "Owen", "-xray_luminosity", "1e30"),
+            ("-output_format", "hdf5"),
+            ("-inner_bc", "absorbing", "-outer_bc", "absorbing"),
+        ):
+            with self.subTest(extra=extra):
+                output = self.run_simulation("-thermal_model", "radiative_energy", *extra)
+                final = np.loadtxt(output / "LOGS" / "temperature_profile_00000010.dat")
+                self.assertEqual(final.shape, (48, 9))
+                self.assertTrue(np.all(np.isfinite(final)))
+                self.assertTrue(np.all(final[:, 1:7] > 0))
 
     def test_sg_changes_radiative_temperature(self):
         without = self.run_simulation("-thermal_model", "radiative", "-selfgravity", "0")
@@ -258,23 +367,30 @@ class RadiativeSimulationTests(unittest.TestCase):
         config["disk_parameters"]["radial_grid_type"] = "logarithmic"
         config["simulation_parameters"]["omp_num_threads"] = 2
         config["time_parameters"] = {"total_simulation_time": 2, "output_write_frequency": 1}
-        output = self.directory / "yaml_run"
-        config["output_parameters"]["output_directory_name"] = str(output)
         config["log_parameters"] = {"disable_terminal_panels": True}
         config["thermodynamics_parameters"]["irradiation_luminosity_lsun"] = 1
         config["thermodynamics_parameters"]["irradiation_factor"] = 0.05
-        filename = self.directory / "radiative.yaml"
-        filename.write_text(yaml.safe_dump(config))
-        process = subprocess.run(
-            [sys.executable, str(ROOT / "run_simulation.py"), "-c", str(filename)],
-            cwd=ROOT, capture_output=True, text=True, timeout=120,
-        )
-        self.assertEqual(process.returncode, 0, process.stdout + process.stderr)
-        data = np.loadtxt(output / "LOGS" / "temperature_profile_00000002.dat")
-        self.assertEqual(data.shape, (64, 9))
-        self.assertIn("STELLAR IRRAD.: [ON / prescribed effective temperature]",
-                      process.stdout + process.stderr)
-        self.assertIn("Irradiation:       ENABLED", (output / "current_run_info.dat").read_text())
+        for model in ("radiative", "radiative_energy"):
+            with self.subTest(model=model):
+                output = self.directory / f"yaml_{model}"
+                config["output_parameters"]["output_directory_name"] = str(output)
+                config["thermodynamics_parameters"]["model"] = model
+                config["thermodynamics_parameters"]["gamma"] = 1.5
+                filename = self.directory / f"{model}.yaml"
+                filename.write_text(yaml.safe_dump(config))
+                process = subprocess.run(
+                    [sys.executable, str(ROOT / "run_simulation.py"), "-c", str(filename)],
+                    cwd=ROOT, capture_output=True, text=True, timeout=120,
+                )
+                self.assertEqual(process.returncode, 0, process.stdout + process.stderr)
+                data = np.loadtxt(output / "LOGS" / "temperature_profile_00000002.dat")
+                self.assertEqual(data.shape, (64, 9))
+                self.assertIn("STELLAR IRRAD.: [ON / prescribed effective temperature]",
+                              process.stdout + process.stderr)
+                info = (output / "current_run_info.dat").read_text()
+                self.assertIn("Irradiation:       ENABLED", info)
+                if model == "radiative_energy":
+                    self.assertIn("Gamma:             1.5", info)
 
     def test_bad_cli_and_unbracketed_equilibrium_fail(self):
         for arguments in (

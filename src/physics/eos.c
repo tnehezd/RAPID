@@ -26,6 +26,7 @@ static EOSState calculateEOSState(double radial_distance, const DiskParameters *
             break;
 
         case THERMODYNAMICS_RADIATIVE:
+        case THERMODYNAMICS_RADIATIVE_ENERGY:
             state.scale_height = interpolateThermalScaleHeight(radial_distance, disk_params);
             if (need_sound_speed) {
                 state.sound_speed = interpolateThermalSoundSpeed(radial_distance, disk_params);

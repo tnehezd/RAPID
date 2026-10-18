@@ -56,11 +56,12 @@ typedef struct {
     double flaring_index;                 /**< Disk flaring index (temperature gradient). */
     ThermodynamicsModel thermodynamics_model;
     double thermal_mean_molecular_weight;
+    double thermal_gamma;
     double thermal_background_temperature;
     double irradiation_luminosity_lsun;
     double irradiation_factor;
     ThermalSolverOptions thermal_solver_options;
-    ThermalState *thermal_states;         /**< CGS equilibrium states, including ghost cells. */
+    ThermalState *thermal_states;         /**< CGS thermal states, including ghost cells. */
     double r_dze_i;                       /**< Inner dead‑zone edge radius [AU]. */
     double r_dze_o;                       /**< Outer dead‑zone edge radius [AU]. */
     double dr_dze_i;                      /**< Width of inner dead‑zone transition [AU]. */

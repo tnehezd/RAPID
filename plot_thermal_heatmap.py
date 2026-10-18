@@ -35,7 +35,7 @@ def load_profiles(run):
         if (not np.all(np.isfinite(gas)) or not np.all(np.isfinite(thermal)) or
                 np.any(gas[:, 1:4] <= 0) or np.any(np.diff(gas[:, 1]) <= 0) or
                 np.any(thermal[:, [1, 2, 3, 5, 6]] <= 0) or
-                np.any(thermal[:, [4, 7, 8]] < 0)):
+                np.any(thermal[:, [4, 7]] < 0)):
             raise ValueError(f"{gas_file}: invalid radii, density or thermal quantities.")
         if not np.allclose(gas[:, 1], thermal[:, 0], rtol=1e-6, atol=0):
             raise ValueError(f"{thermal_file}: radial grid differs from gas snapshot.")
@@ -88,12 +88,18 @@ def plot_heatmaps(run, linthresh=1e-12):
         r"$Q^-$ [erg cm$^{-2}$ s$^{-1}$]",
         r"$100\,[c_s(r,t)/c_s(r,t_0)-1]$ [%]",
     )
-    flux_norm = positive_norm(np.stack(fields[6:8]))
+    flux_values = np.stack(fields[6:8])
+    signed_flux = np.any(flux_values < 0)
+    if signed_flux:
+        limit = float(np.abs(flux_values).max())
+        flux_norm = SymLogNorm(linthresh=limit * 1e-3, vmin=-limit, vmax=limit, base=10)
+    else:
+        flux_norm = positive_norm(flux_values)
     fig, axes = plt.subplots(3, 3, figsize=(20, 11), sharex=True, sharey=True,
                              constrained_layout=True)
     for index, (axis, values, title, label) in enumerate(
             zip(axes.flat, fields, titles, labels)):
-        norm = positive_norm(values) if index not in (1, 2, 8) else None
+        norm = positive_norm(values) if index not in (1, 2, 6, 7, 8) else None
         cmap = "viridis"
         if index == 1:
             limit = max(linthresh, float(np.abs(values).max()))
@@ -104,7 +110,7 @@ def plot_heatmaps(run, linthresh=1e-12):
             cmap = "RdBu_r"
         elif index in (6, 7):
             norm = flux_norm
-            cmap = "magma"
+            cmap = "RdBu_r" if signed_flux else "magma"
         elif index >= 2:
             cmap = "plasma"
         mesh = axis.pcolormesh(times, radii, values, norm=norm, cmap=cmap,
@@ -123,7 +129,7 @@ def plot_heatmaps(run, linthresh=1e-12):
         axis.set_xlabel("t [yr]")
     for axis in axes[:, 0]:
         axis.set_ylabel("r [AU]")
-    fig.suptitle(f"{Path(run).name} - gas and radiative equilibrium\n"
+    fig.suptitle(f"{Path(run).name} - gas and radiative thermodynamics\n"
                  "Pressure gradient: white zero contours; black dots: pressure maxima")
     return fig
 

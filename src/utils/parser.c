@@ -31,6 +31,7 @@ void createDefaultOptions(ParserOptions *opt) {
     opt->flind_val                                  = 0.0;
     opt->thermodynamics_model = THERMODYNAMICS_LOCALLY_ISOTHERMAL;
     opt->thermal_mean_molecular_weight = 2.34;
+    opt->thermal_gamma = 1.4;
     opt->thermal_background_temperature = 10.0;
     opt->irradiation_luminosity_lsun = 0.0;
     opt->irradiation_factor = 0.05;
@@ -94,7 +95,8 @@ void printUsageToTerminal() {
     fprintf(stderr, "  -ufrag <val>   Fragmentation velocity (default: 1000.0)\n");
     fprintf(stderr, "  -ffrag <val>   Fragmentation factor (default: 0.37)\n");
     fprintf(stderr, "Thermodynamics:\n");
-    fprintf(stderr, "  -thermal_model <lociso|locally_isotherm|radiative> (default: lociso)\n");
+    fprintf(stderr, "  -thermal_model <lociso|locally_isotherm|radiative|radiative_energy> (default: lociso)\n");
+    fprintf(stderr, "  -thermal_gamma <val> Adiabatic index > 1 (default: 1.4; energy mode)\n");
     fprintf(stderr, "  -thermal_mu <val> Mean molecular weight in hydrogen masses (default: 2.34)\n");
     fprintf(stderr, "  -thermal_background <val> Background temperature in K (default: 10)\n");
     fprintf(stderr, "  -thermal_tmin <val> -thermal_tmax <val> Temperature bracket in K (default: 1, 1500)\n");
@@ -160,11 +162,11 @@ void printUsageToTerminal() {
     fprintf(stderr, "                     fixed_flux  = Lynden–Bell viscous flux condition\n");
     fprintf(stderr, "                     absorbing   = Dust sink (ghost cell = 0)\n");
     fprintf(stderr, "                     reflecting  = Mirror boundary (non-physical)\n");
-    fprintf(stderr, "                     linear      = Linear extrapolation outflow\n");
+    fprintf(stderr, "                     outflow     = No inflow; radiative_energy mode only\n");
     fprintf(stderr, "\n");
 
     fprintf(stderr, "  -outer_bc <name>   Outer boundary type. Same names as inner_bc.\n");
-    fprintf(stderr, "                     Recommended: parabolic or linear for smooth outflow.\n\n");
+    fprintf(stderr, "                     Use outflow in radiative_energy to prevent external supply.\n\n");
 
     fprintf(stderr, "Log control:\n");
     fprintf(stderr, "  -v             Enable INFO logging level\n");
@@ -191,12 +193,15 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
                 opt->thermodynamics_model = THERMODYNAMICS_LOCALLY_ISOTHERMAL;
             } else if (strcmp(argv[i], "radiative") == 0) {
                 opt->thermodynamics_model = THERMODYNAMICS_RADIATIVE;
+            } else if (strcmp(argv[i], "radiative_energy") == 0) {
+                opt->thermodynamics_model = THERMODYNAMICS_RADIATIVE_ENERGY;
             } else {
-                LOG_ERROR("Unsupported thermal model '%s'. Use lociso|locally_isotherm|radiative; polytropic is not implemented.\n", argv[i]);
+                LOG_ERROR("Unsupported thermal model '%s'. Use lociso|locally_isotherm|radiative|radiative_energy; polytropic is not implemented.\n", argv[i]);
                 return 1;
             }
         }
         else if (strcmp(argv[i], "-thermal_mu") == 0 ||
+                 strcmp(argv[i], "-thermal_gamma") == 0 ||
                  strcmp(argv[i], "-thermal_background") == 0 ||
                  strcmp(argv[i], "-thermal_tmin") == 0 ||
                  strcmp(argv[i], "-thermal_tmax") == 0) {
@@ -209,6 +214,7 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
                 return 1;
             }
             if (strcmp(flag, "-thermal_mu") == 0) opt->thermal_mean_molecular_weight = value;
+            else if (strcmp(flag, "-thermal_gamma") == 0) opt->thermal_gamma = value;
             else if (strcmp(flag, "-thermal_background") == 0) opt->thermal_background_temperature = value;
             else if (strcmp(flag, "-thermal_tmin") == 0) opt->thermal_solver_options.minimum_temperature = value;
             else opt->thermal_solver_options.maximum_temperature = value;
@@ -524,6 +530,7 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
                 else if (strcmp(argv[i], "fixed_flux") == 0)            opt->inner_boundary_condition_type = 2;
                 else if (strcmp(argv[i], "absorbing") == 0)             opt->inner_boundary_condition_type = 3;
                 else if (strcmp(argv[i], "reflecting") == 0)            opt->inner_boundary_condition_type = 4;
+                else if (strcmp(argv[i], "outflow") == 0)               opt->inner_boundary_condition_type = 5;
 //                else if (strcmp(argv[i], "free_outflow") == 0)          opt->inner_boundary_condition_type = 5;
                 else {
                     LOG_ERROR("Unknown inner BC '%s'.\n", argv[i]);
@@ -539,6 +546,7 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
                 else if (strcmp(argv[i], "fixed_flux") == 0)            opt->outer_boundary_condition_type = 2;
                 else if (strcmp(argv[i], "absorbing") == 0)             opt->outer_boundary_condition_type = 3;
                 else if (strcmp(argv[i], "reflecting") == 0)            opt->outer_boundary_condition_type = 4;
+                else if (strcmp(argv[i], "outflow") == 0)               opt->outer_boundary_condition_type = 5;
                 else {
                     LOG_ERROR("Unknown outer BC '%s'.\n", argv[i]);
                     return 1;
@@ -569,6 +577,11 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
 
 
     // --- CRITICAL CONFLICT RESOLUTION GUARD ---
+    if ((opt->inner_boundary_condition_type == 5 || opt->outer_boundary_condition_type == 5) &&
+        opt->thermodynamics_model != THERMODYNAMICS_RADIATIVE_ENERGY) {
+        LOG_ERROR("The outflow boundary requires radiative_energy mode with face-flux transport.\n");
+        return 1;
+    }
     if (opt->thermodynamics_model == THERMODYNAMICS_LOCALLY_ISOTHERMAL &&
         opt->irradiation_luminosity_lsun > 0.0) {
         LOG_WARN("Stellar irradiation is inactive in locally isothermal mode.");
@@ -579,7 +592,11 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
         LOG_ERROR("Invalid thermal temperature bracket or background temperature.\n");
         return 1;
     }
-    if (opt->thermodynamics_model == THERMODYNAMICS_RADIATIVE &&
+    if (opt->thermal_gamma <= 1.0) {
+        LOG_ERROR("Thermal gamma must be finite and greater than 1.\n");
+        return 1;
+    }
+    if (isRadiativeThermodynamics(opt->thermodynamics_model) &&
         (!isfinite(opt->alpha_visc_val) || opt->alpha_visc_val < 0.0 ||
          !isfinite(opt->a_mod_val) || opt->a_mod_val < 0.0 ||
          !isfinite(opt->star_val) || opt->star_val <= 0.0 ||
@@ -587,7 +604,7 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
         LOG_ERROR("Radiative mode requires nonnegative alpha/deadzone reduction, positive stellar mass and density floor.\n");
         return 1;
     }
-    if (opt->thermodynamics_model == THERMODYNAMICS_RADIATIVE &&
+    if (isRadiativeThermodynamics(opt->thermodynamics_model) &&
         opt->test_mode != TEST_MODE_NONE) {
         LOG_ERROR("Existing viscous/photoevaporation benchmarks require locally isothermal mode.\n");
         return 1;

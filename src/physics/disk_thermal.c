@@ -1,6 +1,7 @@
 #include "disk_thermal.h"
 
 #include "config.h"
+#include "boundary_conditions.h"
 #include "disk_model.h"
 #include "gas_physics.h"
 #include "logger.h"
@@ -92,7 +93,8 @@ static double shearParameter(int i, const DiskParameters *disk)
 
 void refreshRadiativeDisk(DiskParameters *disk, SimulationOptions *options)
 {
-    if (disk->thermodynamics_model != THERMODYNAMICS_RADIATIVE) return;
+    if (!isRadiativeThermodynamics(disk->thermodynamics_model)) return;
+    int initialize_temperature = disk->thermal_states == NULL;
     int n = disk->grid_number;
     double time_unit = thermalTimeUnitSeconds();
     if (n < 3) {
@@ -146,10 +148,25 @@ void refreshRadiativeDisk(DiskParameters *disk, SimulationOptions *options)
                     log(disk->irradiation_factor) - log(4.0 * M_PI * STEFAN_BOLTZMANN_CONSTANT_CGS) -
                     2.0 * log(radius_cm)));
             }
-            ThermalStatus status = solveMidplaneTemperature(
-                &parameters, &disk->thermal_solver_options, &next[i]);
+            ThermalStatus status;
+            if (disk->thermodynamics_model == THERMODYNAMICS_RADIATIVE_ENERGY &&
+                initialize_temperature && (i == 0 || i == n + 1)) {
+                /* Ghost temperatures are replaced by adjacent physical T below.
+                 * In particular, a massless absorbing ghost needs no equilibrium. */
+                status = calculateThermalState(&parameters,
+                    disk->thermal_background_temperature, &next[i]);
+            } else if (disk->thermodynamics_model == THERMODYNAMICS_RADIATIVE_ENERGY &&
+                       !initialize_temperature) {
+                status = calculateThermalState(&parameters,
+                    disk->thermal_states[i].temperature, &next[i]);
+            } else {
+                status = solveMidplaneTemperature(
+                    &parameters, &disk->thermal_solver_options, &next[i]);
+            }
             if (status != THERMAL_SUCCESS) {
-                LOG_ERROR("Radiative equilibrium failed at cell %d, r=%.9g AU, Sigma=%.9g g/cm^2: %s (T bracket %.9g--%.9g K).\n",
+                LOG_ERROR("Radiative %s failed at cell %d, r=%.9g AU, Sigma=%.9g g/cm^2: %s (T bracket %.9g--%.9g K).\n",
+                          disk->thermodynamics_model == THERMODYNAMICS_RADIATIVE_ENERGY &&
+                          !initialize_temperature ? "closure" : "equilibrium",
                           i, disk->radial_grid[i], parameters.surface_density,
                           thermalStatusMessage(status),
                           disk->thermal_solver_options.minimum_temperature,
@@ -169,9 +186,26 @@ void refreshRadiativeDisk(DiskParameters *disk, SimulationOptions *options)
             }
         }
         if (converged) {
+            if (initialize_temperature &&
+                disk->thermodynamics_model == THERMODYNAMICS_RADIATIVE_ENERGY) {
+                disk->thermal_states[0].temperature = disk->thermal_states[1].temperature;
+                disk->thermal_states[n + 1].temperature = disk->thermal_states[n].temperature;
+                refreshRadiativeDisk(disk, options);
+                return;
+            }
             createInitialGasPressure(disk, options);
             createInitialGasPressureGradient(disk, options);
             createInitialGasVelocity(disk, options);
+            if (disk->thermodynamics_model == THERMODYNAMICS_RADIATIVE_ENERGY) {
+                for (int i = 1; i <= n; ++i) {
+                    disk->gas_velocity_vector[i] =
+                        0.5 * (radiativeMassFlux(i - 1, disk, options) +
+                               radiativeMassFlux(i, disk, options)) /
+                        (disk->radial_grid[i] * disk->gas_surface_density_vector[i]);
+                }
+                options->current_bc_target = 0;
+                applyBoundaryConditions(disk->gas_velocity_vector, disk, options);
+            }
             return;
         }
     }
@@ -182,7 +216,7 @@ void refreshRadiativeDisk(DiskParameters *disk, SimulationOptions *options)
 void writeThermalSnapshot(const DiskParameters *disk, const SimulationOptions *options,
                           double time_years, double output_time)
 {
-    if (disk->thermodynamics_model != THERMODYNAMICS_RADIATIVE) return;
+    if (!isRadiativeThermodynamics(disk->thermodynamics_model)) return;
     char filename[MAX_PATH_LEN];
     int length = snprintf(filename, sizeof(filename), "%s/%s/temperature_profile_%08d.dat",
                           options->output_dir_name, kLogFilesDirectory, (int)output_time);
@@ -195,8 +229,10 @@ void writeThermalSnapshot(const DiskParameters *disk, const SimulationOptions *o
         LOG_ERROR("Could not open thermal snapshot '%s'.\n", filename);
         exit(EXIT_FAILURE);
     }
-    fprintf(file, "# Radiative equilibrium at %.15g years; SG=%s\n",
-            time_years, disk->enable_selfgravity ? "on" : "off");
+    fprintf(file, "# Radiative %s at %.15g years; SG=%s; gamma=%.15g\n",
+            disk->thermodynamics_model == THERMODYNAMICS_RADIATIVE_ENERGY ?
+            "energy evolution" : "equilibrium",
+            time_years, disk->enable_selfgravity ? "on" : "off", disk->thermal_gamma);
     fprintf(file, "# Irradiation: L_star=%.15g L_sun; factor=%.15g; "
                   "Qminus is net of background and prescribed irradiation\n",
             disk->irradiation_luminosity_lsun, disk->irradiation_factor);

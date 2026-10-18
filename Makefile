@@ -165,3 +165,12 @@ $(BUILD_BIN_DIR)/test_boundary_conditions: tests/test_boundary_conditions.c src/
 
 test-boundary: $(BUILD_BIN_DIR)/test_boundary_conditions
 	./$(BUILD_BIN_DIR)/test_boundary_conditions
+
+$(BUILD_BIN_DIR)/test_energy_equation: tests/test_energy_equation.c $(filter-out $(OBJ_DIR)/core/main.o,$(OBJS))
+	@mkdir -p $(BUILD_BIN_DIR)
+	$(CC) $(CFLAGS) -c $< -o $(OBJ_DIR)/test_energy_equation.o
+	$(CXX) $(OBJ_DIR)/test_energy_equation.o $(filter-out $(OBJ_DIR)/core/main.o,$(OBJS)) $(LDFLAGS) -o $@
+
+.PHONY: test-energy
+test-energy: $(BUILD_BIN_DIR)/test_energy_equation
+	./$(BUILD_BIN_DIR)/test_energy_equation

@@ -23,6 +23,9 @@ thermodynamics_parameters:
 
 Numerical parameters are optional, with the defaults above. They may remain
 when switching to `lociso`; the wrapper reports that they are inactive.
+For time-dependent internal energy, select `model: radiative_energy` and
+optionally set `gamma: 1.4` (default; finite and strictly greater than 1).
+The existing `radiative` mode retains instantaneous equilibrium.
 Run the [example configuration](../configs/config_thermal.yaml) from the project
 root:
 
@@ -31,7 +34,7 @@ make all
 python run_simulation.py -c configs/config_thermal.yaml
 ```
 
-The C CLI accepts `-thermal_model`, `-thermal_mu`, `-thermal_background`,
+The C CLI accepts `-thermal_model`, `-thermal_mu`, `-thermal_gamma`, `-thermal_background`,
 `-thermal_tmin`, and `-thermal_tmax`. Existing internal benchmark modes require
 locally isothermal thermodynamics. Linear and logarithmic grids work, but ghost
 radii must be positive; the example uses a logarithmic grid at its 0.1 AU inner
@@ -41,7 +44,8 @@ The startup terminal summary includes a `THERMODYNAMICS` panel next to the
 boundary-condition summary. It reports the active model, prescribed geometry
 for locally isothermal runs, or heating/cooling, opacity, molecular weight,
 background temperature and solver bracket for radiative runs.
-It also identifies instantaneous equilibrium and whether prescribed stellar
+It also identifies instantaneous equilibrium versus energy evolution (including
+gamma and the transport scheme), and whether prescribed stellar
 irradiation is active, including luminosity and irradiation factor when active.
 A separate `SELF-GRAVITY` panel reports whether SG is enabled, its axisymmetric
 rotation model and, for radiative runs with SG, the thermal coupling.
@@ -52,12 +56,12 @@ The code-unit EOS and vertical closure are in [eos.c](../src/physics/eos.c),
 with the public interface in [eos.h](../include/physics/eos.h).
 An internal `calculateEOSState` helper selects between locally
 isothermal and radiative closures: the lociso branch computes prescribed H(r)
-and cs = Omega*H, while the radiative branch reads equilibrium H and cs from
+and cs = Omega*H, while the radiative branch reads current H and cs from
 the thermal cache. All public closure functions use this shared selection.
 `calculateEOS(Sigma, r, disk_params)` evaluates Gaussian midplane density and
 returns P_mid = rho_mid*cs^2. Height-only requests do not read or compute cs:
 SG initialization uses an initial H guess before the first thermal solve.
-It does not evolve internal energy. The existing
+The EOS itself does not advance internal energy. The existing
 gas_physics.h interface includes eos.h for compatibility.
 
 Parabolic surface-density boundary extrapolation uses the adjacent physical
@@ -113,7 +117,8 @@ pressure, scale height, viscosity, gas evolution and dust dynamics.
 
 `Qplus` remains **viscous heating only** and `Qminus` is cooling **net of both
 background and irradiation**. Thus the existing nine-column snapshots and
-energy-balance plots retain Qplus = Qminus; they do not separately plot the
+equilibrium energy-balance plots retain Qplus = Qminus; in energy mode their
+difference is a physical source term, not a solver residual. They do not separately plot the
 intercepted stellar luminosity. Thermal snapshot headers and run metadata
 record the irradiation parameters.
 
@@ -161,9 +166,10 @@ the reference implementation's low-density exception at `rho <= 1e-10 g/cm^3`.
 The blends soften transitions; branch switches are not guaranteed exactly
 continuous.
 
-This is instantaneous local equilibrium, not an energy-evolution or full
-radiative-transfer solver. There is no self-consistent stellar irradiation geometry, radial
-thermal transport or temperature-dependent molecular weight. The bridge uses
+The `radiative` mode is instantaneous local equilibrium; `radiative_energy`
+advances internal energy as described below. Neither is a full radiative-transfer
+solver. There is no self-consistent stellar irradiation geometry, radial
+radiative diffusion or temperature-dependent molecular weight. The bridge uses
 the same opacity for thick/thin terms, rather than separate Rosseland/Planck
 means. Its numerical domain (`rho > 0`, `0 < T < 1e9 K`) does not imply physical
 validity throughout; constant molecular weight cannot model dissociation or
@@ -175,16 +181,117 @@ generalized heating does not make it a full non-Keplerian angular-momentum
 solver. Absorbing ghosts use the positive gas floor only for their thermal
 closure, without changing the mass boundary.
 
+## Time-dependent energy mode
+
+```yaml
+thermodynamics_parameters:
+  model: radiative_energy
+  gamma: 1.4
+  mean_molecular_weight: 2.34
+  background_temperature_k: 10.0
+  minimum_temperature_k: 1.0
+  maximum_temperature_k: 1500.0
+  irradiation_luminosity_lsun: 1.0
+  irradiation_factor: 0.05
+```
+
+With gas evolution enabled, [energy_equation.c](../src/physics/energy_equation.c)
+advances vertically integrated internal energy E = Sigma*u:
+
+```text
+u = cv*T,  cv = k_B / [mu*m_H*(gamma - 1)]
+P_integrated = (gamma - 1)*E = Sigma*cs^2
+dE/dt + (1/r)*d(r*v_r*E)/dr
+    = -P_integrated*(1/r)*d(r*v_r)/dr + Qplus - Qminus - u*Sigma_dot_wind
+```
+
+P_integrated is distinct from the midplane pressure returned by `calculateEOS`.
+The hydrostatic sound speed remains isothermal, cs^2 = k_B*T/(mu*m_H);
+it is not multiplied by gamma. Vertical hydrostatic balance remains instantaneous.
+E is represented by the stored Sigma and T; neither T nor E is reset to thermal
+equilibrium after a step. Initialization alone uses the equilibrium solution.
+Thereafter the thermal module evaluates opacity, cooling, viscosity and H at
+the evolved temperature, including the coupled SG iteration when enabled.
+
+Only the new mode uses a conservative finite-volume mass update. At face j
+between adjacent radial grid points:
+
+```text
+F_mass = r_face*Sigma*v_r
+       = -3*sqrt(r_face)*d(nu*Sigma*sqrt(r))/dr
+F_energy = F_mass*u_upwind
+cell_area_per_radian = (r_right_face^2 - r_left_face^2)/2
+```
+
+The identical face mass flux transports gas and energy on linear or logarithmic
+grids. Pressure work uses the divergence of the face velocity (mass flux divided
+by arithmetic-mean face Sigma); the reported cell velocity averages the adjacent
+mass fluxes. This remains a Keplerian viscous transport law even with SG, not a
+general non-Keplerian angular-momentum solver. Because the old modes retain their
+original discretization, comparisons with equilibrium mode require resolution
+checks as well as thermal-timescale checks.
+
+The scheme is first-order upwind in energy transport and explicit in time.
+Internal substeps limit diffusive transport, outgoing mass, photoevaporation
+and thermal/compressional changes. The thermal bound uses viscous heating,
+gross radiative emission and absorption separately, not their nearly cancelling
+net balance (including near the radiation floor). Excessive
+subcycling, invalid states and temperatures outside the configured bounds
+terminate with an explicit error; temperatures are not silently clipped.
+The existing radiative floor is a net heating term, not an imposed minimum T
+in evolved states: expansion can transiently cool below the radiation temperature.
+
+Thermal boundaries use zero-gradient specific internal energy (temperature).
+The selected density boundary still controls mass; reflecting boundaries have
+exactly zero face flux. Absorbing ghosts carry no mass. Wind sinks remove the
+transported local specific energy. If the density floor adds mass, it adds
+energy at the transported temperature and emits a warning; floor activation is
+not conservative and must be checked in depleted-disk studies.
+This is an internal-energy model, not a conservative total-energy solver;
+it does not evolve kinetic, orbital or gravitational energy.
+
+Density extrapolation alone does **not** prohibit external mass supply:
+zero-gradient and parabolic ghosts can produce inward boundary fluxes.
+For an isolated disk in `radiative_energy` mode, select:
+
+```yaml
+boundary_conditions:
+  inner_boundary_condition: outflow
+  outer_boundary_condition: outflow
+```
+
+`outflow` uses zero-gradient ghosts but limits the actual boundary face flux
+to outward-only (negative at the inner edge, positive at the outer edge).
+Energy advection, pressure work and reported velocities use the same limited
+mass flux. This prevents boundary mass supply without forcing mass to leave.
+It is supported only by `radiative_energy`; other modes reject it explicitly.
+Existing boundary choices keep their original behavior. The energy example
+configuration selects outflow at both ends; restart the simulation for a changed
+boundary configuration to take effect.
+
+Thermal snapshots retain the existing nine columns, so existing temperature
+plotters continue to work. Headers and run info identify the energy mode and
+gamma. E in CGS can be reconstructed from Sigma and T using cv above.
+Qplus and Qminus need not match outside equilibrium.
+
 ## Tests and output
 
 From the project root:
 
 ```bash
 make test-thermal
+make test-energy
+python -m unittest discover -s tests -p 'test_energy_plots.py'
 python -m unittest discover -s tests -p 'test_thermal_config.py'
 # Requires make all; exercises evolution, SG, grids, dust, photoevaporation, I/O.
 python -m unittest discover -s tests -p 'test_radiative_simulation.py'
 ```
+
+The energy tests independently reconstruct face transport, check mass and
+internal-energy budgets including pressure work and radiative sources, exercise
+reflecting/open boundaries on both grids, verify finite cooling and gamma
+dependence, and check first-order timestep convergence. Integration tests cover
+irradiation with SG enabled/disabled and reconstruct the evolved EOS pressure.
 
 Generate the synthetic 1--100 AU standalone example (not YAML-driven):
 
@@ -216,6 +323,10 @@ python plot_temperature.py output_thermal/LOGS/temperature_profile_00000000.dat
 MPLBACKEND=Agg python plot_temperature.py temperature_profile.dat -o temperature_profile.png
 ```
 
+For energy-mode profiles the last panel shows the net thermal source
+Qplus - Qminus rather than an equilibrium residual. Negative net cooling
+(radiative heating) is supported and uses a signed symlog flux axis.
+
 For line plots of T(r) at all saved times and the percentage change from the
 earliest profile, with a shared time colorbar:
 
@@ -241,7 +352,9 @@ Nine panels in a 3-by-3 layout show Sigma/Sigma(initial), symlog dP/dr,
 density as sqrt(P/rho), with gas pressure converted from code units to CGS.
 The relative equilibrium residual is omitted.
 Heating and cooling share a color normalization. Positive fields use logarithmic
-colors; fluxes containing zeros use linear colors. Temperature and sound-speed changes use a
+colors; nonnegative fluxes containing zeros use linear colors. When net cooling
+is negative, both flux heatmaps share a diverging symlog scale with a linear
+threshold of 0.001 times the maximum absolute flux. Temperature and sound-speed changes use a
 linear diverging color scale centered on zero (negative for cooling, positive
 for increases), fixed at -3% to +3%; values outside this range saturate at the
 endpoint colors without changing the data. `--linthresh` sets the

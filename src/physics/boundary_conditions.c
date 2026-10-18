@@ -88,7 +88,7 @@ void applyBoundaryConditions(double *v,
         case 2: applyFixedFluxInner(v, dp); break;
         case 3: applyAbsorbingInner(v, dp); break;
         case 4: applyReflectingInner(v, dp); break;
-//        case 5: applyFreeOutflowInner(v, dp); break;
+        case 5: applyZeroGradientInner(v, dp); break; // Outflow is enforced on the face flux.
         default: applyZeroGradientInner(v, dp); break;
     }
 
@@ -99,6 +99,7 @@ void applyBoundaryConditions(double *v,
         case 2: applyFixedFluxOuter(v, dp); break;
         case 3: applyAbsorbingOuter(v, dp); break;
         case 4: applyReflectingOuter(v, dp); break;
+        case 5: applyZeroGradientOuter(v, dp); break;
         default: applyZeroGradientOuter(v, dp); break;
     }
 }
