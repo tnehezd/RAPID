@@ -161,6 +161,36 @@ class RadiativeSimulationTests(unittest.TestCase):
                     self.assertEqual(data.shape[1], len(names))
                     self.assertTrue(np.all(np.isfinite(data)))
 
+    def test_prescribed_flaring_is_lociso_only(self):
+        for model in ("radiative", "radiative_energy"):
+            for sg in ("0", "1"):
+                for irradiation in ("prescribed", "geometry"):
+                    with self.subTest(model=model, sg=sg, irradiation=irradiation):
+                        common = (
+                            "-thermal_model", model, "-selfgravity", sg,
+                            "-irradiation_model", irradiation, "-irradiation_luminosity", "1",
+                            "-tmax", "1", "-outfreq", "1",
+                        )
+                        reference = self.run_simulation(*common, "-flind_init", "0")
+                        changed = self.run_simulation("-flind_init", ".25", *common)
+                        for prefix in ("temperature_profile", "density_profile"):
+                            left = sorted((reference / "LOGS").glob(f"{prefix}_*.dat"))
+                            right = sorted((changed / "LOGS").glob(f"{prefix}_*.dat"))
+                            self.assertEqual(len(left), len(right))
+                            for a, b in zip(left, right):
+                                np.testing.assert_array_equal(np.loadtxt(a), np.loadtxt(b))
+                        info = (changed / "current_run_info.dat").read_text()
+                        self.assertIn("Flaring Index:     INACTIVE", info)
+        profiles = []
+        for flaring in ("0", ".25"):
+            output = self.run_simulation(
+                "-thermal_model", "lociso", "-flind_init", flaring, "-tmax", "0"
+            )
+            profiles.append(np.loadtxt(output / "LOGS" / "density_profile_00000000.dat"))
+            self.assertIn(f"Flaring Index:     {float(flaring):.4f}",
+                          (output / "current_run_info.dat").read_text())
+        self.assertGreater(np.max(abs(profiles[0][:, 3] - profiles[1][:, 3])), 0)
+
     def check_thermal_snapshots(self, output):
         thermal_files = sorted((output / "LOGS").glob("temperature_profile_*.dat"))
         self.assertGreaterEqual(len(thermal_files), 2)

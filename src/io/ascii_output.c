@@ -285,9 +285,17 @@ void printCurrentInformationAboutRun(const char *directory_name, const DiskParam
     fprintf(info_file, "  Gas Grid Points:   %d\n", disk_params->grid_number);
     fprintf(info_file, "  Sigma_0 (1 AU):    %.4e M_Sun/AU^2\n", disk_params->sigma_0);
     fprintf(info_file, "  Sigma Exponent:    %.4f\n", disk_params->sigma_power_law_index);
-    fprintf(info_file, "  Aspect Ratio (H/R): %.4f\n", disk_params->h_aspect_ratio);
+    if (isRadiativeThermodynamics(disk_params->thermodynamics_model)) {
+        fprintf(info_file, "  Initial/width H/R: %.4f (not the evolved thermal H/R)\n", disk_params->h_aspect_ratio);
+    } else {
+        fprintf(info_file, "  Aspect Ratio (H/R): %.4f\n", disk_params->h_aspect_ratio);
+    }
     fprintf(info_file, "  Density Floor:     %.3e M_Sun/AU^2\n", disk_params->density_floor);
-    fprintf(info_file, "  Flaring Index:     %.4f\n", disk_params->flaring_index);
+    if (isRadiativeThermodynamics(disk_params->thermodynamics_model)) {
+        fprintf(info_file, "  Flaring Index:     INACTIVE (H follows thermal state)\n");
+    } else {
+        fprintf(info_file, "  Flaring Index:     %.4f\n", disk_params->flaring_index);
+    }
     fprintf(info_file, "  Alpha Viscosity:   %.4e\n", disk_params->alpha_parameter);
     fprintf(info_file, "  Total Disk Mass:   %.4e M_Sun\n\n", disk_params->total_disk_mass);
 

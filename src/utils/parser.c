@@ -126,7 +126,7 @@ void printUsageToTerminal() {
     fprintf(stderr, "  -alpha_init <val> Alpha viscosity (default: 0.01)\n");
     fprintf(stderr, "  -stellar_mass <val> Star mass (M_sun, default: 1.0)\n");
     fprintf(stderr, "  -h_init <val>  Aspect ratio at 1 AU (H/R, default: 0.05)\n");
-    fprintf(stderr, "  -flind_init <val> Flaring index (default: 0.0)\n");
+    fprintf(stderr, "  -flind_init <val> Flaring index, lociso only (default: 0.0; ignored in radiative modes)\n");
     fprintf(stderr, "  -rdzei <val>   Inner dead zone radius (AU, default: 0.0)\n");
     fprintf(stderr, "  -rdzeo <val>   Outer dead zone radius (AU, default: 0.0)\n");
     fprintf(stderr, "  -drdzei <val>  Inner dead zone transition width multiplier (default: 0.0)\n");
@@ -591,6 +591,13 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
         i++;
     }
 
+
+    if (isRadiativeThermodynamics(opt->thermodynamics_model)) {
+        if (opt->flind_val != 0.0) {
+            LOG_WARN("Prescribed flaring is inactive in radiative modes; ignoring -flind_init and using 0 for initialization and deadzone widths.");
+        }
+        opt->flind_val = 0.0;
+    }
 
     // --- CRITICAL CONFLICT RESOLUTION GUARD ---
     if ((opt->inner_boundary_condition_type == 5 || opt->outer_boundary_condition_type == 5) &&

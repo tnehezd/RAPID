@@ -198,7 +198,7 @@ void refreshRadiativeDisk(DiskParameters *disk, SimulationOptions *options)
         /* Initial guess only, for the SG kernel's temperature-dependent softening. */
         for (int i = 0; i <= n + 1; ++i) {
             double radius = disk->radial_grid[i];
-            double height = disk->h_aspect_ratio * pow(radius, 1.0 + disk->flaring_index);
+            double height = disk->h_aspect_ratio * radius;
             if (!isfinite(radius) || radius <= 0.0 || !isfinite(height) || height <= 0.0) {
                 LOG_ERROR("Radiative initialization requires positive radii and initial H; use a finer or logarithmic grid.\n");
                 exit(EXIT_FAILURE);

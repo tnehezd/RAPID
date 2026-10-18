@@ -271,6 +271,10 @@ non-convergence remains an explicit error, never a locally isothermal fallback.
 
 ## Opacity and limitations
 
+See [disk geometry and flaring](geometry.md) for the distinction between
+prescribed lociso geometry and thermally determined radiative height.
+`flaring_index` is inactive in both radiative modes.
+
 Thermal ASCII diagnostics (`temperature_profile`, `irradiation_profile`,
 `thermal_timescales`, and `energy_budget`) use the shared RAPID header writer
 with version/build information, physical snapshot time, descriptive metadata,
