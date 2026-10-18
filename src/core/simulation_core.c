@@ -397,7 +397,7 @@ static void writeFinalSnapshot(double t, ParticleData *particle_data, int partic
 {
     double final_output_time = sim_opts->maximum_simulation_time;
     double current_time_years = t / (2.0 * M_PI);
-    writeThermalSnapshot(disk_params, sim_opts, current_time_years);
+    writeThermalSnapshot(disk_params, sim_opts, current_time_years, final_output_time);
 
     if (!isDustEnabled(mode) && sim_opts->output_format == OUTPUT_ASCII) {
         char final_density_name[MAX_PATH_LEN];
@@ -529,7 +529,7 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
         double current_time_years = t / (2.0 * M_PI);
         int snapshot_done = isSnapshotDue(current_time_years, output_time, deltat, sim_opts);
         if (snapshot_done) {
-            writeThermalSnapshot(disk_params, sim_opts, current_time_years);
+            writeThermalSnapshot(disk_params, sim_opts, current_time_years, output_time);
         }
 
         if (isDustEnabled(mode)) {

@@ -9,6 +9,6 @@ double interpolateThermalSoundSpeed(double radius, const DiskParameters *disk);
 double interpolateThermalScaleHeight(double radius, const DiskParameters *disk);
 void refreshRadiativeDisk(DiskParameters *disk, SimulationOptions *options);
 void writeThermalSnapshot(const DiskParameters *disk, const SimulationOptions *options,
-                          double time_years);
+                          double time_years, double output_time);
 
 #endif

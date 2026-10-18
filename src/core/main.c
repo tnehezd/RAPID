@@ -336,7 +336,7 @@ int main(int argc, const char **argv) {
             disk_params.thermal_mean_molecular_weight,
             disk_params.thermal_background_temperature,
             disk_params.enable_selfgravity ? "on" : "off");
-        writeThermalSnapshot(&disk_params, &sim_opts, 0.0);
+        writeThermalSnapshot(&disk_params, &sim_opts, 0.0, 0.0);
     } else {
         updateSelfGravity(&disk_params);
     }

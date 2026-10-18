@@ -173,12 +173,12 @@ void refreshRadiativeDisk(DiskParameters *disk, SimulationOptions *options)
 }
 
 void writeThermalSnapshot(const DiskParameters *disk, const SimulationOptions *options,
-                          double time_years)
+                          double time_years, double output_time)
 {
     if (disk->thermodynamics_model != THERMODYNAMICS_RADIATIVE) return;
     char filename[MAX_PATH_LEN];
-    int length = snprintf(filename, sizeof(filename), "%s/%s/temperature_profile_%.12g.dat",
-                          options->output_dir_name, kLogFilesDirectory, time_years);
+    int length = snprintf(filename, sizeof(filename), "%s/%s/temperature_profile_%08d.dat",
+                          options->output_dir_name, kLogFilesDirectory, (int)output_time);
     if (length < 0 || (size_t)length >= sizeof(filename)) {
         LOG_ERROR("Thermal output path is too long.\n");
         exit(EXIT_FAILURE);

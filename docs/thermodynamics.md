@@ -128,8 +128,11 @@ It uses 1 Msun, `Sigma=100*(r/AU)^-1 g/cm^2`, `alpha=1e-3`, `mu=2.34`,
 `T_bg=10 K` and Keplerian shear.
 
 Radiative runs write ASCII files
-`<run>/LOGS/temperature_profile_<actual_time_years>.dat` initially, at scheduled
-snapshots and at the final state, for both ASCII and HDF5 runs. Existing gas
+`<run>/LOGS/temperature_profile_00000000.dat` initially, at scheduled
+snapshots and at the final state, for both ASCII and HDF5 runs. The suffix uses
+the same eight-digit, zero-padded integer output-time label as gas snapshots
+(for example, `temperature_profile_00010000.dat`). The actual simulation time
+in years is retained in the header. Existing gas
 output schemas are unchanged. The run-information log records the thermal
 model and parameters. The nine columns are:
 
@@ -140,6 +143,29 @@ r_AU T_K H_over_r rho_g_cm3 nu_cm2_s kappa_cm2_g tau Qplus Qminus
 They can be plotted directly:
 
 ```bash
-python plot_temperature.py output_thermal/LOGS/temperature_profile_0.dat
+python plot_temperature.py output_thermal/LOGS/temperature_profile_00000000.dat
 MPLBACKEND=Agg python plot_temperature.py temperature_profile.dat -o temperature_profile.png
 ```
+
+Combined time-radius heatmaps from matching gas and thermal ASCII snapshots:
+
+```bash
+python plot_thermal_heatmap.py output_thermal
+MPLBACKEND=Agg python plot_thermal_heatmap.py output_thermal -o thermal_heatmaps.png
+```
+
+Nine panels in a 3-by-3 layout show Sigma/Sigma(initial), symlog dP/dr,
+100*(T/T(initial)-1) [%], H/r, opacity, optical depth, heating, cooling and
+100*(cs/cs(initial)-1) [%]. Sound speed is recovered from the midplane pressure and
+density as sqrt(P/rho), with gas pressure converted from code units to CGS.
+The relative equilibrium residual is omitted.
+Heating and cooling share a color normalization. Positive fields use logarithmic
+colors; fluxes containing zeros use linear colors. Temperature and sound-speed changes use a
+linear diverging color scale centered on zero (negative for cooling, positive
+for increases), fixed at -3% to +3%; values outside this range saturate at the
+endpoint colors without changing the data. `--linthresh` sets the
+pressure-gradient linear threshold (default 1e-12). White dP/dr=0 contours and
+black positive-to-negative crossing markers follow the gas heatmap convention.
+At least two paired snapshots are required; times and radial grids are checked.
+Initial density, temperature and sound speed mean the earliest snapshot in that run,
+normalized separately at each radius. Other thermal panels remain absolute.

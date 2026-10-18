@@ -52,7 +52,9 @@ class RadiativeSimulationTests(unittest.TestCase):
             self.assertTrue(np.all(data[:, 1] >= 10.0))
             self.assertTrue(np.all(data[:, 2:7] > 0.0))
             np.testing.assert_allclose(data[:, 7], data[:, 8], rtol=1e-8, atol=1e-20)
-        return np.loadtxt(output / "LOGS" / "temperature_profile_0.dat")
+        for path in thermal_files:
+            self.assertRegex(path.name, r"^temperature_profile_\d{8}\.dat$")
+        return np.loadtxt(output / "LOGS" / "temperature_profile_00000000.dat")
 
     def test_radiative_evolves_on_both_grids_with_and_without_sg(self):
         for grid in ("linear", "logarithmic"):
@@ -69,7 +71,7 @@ class RadiativeSimulationTests(unittest.TestCase):
                     self.assertGreater(np.max(np.abs(final_gas[:, 2] / initial_gas[:, 2] - 1)),
                                        1e-8)
                     self.assertGreater(np.max(np.abs(
-                        np.loadtxt(logs / "temperature_profile_10.dat")[:, 1] /
+                        np.loadtxt(logs / "temperature_profile_00000010.dat")[:, 1] /
                         initial[:, 1] - 1)), 1e-9)
                     # Independent CGS -> code conversion and pressure reconstruction.
                     time_unit = 365.242199 * 86400 / (2 * math.pi)
@@ -169,7 +171,7 @@ class RadiativeSimulationTests(unittest.TestCase):
             cwd=ROOT, capture_output=True, text=True, timeout=120,
         )
         self.assertEqual(process.returncode, 0, process.stdout + process.stderr)
-        data = np.loadtxt(output / "LOGS" / "temperature_profile_2.dat")
+        data = np.loadtxt(output / "LOGS" / "temperature_profile_00000002.dat")
         self.assertEqual(data.shape, (64, 9))
 
     def test_bad_cli_and_unbracketed_equilibrium_fail(self):
