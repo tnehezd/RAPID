@@ -210,12 +210,14 @@ void refreshRadiativeDisk(DiskParameters *disk, SimulationOptions *options)
 
     int geometric = disk->irradiation_model == IRRADIATION_GEOMETRY;
     double radii[n + 2], heights[n + 2];
+    int shadow_hull[n];
     for (int i = 0; i <= n + 1; ++i) radii[i] = disk->radial_grid[i] * AU_IN_CM;
     for (int iteration = 0; iteration < 64; ++iteration) {
         updateSelfGravity(disk);
         ThermalState next[n + 2];
         for (int i = 0; i <= n + 1; ++i) heights[i] = disk->thermal_states[i].scale_height;
         double maximum_change = 0.0;
+        int shadow_hull_count = 0;
         for (int index = 0; index <= n + 1; ++index) {
             /* Geometry is causal in radius; solve physical cells before ghosts. */
             int i = geometric ? (index < n ? index + 1 : (index == n ? 0 : n + 1)) : index;
@@ -232,7 +234,8 @@ void refreshRadiativeDisk(DiskParameters *disk, SimulationOptions *options)
             IrradiationGeometry geometry = {
                 .radii = radii, .heights = heights, .index = i,
                 .surface_height_factor = disk->irradiation_surface_height,
-                .stellar_radius = disk->irradiation_stellar_radius_rsun * SOLAR_RADIUS_IN_CM
+                .stellar_radius = disk->irradiation_stellar_radius_rsun * SOLAR_RADIUS_IN_CM,
+                .shadow_hull = shadow_hull, .shadow_hull_count = shadow_hull_count
             };
             if (geometric && i >= 1 && i <= n) {
                 parameters.irradiation_temperature = 0.0;
@@ -270,6 +273,11 @@ void refreshRadiativeDisk(DiskParameters *disk, SimulationOptions *options)
                 exit(EXIT_FAILURE);
             }
             heights[i] = next[i].scale_height;
+            if (geometric && i >= 1 && i <= n &&
+                !appendIrradiationShadowHull(&geometry, shadow_hull, &shadow_hull_count)) {
+                LOG_ERROR("Invalid irradiation shadow hull at cell %d.\n", i);
+                exit(EXIT_FAILURE);
+            }
             maximum_change = fmax(maximum_change, fabs(next[i].scale_height /
                                             disk->thermal_states[i].scale_height - 1.0));
         }

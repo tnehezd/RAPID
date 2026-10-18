@@ -186,7 +186,15 @@ r_AU surface_AU effective_factor visible_stellar_fraction Tirr_K
 Visibility describes occultation alone; an unocculted part of the star can
 still lie below the local tangent and contribute no direct heating. Headers
 and run metadata identify the model and surface/stellar-radius parameters.
-The visibility scan is quadratic in the number of radial cells.
+The radial sweep incrementally retains the upper convex hull of interior
+surface points. Points below an upper chord cannot set the stellar horizon
+for any exterior cell, so they can be discarded without a neighbor-distance
+cutoff. Each trial surface height queries this hull with binary search.
+Hull construction is amortized linear per sweep, and each shadow query is
+O(log N), rather than scanning all interior cells. The hull is rebuilt for
+every thermal/SG sweep from the newly evaluated interior heights; geometry
+is still refreshed at every energy substep. This optimization preserves
+distant occulting peaks and does not change the physical shadow model.
 
 This is an opaque prescribed-surface approximation: no scattering, limb
 darkening, stellar-wavelength opacity, diffuse heating in shadows, inner-rim
@@ -196,6 +204,23 @@ optically thin clearing or cavity illumination. It retains the effective
 midplane-temperature closure, rather than separately transporting and
 conserving stellar photon energy. Thin disks and `R_star/r << 1` are assumed;
 check spatial/time convergence, particularly near shadow boundaries.
+
+**Caveat: thermal optical depth is not stellar-light optical depth.** The
+existing opacity and effective optical depth already control thermal emission
+in both optically thick and optically thin limits. They do not determine how
+much incident stellar light a cell transmits. Geometry mode assumes an opaque
+surface at `z_s = chi*H`, without attenuation `exp(-tau_star)` along stellar
+rays. Consequently, a depleted inner annulus can overestimate shadowing and
+underestimate irradiation of the outer disk. Interpret this model as a
+first approximation for disks opaque to stellar light, not as a model of
+transparent gaps, cavities or late-stage clearing.
+
+Stellar-light transmission is deferred. Implementing it requires an explicitly
+chosen stellar-spectrum-weighted absorption opacity, a consistent density
+column along each ray and accounting for absorbed versus transmitted light.
+The current local-temperature thermal opacity is not automatically an
+appropriate stellar-light opacity; no additional stellar opacity parameter
+or optical-depth-dependent irradiation correction is implemented.
 
 Fluxes include both disk faces. The bridge uses RAPID's AU, solar-mass and
 `year/(2*pi)` units for conversion to CGS and back. The standalone example uses

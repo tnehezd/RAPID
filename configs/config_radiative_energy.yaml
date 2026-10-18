@@ -29,10 +29,14 @@ thermodynamics_parameters:
   minimum_temperature_k: 1.0
   maximum_temperature_k: 1500.0
   irradiation_luminosity_lsun: 1.0  # omitted/default 0.0: irradiation off
-  irradiation_model: prescribed   # alternative: geometry (chi*H surface + shadowing)
-  irradiation_factor: 0.05         # effective geometry/absorption factor
-  # irradiation_surface_height: 4.0     # geometry mode: surface height/H
-  # irradiation_stellar_radius_rsun: 2.0
+  #irradiation_model: prescribed   # alternative: geometry (chi*H surface + shadowing)
+  irradiation_model: geometry   # alternative: geometry (chi*H surface + shadowing)
+  #irradiation_factor: 0.05         # effective geometry/absorption factor
+  irradiation_surface_height: 4.0     # geometry mode: surface height/H
+  irradiation_stellar_radius_rsun: 2.0
+  # Caveat: geometry assumes an opaque chi*H surface, even in depleted cells.
+  # Thermal tau affects cooling, not stellar-light transmission or shadow opacity.
+  # See docs/thermodynamics.md; transparent gaps/cavities require a future model.
 
 deadzone_parameters:
   deadzone_inner_radius_au: 2.7
@@ -47,7 +51,7 @@ boundary_conditions:
 
 output_parameters:
   input_file_path: ""
-  output_directory_name: "output_radiative_energy"
+  output_directory_name: "output_radiative_energy_geometry"
   output_format: "ascii"
 
 time_parameters:

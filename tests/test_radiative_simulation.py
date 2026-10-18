@@ -382,6 +382,7 @@ class RadiativeSimulationTests(unittest.TestCase):
 
     def test_outflow_prevents_mass_supply_in_energy_example(self):
         config = yaml.safe_load((ROOT / "configs" / "config_radiative_energy.yaml").read_text())
+        config["thermodynamics_parameters"]["irradiation_model"] = "prescribed"
         self.assertEqual(config["boundary_conditions"], {
             "inner_boundary_condition": "outflow", "outer_boundary_condition": "outflow"
         })

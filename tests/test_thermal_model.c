@@ -4,6 +4,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
 
 static int failures = 0;
 
@@ -237,6 +238,41 @@ static void testIrradiationGeometry(void)
     CHECK(!calculateIrradiationGeometry(&geometry, heights[1], &factor, &visibility));
 }
 
+static void testShadowHull(void)
+{
+    enum { N = 256 };
+    double radii[N + 1], heights[N + 1];
+    int hull[N];
+    uint32_t random = 1234567;
+    for (int profile = 0; profile < 8; ++profile) {
+        int count = 0;
+        for (int i = 1; i <= N; ++i) {
+            radii[i] = profile % 2 ? exp(i * 0.02) : 1.0 + i * 0.1;
+            random = 1664525u * random + 1013904223u;
+            double noise = (double)random / UINT32_MAX;
+            heights[i] = radii[i] * (profile < 2 ? 0.05 :
+                profile < 4 ? 0.01 * pow(radii[i], 0.25) :
+                profile < 6 ? 0.02 + 0.01 * sin(i * 0.2) : 0.01 + 0.1 * noise);
+            IrradiationGeometry geometry = {
+                .radii = radii, .heights = heights, .index = i,
+                .surface_height_factor = 4, .stellar_radius = 0.01
+            };
+            for (int trial = 0; trial < 9; ++trial) {
+                double height = heights[i] * pow(1.2, trial - 4);
+                double expected, expected_visibility, actual, actual_visibility;
+                geometry.shadow_hull = NULL;
+                CHECK(calculateIrradiationGeometry(&geometry, height, &expected, &expected_visibility));
+                geometry.shadow_hull = hull;
+                geometry.shadow_hull_count = count;
+                CHECK(calculateIrradiationGeometry(&geometry, height, &actual, &actual_visibility));
+                CHECK(fabs(actual - expected) < 1e-12);
+                CHECK(fabs(actual_visibility - expected_visibility) < 1e-10);
+            }
+            CHECK(appendIrradiationShadowHull(&geometry, hull, &count));
+        }
+    }
+}
+
 static int printProfile(void)
 {
     ThermalSolverOptions options = defaultThermalSolverOptions();
@@ -276,6 +312,7 @@ int main(int argc, char **argv)
     testSolver();
     testIrradiation();
     testIrradiationGeometry();
+    testShadowHull();
     if (failures != 0) {
         fprintf(stderr, "%d thermal checks failed\n", failures);
         return 1;
