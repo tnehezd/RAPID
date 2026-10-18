@@ -73,11 +73,13 @@ ThermalStatus calculateThermalState(const ThermalParameters *parameters,
 /* Defaults: 1--1500 K, relative tolerance 1e-8, at most 128 bisections. */
 ThermalSolverOptions defaultThermalSolverOptions(void);
 
-/* Solve cooling = heating within an explicit sign-changing bracket.
+/* Solve cooling = heating within explicit temperature bounds.
  * The lower bound is raised to (T_bg^4 + T_irr^4)^(1/4) for prescribed
  * irradiation, or T_bg when irradiation depends on the trial temperature.
- * Multiple roots are not enumerated and
- * thermal stability is not inferred. State is unchanged on any failure. */
+ * Search 256 logarithmic intervals cold-to-hot for the first sampled
+ * heating-to-cooling crossing, then bisect. Balanced lower bounds are accepted.
+ * Sub-grid root pairs can be missed; roots are not fully enumerated and
+ * coupled disk stability is not inferred. State is unchanged on any failure. */
 ThermalStatus solveMidplaneTemperature(const ThermalParameters *parameters,
                                       const ThermalSolverOptions *options,
                                       ThermalState *state);

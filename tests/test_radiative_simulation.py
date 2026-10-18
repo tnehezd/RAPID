@@ -69,6 +69,42 @@ class RadiativeSimulationTests(unittest.TestCase):
                         self.assertTrue(np.all(np.isfinite(sizes)))
                         self.assertTrue(np.all(sizes[:, -1] > 0))
 
+    def test_depleted_prescribed_disk_selects_cold_equilibrium(self):
+        sigma_code = 8.86918308e-8 * 1.496e13 ** 2 / 1.989e33
+        for model in ("radiative", "radiative_energy"):
+            for grid in ("linear", "logarithmic"):
+                with self.subTest(model=model, grid=grid):
+                    boundary = "outflow" if model == "radiative_energy" else "zero_gradient"
+                    output = self.run_simulation(
+                        "-thermal_model", model, "-grid_type", grid,
+                        "-sigma0_init", str(sigma_code), "-index_init", "0",
+                        "-n", "500", "-ro", "50", "-rdzeo", "24",
+                        "-irradiation_model", "prescribed", "-irradiation_luminosity", "1",
+                        "-irradiation_factor", ".05", "-inner_bc", boundary,
+                        "-outer_bc", boundary, "-evol", "0", "-tmax", "0",
+                    )
+                    snapshots = sorted((output / "LOGS").glob("temperature_profile_*.dat"))
+                    self.assertGreaterEqual(len(snapshots), 1)
+                    for snapshot in snapshots:
+                        data = np.loadtxt(snapshot)
+                        self.assertEqual(data.shape, (500, 9))
+                        self.assertTrue(np.all(np.isfinite(data)))
+                        self.assertTrue(np.all((data[:, 1] > 10) & (data[:, 1] < 200)))
+                    initial = np.loadtxt(snapshots[0])
+                    if grid == "linear":
+                        self.assertGreater(initial[3, 1], 163)
+                        self.assertLess(initial[3, 1], 164)
+                    if model == "radiative":
+                        tau_eff = .375 * initial[:, 6] + math.sqrt(3) / 4 + .25 / initial[:, 6]
+                        tirr = (.05 * 3.828e33 /
+                                (4 * math.pi * 5.670374419e-5 *
+                                 (initial[:, 0] * 1.496e13) ** 2)) ** .25
+                        flux = (2 * 5.670374419e-5 *
+                                (initial[:, 1] ** 4 + 10 ** 4 + tirr ** 4) / tau_eff)
+                        tolerance = (1e-8 * np.maximum(abs(initial[:, 8]), initial[:, 7]) +
+                                     64 * np.finfo(float).eps * flux)
+                        self.assertTrue(np.all(abs(initial[:, 8] - initial[:, 7]) <= 1.01 * tolerance))
+
     def check_thermal_snapshots(self, output):
         thermal_files = sorted((output / "LOGS").glob("temperature_profile_*.dat"))
         self.assertGreaterEqual(len(thermal_files), 2)

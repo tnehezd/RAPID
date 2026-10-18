@@ -143,6 +143,16 @@ static void testSolver(void)
         parameters.alpha = target.cooling / target.heating;
         options.minimum_temperature = 0.99 * temperature;
         options.maximum_temperature = 1.01 * temperature;
+        ThermalState below, above;
+        CHECK(calculateThermalState(&parameters, options.minimum_temperature, &below) ==
+              THERMAL_SUCCESS);
+        CHECK(calculateThermalState(&parameters, options.maximum_temperature, &above) ==
+              THERMAL_SUCCESS);
+        if (below.cooling > below.heating && above.cooling < above.heating) {
+            CHECK(solveMidplaneTemperature(&parameters, &options, &state) ==
+                  THERMAL_NOT_BRACKETED);
+            continue;
+        }
         CHECK(solveMidplaneTemperature(&parameters, &options, &state) == THERMAL_SUCCESS);
         CHECK(closeRelative(state.temperature, temperature, 1e-8));
         CHECK(closeRelative(state.cooling, state.heating, options.relative_tolerance));
@@ -316,6 +326,48 @@ static void testIrradiatedRoundoffConvergence(void)
     CHECK(solveMidplaneTemperature(&parameters, &options, &state) == THERMAL_NOT_BRACKETED);
 }
 
+static void testDepletedPrescribedEquilibrium(void)
+{
+    ThermalParameters parameters = referenceParameters();
+    double radius = 1.294589 * 1.496e13;
+    double time_unit = 365.242199 * 86400.0 / (2.0 * acos(-1.0));
+    parameters.surface_density = 8.86918308e-8;
+    parameters.orbital_frequency = sqrt(1.0 / pow(1.294589, 3)) / time_unit;
+    parameters.alpha = 0.003 * (1.0 - 0.5 * 0.99 *
+        (tanh((1.294589 - 2.7) / (0.05 * 2.7)) -
+         tanh((1.294589 - 24.0) / (0.05 * 24.0))));
+    parameters.irradiation_temperature = pow(0.05 * 3.828e33 /
+        (4.0 * acos(-1.0) * 5.670374419e-5 * radius * radius), 0.25);
+    ThermalSolverOptions options = defaultThermalSolverOptions();
+    ThermalState state;
+    ThermalState hot, cold_side, warm_side;
+    CHECK(calculateThermalState(&parameters, parameters.irradiation_temperature, &cold_side) ==
+          THERMAL_SUCCESS);
+    CHECK(cold_side.cooling < cold_side.heating);
+    CHECK(calculateThermalState(&parameters, 180.0, &warm_side) == THERMAL_SUCCESS);
+    CHECK(warm_side.cooling > warm_side.heating);
+    CHECK(calculateThermalState(&parameters, 1500.0, &hot) == THERMAL_SUCCESS);
+    CHECK(hot.cooling < hot.heating);
+    ThermalStatus status = solveMidplaneTemperature(&parameters, &options, &state);
+    CHECK(status == THERMAL_SUCCESS);
+    if (status != THERMAL_SUCCESS) return;
+    CHECK(state.temperature > parameters.irradiation_temperature && state.temperature < 164.0);
+    CHECK(closeRelative(state.cooling, state.heating, options.relative_tolerance));
+    double step = state.temperature * 1e-6;
+    CHECK(calculateThermalState(&parameters, state.temperature - step, &cold_side) == THERMAL_SUCCESS);
+    CHECK(calculateThermalState(&parameters, state.temperature + step, &warm_side) == THERMAL_SUCCESS);
+    CHECK(cold_side.cooling < cold_side.heating);
+    CHECK(warm_side.cooling > warm_side.heating);
+    options.maximum_temperature = 200.0;
+    CHECK(solveMidplaneTemperature(&parameters, &options, &cold_side) == THERMAL_SUCCESS);
+    CHECK(closeRelative(state.temperature, cold_side.temperature, 1e-8));
+    options.minimum_temperature = 1000.0;
+    options.maximum_temperature = 1500.0;
+    state.temperature = -123.0;
+    CHECK(solveMidplaneTemperature(&parameters, &options, &state) == THERMAL_NOT_BRACKETED);
+    CHECK(state.temperature == -123.0);
+}
+
 static int printProfile(void)
 {
     ThermalSolverOptions options = defaultThermalSolverOptions();
@@ -357,6 +409,7 @@ int main(int argc, char **argv)
     testIrradiationGeometry();
     testShadowHull();
     testIrradiatedRoundoffConvergence();
+    testDepletedPrescribedEquilibrium();
     if (failures != 0) {
         fprintf(stderr, "%d thermal checks failed\n", failures);
         return 1;

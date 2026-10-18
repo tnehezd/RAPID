@@ -204,21 +204,32 @@ ThermalStatus solveMidplaneTemperature(const ThermalParameters *parameters,
     if (status != THERMAL_SUCCESS) {
         return status;
     }
-    status = calculateThermalState(parameters, upper, &right);
-    if (status != THERMAL_SUCCESS) {
-        return status;
-    }
     if (isBalanced(parameters, &left, options->relative_tolerance)) {
         *state = left;
         return THERMAL_SUCCESS;
     }
-    if (isBalanced(parameters, &right, options->relative_tolerance)) {
-        *state = right;
-        return THERMAL_SUCCESS;
-    }
     double left_residual = left.cooling - left.heating;
-    double right_residual = right.cooling - right.heating;
-    if ((left_residual < 0.0) == (right_residual < 0.0)) {
+    double scan_lower = lower;
+    double log_span = log(upper / lower);
+    int bracketed = 0;
+    /* Opacity transitions can put both user bounds on the heating side.
+     * Search cold-to-hot for the first sampled restoring crossing instead
+     * of assuming the residual is monotone over the entire interval. */
+    for (int sample = 1; sample <= 256; ++sample) {
+        double temperature = sample == 256 ? upper :
+            scan_lower * exp(log_span * sample / 256.0);
+        status = calculateThermalState(parameters, temperature, &right);
+        if (status != THERMAL_SUCCESS) return status;
+        double residual = right.cooling - right.heating;
+        if (left_residual < 0.0 && residual >= 0.0) {
+            upper = temperature;
+            bracketed = 1;
+            break;
+        }
+        lower = temperature;
+        left_residual = residual;
+    }
+    if (!bracketed) {
         return THERMAL_NOT_BRACKETED;
     }
 
@@ -259,7 +270,7 @@ const char *thermalStatusMessage(ThermalStatus status)
     case THERMAL_NUMERICAL_ERROR:
         return "non-finite, underflowed or overflowed thermal quantity";
     case THERMAL_NOT_BRACKETED:
-        return "temperature bounds do not bracket an equilibrium";
+        return "temperature bounds contain no sampled heating-to-cooling equilibrium";
     case THERMAL_NO_CONVERGENCE:
         return "thermal solver did not meet temperature and energy tolerances";
     }

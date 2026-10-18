@@ -253,12 +253,21 @@ be many orders smaller than either flux; a tolerance relative only to the
 small viscous heating can otherwise be unattainable even at adjacent
 representable temperatures. This allowance does not relax the temperature
 bracket criterion or suppress genuine non-convergence. An already
-balanced bracket endpoint is also accepted. The lower bound is raised to
+balanced lower endpoint is also accepted. The lower bound is raised to
 `T_rad` (or `T_bg` without irradiation). The upper bound must accommodate
-the irradiated temperature, including ghost radii. A missing sign change or non-convergence is an explicit error, not a
-fallback to locally isothermal behavior. Multiple equilibria are possible:
-callers must isolate the desired branch with the bounds; the solver neither
-enumerates roots nor determines thermal stability.
+the irradiated temperature, including ghost radii.
+
+Opacity transitions make the thermal residual non-monotone: both bounds can
+have net heating while an interior cold equilibrium exists. The solver searches
+256 logarithmically spaced intervals from cold to hot for the first sampled
+heating-to-cooling crossing, then bisects that local bracket. This selects the
+cold restoring branch rather than following the previous temperature; it applies
+to prescribed and geometric irradiation, including energy-mode initialization.
+It is not a complete root enumeration: pairs of crossings within a sampling
+interval can be missed, and a local restoring crossing does not establish
+stability of the coupled irradiation/SG disk. Narrower explicit bounds can
+isolate a desired restoring branch. A missing sampled crossing or
+non-convergence remains an explicit error, never a locally isothermal fallback.
 
 ## Opacity and limitations
 
