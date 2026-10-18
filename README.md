@@ -73,6 +73,50 @@ Gas profile snapshots (`LOGS/density_profile_*.dat`) write radius, surface densi
 pressure, and pressure gradient with 10 significant digits. Rebuild and rerun
 simulations to obtain this precision; existing snapshots are unchanged.
 
+### Runtime comparison matrix
+
+`test_examples/generate_configs.py` generates 80 independent YAMLs: SG on/off,
+photoevaporation on/off (Picogna), gas-only/one growing dust population,
+linear/logarithmic grids, and five thermal choices (lociso, radiative with
+prescribed/geometric irradiation, radiative_energy with prescribed/geometric
+irradiation). Each uses 500 gas cells, 1000 particles when dust is active,
+4 OpenMP threads, 500,000 years and 10,000-year output cadence.
+Energy runs use outflow boundaries; other modes use zero-gradient boundaries,
+so these comparisons do not isolate numerical cost at identical physics.
+
+```bash
+python test_examples/generate_configs.py --generate-only
+# Generate and run all cases, at most 10 concurrent runs / 40 OpenMP threads:
+python test_examples/generate_configs.py
+# Reduce concurrency:
+python test_examples/generate_configs.py --jobs 2
+```
+
+Build the release binary first (`make all`). Each case has its own output
+directory; per-case console logs and `timings.tsv` are written to
+`benchmark_logs/` (overwritten on a new batch). Failed cases are reported and
+the runner exits nonzero after the batch. Concurrent wall times include resource
+contention; use `--jobs 1` for isolated timing comparisons.
+
+### Initial dust drift diagnostic
+
+Dust runs write `drift_timecale.dat` (historical filename retained) in the
+output root, for both ASCII and HDF5 output. It contains the initial population
+and particle IDs, distance in AU, grain radius in cm, Stokes number, signed
+radial velocity in AU/year, local `r/abs(v_r)` in years, and direction
+(-1 inward, 0 stationary, +1 outward). A stationary particle has infinite
+timescale. Velocity includes gas advection: this is not a time-integrated
+arrival time at the star. Both populations are listed when enabled.
+
+Growth/fragmentation updates the primary grain size once per step, after dust
+density deposition and before RK4 position transport. Gas and deposited dust
+fields are interpolated at the particle radius on their gas-grid coordinates;
+the dust density's zero-based physical-cell array excludes gas ghost cells.
+RK4 holds that size fixed. The secondary micron population is not grown by
+this update. This split scheme is not a fourth-order coupled growth solver.
+`make test-dust` tests linear/log grids with particle counts below, equal to
+and above the gas-cell count.
+
 Gas viscous evolution advances `nu * Sigma` and divides by the same local
 viscosity to recover `Sigma` before applying photoevaporation and the density
 floor. Results generated without this conversion must be rerun.

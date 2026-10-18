@@ -165,6 +165,9 @@ void calculateDustSurfaceDensity(const ParticleData *particle_data, const Simula
  * @param simulation_options    Pointer to simulation options.
  * @param disk_params Pointer to disk parameter structure.
  */
+void writeInitialDriftTimescales(const ParticleData *particles, int count,
+                                const SimulationOptions *options, const DiskParameters *disk);
+
 void calculateDustDistance(const char *file_name, ParticleData *particle_data, double actual_timestep, double actual_time, int number_of_particles, const SimulationOptions *simulation_options, const DiskParameters *disk_params);
 
 

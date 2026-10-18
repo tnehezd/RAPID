@@ -475,6 +475,7 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
             exit(EXIT_FAILURE);
         }
         loadDustParticlesFromFile(&particle_data, sim_opts->dust_input_filename);
+        writeInitialDriftTimescales(&particle_data, particle_number, sim_opts, disk_params);
     }
 
     char dens_name[MAX_PATH_LEN] = "";

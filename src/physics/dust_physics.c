@@ -209,14 +209,16 @@ void updateParticleSizes(ParticleData *particle_data, int particle_number, doubl
         double r = particle_data->particle_distance_array[i][0];
         if (r < disk_params->r_min || r > disk_params->r_max) continue;
 
-        // Retrieve local gas properties at particle position using grid indices
-        int idx = (int)particle_data->dust_particle_mass_array[i][1];
-        if (idx < 0 || idx >= disk_params->grid_number) idx = 0;
-
-        double gas_sigma = disk_params->gas_surface_density_vector[idx];
-        double gas_pres  = disk_params->gas_pressure_vector[idx];
-        double gas_grad  = disk_params->gas_pressure_gradient_vector[idx];
-        double dust_sigma = particle_data->dust_surfacedensity[idx];
+        double gas_sigma, gas_pres, gas_grad, fraction;
+        linearInterpolation(disk_params->gas_surface_density_vector, disk_params->radial_grid,
+                            r, &gas_sigma, disk_params->delta_r, disk_params);
+        linearInterpolation(disk_params->gas_pressure_vector, disk_params->radial_grid,
+                            r, &gas_pres, disk_params->delta_r, disk_params);
+        linearInterpolation(disk_params->gas_pressure_gradient_vector, disk_params->radial_grid,
+                            r, &gas_grad, disk_params->delta_r, disk_params);
+        int left = findDustLeftCell(r, disk_params, &fraction);
+        double dust_sigma = (1.0 - fraction) * particle_data->dust_surfacedensity[left] +
+                            fraction * particle_data->dust_surfacedensity[left + 1];
 
         // Update primary population size
         particle_data->particle_distance_array[i][1] = calculateDustParticleSize(
@@ -388,21 +390,73 @@ void calculateDustSurfaceDensity(const ParticleData *particle_data,
 }
 
 
+void writeInitialDriftTimescales(const ParticleData *particles, int count,
+                                const SimulationOptions *options, const DiskParameters *disk)
+{
+    char path[MAX_PATH_LEN];
+    int length = snprintf(path, sizeof(path), "%s/%s%s", options->output_dir_name,
+                          kDriftTimescaleFileName, kFileNamesSuffix);
+    if (length < 0 || (size_t)length >= sizeof(path)) {
+        LOG_ERROR("Initial drift timescale path is too long.\n");
+        exit(EXIT_FAILURE);
+    }
+    FILE *file = fopen(path, "w");
+    if (file == NULL) {
+        LOG_ERROR("Could not open initial drift timescales '%s'.\n", path);
+        exit(EXIT_FAILURE);
+    }
+    fprintf(file, "# Initial local radial dust-motion timescales at t=0; not integrated arrival times\n");
+    fprintf(file, "# Velocity includes pressure-driven drift and gas advection; outward is positive\n");
+    fprintf(file, "# t_drift=r/abs(v_r); inf at zero velocity; direction: -1 inward, 0 stationary, +1 outward\n");
+    fprintf(file, "# population particle_id r_AU size_cm Stokes v_r_AU_yr t_drift_yr direction\n");
+    int populations = options->option_for_dust_secondary_population == 1 ? 2 : 1;
+    for (int population = 0; population < populations; ++population) {
+        for (int i = 0; i < count; ++i) {
+            double radius = population == 0 ? particles->particle_distance_array[i][0] :
+                                             particles->micron_particle_distance_array[i][0];
+            double size = population == 0 ? particles->particle_distance_array[i][1] :
+                                           particles->micron_particle_distance_array[i][1];
+            if (!isfinite(radius) || !isfinite(size) || radius < disk->r_min ||
+                radius > disk->r_max || size <= 0.0) {
+                LOG_ERROR("Invalid initial drift diagnostic particle %d in population %d.\n", i, population + 1);
+                fclose(file);
+                exit(EXIT_FAILURE);
+            }
+            double sigma, gradient, gas_velocity, velocity;
+            linearInterpolation(disk->gas_surface_density_vector, disk->radial_grid,
+                                radius, &sigma, disk->delta_r, disk);
+            linearInterpolation(disk->gas_pressure_gradient_vector, disk->radial_grid,
+                                radius, &gradient, disk->delta_r, disk);
+            linearInterpolation(disk->gas_velocity_vector, disk->radial_grid,
+                                radius, &gas_velocity, disk->delta_r, disk);
+            calculate1DDustDrift(size, gradient, sigma, gas_velocity, radius, &velocity, disk);
+            double stokes = calculateStokesNumber(size, sigma, disk);
+            velocity *= 2.0 * M_PI;
+            if (!isfinite(velocity) || !isfinite(stokes) || stokes < 0.0) {
+                LOG_ERROR("Invalid initial drift velocity or Stokes number at r=%.9g AU.\n", radius);
+                fclose(file);
+                exit(EXIT_FAILURE);
+            }
+            double time = velocity == 0.0 ? INFINITY : radius / fabs(velocity);
+            fprintf(file, "%d %d %.15e %.15e %.15e %.15e %.15e %d\n",
+                    population + 1, i, radius, size * AU_IN_CM, stokes, velocity, time,
+                    velocity > 0.0 ? 1 : (velocity < 0.0 ? -1 : 0));
+        }
+    }
+    int failed = ferror(file);
+    if (fclose(file) != 0) failed = 1;
+    if (failed) {
+        LOG_ERROR("Failed to write initial drift timescales '%s'.\n", path);
+        exit(EXIT_FAILURE);
+    }
+}
+
 void calculateDustDistance(const char *file_name, ParticleData *particle_data, double actual_timestep, double actual_time, int number_of_particles, const SimulationOptions *simulation_options, const DiskParameters *disk_params){
 
     int i;
     double particle_distance, particle_distance_new, particle_radius_new, particle_radius;
-    char file_path[1024];
-
-    #pragma omp master
-    {
-        if (actual_time == 0) {
-            sprintf(file_path, "%s/%s%s", file_name, kDriftTimescaleFileName, kFileNamesSuffix);
-            drift_timescale_file = fopen(file_path, "w");
-        }
-    }
-
-    #pragma omp barrier
+    (void)file_name;
+    (void)actual_time;
 
     #pragma omp parallel for private(particle_distance, particle_distance_new, particle_radius_new, particle_radius)
 
@@ -414,10 +468,9 @@ void calculateDustDistance(const char *file_name, ParticleData *particle_data, d
             particle_distance = particle_data->particle_distance_array[i][0];
             particle_radius = particle_data->particle_distance_array[i][1];
 
-            integrateParticleRungeKutta4(actual_time, particle_radius, particle_data->dust_surfacedensity, 
-                                        particle_data->particle_distance_grid, actual_timestep, 
+            integrateParticleRungeKutta4(particle_radius, actual_timestep,
                                         particle_distance, &particle_distance_new, &particle_radius_new, 
-                                        disk_params, simulation_options);
+                                        disk_params);
 
             // 2. Másodlagos (mikronos) populáció integrálása, ha aktív
             double micron_distance_new = 0.0;
@@ -427,10 +480,9 @@ void calculateDustDistance(const char *file_name, ParticleData *particle_data, d
                 double mic_rad  = particle_data->micron_particle_distance_array[i][1];
                 
                 // Itt a mikronos sűrűség mezőt (micron_dust_surfacedensity) használjuk az integrációhoz
-                integrateParticleRungeKutta4(actual_time, mic_rad, particle_data->micron_dust_surfacedensity, 
-                                            particle_data->micron_particle_distance_grid, actual_timestep, 
+                integrateParticleRungeKutta4(mic_rad, actual_timestep,
                                             mic_dist, &micron_distance_new, &micron_radius_new, 
-                                            disk_params, simulation_options);
+                                            disk_params);
             }
 
             // 3. Frissítés
@@ -454,15 +506,4 @@ void calculateDustDistance(const char *file_name, ParticleData *particle_data, d
         
     }
 
-    #pragma omp master
-    {
-        if (actual_time == 0) { 
-            if (drift_timescale_file != NULL) {
-                fclose(drift_timescale_file);
-                drift_timescale_file = NULL; 
-            }
-        }
-    }
-
-    #pragma omp barrier
 }
