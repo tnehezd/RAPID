@@ -146,9 +146,9 @@ debug: debug-build
 	lldb ./$(BIN_DIR)/debug/simulation
 
 # Standalone thermal tests need neither HDF5 nor OpenMP.
-$(BUILD_BIN_DIR)/test_thermal_model: tests/test_thermal_model.c src/physics/thermal_model.c include/physics/thermal_model.h
+$(BUILD_BIN_DIR)/test_thermal_model: tests/test_thermal_model.c src/physics/thermal_model.c $(wildcard include/physics/*.h include/core/*.h)
 	@mkdir -p $(BUILD_BIN_DIR)
-	$(CC) -Wall -Wextra -Werror -std=c99 $(OPT_FLAGS) -I$(INC_DIR)/physics \
+	$(CC) -Wall -Wextra -Werror -std=c99 $(OPT_FLAGS) $(INC_FLAGS) \
 		tests/test_thermal_model.c src/physics/thermal_model.c -lm -o $@
 
 $(BIN_DIR)/test_thermal_model: $(BUILD_BIN_DIR)/test_thermal_model FORCE

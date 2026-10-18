@@ -50,11 +50,13 @@ rotation model and, for radiative runs with SG, the thermal coupling.
 
 The code-unit EOS and vertical closure are in [eos.c](../src/physics/eos.c),
 with the public interface in [eos.h](../include/physics/eos.h).
-`calculateEOS(Sigma, r, disk_params)` explicitly dispatches between locally
+An internal `calculateEOSState` helper selects between locally
 isothermal and radiative closures: the lociso branch computes prescribed H(r)
 and cs = Omega*H, while the radiative branch reads equilibrium H and cs from
-the thermal cache. It then evaluates Gaussian midplane density and returns
-P_mid = rho_mid*cs^2.
+the thermal cache. All public closure functions use this shared selection.
+`calculateEOS(Sigma, r, disk_params)` evaluates Gaussian midplane density and
+returns P_mid = rho_mid*cs^2. Height-only requests do not read or compute cs:
+SG initialization uses an initial H guess before the first thermal solve.
 It does not evolve internal energy. The existing
 gas_physics.h interface includes eos.h for compatibility.
 

@@ -45,6 +45,18 @@ extern FILE *load_dust_particles_file;  /**< Pointer to the input file used for 
 /** @brief One Astronomical Unit in centimeters (CGS units). */
 #define AU_IN_CM                                1.496e13     
 
+/** @brief Boltzmann constant in erg/K (CGS units). */
+#define BOLTZMANN_CONSTANT_CGS                   1.380649e-16
+
+/** @brief Hydrogen atom mass in grams (CGS units). */
+#define HYDROGEN_MASS_IN_GRAMS                   1.6735575e-24
+
+/** @brief Stefan-Boltzmann constant in erg/(cm^2 s K^4) (CGS units). */
+#define STEFAN_BOLTZMANN_CONSTANT_CGS             5.670374419e-5
+
+/** @brief Gaussian vertical-profile normalization sqrt(2*pi). */
+#define SQRT_TWO_PI                             2.5066282746310005
+
 /** @brief Factor to convert days to years. */
 #define DAYS_PER_YEAR_CONVERSION_FACTOR         2.737850787e-3
 

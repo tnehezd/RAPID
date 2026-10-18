@@ -143,7 +143,7 @@ void refreshRadiativeDisk(DiskParameters *disk, SimulationOptions *options)
                 double radius_cm = disk->radial_grid[i] * AU_IN_CM;
                 parameters.irradiation_temperature = exp(0.25 * (
                     log(disk->irradiation_luminosity_lsun) + log(3.828e33) +
-                    log(disk->irradiation_factor) - log(4.0 * M_PI * 5.670374419e-5) -
+                    log(disk->irradiation_factor) - log(4.0 * M_PI * STEFAN_BOLTZMANN_CONSTANT_CGS) -
                     2.0 * log(radius_cm)));
             }
             ThermalStatus status = solveMidplaneTemperature(

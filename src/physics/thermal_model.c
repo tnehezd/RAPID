@@ -1,12 +1,8 @@
 #include "thermal_model.h"
+#include "config.h"
 
 #include <math.h>
 #include <stddef.h>
-
-static const double kBoltzmann = 1.380649e-16;
-static const double kHydrogenMass = 1.6735575e-24;
-static const double kStefanBoltzmann = 5.670374419e-5;
-static const double kSqrtTwoPi = 2.5066282746310005;
 
 static double logSum(double a, double b)
 {
@@ -107,11 +103,11 @@ ThermalStatus calculateThermalState(const ThermalParameters *parameters,
 
     ThermalState value = {0};
     value.temperature = temperature;
-    value.sound_speed = sqrt(kBoltzmann * temperature /
-                             (parameters->mean_molecular_weight * kHydrogenMass));
+    value.sound_speed = sqrt(BOLTZMANN_CONSTANT_CGS * temperature /
+                             (parameters->mean_molecular_weight * HYDROGEN_MASS_IN_GRAMS));
     value.scale_height = value.sound_speed / parameters->orbital_frequency;
     value.midplane_density = parameters->surface_density /
-                             (kSqrtTwoPi * value.scale_height);
+                             (SQRT_TWO_PI * value.scale_height);
     if (!isfinite(value.sound_speed) || value.sound_speed <= 0.0 ||
         !isfinite(value.scale_height) || value.scale_height <= 0.0 ||
         !isfinite(value.midplane_density) || value.midplane_density <= 0.0) {
@@ -132,7 +128,7 @@ ThermalStatus calculateThermalState(const ThermalParameters *parameters,
                     parameters->orbital_frequency * parameters->orbital_frequency;
     double background = radiationTemperature(parameters);
     /* Factored T^4 - T_rad^4 avoids cancellation near the irradiation floor. */
-    value.cooling = 2.0 * kStefanBoltzmann * (temperature - background) *
+    value.cooling = 2.0 * STEFAN_BOLTZMANN_CONSTANT_CGS * (temperature - background) *
                     (temperature + background) *
                     (temperature * temperature + background * background) /
                     value.effective_optical_depth;
