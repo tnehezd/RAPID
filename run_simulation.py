@@ -24,10 +24,14 @@ def validate_thermal_config(config: object) -> str:
         "maximum_temperature_k": 1500.0,
         "irradiation_luminosity_lsun": 0.0,
         "irradiation_factor": 0.05,
+        "irradiation_surface_height": 4.0,
+        "irradiation_stellar_radius_rsun": 2.0,
     }
     for key in thermal:
-        if key not in ("model", *numeric_settings):
+        if key not in ("model", "irradiation_model", *numeric_settings):
             raise ValueError(f"Unknown thermal setting: {key!r}.")
+    if thermal.get("irradiation_model", "prescribed") not in ("prescribed", "geometry"):
+        raise ValueError("thermodynamics_parameters.irradiation_model must be 'prescribed' or 'geometry'.")
     model = thermal.get("model", "lociso")
     if model == "locally_isotherm":
         model = "lociso"
@@ -296,6 +300,9 @@ def main():
             "maximum_temperature_k": "-thermal_tmax",
             "irradiation_luminosity_lsun": "-irradiation_luminosity",
             "irradiation_factor": "-irradiation_factor",
+            "irradiation_model": "-irradiation_model",
+            "irradiation_surface_height": "-irradiation_surface_height",
+            "irradiation_stellar_radius_rsun": "-irradiation_stellar_radius",
         }
         thermal = full_config["thermodynamics_parameters"]
         for key, flag in thermal_flags.items():

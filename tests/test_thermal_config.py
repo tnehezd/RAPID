@@ -114,6 +114,31 @@ class ThermalConfigTests(unittest.TestCase):
                 )
                 self.assertEqual(original, with_radiative_settings)
 
+    def test_geometry_settings_reach_binary(self):
+        for model in ("radiative", "radiative_energy"):
+            call = self.run_wrapper(
+                "disk_parameters:\n  star_mass_msun: 1\n"
+                f"thermodynamics_parameters:\n  model: {model}\n"
+                "  irradiation_model: geometry\n  irradiation_surface_height: 3.5\n"
+                "  irradiation_stellar_radius_rsun: 1.5\n"
+            )
+            for key, value, flag in (
+                ("irradiation_model", "geometry", "-irradiation_model"),
+                ("irradiation_surface_height", 3.5, "-irradiation_surface_height"),
+                ("irradiation_stellar_radius_rsun", 1.5, "-irradiation_stellar_radius"),
+            ):
+                self.assertEqual(call.args[1][key], value)
+                self.assertEqual(call.args[2][key], flag)
+        for value in ("typo", None, True, [], {}):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                validate_thermal_config({
+                    "thermodynamics_parameters": {"irradiation_model": value}
+                })
+        for key in ("irradiation_surface_height", "irradiation_stellar_radius_rsun"):
+            for value in (0, -1, True, None, "4", float("nan"), float("inf")):
+                with self.subTest(key=key, value=value), self.assertRaises(ValueError):
+                    validate_thermal_config({"thermodynamics_parameters": {key: value}})
+
     def test_invalid_mode_never_launches_binary(self):
         for model in ("polytropic", "typo"):
             with self.subTest(model=model), \

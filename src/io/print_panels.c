@@ -107,14 +107,21 @@ void printThermodynamicsStatus(const DiskParameters *disk_params) {
         fprintf(stderr, "   HEATING:        [Viscous]\n");
         fprintf(stderr, "   COOLING:        [Opacity-dependent radiation]\n");
         fprintf(stderr, "   OPACITY:        [Smoothed Lin-Papaloizou]\n");
+        int geometric = disk_params->irradiation_model == IRRADIATION_GEOMETRY;
         int irradiated = disk_params->irradiation_luminosity_lsun > 0.0 &&
-                         disk_params->irradiation_factor > 0.0;
+                         (geometric || disk_params->irradiation_factor > 0.0);
         fprintf(stderr, "   STELLAR IRRAD.: [%s]\n",
-                irradiated ? "ON / prescribed effective temperature" : "OFF");
+                irradiated ? (geometric ? "ON / geometry + shadowing" :
+                              "ON / prescribed effective temperature") : "OFF");
         if (irradiated) {
             fprintf(stderr, "   STELLAR LUM.:   [%.6g L_sun]\n",
                     disk_params->irradiation_luminosity_lsun);
-            fprintf(stderr, "   IRRAD. FACTOR:  [%.6g]\n", disk_params->irradiation_factor);
+            if (geometric) {
+                fprintf(stderr, "   SURFACE H/Hgas:[%.6g]\n", disk_params->irradiation_surface_height);
+                fprintf(stderr, "   STELLAR RADIUS:[%.6g R_sun]\n", disk_params->irradiation_stellar_radius_rsun);
+            } else {
+                fprintf(stderr, "   IRRAD. FACTOR:  [%.6g]\n", disk_params->irradiation_factor);
+            }
         }
         fprintf(stderr, "   MEAN MOL. WT.:  [%.6g m_H]\n",
                 disk_params->thermal_mean_molecular_weight);

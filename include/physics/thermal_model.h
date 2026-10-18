@@ -1,6 +1,8 @@
 #ifndef THERMAL_MODEL_H
 #define THERMAL_MODEL_H
 
+#include "irradiation.h"
+
 typedef enum {
     THERMAL_SUCCESS = 0,
     THERMAL_INVALID_INPUT,
@@ -30,6 +32,8 @@ typedef struct {
     double background_temperature;
     double shear_parameter;       /* |d ln Omega/d ln r|; Keplerian = 1.5 */
     double irradiation_temperature; /* prescribed effective irradiation T in K; 0 disables */
+    const IrradiationGeometry *irradiation_geometry; /* optional temperature-dependent geometry */
+    double irradiation_luminosity; /* erg/s, used only with geometry */
 } ThermalParameters;
 
 typedef struct {
@@ -51,6 +55,9 @@ typedef struct {
     double heating;               /* erg cm^-2 s^-1, both surfaces */
     double cooling;               /* net of background and irradiation, both surfaces */
     int iterations;
+    double irradiation_temperature;
+    double irradiation_factor;
+    double stellar_visibility;
 } ThermalState;
 
 /* Smoothed Lin-Papaloizou fit, including the electron-scattering branch.
@@ -67,7 +74,8 @@ ThermalStatus calculateThermalState(const ThermalParameters *parameters,
 ThermalSolverOptions defaultThermalSolverOptions(void);
 
 /* Solve cooling = heating within an explicit sign-changing bracket.
- * The lower bound is raised to (T_bg^4 + T_irr^4)^(1/4).
+ * The lower bound is raised to (T_bg^4 + T_irr^4)^(1/4) for prescribed
+ * irradiation, or T_bg when irradiation depends on the trial temperature.
  * Multiple roots are not enumerated and
  * thermal stability is not inferred. State is unchanged on any failure. */
 ThermalStatus solveMidplaneTemperature(const ThermalParameters *parameters,

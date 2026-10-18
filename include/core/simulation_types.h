@@ -60,8 +60,15 @@ typedef struct {
     double thermal_background_temperature;
     double irradiation_luminosity_lsun;
     double irradiation_factor;
+    IrradiationModel irradiation_model;
+    double irradiation_surface_height;
+    double irradiation_stellar_radius_rsun;
     ThermalSolverOptions thermal_solver_options;
     ThermalState *thermal_states;         /**< CGS thermal states, including ghost cells. */
+    struct {
+        bool initialized;
+        double initial, heating, cooling, work, boundary, wind, floor;
+    } energy_budget;                     /**< Cumulative internal energies in code units. */
     double r_dze_i;                       /**< Inner dead‑zone edge radius [AU]. */
     double r_dze_o;                       /**< Outer dead‑zone edge radius [AU]. */
     double dr_dze_i;                      /**< Width of inner dead‑zone transition [AU]. */

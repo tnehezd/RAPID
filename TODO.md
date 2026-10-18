@@ -5,9 +5,8 @@
 - [ ] Add central-star irradiation to the thermal model, with consistent
   absorption geometry and midplane heating.
   - [ ] Stellar irradiation is connected to mass? 
-  - [ ] Connect irradiation angle to disk geometry and stellar position.
-  - [ ] Self-consistent absorption/vertical geometry, including shadowing and
-    reduced absorption in optically thin regions.
+  - [ ] Self-consistent absorption/vertical geometry, including an optical-depth-dependent
+    irradiation surface and reduced absorption in optically thin regions.
 - [ ] Add vertical dust settling, initially using an equilibrium dust scale height.
 - [ ] Extend the disk model to 1+1D with a local vertical structure.
 - [ ] Make alpha respond to temperature and ionization.

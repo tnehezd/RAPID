@@ -49,6 +49,9 @@ typedef struct {
     double thermal_background_temperature;
     double irradiation_luminosity_lsun;
     double irradiation_factor;
+    IrradiationModel irradiation_model;
+    double irradiation_surface_height;
+    double irradiation_stellar_radius_rsun;
     ThermalSolverOptions thermal_solver_options;
     double r_dze_i_val;                                 /**< Inner dead-zone edge radius. */
     double r_dze_o_val;                                 /**< Outer dead-zone edge radius. */

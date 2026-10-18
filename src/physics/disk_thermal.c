@@ -92,14 +92,102 @@ static double shearParameter(int i, const DiskParameters *disk)
                 (2.0 * frequencySquared(i, disk)));
 }
 
+static ThermalParameters cellThermalParameters(int i, double sigma, const DiskParameters *disk)
+{
+    ThermalParameters parameters = {
+        .surface_density = sigma * SOLAR_MASS_IN_GRAMS / (AU_IN_CM * AU_IN_CM),
+        .orbital_frequency = sqrt(frequencySquared(i, disk)) / thermalTimeUnitSeconds(),
+        .alpha = calculateTurbulentAlpha(disk->radial_grid[i], disk),
+        .mean_molecular_weight = disk->thermal_mean_molecular_weight,
+        .background_temperature = disk->thermal_background_temperature,
+        .shear_parameter = shearParameter(i, disk)
+    };
+    if (disk->irradiation_model == IRRADIATION_GEOMETRY) {
+        parameters.irradiation_temperature = disk->thermal_states[i].irradiation_temperature;
+    } else if (disk->irradiation_luminosity_lsun > 0.0 && disk->irradiation_factor > 0.0) {
+        double radius_cm = disk->radial_grid[i] * AU_IN_CM;
+        parameters.irradiation_temperature = exp(0.25 * (
+            log(disk->irradiation_luminosity_lsun) + log(SOLAR_LUMINOSITY_CGS) +
+            log(disk->irradiation_factor) - log(4.0 * M_PI * STEFAN_BOLTZMANN_CONSTANT_CGS) -
+            2.0 * log(radius_cm)));
+    }
+    return parameters;
+}
+
+static void writeThermalTimescales(const DiskParameters *disk, const SimulationOptions *options,
+                                  double time_years, double output_time)
+{
+    char filename[MAX_PATH_LEN];
+    int length = snprintf(filename, sizeof(filename), "%s/%s/thermal_timescales_%08d.dat",
+                          options->output_dir_name, kLogFilesDirectory, (int)output_time);
+    if (length < 0 || (size_t)length >= sizeof(filename)) {
+        LOG_ERROR("Thermal timescale output path is too long.\n");
+        exit(EXIT_FAILURE);
+    }
+    FILE *file = fopen(filename, "w");
+    if (file == NULL) {
+        LOG_ERROR("Could not open thermal timescales '%s'.\n", filename);
+        exit(EXIT_FAILURE);
+    }
+    double cv = BOLTZMANN_CONSTANT_CGS /
+        (disk->thermal_mean_molecular_weight * HYDROGEN_MASS_IN_GRAMS * (disk->thermal_gamma - 1.0));
+    double year = YEARS_PER_DAY_CONVERSION_FACTOR * 86400.0;
+    fprintf(file, "# Thermal timescales at %.15g years; E in erg/cm^2, times in years\n", time_years);
+    fprintf(file, "# Zero time with flag=0 means undefined; relaxation holds Sigma, Omega, alpha, shear and irradiation fixed\n");
+    fprintf(file, "# dnet_dT = d(Qminus-Qplus)/dT; sign +1 restoring, -1 locally unstable, 0 neutral\n");
+    fprintf(file, "# r_AU E_area t_cool_yr cool_valid t_relax_yr restoring_sign dnet_dT\n");
+    for (int i = 1; i <= disk->grid_number; ++i) {
+        ThermalParameters parameters = cellThermalParameters(i, disk->gas_surface_density_vector[i], disk);
+        const ThermalState *state = &disk->thermal_states[i];
+        double capacity = parameters.surface_density * cv;
+        double energy = capacity * state->temperature;
+        double delta = 1e-4 * state->temperature;
+        ThermalState lower, upper;
+        ThermalStatus low = calculateThermalState(&parameters, state->temperature - delta, &lower);
+        ThermalStatus high = calculateThermalState(&parameters, state->temperature + delta, &upper);
+        if (low != THERMAL_SUCCESS || high != THERMAL_SUCCESS) {
+            LOG_ERROR("Thermal relaxation derivative failed at cell %d: %s / %s.\n",
+                      i, thermalStatusMessage(low), thermalStatusMessage(high));
+            fclose(file);
+            exit(EXIT_FAILURE);
+        }
+        double derivative = ((upper.cooling - upper.heating) -
+                             (lower.cooling - lower.heating)) / (2.0 * delta);
+        int sign = derivative > 0.0 ? 1 : (derivative < 0.0 ? -1 : 0);
+        double cooling_time = state->cooling > 0.0 ? energy / state->cooling / year : 0.0;
+        double relaxation_time = sign != 0 ? capacity / fabs(derivative) / year : 0.0;
+        if (!isfinite(cooling_time) || !isfinite(relaxation_time) || !isfinite(derivative)) {
+            LOG_ERROR("Non-finite thermal timescale at cell %d.\n", i);
+            fclose(file);
+            exit(EXIT_FAILURE);
+        }
+        fprintf(file, "%.15e %.15e %.15e %d %.15e %d %.15e\n",
+                disk->radial_grid[i], energy, cooling_time, state->cooling > 0.0,
+                relaxation_time, sign, derivative);
+    }
+    int failed = ferror(file);
+    if (fclose(file) != 0) failed = 1;
+    if (failed) {
+        LOG_ERROR("Failed to write thermal timescales '%s'.\n", filename);
+        exit(EXIT_FAILURE);
+    }
+}
+
 void refreshRadiativeDisk(DiskParameters *disk, SimulationOptions *options)
 {
     if (!isRadiativeThermodynamics(disk->thermodynamics_model)) return;
     int initialize_temperature = disk->thermal_states == NULL;
     int n = disk->grid_number;
-    double time_unit = thermalTimeUnitSeconds();
     if (n < 3) {
         LOG_ERROR("Radiative model needs at least three radial cells.\n");
+        exit(EXIT_FAILURE);
+    }
+    if (disk->irradiation_model == IRRADIATION_GEOMETRY &&
+        (!isfinite(disk->irradiation_stellar_radius_rsun) ||
+         disk->irradiation_stellar_radius_rsun <= 0.0 ||
+         disk->irradiation_stellar_radius_rsun * SOLAR_RADIUS_IN_CM >=
+         disk->radial_grid[1] * AU_IN_CM)) {
+        LOG_ERROR("Geometric irradiation requires a positive stellar radius smaller than the inner physical grid radius.\n");
         exit(EXIT_FAILURE);
     }
     if (disk->thermal_states == NULL) {
@@ -120,11 +208,17 @@ void refreshRadiativeDisk(DiskParameters *disk, SimulationOptions *options)
         }
     }
 
+    int geometric = disk->irradiation_model == IRRADIATION_GEOMETRY;
+    double radii[n + 2], heights[n + 2];
+    for (int i = 0; i <= n + 1; ++i) radii[i] = disk->radial_grid[i] * AU_IN_CM;
     for (int iteration = 0; iteration < 64; ++iteration) {
         updateSelfGravity(disk);
         ThermalState next[n + 2];
+        for (int i = 0; i <= n + 1; ++i) heights[i] = disk->thermal_states[i].scale_height;
         double maximum_change = 0.0;
-        for (int i = 0; i <= n + 1; ++i) {
+        for (int index = 0; index <= n + 1; ++index) {
+            /* Geometry is causal in radius; solve physical cells before ghosts. */
+            int i = geometric ? (index < n ? index + 1 : (index == n ? 0 : n + 1)) : index;
             double sigma = disk->gas_surface_density_vector[i];
             if (!isfinite(sigma) || sigma < 0.0) {
                 LOG_ERROR("Invalid surface density %.9g at thermal cell %d, r=%.9g AU.\n",
@@ -134,23 +228,24 @@ void refreshRadiativeDisk(DiskParameters *disk, SimulationOptions *options)
             /* Absorbing ghosts may have zero Sigma. Their thermal closure uses
              * the positive floor; the actual mass/pressure boundary is unchanged. */
             if ((i == 0 || i == n + 1) && sigma == 0.0) sigma = disk->density_floor;
-            ThermalParameters parameters = {
-                .surface_density = sigma * SOLAR_MASS_IN_GRAMS / (AU_IN_CM * AU_IN_CM),
-                .orbital_frequency = sqrt(frequencySquared(i, disk)) / time_unit,
-                .alpha = calculateTurbulentAlpha(disk->radial_grid[i], disk),
-                .mean_molecular_weight = disk->thermal_mean_molecular_weight,
-                .background_temperature = disk->thermal_background_temperature,
-                .shear_parameter = shearParameter(i, disk)
+            ThermalParameters parameters = cellThermalParameters(i, sigma, disk);
+            IrradiationGeometry geometry = {
+                .radii = radii, .heights = heights, .index = i,
+                .surface_height_factor = disk->irradiation_surface_height,
+                .stellar_radius = disk->irradiation_stellar_radius_rsun * SOLAR_RADIUS_IN_CM
             };
-            if (disk->irradiation_luminosity_lsun > 0.0 && disk->irradiation_factor > 0.0) {
-                double radius_cm = disk->radial_grid[i] * AU_IN_CM;
-                parameters.irradiation_temperature = exp(0.25 * (
-                    log(disk->irradiation_luminosity_lsun) + log(3.828e33) +
-                    log(disk->irradiation_factor) - log(4.0 * M_PI * STEFAN_BOLTZMANN_CONSTANT_CGS) -
-                    2.0 * log(radius_cm)));
+            if (geometric && i >= 1 && i <= n) {
+                parameters.irradiation_temperature = 0.0;
+                parameters.irradiation_geometry = &geometry;
+                parameters.irradiation_luminosity =
+                    disk->irradiation_luminosity_lsun * SOLAR_LUMINOSITY_CGS;
             }
             ThermalStatus status;
-            if (disk->thermodynamics_model == THERMODYNAMICS_RADIATIVE_ENERGY &&
+            if (geometric && (i == 0 || i == n + 1)) {
+                int adjacent = i == 0 ? 1 : n;
+                parameters.irradiation_temperature = next[adjacent].irradiation_temperature;
+                status = calculateThermalState(&parameters, next[adjacent].temperature, &next[i]);
+            } else if (disk->thermodynamics_model == THERMODYNAMICS_RADIATIVE_ENERGY &&
                 initialize_temperature && (i == 0 || i == n + 1)) {
                 /* Ghost temperatures are replaced by adjacent physical T below.
                  * In particular, a massless absorbing ghost needs no equilibrium. */
@@ -174,6 +269,7 @@ void refreshRadiativeDisk(DiskParameters *disk, SimulationOptions *options)
                           disk->thermal_solver_options.maximum_temperature);
                 exit(EXIT_FAILURE);
             }
+            heights[i] = next[i].scale_height;
             maximum_change = fmax(maximum_change, fabs(next[i].scale_height /
                                             disk->thermal_states[i].scale_height - 1.0));
         }
@@ -214,6 +310,38 @@ void refreshRadiativeDisk(DiskParameters *disk, SimulationOptions *options)
     exit(EXIT_FAILURE);
 }
 
+static void writeIrradiationSnapshot(const DiskParameters *disk, const SimulationOptions *options,
+                                    double time_years, double output_time)
+{
+    char filename[MAX_PATH_LEN];
+    int length = snprintf(filename, sizeof(filename), "%s/%s/irradiation_profile_%08d.dat",
+                          options->output_dir_name, kLogFilesDirectory, (int)output_time);
+    if (length < 0 || (size_t)length >= sizeof(filename)) {
+        LOG_ERROR("Irradiation output path is too long.\n");
+        exit(EXIT_FAILURE);
+    }
+    FILE *file = fopen(filename, "w");
+    if (file == NULL) {
+        LOG_ERROR("Could not open irradiation snapshot '%s'.\n", filename);
+        exit(EXIT_FAILURE);
+    }
+    fprintf(file, "# Geometric irradiation at %.15g years; chi=%.15g; R_star=%.15g R_sun\n",
+            time_years, disk->irradiation_surface_height, disk->irradiation_stellar_radius_rsun);
+    fprintf(file, "# r_AU surface_AU effective_factor visible_stellar_fraction Tirr_K\n");
+    for (int i = 1; i <= disk->grid_number; ++i) {
+        const ThermalState *state = &disk->thermal_states[i];
+        fprintf(file, "%.15e %.15e %.15e %.15e %.15e\n", disk->radial_grid[i],
+                disk->irradiation_surface_height * state->scale_height / AU_IN_CM,
+                state->irradiation_factor, state->stellar_visibility, state->irradiation_temperature);
+    }
+    int failed = ferror(file);
+    if (fclose(file) != 0) failed = 1;
+    if (failed) {
+        LOG_ERROR("Failed to write irradiation snapshot '%s'.\n", filename);
+        exit(EXIT_FAILURE);
+    }
+}
+
 void writeThermalSnapshot(const DiskParameters *disk, const SimulationOptions *options,
                           double time_years, double output_time)
 {
@@ -234,9 +362,10 @@ void writeThermalSnapshot(const DiskParameters *disk, const SimulationOptions *o
             disk->thermodynamics_model == THERMODYNAMICS_RADIATIVE_ENERGY ?
             "energy evolution" : "equilibrium",
             time_years, disk->enable_selfgravity ? "on" : "off", disk->thermal_gamma);
-    fprintf(file, "# Irradiation: L_star=%.15g L_sun; factor=%.15g; "
-                  "Qminus is net of background and prescribed irradiation\n",
-            disk->irradiation_luminosity_lsun, disk->irradiation_factor);
+    fprintf(file, "# Irradiation: L_star=%.15g L_sun; factor=%.15g; model=%s; "
+                  "Qminus is net of background and irradiation\n",
+            disk->irradiation_luminosity_lsun, disk->irradiation_factor,
+            disk->irradiation_model == IRRADIATION_GEOMETRY ? "geometry" : "prescribed");
     fprintf(file, "# r_AU T_K H_over_r rho_g_cm3 nu_cm2_s kappa_cm2_g tau Qplus Qminus\n");
     for (int i = 1; i <= disk->grid_number; ++i) {
         const ThermalState *state = &disk->thermal_states[i];
@@ -251,5 +380,12 @@ void writeThermalSnapshot(const DiskParameters *disk, const SimulationOptions *o
     if (failed) {
         LOG_ERROR("Failed to write thermal snapshot '%s'.\n", filename);
         exit(EXIT_FAILURE);
+    }
+    if (disk->thermodynamics_model == THERMODYNAMICS_RADIATIVE_ENERGY) {
+        writeEnergyBudget(disk, options, time_years, output_time);
+        writeThermalTimescales(disk, options, time_years, output_time);
+    }
+    if (disk->irradiation_model == IRRADIATION_GEOMETRY) {
+        writeIrradiationSnapshot(disk, options, time_years, output_time);
     }
 }

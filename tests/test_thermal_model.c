@@ -21,7 +21,11 @@ static int closeRelative(double actual, double expected, double tolerance)
 
 static ThermalParameters referenceParameters(void)
 {
-    ThermalParameters parameters = {100.0, 1.991013777793097e-7, 1e-3, 2.34, 10.0, 1.5, 0.0};
+    ThermalParameters parameters = {
+        .surface_density = 100.0, .orbital_frequency = 1.991013777793097e-7,
+        .alpha = 1e-3, .mean_molecular_weight = 2.34,
+        .background_temperature = 10.0, .shear_parameter = 1.5
+    };
     return parameters;
 }
 
@@ -204,6 +208,35 @@ static void testIrradiation(void)
     }
 }
 
+static void testIrradiationGeometry(void)
+{
+    double radii[] = {0, 10, 20, 30};
+    double heights[] = {0, 0.5, 1, 1.5};
+    IrradiationGeometry geometry = {
+        .radii = radii, .heights = heights, .index = 3,
+        .surface_height_factor = 2, .stellar_radius = 1
+    };
+    double factor, visibility;
+    CHECK(calculateIrradiationGeometry(&geometry, heights[3], &factor, &visibility));
+    CHECK(closeRelative(visibility, 0.5, 1e-13));
+    CHECK(closeRelative(factor, 1.0 / (hypot(30, 3) * hypot(1, 0.1) *
+                                      3 * acos(-1.0)), 1e-13));
+    heights[3] = 3;
+    CHECK(calculateIrradiationGeometry(&geometry, heights[3], &factor, &visibility));
+    double slope = (6.0 - 2.0) / 10.0;
+    double grazing = (30 * slope - 6) / (hypot(30, 6) * hypot(1, slope));
+    CHECK(closeRelative(visibility, 1.0, 1e-13));
+    CHECK(closeRelative(factor, 0.5 * grazing, 1e-13));
+    heights[2] = 6;
+    CHECK(calculateIrradiationGeometry(&geometry, heights[3], &factor, &visibility));
+    CHECK(factor == 0.0 && visibility == 0.0);
+    heights[2] = NAN;
+    CHECK(!calculateIrradiationGeometry(&geometry, heights[3], &factor, &visibility));
+    geometry.index = 1;
+    geometry.stellar_radius = 10;
+    CHECK(!calculateIrradiationGeometry(&geometry, heights[1], &factor, &visibility));
+}
+
 static int printProfile(void)
 {
     ThermalSolverOptions options = defaultThermalSolverOptions();
@@ -242,6 +275,7 @@ int main(int argc, char **argv)
     testState();
     testSolver();
     testIrradiation();
+    testIrradiationGeometry();
     if (failures != 0) {
         fprintf(stderr, "%d thermal checks failed\n", failures);
         return 1;

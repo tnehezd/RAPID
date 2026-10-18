@@ -56,6 +56,8 @@ extern FILE *load_dust_particles_file;  /**< Pointer to the input file used for 
 
 /** @brief Gaussian vertical-profile normalization sqrt(2*pi). */
 #define SQRT_TWO_PI                             2.5066282746310005
+#define SOLAR_RADIUS_IN_CM                      6.957e10
+#define SOLAR_LUMINOSITY_CGS                     3.828e33
 
 /** @brief Factor to convert days to years. */
 #define DAYS_PER_YEAR_CONVERSION_FACTOR         2.737850787e-3

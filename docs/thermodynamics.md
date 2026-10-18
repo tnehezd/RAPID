@@ -122,11 +122,80 @@ difference is a physical source term, not a solver residual. They do not separat
 intercepted stellar luminosity. Thermal snapshot headers and run metadata
 record the irradiation parameters.
 
-There is no self-shadowing, evolving grazing angle, separate stellar-wavelength
+In prescribed mode there is no self-shadowing, evolving grazing angle, separate stellar-wavelength
 opacity or vertical radiative transfer. In particular, this prescription does
 not reduce stellar absorption when the disk becomes transparent; use caution
 for depleted/optically thin disks. It is a controlled first approximation,
 not a photon-energy-conserving irradiation solver.
+
+### Geometry-dependent irradiation
+
+Both `radiative` and `radiative_energy` support the opt-in
+`irradiation_model: geometry`. The default remains `prescribed`, so existing
+configurations retain their normalization and behavior. For example:
+
+```yaml
+thermodynamics_parameters:
+  model: radiative_energy       # also supported: radiative
+  irradiation_luminosity_lsun: 1.0
+  irradiation_model: geometry
+  irradiation_surface_height: 4.0
+  irradiation_stellar_radius_rsun: 2.0
+```
+
+The new positive parameters default to 4 and 2, respectively; CLI equivalents
+are `-irradiation_model`, `-irradiation_surface_height` and
+`-irradiation_stellar_radius`. The stellar radius must be smaller than every
+physical grid radius. Luminosity zero still disables the stellar contribution.
+The fixed `irradiation_factor` is **not used** in geometry mode.
+
+The absorbing surface is prescribed as `z_s = chi*H`. Its radial slope is a
+backward difference between adjacent physical cells. At the inner physical
+cell a conical continuation (`dz_s/dr = z_s/r`) closes the unresolved interior;
+there is no inner rim or disk material inside the computational domain.
+For a surface at `(r,z_s)` with slope `s`, define
+`g = (r*s-z_s)/(sqrt(r^2+z_s^2)*sqrt(1+s^2))`.
+The star is a uniformly bright circular disk centered at the origin, with
+small angular size. A stellar strip at height `y` has incidence
+`max(0, g + y/(sqrt(r^2+z_s^2)*sqrt(1+s^2)))`. Rays from each strip to the
+surface are blocked if they pass below **any** interior surface node.
+The integral over visible, positively illuminating stellar strips gives the
+intercepted fraction. Half is assigned to downward reprocessing, defining
+`f_geom = 0.5*<positive visible incidence>`. The existing closure then uses
+`T_irr^4 = f_geom*L_star/(4*pi*sigma_SB*r^2)`. Partial stellar occultation and
+the finite stellar size avoid a binary point-source shadow transition.
+
+Equilibrium cells are solved from inside out: each temperature trial
+recalculates its own H, surface slope, occultation and irradiation, while the
+interior solved surfaces remain fixed. This is a causal, one-sided spatial
+closure, not a global vertical-structure solution; multiple equilibrium
+branches still require care. With SG, this radial sweep participates in the
+existing damped SG/thermal iteration. In energy mode initialization uses this
+equilibrium, then every substep recalculates geometry at the evolved T.
+Ghost temperatures and irradiation follow their adjacent physical cells.
+The local relaxation diagnostic holds the resulting irradiation fixed, so it
+does **not** diagnose geometry-driven/nonlocal thermal instabilities.
+
+Geometric runs write `irradiation_profile_<time>.dat` alongside each thermal
+snapshot, including for HDF5 output:
+
+```text
+r_AU surface_AU effective_factor visible_stellar_fraction Tirr_K
+```
+
+Visibility describes occultation alone; an unocculted part of the star can
+still lie below the local tangent and contribute no direct heating. Headers
+and run metadata identify the model and surface/stellar-radius parameters.
+The visibility scan is quadratic in the number of radial cells.
+
+This is an opaque prescribed-surface approximation: no scattering, limb
+darkening, stellar-wavelength opacity, diffuse heating in shadows, inner-rim
+transfer or optical-depth-dependent surface height is solved. Depleted cells
+still act as opaque screens, so do not use this approximation to predict
+optically thin clearing or cavity illumination. It retains the effective
+midplane-temperature closure, rather than separately transporting and
+conserving stellar photon energy. Thin disks and `R_star/r << 1` are assumed;
+check spatial/time convergence, particularly near shadow boundaries.
 
 Fluxes include both disk faces. The bridge uses RAPID's AU, solar-mass and
 `year/(2*pi)` units for conversion to CGS and back. The standalone example uses
@@ -172,7 +241,8 @@ continuous.
 
 The `radiative` mode is instantaneous local equilibrium; `radiative_energy`
 advances internal energy as described below. Neither is a full radiative-transfer
-solver. There is no self-consistent stellar irradiation geometry, radial
+solver. Irradiation can use a prescribed height surface, but no self-consistent
+vertical absorption structure is solved. There is no radial
 radiative diffusion or temperature-dependent molecular weight. The bridge uses
 the same opacity for thick/thin terms, rather than separate Rosseland/Planck
 means. Its numerical domain (`rho > 0`, `0 < T < 1e9 K`) does not imply physical
@@ -277,6 +347,48 @@ Thermal snapshots retain the existing nine columns, so existing temperature
 plotters continue to work. Headers and run info identify the energy mode and
 gamma. E in CGS can be reconstructed from Sigma and T using cv above.
 Qplus and Qminus need not match outside equilibrium.
+
+### Energy diagnostics
+
+Energy-mode runs also write `energy_budget_<time>.dat` and
+`thermal_timescales_<time>.dat` in LOGS, with the same cadence, time labels and
+actual-time headers as thermal snapshots (also for HDF5 runs).
+The original nine-column temperature output is unchanged.
+
+The budget contains one row:
+
+```text
+time_yr E_initial E_current heating cooling pressure_work boundary wind_loss floor_added residual relative_residual
+```
+
+All energies are in erg, integrated over exact finite-volume annuli and over
+all internal substeps since initialization. The discrete balance is
+`E_current - E_initial = heating - cooling + pressure_work + boundary
+- wind_loss + floor_added + residual`. Boundary and pressure work are signed
+energy gains; net radiative cooling can be negative. Wind loss removes local
+specific internal energy; floor energy is accounted separately, even if a wind
+attempts to remove more gas than the allowed floor. The relative residual divides
+by max(abs(E_initial), abs(E_current)). This tests the implemented internal-energy
+update, not total (orbital/gravitational) energy conservation.
+
+The timescale file has one row per physical cell:
+
+```text
+r_AU E_area t_cool_yr cool_valid t_relax_yr restoring_sign dnet_dT
+```
+
+`E_area = Sigma*cv*T` is in erg/cm^2. `t_cool = E_area/Qminus` is reported only
+for positive net cooling; otherwise `cool_valid=0` and the stored time is zero
+(undefined, not instantaneous cooling). It excludes heating and transport.
+`dnet_dT` is a centered temperature derivative of Qminus-Qplus with fractional
+temperature offset 1e-4, holding Sigma, Omega, alpha, shear and irradiation fixed
+but recalculating hydrostatic H, density, viscosity and opacity.
+`t_relax = Sigma*cv/abs(dnet_dT)` is the local linear thermal response estimate:
+sign +1 means restoring, -1 means growing/unstable, and 0 means neutral with
+an undefined time stored as zero. Away from equilibrium it is a local Jacobian
+estimate, not a measured relaxation time or a global stability verdict; it
+excludes advection, pressure work and nonlocal SG feedback. Opacity branch
+transitions can affect this finite-difference estimate.
 
 ## Tests and output
 

@@ -35,6 +35,9 @@ void createDefaultOptions(ParserOptions *opt) {
     opt->thermal_background_temperature = 10.0;
     opt->irradiation_luminosity_lsun = 0.0;
     opt->irradiation_factor = 0.05;
+    opt->irradiation_model = IRRADIATION_PRESCRIBED;
+    opt->irradiation_surface_height = 4.0;
+    opt->irradiation_stellar_radius_rsun = 2.0;
     opt->thermal_solver_options = defaultThermalSolverOptions();
     opt->r_dze_i_val                                = 0.0;
     opt->r_dze_o_val                                = 0.0;
@@ -102,6 +105,9 @@ void printUsageToTerminal() {
     fprintf(stderr, "  -thermal_tmin <val> -thermal_tmax <val> Temperature bracket in K (default: 1, 1500)\n");
     fprintf(stderr, "  -irradiation_luminosity <val> Stellar luminosity in L_sun (default: 0, off)\n");
     fprintf(stderr, "  -irradiation_factor <val> Effective irradiation factor in [0,1] (default: 0.05)\n");
+    fprintf(stderr, "  -irradiation_model <prescribed|geometry> Irradiation geometry (default: prescribed)\n");
+    fprintf(stderr, "  -irradiation_surface_height <val> Surface height/H (default: 4)\n");
+    fprintf(stderr, "  -irradiation_stellar_radius <val> Stellar radius in R_sun (default: 2)\n");
     fprintf(stderr, "Time parameters:\n");
     fprintf(stderr, "  -tStep <val>   Fixed time step (default: 0.0)\n");
     fprintf(stderr, "  -tmax <val>    Total simulation time (default: 1.0e6)\n");
@@ -200,7 +206,15 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
                 return 1;
             }
         }
+        else if (strcmp(argv[i], "-irradiation_model") == 0) {
+            if (++i >= argc) { LOG_ERROR("Missing value for -irradiation_model.\n"); return 1; }
+            if (strcmp(argv[i], "prescribed") == 0) opt->irradiation_model = IRRADIATION_PRESCRIBED;
+            else if (strcmp(argv[i], "geometry") == 0) opt->irradiation_model = IRRADIATION_GEOMETRY;
+            else { LOG_ERROR("Unknown irradiation model '%s'. Use prescribed|geometry.\n", argv[i]); return 1; }
+        }
         else if (strcmp(argv[i], "-thermal_mu") == 0 ||
+                 strcmp(argv[i], "-irradiation_surface_height") == 0 ||
+                 strcmp(argv[i], "-irradiation_stellar_radius") == 0 ||
                  strcmp(argv[i], "-thermal_gamma") == 0 ||
                  strcmp(argv[i], "-thermal_background") == 0 ||
                  strcmp(argv[i], "-thermal_tmin") == 0 ||
@@ -213,7 +227,9 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
                 LOG_ERROR("Invalid positive number for %s: '%s'.\n", flag, argv[i]);
                 return 1;
             }
-            if (strcmp(flag, "-thermal_mu") == 0) opt->thermal_mean_molecular_weight = value;
+            if (strcmp(flag, "-irradiation_surface_height") == 0) opt->irradiation_surface_height = value;
+            else if (strcmp(flag, "-irradiation_stellar_radius") == 0) opt->irradiation_stellar_radius_rsun = value;
+            else if (strcmp(flag, "-thermal_mu") == 0) opt->thermal_mean_molecular_weight = value;
             else if (strcmp(flag, "-thermal_gamma") == 0) opt->thermal_gamma = value;
             else if (strcmp(flag, "-thermal_background") == 0) opt->thermal_background_temperature = value;
             else if (strcmp(flag, "-thermal_tmin") == 0) opt->thermal_solver_options.minimum_temperature = value;

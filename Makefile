@@ -146,10 +146,10 @@ debug: debug-build
 	lldb ./$(BIN_DIR)/debug/simulation
 
 # Standalone thermal tests need neither HDF5 nor OpenMP.
-$(BUILD_BIN_DIR)/test_thermal_model: tests/test_thermal_model.c src/physics/thermal_model.c $(wildcard include/physics/*.h include/core/*.h)
+$(BUILD_BIN_DIR)/test_thermal_model: tests/test_thermal_model.c src/physics/thermal_model.c src/physics/irradiation.c $(wildcard include/physics/*.h include/core/*.h)
 	@mkdir -p $(BUILD_BIN_DIR)
 	$(CC) -Wall -Wextra -Werror -std=c99 $(OPT_FLAGS) $(INC_FLAGS) \
-		tests/test_thermal_model.c src/physics/thermal_model.c -lm -o $@
+		tests/test_thermal_model.c src/physics/thermal_model.c src/physics/irradiation.c -lm -o $@
 
 $(BIN_DIR)/test_thermal_model: $(BUILD_BIN_DIR)/test_thermal_model FORCE
 	@cmp -s $< $@ || cp $< $@
@@ -157,11 +157,11 @@ $(BIN_DIR)/test_thermal_model: $(BUILD_BIN_DIR)/test_thermal_model FORCE
 test-thermal: $(BIN_DIR)/test_thermal_model
 	./$(BIN_DIR)/test_thermal_model
 
-$(BUILD_BIN_DIR)/test_boundary_conditions: tests/test_boundary_conditions.c src/physics/boundary_conditions.c src/physics/thermal_model.c $(wildcard include/physics/*.h include/core/*.h include/io/*.h)
+$(BUILD_BIN_DIR)/test_boundary_conditions: tests/test_boundary_conditions.c src/physics/boundary_conditions.c src/physics/thermal_model.c src/physics/irradiation.c $(wildcard include/physics/*.h include/core/*.h include/io/*.h)
 	@mkdir -p $(BUILD_BIN_DIR)
 	$(CC) -Wall -Wextra -Werror -std=c99 $(OPT_FLAGS) $(INC_FLAGS) \
 		tests/test_boundary_conditions.c src/physics/boundary_conditions.c \
-		src/physics/thermal_model.c -lm -o $@
+		src/physics/thermal_model.c src/physics/irradiation.c -lm -o $@
 
 test-boundary: $(BUILD_BIN_DIR)/test_boundary_conditions
 	./$(BUILD_BIN_DIR)/test_boundary_conditions

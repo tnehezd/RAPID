@@ -138,6 +138,9 @@ int main(int argc, const char **argv) {
     disk_params.thermal_background_temperature = def.thermal_background_temperature;
     disk_params.irradiation_luminosity_lsun = def.irradiation_luminosity_lsun;
     disk_params.irradiation_factor = def.irradiation_factor;
+    disk_params.irradiation_model = def.irradiation_model;
+    disk_params.irradiation_surface_height = def.irradiation_surface_height;
+    disk_params.irradiation_stellar_radius_rsun = def.irradiation_stellar_radius_rsun;
     disk_params.thermal_solver_options = def.thermal_solver_options;
     disk_params.r_dze_i = def.r_dze_i_val;
     disk_params.r_dze_o = def.r_dze_o_val;

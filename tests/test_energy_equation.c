@@ -111,6 +111,11 @@ static void testTransport(int logarithmic, int boundary)
     }
     closeEnough(new_mass, old_mass - dt * (flux[N] - flux[0]));
     closeEnough(new_energy, old_energy - dt * (eflux[N] - eflux[0]) + dt * sources);
+    double budget_change = f.disk.energy_budget.heating - f.disk.energy_budget.cooling +
+        f.disk.energy_budget.work + f.disk.energy_budget.boundary -
+        f.disk.energy_budget.wind + f.disk.energy_budget.floor;
+    closeEnough(totalDiskInternalEnergy(&f.disk), f.disk.energy_budget.initial + budget_change);
+    closeEnough(f.disk.energy_budget.boundary, -2.0 * M_PI * dt * (eflux[N] - eflux[0]));
     if (boundary == 5) assert(new_mass <= old_mass);
 }
 
@@ -209,6 +214,39 @@ static void testHeating(void)
     closeEnough(f.thermal[4].temperature, expected);
 }
 
+static void geometricAtTime(double duration, int steps, double *temperatures)
+{
+    Fixture f;
+    initialize(&f, 0.0, 1.4, 1);
+    f.disk.irradiation_model = IRRADIATION_GEOMETRY;
+    f.disk.irradiation_surface_height = 4.0;
+    f.disk.irradiation_stellar_radius_rsun = 2.0;
+    f.disk.irradiation_luminosity_lsun = 1.0;
+    refreshRadiativeDisk(&f.disk, &f.options);
+    f.options.user_defined_time_step = duration / steps;
+    for (int step = 0; step < steps; ++step) evolveRadiativeEnergy(&f.disk, &f.options);
+    for (int i = 1; i <= N; ++i) temperatures[i] = f.thermal[i].temperature;
+    double expected = f.disk.energy_budget.initial + f.disk.energy_budget.heating -
+        f.disk.energy_budget.cooling + f.disk.energy_budget.work + f.disk.energy_budget.boundary -
+        f.disk.energy_budget.wind + f.disk.energy_budget.floor;
+    closeEnough(totalDiskInternalEnergy(&f.disk), expected);
+}
+
+static void testGeometricConvergence(void)
+{
+    double coarse[N + 2], fine[N + 2], reference[N + 2];
+    geometricAtTime(0.1, 10, coarse);
+    geometricAtTime(0.1, 20, fine);
+    geometricAtTime(0.1, 200, reference);
+    double coarse_error = 0, fine_error = 0;
+    for (int i = 1; i <= N; ++i) {
+        coarse_error += fabs(coarse[i] - reference[i]);
+        fine_error += fabs(fine[i] - reference[i]);
+    }
+    assert(coarse_error > 1e-10);
+    assert(fine_error < 0.6 * coarse_error);
+}
+
 static void testRadiationFloorStability(void)
 {
     Fixture f;
@@ -238,6 +276,7 @@ int main(void)
     testConvergenceAndGamma();
     testHeating();
     testRadiationFloorStability();
+    testGeometricConvergence();
     puts("Energy equation: transport, compression, budgets and finite cooling checks passed");
     return 0;
 }

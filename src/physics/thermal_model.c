@@ -126,7 +126,22 @@ ThermalStatus calculateThermalState(const ThermalParameters *parameters,
     value.heating = parameters->shear_parameter * parameters->shear_parameter *
                     value.viscosity * parameters->surface_density *
                     parameters->orbital_frequency * parameters->orbital_frequency;
-    double background = radiationTemperature(parameters);
+    ThermalParameters radiation = *parameters;
+    if (parameters->irradiation_geometry != NULL) {
+        if (!isfinite(parameters->irradiation_luminosity) ||
+            parameters->irradiation_luminosity < 0.0 ||
+            !calculateIrradiationGeometry(parameters->irradiation_geometry, value.scale_height,
+                                         &value.irradiation_factor, &value.stellar_visibility)) {
+            return THERMAL_INVALID_INPUT;
+        }
+        double radius = parameters->irradiation_geometry->radii[parameters->irradiation_geometry->index];
+        radiation.irradiation_temperature = value.irradiation_factor > 0.0 &&
+            parameters->irradiation_luminosity > 0.0 ? exp(0.25 * (
+                log(value.irradiation_factor) + log(parameters->irradiation_luminosity) -
+                log(4.0 * acos(-1.0) * STEFAN_BOLTZMANN_CONSTANT_CGS) - 2.0 * log(radius))) : 0.0;
+    }
+    value.irradiation_temperature = radiation.irradiation_temperature;
+    double background = radiationTemperature(&radiation);
     /* Factored T^4 - T_rad^4 avoids cancellation near the irradiation floor. */
     value.cooling = 2.0 * STEFAN_BOLTZMANN_CONSTANT_CGS * (temperature - background) *
                     (temperature + background) *
@@ -169,7 +184,9 @@ ThermalStatus solveMidplaneTemperature(const ThermalParameters *parameters,
         return THERMAL_INVALID_INPUT;
     }
 
-    double lower = fmax(options->minimum_temperature, radiationTemperature(parameters));
+    double lower = fmax(options->minimum_temperature,
+        parameters->irradiation_geometry != NULL ? parameters->background_temperature :
+                                                 radiationTemperature(parameters));
     double upper = options->maximum_temperature;
     if (lower > upper) {
         return THERMAL_NOT_BRACKETED;

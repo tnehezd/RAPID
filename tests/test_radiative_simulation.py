@@ -189,6 +189,186 @@ class RadiativeSimulationTests(unittest.TestCase):
                     info = (output / "current_run_info.dat").read_text()
                     self.assertIn("radiative_energy", info)
                     self.assertIn("1.6", info)
+                    budget = np.loadtxt(logs / "energy_budget_00000010.dat")
+                    self.assertEqual(budget.shape, (11,))
+                    self.assertTrue(np.all(np.isfinite(budget)))
+                    self.assertLess(abs(budget[10]), 1e-11)
+                    np.testing.assert_allclose(
+                        budget[2], budget[1] + budget[3] - budget[4] +
+                        budget[5] + budget[6] - budget[7] + budget[8], rtol=1e-11
+                    )
+                    times = np.loadtxt(logs / "thermal_timescales_00000010.dat")
+                    self.assertEqual(times.shape, (48, 7))
+                    self.assertTrue(np.all(np.isfinite(times)))
+                    sigma_cgs = gas[:, 2] * 1.989e33 / 1.496e13**2
+                    capacity = sigma_cgs * 1.380649e-16 / (2.34 * 1.6735575e-24 * .6)
+                    np.testing.assert_allclose(times[:, 1], capacity * final[:, 1], rtol=2e-9)
+                    radii = final[:, 0]
+                    ghosts = ([radii[0] / (radii[-1] / radii[-2]), radii[-1]**2 / radii[-2]]
+                              if grid == "logarithmic" else
+                              [2*radii[0] - radii[1], 2*radii[-1] - radii[-2]])
+                    centers = np.r_[ghosts[0], radii, ghosts[1]]
+                    faces = .5 * (centers[1:] + centers[:-1])
+                    integrated_energy = np.sum(
+                        np.pi * np.diff(faces**2) * 1.496e13**2 * capacity * final[:, 1]
+                    )
+                    np.testing.assert_allclose(budget[2], integrated_energy, rtol=2e-9)
+                    positive = final[:, 8] > 0
+                    np.testing.assert_array_equal(times[:, 3], positive)
+                    np.testing.assert_allclose(
+                        times[positive, 2], times[positive, 1] / final[positive, 8] /
+                        (365.242199 * 86400), rtol=1e-12
+                    )
+                    np.testing.assert_allclose(
+                        times[:, 4], capacity / np.abs(times[:, 6]) / (365.242199 * 86400),
+                        rtol=2e-9
+                    )
+
+    def test_thermal_relaxation_diagnostic_at_radiation_floor(self):
+        output = self.run_simulation(
+            "-thermal_model", "radiative_energy", "-alpha_init", "0",
+            "-amod", "1", "-irradiation_luminosity", "0", "-evol", "0"
+        )
+        logs = output / "LOGS"
+        thermal = np.loadtxt(logs / "temperature_profile_00000000.dat")
+        times = np.loadtxt(logs / "thermal_timescales_00000000.dat")
+        tau = thermal[:, 6]
+        tau_eff = .375 * tau + math.sqrt(3) / 4 + .25 / tau
+        # At T=T_bg, opacity derivatives multiply T^4-T_bg^4=0.
+        expected_derivative = 8 * 5.670374419e-5 * thermal[:, 1]**3 / tau_eff
+        np.testing.assert_allclose(times[:, 6], expected_derivative, rtol=1e-6)
+        np.testing.assert_array_equal(times[:, 5], 1)
+        np.testing.assert_array_equal(times[:, 3], 0)
+        np.testing.assert_array_equal(times[:, 2], 0)
+        initial_budget = np.loadtxt(logs / "energy_budget_00000000.dat")
+        np.testing.assert_allclose(initial_budget[1], initial_budget[2], rtol=0, atol=0)
+        np.testing.assert_array_equal(initial_budget[3:], 0)
+
+    def test_geometric_irradiation(self):
+        for model in ("radiative", "radiative_energy"):
+            for grid in ("linear", "logarithmic"):
+                for sg in ("0", "1"):
+                    with self.subTest(model=model, grid=grid, sg=sg):
+                        output = self.run_simulation(
+                            "-thermal_model", model, "-grid_type", grid, "-selfgravity", sg,
+                            "-irradiation_model", "geometry", "-irradiation_luminosity", "1",
+                            "-output_format", "hdf5" if sg == "1" else "ascii",
+                        )
+                        logs = output / "LOGS"
+                        thermal = np.loadtxt(logs / "temperature_profile_00000010.dat")
+                        geometry = np.loadtxt(logs / "irradiation_profile_00000010.dat")
+                        self.assertEqual(geometry.shape, (48, 5))
+                        self.assertTrue(np.all(np.isfinite(geometry)))
+                        np.testing.assert_allclose(geometry[:, 0], thermal[:, 0], rtol=1e-14)
+                        np.testing.assert_allclose(
+                            geometry[:, 1], 4 * thermal[:, 0] * thermal[:, 2], rtol=1e-14
+                        )
+                        self.assertTrue(np.all((geometry[:, 2:4] >= 0) & (geometry[:, 2:4] <= 1)))
+                        expected = (geometry[:, 2] * 3.828e33 /
+                                    (4 * math.pi * 5.670374419e-5 *
+                                     (geometry[:, 0] * 1.496e13)**2))**.25
+                        np.testing.assert_allclose(geometry[:, 4], expected, rtol=1e-13)
+                        # Independently integrate illuminated stellar strips,
+                        # rejecting rays hidden by any interior annulus.
+                        star_radius = 2 * 6.957e10 / 1.496e13
+                        stellar_y = np.linspace(-star_radius, star_radius, 20001)
+                        intensity = 2 * np.sqrt(np.maximum(
+                            0, 1 - (stellar_y / star_radius)**2
+                        )) / (math.pi * star_radius)
+                        for i in (0, 12, 24, 47):
+                            radius, surface = geometry[i, :2]
+                            slope = (surface / radius if i == 0 else
+                                     (surface - geometry[i-1, 1]) /
+                                     (radius - geometry[i-1, 0]))
+                            visible = np.ones(stellar_y.shape, dtype=bool)
+                            for inner_radius, inner_surface in geometry[:i, :2]:
+                                ray = surface * inner_radius / radius + stellar_y * (
+                                    1 - inner_radius / radius
+                                )
+                                visible &= ray >= inner_surface
+                            incidence = np.maximum(0, (
+                                radius * slope - surface + stellar_y
+                            ) / (math.hypot(radius, surface) * math.hypot(1, slope)))
+                            integrand = intensity * incidence * visible
+                            integrated = .25 * np.sum(
+                                (integrand[:-1] + integrand[1:]) * np.diff(stellar_y)
+                            )
+                            np.testing.assert_allclose(
+                                geometry[i, 2], integrated, rtol=1e-4, atol=1e-8
+                            )
+                        radiation = (10**4 + expected**4)**.25
+                        tau = thermal[:, 6]
+                        tau_eff = .375 * tau + math.sqrt(3) / 4 + .25 / tau
+                        cooling = 2 * 5.670374419e-5 * (
+                            thermal[:, 1]**4 - radiation**4
+                        ) / tau_eff
+                        np.testing.assert_allclose(thermal[:, 8], cooling, rtol=1e-8, atol=1e-10)
+                        if model == "radiative":
+                            np.testing.assert_allclose(thermal[:, 7], thermal[:, 8], rtol=1e-8)
+                        else:
+                            budget = np.loadtxt(logs / "energy_budget_00000010.dat")
+                            self.assertLess(abs(budget[10]), 1e-11)
+                        self.assertIn("geometry + shadowing",
+                                      (output / "current_run_info.dat").read_text())
+
+    def test_geometric_yaml_example(self):
+        config = yaml.safe_load((ROOT / "configs" / "config_radiative_energy.yaml").read_text())
+        config["thermodynamics_parameters"].update(
+            irradiation_model="geometry", irradiation_surface_height=4.0,
+            irradiation_stellar_radius_rsun=2.0,
+        )
+        config["time_parameters"].update(total_simulation_time=100, output_write_frequency=50)
+        output = self.directory / "geometry_yaml"
+        config["output_parameters"]["output_directory_name"] = str(output)
+        path = self.directory / "geometry.yaml"
+        path.write_text(yaml.safe_dump(config))
+        process = subprocess.run(
+            [sys.executable, "run_simulation.py", "-c", str(path)],
+            cwd=ROOT, capture_output=True, text=True, timeout=120,
+        )
+        self.assertEqual(process.returncode, 0, process.stdout + process.stderr)
+        budget = np.loadtxt(output / "LOGS" / "energy_budget_00000100.dat")
+        self.assertLess(abs(budget[10]), 1e-11)
+        geometry = np.loadtxt(output / "LOGS" / "irradiation_profile_00000100.dat")
+        self.assertEqual(geometry.shape, (500, 5))
+        self.assertTrue(np.all(np.isfinite(geometry)))
+
+    def test_geometry_off_and_prescribed_factor_independence(self):
+        common = ("-thermal_model", "radiative_energy", "-evol", "0")
+        prescribed = self.run_simulation(*common, "-irradiation_luminosity", "0")
+        geometric = self.run_simulation(
+            *common, "-irradiation_model", "geometry", "-irradiation_luminosity", "0"
+        )
+        def initial(output):
+            return np.loadtxt(output / "LOGS" / "temperature_profile_00000000.dat")
+        np.testing.assert_array_equal(initial(prescribed), initial(geometric))
+        zero_factor = self.run_simulation(
+            *common, "-irradiation_model", "geometry", "-irradiation_luminosity", "1",
+            "-irradiation_factor", "0",
+        )
+        unit_factor = self.run_simulation(
+            *common, "-irradiation_model", "geometry", "-irradiation_luminosity", "1",
+            "-irradiation_factor", "1",
+        )
+        np.testing.assert_array_equal(initial(zero_factor), initial(unit_factor))
+
+    def test_invalid_geometry_cli(self):
+        for flag, value in (
+            ("-irradiation_model", "unknown"),
+            ("-irradiation_surface_height", "0"),
+            ("-irradiation_surface_height", "nan"),
+            ("-irradiation_stellar_radius", "-1"),
+            ("-irradiation_stellar_radius", "inf"),
+        ):
+            process = subprocess.run([str(BINARY), flag, value], cwd=ROOT,
+                                     capture_output=True, text=True, timeout=10)
+            self.assertNotEqual(process.returncode, 0)
+            self.assertIn("ERROR", process.stderr)
+        with self.assertRaises(AssertionError) as failure:
+            self.run_simulation("-thermal_model", "radiative",
+                                "-irradiation_model", "geometry",
+                                "-irradiation_stellar_radius", "300")
+        self.assertIn("stellar radius smaller", str(failure.exception).lower())
 
     def test_energy_invalid_gamma_cli(self):
         for value in ("1", "0", "-1", "nan", "inf", "bad"):
@@ -261,6 +441,8 @@ class RadiativeSimulationTests(unittest.TestCase):
                 self.assertEqual(final.shape, (48, 9))
                 self.assertTrue(np.all(np.isfinite(final)))
                 self.assertTrue(np.all(final[:, 1:7] > 0))
+                budget = np.loadtxt(output / "LOGS" / "energy_budget_00000010.dat")
+                self.assertLess(abs(budget[10]), 1e-11)
 
     def test_sg_changes_radiative_temperature(self):
         without = self.run_simulation("-thermal_model", "radiative", "-selfgravity", "0")

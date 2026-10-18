@@ -9,6 +9,63 @@
 #include <math.h>
 #include <stdlib.h>
 
+double totalDiskInternalEnergy(const DiskParameters *disk)
+{
+    double total = 0.0;
+    double unit = AU_IN_CM / thermalTimeUnitSeconds();
+    double cv = BOLTZMANN_CONSTANT_CGS /
+        (disk->thermal_mean_molecular_weight * HYDROGEN_MASS_IN_GRAMS *
+         (disk->thermal_gamma - 1.0) * unit * unit);
+    for (int i = 1; i <= disk->grid_number; ++i) {
+        double left = 0.5 * (disk->radial_grid[i - 1] + disk->radial_grid[i]);
+        double right = 0.5 * (disk->radial_grid[i] + disk->radial_grid[i + 1]);
+        total += M_PI * (right * right - left * left) *
+                 disk->gas_surface_density_vector[i] * cv * disk->thermal_states[i].temperature;
+    }
+    return total;
+}
+
+void writeEnergyBudget(const DiskParameters *disk, const SimulationOptions *options,
+                       double time_years, double output_time)
+{
+    char filename[MAX_PATH_LEN];
+    int length = snprintf(filename, sizeof(filename), "%s/%s/energy_budget_%08d.dat",
+                          options->output_dir_name, kLogFilesDirectory, (int)output_time);
+    if (length < 0 || (size_t)length >= sizeof(filename)) {
+        LOG_ERROR("Energy budget output path is too long.\n");
+        exit(EXIT_FAILURE);
+    }
+    FILE *file = fopen(filename, "w");
+    if (file == NULL) {
+        LOG_ERROR("Could not open energy budget '%s'.\n", filename);
+        exit(EXIT_FAILURE);
+    }
+    double unit = AU_IN_CM / thermalTimeUnitSeconds();
+    double conversion = SOLAR_MASS_IN_GRAMS * unit * unit;
+    double total = totalDiskInternalEnergy(disk);
+    double initial = disk->energy_budget.initialized ? disk->energy_budget.initial : total;
+    double expected = disk->energy_budget.heating - disk->energy_budget.cooling +
+        disk->energy_budget.work + disk->energy_budget.boundary -
+        disk->energy_budget.wind + disk->energy_budget.floor;
+    double residual = total - initial - expected;
+    double scale = fmax(fabs(initial), fabs(total));
+    fprintf(file, "# Cumulative internal-energy budget at %.15g years; all energies in erg\n", time_years);
+    fprintf(file, "# Positive boundary/work add energy; cooling and wind are subtracted; cooling can be negative\n");
+    fprintf(file, "# time_yr E_initial E_current heating cooling pressure_work boundary wind_loss floor_added residual relative_residual\n");
+    fprintf(file, "%.15e %.15e %.15e %.15e %.15e %.15e %.15e %.15e %.15e %.15e %.15e\n",
+            time_years, initial * conversion, total * conversion,
+            disk->energy_budget.heating * conversion, disk->energy_budget.cooling * conversion,
+            disk->energy_budget.work * conversion, disk->energy_budget.boundary * conversion,
+            disk->energy_budget.wind * conversion, disk->energy_budget.floor * conversion,
+            residual * conversion, scale > 0.0 ? residual / scale : 0.0);
+    int failed = ferror(file);
+    if (fclose(file) != 0) failed = 1;
+    if (failed) {
+        LOG_ERROR("Failed to write energy budget '%s'.\n", filename);
+        exit(EXIT_FAILURE);
+    }
+}
+
 double radiativeMassFlux(int j, const DiskParameters *disk, const SimulationOptions *options)
 {
     if ((j == 0 && options->inner_boundary_condition_type == 4) ||
@@ -40,6 +97,10 @@ void evolveRadiativeEnergy(DiskParameters *disk, SimulationOptions *options)
     if (!isfinite(remaining) || remaining <= 0.0 || !isfinite(cv) || cv <= 0.0) {
         LOG_ERROR("Invalid energy timestep or ideal-gas heat capacity.\n");
         exit(EXIT_FAILURE);
+    }
+    if (!disk->energy_budget.initialized) {
+        disk->energy_budget.initial = totalDiskInternalEnergy(disk);
+        disk->energy_budget.initialized = true;
     }
 
     double face[n + 1], mass_flux[n + 1], energy_flux[n + 1], volume_flux[n + 1];
@@ -126,7 +187,19 @@ void evolveRadiativeEnergy(DiskParameters *disk, SimulationOptions *options)
                 exit(EXIT_FAILURE);
             }
             temperature_next[i] = temperature;
+            double weight = 2.0 * M_PI * area;
+            double wind_removed = dt * disk->sigma_dot_photoevap[i];
+            double raw_sigma = sigma - wind_removed;
+            disk->energy_budget.heating += weight * dt *
+                disk->thermal_states[i].heating * source_conversion;
+            disk->energy_budget.cooling += weight * dt *
+                disk->thermal_states[i].cooling * source_conversion;
+            disk->energy_budget.work -= weight * dt * (disk->thermal_gamma - 1.0) *
+                energy[i] * (volume_flux[i] - volume_flux[i - 1]) / area;
+            disk->energy_budget.wind += weight * wind_removed * cv * temperature;
+            disk->energy_budget.floor += weight * (sigma_next[i] - raw_sigma) * cv * temperature;
         }
+        disk->energy_budget.boundary -= 2.0 * M_PI * dt * (energy_flux[n] - energy_flux[0]);
         options->current_bc_target = 0;
         applySurfaceDensityBoundaryConditions(sigma_next, disk, options);
         /* Open boundaries use zero-gradient specific energy; absorbing ghosts

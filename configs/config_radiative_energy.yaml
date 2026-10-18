@@ -29,7 +29,10 @@ thermodynamics_parameters:
   minimum_temperature_k: 1.0
   maximum_temperature_k: 1500.0
   irradiation_luminosity_lsun: 1.0  # omitted/default 0.0: irradiation off
+  irradiation_model: prescribed   # alternative: geometry (chi*H surface + shadowing)
   irradiation_factor: 0.05         # effective geometry/absorption factor
+  # irradiation_surface_height: 4.0     # geometry mode: surface height/H
+  # irradiation_stellar_radius_rsun: 2.0
 
 deadzone_parameters:
   deadzone_inner_radius_au: 2.7
