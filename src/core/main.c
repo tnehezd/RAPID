@@ -27,6 +27,7 @@
 #include "mass_conservation_test.h"
 #include "ring_viscosity.h"
 #include "photoevap_flux_test.h"
+#include "disk_thermal.h"
 
 
 extern void initializeDefaultOptions(InitializeDefaultOptions *def);
@@ -83,7 +84,7 @@ int main(int argc, const char **argv) {
         def.output_dir_name[len - 1] = '\0';
     }
 
-    DiskParameters disk_params; 
+    DiskParameters disk_params = {0};
     SimulationOptions sim_opts;
     OutputFiles output_files;
     
@@ -130,6 +131,10 @@ int main(int argc, const char **argv) {
     disk_params.stellar_mass = def.star_val;
     disk_params.h_aspect_ratio = def.hasp_val;
     disk_params.flaring_index = def.flind_val;
+    disk_params.thermodynamics_model = def.thermodynamics_model;
+    disk_params.thermal_mean_molecular_weight = def.thermal_mean_molecular_weight;
+    disk_params.thermal_background_temperature = def.thermal_background_temperature;
+    disk_params.thermal_solver_options = def.thermal_solver_options;
     disk_params.r_dze_i = def.r_dze_i_val;
     disk_params.r_dze_o = def.r_dze_o_val;
     disk_params.dr_dze_i = def.dr_dze_i_val;
@@ -216,8 +221,11 @@ int main(int argc, const char **argv) {
     disk_params.enable_selfgravity = def.enable_selfgravity;
 
     if (def.input_file != NULL && strcmp(def.input_file, "") != 0) {
-        strncpy(current_inputsig_file, def.input_file, MAX_PATH_LEN - 1);
-        current_inputsig_file[MAX_PATH_LEN - 1] = '\0';
+        current_inputsig_file = strdup(def.input_file);
+        if (current_inputsig_file == NULL) {
+            LOG_ERROR("Failed to allocate input profile path.\n");
+            return EXIT_FAILURE;
+        }
         LOG_DEBUG("Input file specified: '%s'. Attempting to read initial profile.", current_inputsig_file);
 
         disk_params.grid_number = calculateNumbersOfParticles(current_inputsig_file); 
@@ -290,7 +298,10 @@ int main(int argc, const char **argv) {
         LOG_DEBUG("InitializeDefaultOptions (init_tool_params) structure populated for profile generation.");
         LOG_DEBUG("Calling runInitialization(&init_tool_params, &disk_params)...");
         strncpy(init_tool_params.output_base_path, initial_dir_path, MAX_PATH_LEN - 1);
-        runInitialization(&init_tool_params, &disk_params,&sim_opts);
+        if (runInitialization(&init_tool_params, &disk_params, &sim_opts) != 0) {
+            LOG_ERROR("Disk initialization failed.\n");
+            return EXIT_FAILURE;
+        }
         LOG_DEBUG("runInitialization completed. disk_params allocated and populated.");
         asprintf(&current_inputsig_file, "%s/%s%s", initial_dir_path, kInitialGasProfileFileName,kFileNamesSuffix);
         LOG_DEBUG("Generated GAS profile will be loaded from '%s'.", current_inputsig_file);
@@ -319,7 +330,16 @@ int main(int argc, const char **argv) {
     LOG_DEBUG("loadGasSurfaceDensityFromFile completed. Calling applyBoundaryConditions for disk_params.radial_grid and disk_params.gas_surface_density_vector...");
     sim_opts.current_bc_target = 0;
     applyBoundaryConditions(disk_params.gas_surface_density_vector, &disk_params, &sim_opts);
-    updateSelfGravity(&disk_params);
+    if (disk_params.thermodynamics_model == THERMODYNAMICS_RADIATIVE) {
+        refreshRadiativeDisk(&disk_params, &sim_opts);
+        MSG("Thermodynamics: radiative equilibrium; mu=%.6g, T_bg=%.6g K, SG=%s\n",
+            disk_params.thermal_mean_molecular_weight,
+            disk_params.thermal_background_temperature,
+            disk_params.enable_selfgravity ? "on" : "off");
+        writeThermalSnapshot(&disk_params, &sim_opts, 0.0);
+    } else {
+        updateSelfGravity(&disk_params);
+    }
 
     if (sim_opts.test_mode == TEST_MODE_MASS_CONSERVATION || 
         sim_opts.test_mode == TEST_RING_VISCOSITY ||
@@ -378,7 +398,7 @@ int main(int argc, const char **argv) {
         if (disk_params.gas_velocity_vector) free(disk_params.gas_velocity_vector);
         if (disk_params.sigma_dot_photoevap) free(disk_params.sigma_dot_photoevap);
         if (disk_params.selfgravity_omega2_extra) free(disk_params.selfgravity_omega2_extra);
-    if (disk_params.selfgravity_omega2_extra) free(disk_params.selfgravity_omega2_extra);
+        free(disk_params.thermal_states);
         
         free(current_inputsig_file);
         free(current_inputdust_file);
@@ -450,6 +470,7 @@ int main(int argc, const char **argv) {
     if (disk_params.gas_velocity_vector) free(disk_params.gas_velocity_vector);
     if (disk_params.sigma_dot_photoevap) free(disk_params.sigma_dot_photoevap);
     if (disk_params.selfgravity_omega2_extra) free(disk_params.selfgravity_omega2_extra);
+    free(disk_params.thermal_states);
     LOG_DEBUG("Dynamically allocated disk arrays freed.");
     free(current_inputsig_file);
     free(current_inputdust_file);

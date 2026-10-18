@@ -14,6 +14,7 @@
 #include <math.h>   
 
 #include "print_panels.h"
+#include "disk_thermal.h"
 
 void initializeDefaultOptions(InitializeDefaultOptions *def) {
     def->use_cutoff             = false; 
@@ -260,6 +261,7 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
     sim_opts->current_bc_target = 0;
     applyBoundaryConditions(disk_params->gas_surface_density_vector, disk_params, sim_opts);
 
+    refreshRadiativeDisk(disk_params, sim_opts);
     createInitialGasPressure(disk_params,sim_opts);
     createInitialGasPressureGradient(disk_params,sim_opts);
     createInitialGasVelocity(disk_params,sim_opts);

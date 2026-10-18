@@ -3,8 +3,52 @@ import subprocess
 import argparse
 import os
 import datetime
+import math
 
 prefix = "[PY-WRAPPER]"
+
+
+def validate_thermal_config(config: object) -> str:
+    if not isinstance(config, dict):
+        raise ValueError("Configuration root must be a YAML mapping.")
+    if "thermal" in config:
+        raise ValueError("Use 'thermodynamics_parameters' instead of 'thermal'.")
+    thermal = config.get("thermodynamics_parameters", {})
+    if not isinstance(thermal, dict):
+        raise ValueError("'thermodynamics_parameters' must be a YAML mapping with a 'model' field.")
+    numeric_settings = {
+        "mean_molecular_weight": 2.34,
+        "background_temperature_k": 10.0,
+        "minimum_temperature_k": 1.0,
+        "maximum_temperature_k": 1500.0,
+    }
+    for key in thermal:
+        if key not in ("model", *numeric_settings):
+            raise ValueError(f"Unknown thermal setting: {key!r}.")
+    model = thermal.get("model", "lociso")
+    if model == "locally_isotherm":
+        model = "lociso"
+    if not isinstance(model, str) or model not in ("lociso", "radiative", "polytropic"):
+        raise ValueError(
+            "thermodynamics_parameters.model must be 'lociso' (or 'locally_isotherm'), "
+            "'radiative', or 'polytropic'."
+        )
+    if model == "polytropic":
+        raise ValueError(
+            "thermodynamics_parameters.model='polytropic' is not implemented yet. "
+            "Use 'lociso', 'locally_isotherm', or 'radiative'."
+        )
+    for key, default in numeric_settings.items():
+        value = thermal.get(key, default)
+        if (isinstance(value, bool) or not isinstance(value, (int, float)) or
+                not math.isfinite(value) or value <= 0):
+            raise ValueError(f"thermodynamics_parameters.{key} must be a finite positive number.")
+    lower = thermal.get("minimum_temperature_k", 1.0)
+    upper = thermal.get("maximum_temperature_k", 1500.0)
+    background = thermal.get("background_temperature_k", 10.0)
+    if not lower < upper < 1e9 or background > upper:
+        raise ValueError("Invalid thermodynamics_parameters temperature bracket or background temperature.")
+    return model
 
 
 def run_c_program(executable_path, params, arg_mapping, verbosity_flag, disable_panels, program_name="C Program", omp_threads=None):
@@ -109,6 +153,17 @@ def main():
     except yaml.YAMLError as exc:
         print(f"{prefix} Error parsing YAML file '{config_file}': {exc}")
         return
+
+    try:
+        thermal_model = validate_thermal_config(full_config)
+    except ValueError as exc:
+        parser.error(str(exc))
+    print(f"{prefix} Thermal model: {thermal_model}.")
+    if thermal_model == "lociso" and any(
+        key != "model" for key in full_config.get("thermodynamics_parameters", {})
+    ):
+        print(f"{prefix} Radiative parameters are inactive in locally isothermal mode; "
+              "the prescribed aspect ratio and flaring are used.")
 
     # --- OMP threads from YAML (optional) ---
     omp_threads = full_config.get("simulation_parameters", {}).get("omp_num_threads", None)
@@ -221,6 +276,21 @@ def main():
         "tStep": "-tStep", "totalTime": "-tmax", "outputFrequency": "-outfreq"
     }
 
+    if thermal_model == "radiative":
+        all_params["thermal_model"] = thermal_model
+        c_arg_mapping["thermal_model"] = "-thermal_model"
+        thermal_flags = {
+            "mean_molecular_weight": "-thermal_mu",
+            "background_temperature_k": "-thermal_background",
+            "minimum_temperature_k": "-thermal_tmin",
+            "maximum_temperature_k": "-thermal_tmax",
+        }
+        thermal = full_config["thermodynamics_parameters"]
+        for key, flag in thermal_flags.items():
+            if key in thermal:
+                all_params[key] = thermal[key]
+                c_arg_mapping[key] = flag
+
     if not all_params:
         print(f"{prefix} Error: No parameters could be parsed from YAML. Exiting.")
         return
@@ -241,7 +311,7 @@ def main():
 
     if not success:
         print(f"{prefix} The C program exited with an error (error code: {return_code}) with the Python wrapper.")
-        return
+        raise SystemExit(return_code or 1)
 
     print(f"{prefix} All programs completed successfully.")
 

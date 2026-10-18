@@ -20,6 +20,7 @@
 #include "hdf5_output.h"
 #include "print_terminal.h"
 #include "logger.h"
+#include "disk_thermal.h"
 
 
 void calculate1DDustDrift(double particle_radius, double pressure_gradient, double gas_surface_density, double gas_velocity, double radial_distance, double *drift_velocity, const DiskParameters *disk_params) {
@@ -396,6 +397,7 @@ static void writeFinalSnapshot(double t, ParticleData *particle_data, int partic
 {
     double final_output_time = sim_opts->maximum_simulation_time;
     double current_time_years = t / (2.0 * M_PI);
+    writeThermalSnapshot(disk_params, sim_opts, current_time_years);
 
     if (!isDustEnabled(mode) && sim_opts->output_format == OUTPUT_ASCII) {
         char final_density_name[MAX_PATH_LEN];
@@ -510,6 +512,9 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
 
         /* smoothing */
         double deltat = 0.7 * dt_old + 0.3 * dt_new;
+        if (disk_params->thermodynamics_model == THERMODYNAMICS_RADIATIVE) {
+            deltat = fmin(deltat, dt_new);
+        }
 
         // End exactly at tmax so the final snapshot represents the requested time.
         double remaining_time = t_integration_in_internal_units - t;
@@ -523,6 +528,9 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
 
         double current_time_years = t / (2.0 * M_PI);
         int snapshot_done = isSnapshotDue(current_time_years, output_time, deltat, sim_opts);
+        if (snapshot_done) {
+            writeThermalSnapshot(disk_params, sim_opts, current_time_years);
+        }
 
         if (isDustEnabled(mode)) {
             simulateDustDriftStep(&t, deltat, &output_time, &particle_data, particle_number, disk_params, sim_opts, output_files, dens_name, dust_name, dust_name2, size_name, size_name2, mode);

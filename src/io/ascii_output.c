@@ -322,6 +322,20 @@ void printCurrentInformationAboutRun(const char *directory_name, const DiskParam
     fprintf(info_file, "\n--- [ Self-gravity ] ---\n");
     fprintf(info_file, "  Status:            %s\n\n", disk_params->enable_selfgravity ? "ENABLED" : "DISABLED");
 
+    fprintf(info_file, "\n--- [ Thermodynamics ] ---\n");
+    fprintf(info_file, "  Model:             %s\n",
+            disk_params->thermodynamics_model == THERMODYNAMICS_RADIATIVE ?
+            "radiative equilibrium" : "locally_isotherm (lociso)");
+    if (disk_params->thermodynamics_model == THERMODYNAMICS_RADIATIVE) {
+        fprintf(info_file, "  Mean mol. weight:  %.9g\n", disk_params->thermal_mean_molecular_weight);
+        fprintf(info_file, "  Background:        %.9g K\n", disk_params->thermal_background_temperature);
+        fprintf(info_file, "  T bracket:         %.9g -- %.9g K\n",
+                disk_params->thermal_solver_options.minimum_temperature,
+                disk_params->thermal_solver_options.maximum_temperature);
+        fprintf(info_file, "  SG thermal effect: %s (effective Omega and rotation shear)\n",
+                disk_params->enable_selfgravity ? "ENABLED" : "DISABLED");
+    }
+
     fprintf(info_file, "\n--- [ Photoevaporation ] ---\n");
     if (!disk_params->enable_photoevaporation) {
         fprintf(info_file, "  Mode:              DISABLED\n");

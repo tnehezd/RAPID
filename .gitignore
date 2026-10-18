@@ -53,6 +53,8 @@ plot_gas.py
 calculate_*.py
 sig.py
 
+tempera*.dat
+
 Photoevaporation_O*/
 
 notebooks/mass*/mass*/config/

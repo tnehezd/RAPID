@@ -13,6 +13,7 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+#include "thermal_model.h"
 #define MAX_PATH_LEN 16384 
 
 
@@ -53,6 +54,11 @@ typedef struct {
     double disk_mass;                     /**< Total disk mass [M_sun]. */
     double h_aspect_ratio;                /**< Disk aspect ratio H/R at reference radius. */
     double flaring_index;                 /**< Disk flaring index (temperature gradient). */
+    ThermodynamicsModel thermodynamics_model;
+    double thermal_mean_molecular_weight;
+    double thermal_background_temperature;
+    ThermalSolverOptions thermal_solver_options;
+    ThermalState *thermal_states;         /**< CGS equilibrium states, including ghost cells. */
     double r_dze_i;                       /**< Inner dead‑zone edge radius [AU]. */
     double r_dze_o;                       /**< Outer dead‑zone edge radius [AU]. */
     double dr_dze_i;                      /**< Width of inner dead‑zone transition [AU]. */

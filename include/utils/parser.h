@@ -43,6 +43,10 @@ typedef struct {
     double star_val;                                    /**< Stellar mass. */
     double hasp_val;                                    /**< Disk aspect ratio parameter. */
     double flind_val;                                   /**< Disk flaring index. */
+    ThermodynamicsModel thermodynamics_model;
+    double thermal_mean_molecular_weight;
+    double thermal_background_temperature;
+    ThermalSolverOptions thermal_solver_options;
     double r_dze_i_val;                                 /**< Inner dead-zone edge radius. */
     double r_dze_o_val;                                 /**< Outer dead-zone edge radius. */
     double dr_dze_i_val;                                /**< Inner dead-zone width. */

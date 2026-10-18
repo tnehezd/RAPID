@@ -29,6 +29,10 @@ void createDefaultOptions(ParserOptions *opt) {
     opt->star_val                                   = 1.0;
     opt->hasp_val                                   = 0.05;
     opt->flind_val                                  = 0.0;
+    opt->thermodynamics_model = THERMODYNAMICS_LOCALLY_ISOTHERMAL;
+    opt->thermal_mean_molecular_weight = 2.34;
+    opt->thermal_background_temperature = 10.0;
+    opt->thermal_solver_options = defaultThermalSolverOptions();
     opt->r_dze_i_val                                = 0.0;
     opt->r_dze_o_val                                = 0.0;
     opt->dr_dze_i_val                               = 0.0;
@@ -87,6 +91,11 @@ void printUsageToTerminal() {
     fprintf(stderr, "  -twopop <val>  Enable/disable two dust populations (0. or 1., default: 1.0)\n");
     fprintf(stderr, "  -ufrag <val>   Fragmentation velocity (default: 1000.0)\n");
     fprintf(stderr, "  -ffrag <val>   Fragmentation factor (default: 0.37)\n");
+    fprintf(stderr, "Thermodynamics:\n");
+    fprintf(stderr, "  -thermal_model <lociso|locally_isotherm|radiative> (default: lociso)\n");
+    fprintf(stderr, "  -thermal_mu <val> Mean molecular weight in hydrogen masses (default: 2.34)\n");
+    fprintf(stderr, "  -thermal_background <val> Background temperature in K (default: 10)\n");
+    fprintf(stderr, "  -thermal_tmin <val> -thermal_tmax <val> Temperature bracket in K (default: 1, 1500)\n");
     fprintf(stderr, "Time parameters:\n");
     fprintf(stderr, "  -tStep <val>   Fixed time step (default: 0.0)\n");
     fprintf(stderr, "  -tmax <val>    Total simulation time (default: 1.0e6)\n");
@@ -172,7 +181,35 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
     bool flag_has_sigma0    = false;
 
     while (i < argc) {
-        if(strcmp(argv[i], "-drift") == 0) {
+        if (strcmp(argv[i], "-thermal_model") == 0) {
+            if (++i >= argc) { LOG_ERROR("Missing value for -thermal_model.\n"); return 1; }
+            if (strcmp(argv[i], "lociso") == 0 || strcmp(argv[i], "locally_isotherm") == 0) {
+                opt->thermodynamics_model = THERMODYNAMICS_LOCALLY_ISOTHERMAL;
+            } else if (strcmp(argv[i], "radiative") == 0) {
+                opt->thermodynamics_model = THERMODYNAMICS_RADIATIVE;
+            } else {
+                LOG_ERROR("Unsupported thermal model '%s'. Use lociso|locally_isotherm|radiative; polytropic is not implemented.\n", argv[i]);
+                return 1;
+            }
+        }
+        else if (strcmp(argv[i], "-thermal_mu") == 0 ||
+                 strcmp(argv[i], "-thermal_background") == 0 ||
+                 strcmp(argv[i], "-thermal_tmin") == 0 ||
+                 strcmp(argv[i], "-thermal_tmax") == 0) {
+            const char *flag = argv[i];
+            if (++i >= argc) { LOG_ERROR("Missing value for %s.\n", flag); return 1; }
+            char *end;
+            double value = strtod(argv[i], &end);
+            if (end == argv[i] || *end != '\0' || !isfinite(value) || value <= 0.0) {
+                LOG_ERROR("Invalid positive number for %s: '%s'.\n", flag, argv[i]);
+                return 1;
+            }
+            if (strcmp(flag, "-thermal_mu") == 0) opt->thermal_mean_molecular_weight = value;
+            else if (strcmp(flag, "-thermal_background") == 0) opt->thermal_background_temperature = value;
+            else if (strcmp(flag, "-thermal_tmin") == 0) opt->thermal_solver_options.minimum_temperature = value;
+            else opt->thermal_solver_options.maximum_temperature = value;
+        }
+        else if(strcmp(argv[i], "-drift") == 0) {
             i++;
             if (i < argc) opt->option_for_dust_drift = atof(argv[i]); else { LOG_ERROR("Missing value for -drift.\n"); return 1; }
         }
@@ -511,6 +548,25 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
 
 
     // --- CRITICAL CONFLICT RESOLUTION GUARD ---
+    if (opt->thermal_solver_options.maximum_temperature >= 1e9 ||
+        opt->thermal_solver_options.maximum_temperature <= opt->thermal_solver_options.minimum_temperature ||
+        opt->thermal_background_temperature > opt->thermal_solver_options.maximum_temperature) {
+        LOG_ERROR("Invalid thermal temperature bracket or background temperature.\n");
+        return 1;
+    }
+    if (opt->thermodynamics_model == THERMODYNAMICS_RADIATIVE &&
+        (!isfinite(opt->alpha_visc_val) || opt->alpha_visc_val < 0.0 ||
+         !isfinite(opt->a_mod_val) || opt->a_mod_val < 0.0 ||
+         !isfinite(opt->star_val) || opt->star_val <= 0.0 ||
+         !isfinite(opt->density_floor) || opt->density_floor <= 0.0)) {
+        LOG_ERROR("Radiative mode requires nonnegative alpha/deadzone reduction, positive stellar mass and density floor.\n");
+        return 1;
+    }
+    if (opt->thermodynamics_model == THERMODYNAMICS_RADIATIVE &&
+        opt->test_mode != TEST_MODE_NONE) {
+        LOG_ERROR("Existing viscous/photoevaporation benchmarks require locally isothermal mode.\n");
+        return 1;
+    }
     if (flag_has_disk_mass && flag_has_sigma0) {
         printFatalErrorMessageForDiskMass();
         return 1;

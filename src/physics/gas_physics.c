@@ -11,11 +11,22 @@
 #include <omp.h>       
 
 #include "photoevaporation.h"
+#include "disk_thermal.h"
 
 #define WIND_CRIT 1e-20  // Critical value for wind profile (below this value, wind is considered zero) [M_sol/AU^2/day]
 
 double calculateTurbulentAlpha(double radial_distance, const DiskParameters *disk_params) {
     
+    if (disk_params->thermodynamics_model == THERMODYNAMICS_RADIATIVE) {
+        double inner = disk_params->dr_dze_i > 0.0 ?
+            tanh((radial_distance - disk_params->r_dze_i) / disk_params->dr_dze_i) :
+            (radial_distance >= disk_params->r_dze_i ? 1.0 : -1.0);
+        double outer = disk_params->dr_dze_o > 0.0 ?
+            tanh((disk_params->r_dze_o - radial_distance) / disk_params->dr_dze_o) :
+            (radial_distance < disk_params->r_dze_o ? 1.0 : -1.0);
+        return disk_params->alpha_parameter *
+            (1.0 - 0.5 * (1.0 - disk_params->alpha_parameter_modification) * (inner + outer));
+    }
     double alpha_r;
     alpha_r = 1.0 - 0.5 * (1.0 - disk_params->alpha_parameter_modification) * (tanh((radial_distance - disk_params->r_dze_i) / disk_params->dr_dze_i) + tanh((disk_params->r_dze_o - radial_distance) / disk_params->dr_dze_o));
     return alpha_r * disk_params->alpha_parameter;
@@ -33,6 +44,9 @@ double calculateKinematicViscosity(double radial_distance, const DiskParameters 
 
 double calculatePressureScaleHeight(double radial_distance, const DiskParameters *disk_params) {
 
+    if (disk_params->thermodynamics_model == THERMODYNAMICS_RADIATIVE) {
+        return interpolateThermalScaleHeight(radial_distance, disk_params);
+    }
     double local_pressure_scaleheight = pow(radial_distance, 1. + disk_params->flaring_index) * disk_params->h_aspect_ratio;
     return local_pressure_scaleheight;
 }
@@ -75,6 +89,9 @@ double calculateKeplerianFrequency(double radial_distance, const DiskParameters 
 // so viscosity, pressure and the midplane density feel the modified rotation curve.
 double calculateLocalSoundSpeed(double radial_distance, const DiskParameters *disk_params) {
     
+    if (disk_params->thermodynamics_model == THERMODYNAMICS_RADIATIVE) {
+        return interpolateThermalSoundSpeed(radial_distance, disk_params);
+    }
     return calculateKeplerianFrequency(radial_distance,disk_params) * calculatePressureScaleHeight(radial_distance,disk_params);
 }
 
@@ -184,8 +201,15 @@ void refreshGasSurfaceDensityPressurePressureGradient(SimulationOptions *sim_opt
             ftcsFirstDerivativeCoefficient(disk_params->radial_grid[i], disk_params) * first_derivative;
 
         // Convert the evolved nu * Sigma back to physical Sigma before applying sinks.
-        gas_surface_density_temp[i] = (gas_velocity_array[i] + dt * viscous_sigma_dot) /
-                                      viscosity;
+        if (disk_params->thermodynamics_model == THERMODYNAMICS_RADIATIVE &&
+            viscosity == 0.0) {
+            gas_surface_density_temp[i] = disk_params->gas_surface_density_vector[i] +
+                dt * (3.0 * second_derivative +
+                      4.5 / disk_params->radial_grid[i] * first_derivative);
+        } else {
+            gas_surface_density_temp[i] = (gas_velocity_array[i] + dt * viscous_sigma_dot) /
+                                          viscosity;
+        }
     }
 
     // =========================================================================
@@ -208,6 +232,14 @@ void refreshGasSurfaceDensityPressurePressureGradient(SimulationOptions *sim_opt
     // Boundary conditions are defined for the physical surface density Sigma.
     sim_opts->current_bc_target = 0;
     applyBoundaryConditions(gas_surface_density_temp, disk_params, sim_opts);
+
+    if (disk_params->thermodynamics_model == THERMODYNAMICS_RADIATIVE) {
+        for (i = 0; i <= disk_params->grid_number + 1; ++i) {
+            disk_params->gas_surface_density_vector[i] = gas_surface_density_temp[i];
+        }
+        refreshRadiativeDisk(disk_params, sim_opts);
+        return;
+    }
 
     // Commit the physical surface-density state and update gas pressure.
     for (i = 1; i <= disk_params->grid_number; i++) {

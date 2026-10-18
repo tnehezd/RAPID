@@ -1,4 +1,4 @@
-# Self-gravity test configuration (gas only)
+# Thermal-model test configuration (gas only)
 
 simulation_parameters:
   enable_dust_drift: false
@@ -6,23 +6,28 @@ simulation_parameters:
   enable_gas_evolution: true
   enable_two_dust_populations: false
   enable_photoevaporation: false
-  enable_selfgravity: true            # axisymmetric disk self-gravity in the rotation curve
+  enable_selfgravity: false
   omp_num_threads: 6
 
 disk_parameters:
   number_of_grid_points: 500
-  inner_radius_au: 1.0
+  radial_grid_type: logarithmic
+  inner_radius_au: 0.1
   outer_radius_au: 50.0
-  disk_mass: 0.1                    # massive disk, so the self-gravity term is significant
+  disk_mass: 0.01
   sigma_profile_exponent: -0.5
   alpha_viscosity: 0.003
   star_mass_msun: 1.0
   aspect_ratio_at_1au: 0.05
   flaring_index: 0.0
   density_floor: 1e-20
-  #use_cutoff_for_gas: true
-  #characteristic_cutoff_radius_au: 10.0
-  #cutoff_sharpness_factor: 1.5
+
+thermodynamics_parameters:
+  model: radiative                   # alternatives: lociso, locally_isotherm
+  mean_molecular_weight: 2.34
+  background_temperature_k: 10.0
+  minimum_temperature_k: 1.0
+  maximum_temperature_k: 1500.0
 
 deadzone_parameters:
   deadzone_inner_radius_au: 2.7
@@ -33,12 +38,8 @@ deadzone_parameters:
 
 output_parameters:
   input_file_path: ""
-  output_directory_name: "output_selfgravity"
+  output_directory_name: "output_thermal"
   output_format: "ascii"
-
-boundary_conditions:
-  inner_boundary_condition: zero_gradient
-  outer_boundary_condition: zero_gradient
 
 time_parameters:
   total_simulation_time: 5e5

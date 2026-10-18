@@ -96,7 +96,7 @@ OBJS = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRCS_C))
 DEPS = $(OBJS:.o=.d)
 DEPS := $(DEPS:.opp=.d)
 
-.PHONY: all clean run debug
+.PHONY: all clean run debug test-thermal
 
 all: $(BIN_DIR)/simulation
 
@@ -121,3 +121,12 @@ run: all
 
 debug: all
 	lldb ./$(BIN_DIR)/simulation
+
+# Standalone thermal tests need neither HDF5 nor OpenMP.
+$(BIN_DIR)/test_thermal_model: tests/test_thermal_model.c src/physics/thermal_model.c include/physics/thermal_model.h
+	@mkdir -p $(BIN_DIR)
+	$(CC) -Wall -Wextra -Werror -std=c99 -g -O0 -I$(INC_DIR)/physics \
+		tests/test_thermal_model.c src/physics/thermal_model.c -lm -o $@
+
+test-thermal: $(BIN_DIR)/test_thermal_model
+	./$(BIN_DIR)/test_thermal_model
