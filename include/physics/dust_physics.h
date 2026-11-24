@@ -49,6 +49,9 @@ void applyCoagulationMassTransfer(ParticleData *p, DiskParameters *disk, Simulat
  */
 double calculateStokesNumber(double particle_radius, double gas_surfacedensity, const DiskParameters *disk_params);
 
+/** Update primary particle sizes to match the prescribed constant Stokes number. */
+void updateFixedStokesSizes(ParticleData *particles, int count, const DiskParameters *disk);
+
 /**
  * @brief Computes the radial drift barrier size.
  *
@@ -83,7 +86,8 @@ double calculateTurbulentFragmentationBarrier(double gas_surfacedensity, double 
  * @brief Computes the drift-induced fragmentation barrier size.
  *
  * This barrier arises when drift-driven relative velocities exceed the
- * fragmentation threshold.
+ * fragmentation threshold. It uses disk_params->fragmentation_factor,
+ * as does the turbulent fragmentation barrier.
  *
  * @param gas_surfacedensity  Local gas surface density.
  * @param radial_distance     Radial position.

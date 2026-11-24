@@ -245,6 +245,7 @@ def main():
         "population_one_mass_ratio": "ratio_val",
         "micro_particle_size_cm": "mic_val",
         "one_size_particle_value_cm": "onesize_val",
+        "constant_stokes_number": "fixed_stokes",
         "dust_particle_density_g_cm3": "pdensity_val",
 
         "input_file_path": "input_file",
@@ -283,6 +284,7 @@ def main():
         "dr_dze_i_val": "-drdzei", "dr_dze_o_val": "-drdzeo",
         "a_mod_val": "-amod", "density_floor": "-density_floor", "dust_density_floor": "-dust_density_floor",
         "eps_val": "-eps", "ratio_val": "-ratio", "mic_val": "-micsize", "onesize_val": "-largesize",
+        "fixed_stokes": "-stokes",
         "pdensity_val": "-pdensity",
         "gaussian_smoothing_sigma_grid_units": "-gaussian_sigma_grid_units",
         "gaussian_smoothing_cutoff_sigma": "-gaussian_cutoff_sigma",

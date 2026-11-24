@@ -76,6 +76,7 @@ typedef struct {
     double alpha_parameter_modification;  /**< α‑viscosity reduction factor inside dead zones. */
     double particle_density;              /**< Dust particle material density [g/cm³]. */
     double particle_density_dimensionless;/**< Dimensionless dust density (code units). */
+    double fixed_stokes;                  /**< Constant Stokes number, or zero when disabled. */
     double *radial_grid;                  /**< Radial grid array [AU]. */
     double *gas_surface_density_vector;   /**< Gas surface density at each grid point. */
     double *gas_pressure_vector;          /**< Gas pressure at each grid point. */

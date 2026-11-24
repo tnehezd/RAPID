@@ -151,6 +151,7 @@ int main(int argc, const char **argv) {
     disk_params.fragmentation_velocity = def.fragmenatation_velocity;
     disk_params.drift_factor = 0.55; // set by Birnstiel 2012
     disk_params.particle_density = def.pdensity_val;
+    disk_params.fixed_stokes = def.fixed_stokes;
     disk_params.total_disk_mass = def.total_disk_mass;    
     disk_params.gaussian_sigma  = sim_opts.gaussian_sigma;
     disk_params.gaussian_cutoff = sim_opts.gaussian_cutoff;
@@ -293,10 +294,12 @@ int main(int argc, const char **argv) {
         init_tool_params.star_mass = disk_params.stellar_mass;
         init_tool_params.dust_to_gas_ratio = def.eps_val;
         init_tool_params.n_dust_particles = def.number_of_dust_particles; 
-        init_tool_params.two_pop_ratio = def.ratio_val;
+        init_tool_params.two_pop_ratio = def.fixed_stokes > 0.0 ? 1.0 : def.ratio_val;
         init_tool_params.micro_size_cm = def.mic_val;
         init_tool_params.one_size_particle_cm = def.onesize_val;
         init_tool_params.dust_density_g_cm3 = def.pdensity_val;
+        init_tool_params.fragmentation_factor = disk_params.fragmentation_factor;
+        init_tool_params.drift_factor = disk_params.drift_factor;
         init_tool_params.total_disk_mass = disk_params.total_disk_mass;
         init_tool_params.density_floor = disk_params.density_floor;
         init_tool_params.dust_density_floor = disk_params.dust_density_floor;

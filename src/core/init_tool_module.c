@@ -316,7 +316,14 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
         
         double s_max_cm;
 
-        if (default_options->one_size_particle_cm > 0.0) {
+        if (disk_params->fixed_stokes > 0.0) {
+            s_max_cm = 2.0 * disk_params->fixed_stokes * (double)sigma_gas_local /
+                       (M_PI * disk_params->particle_density_dimensionless) * AU_IN_CM;
+            if (!isfinite(s_max_cm) || s_max_cm <= 0.0) {
+                LOG_ERROR("Cannot initialize constant Stokes particles at r=%.9g AU: invalid gas density or size.\n", r_dust_particle_au);
+                return 1;
+            }
+        } else if (default_options->one_size_particle_cm > 0.0) {
             s_max_cm = default_options->one_size_particle_cm;
         } else {
             double calculateKeplerianVelocity_au_yr2pi = calculateKeplerianVelocity(r_dust_particle_au, disk_params);
@@ -347,7 +354,8 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
             if (dlnPdlnr_abs_cs2_half < 1e-12) {
                 s_df = 1e99;
             } else {
-                s_df = fragmentation_velocity_au_yr2pi * calculateKeplerianVelocity_au_yr2pi / dlnPdlnr_abs_cs2_half * 2.0 * sigma_gas_local_cgs / (M_PI * default_options->dust_density_g_cm3);
+                s_df = calculateDriftInducedFragmentationBarrier((double)sigma_gas_local, r_dust_particle_au,
+                        pressure_local, dPdr_local, default_options->dust_density_g_cm3, disk_params);
             }
 
             s_max_cm = findMinimumForThreeNumbersInitTool(s_drift, s_frag, s_df);

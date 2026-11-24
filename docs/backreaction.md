@@ -1,8 +1,13 @@
 # Stationary dust backreaction (experimental)
 
-Enable with `simulation_parameters.enable_backreaction: true` in YAML or
-`-backreaction 1` on the CLI. The default is off and retains the existing
-passive-dust solver. See [the example](../configs/config_backreaction.yaml).
+**2.3.0 development version:** backreaction is disabled pending physical
+validation. Enabling it in the executable produces an error. The description
+below records the experimental implementation and does not describe an
+available mode in this version.
+
+The experimental interface used `simulation_parameters.enable_backreaction: true`
+in YAML or `-backreaction 1` on the CLI. The default is off and retains the
+existing passive-dust solver. See [the example](../configs/config_backreaction.yaml).
 
 The first version supports evolved **lociso gas and one drifting particle
 population**, with optional grain growth, on linear or logarithmic grids.

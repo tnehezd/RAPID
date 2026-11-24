@@ -299,6 +299,11 @@ void printCurrentInformationAboutRun(const char *directory_name, const DiskParam
     fprintf(info_file, "  Alpha Viscosity:   %.4e\n", disk_params->alpha_parameter);
     fprintf(info_file, "  Total Disk Mass:   %.4e M_Sun\n\n", disk_params->total_disk_mass);
 
+    if (disk_params->fixed_stokes > 0.0) {
+        fprintf(info_file, "\n--- [ Constant Stokes Dust ] ---\n");
+        fprintf(info_file, "  Stokes number:     %.17g\n", disk_params->fixed_stokes);
+        fprintf(info_file, "  Grain radius:      Local Epstein-equivalent size\n");
+    }
 
     fprintf(info_file, "\n--- [ Dust Backreaction ] ---\n");
     fprintf(info_file, "  Status:            %s\n", disk_params->enable_backreaction ? "ENABLED" : "DISABLED");

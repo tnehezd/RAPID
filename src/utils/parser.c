@@ -64,6 +64,7 @@ void createDefaultOptions(ParserOptions *opt) {
     opt->ratio_val                                  = 0.85;
     opt->mic_val                                    = 1e-4; 
     opt->onesize_val                                = 0.0; 
+    opt->fixed_stokes                               = 0.0;
     opt->pdensity_val                               = 1.6; 
     opt->output_format                              = OUTPUT_ASCII;
     opt->test_mode                                  = TEST_MODE_NONE;
@@ -96,10 +97,11 @@ void printUsageToTerminal() {
     fprintf(stderr, "  -growth <val>  Enable/disable growth (0. or 1., default: 1.0)\n");
     fprintf(stderr, "  -evol <val>    Enable/disable evolution (0. or 1., default: 1.0)\n");
     fprintf(stderr, "  -twopop <val>  Enable/disable two dust populations (0. or 1., default: 1.0)\n");
+    fprintf(stderr, "  -stokes <val>  Constant positive Stokes number; requires -drift 1 -growth 0 -twopop 0\n");
     fprintf(stderr, "  -ufrag <val>   Fragmentation velocity (default: 1000.0)\n");
     fprintf(stderr, "  -ffrag <val>   Fragmentation factor (default: 0.37)\n");
     fprintf(stderr, "Thermodynamics:\n");
-    fprintf(stderr, "  -thermal_model <lociso|locally_isotherm|radiative|radiative_energy> (default: lociso)\n");
+    fprintf(stderr, "  -thermal_model <lociso|locally_isotherm> (radiative modes disabled in 2.3.0)\n");
     fprintf(stderr, "  -thermal_gamma <val> Adiabatic index > 1 (default: 1.4; energy mode)\n");
     fprintf(stderr, "  -thermal_mu <val> Mean molecular weight in hydrogen masses (default: 2.34)\n");
     fprintf(stderr, "  -thermal_background <val> Background temperature in K (default: 10)\n");
@@ -154,8 +156,8 @@ void printUsageToTerminal() {
     fprintf(stderr, "  -ascii                        Shortcut for --output-format ascii\n");
     fprintf(stderr, "  -hdf5                       Shortcut for --output-format hdf5\n");
     fprintf(stderr, "Photoevaporation options:\n");
-    fprintf(stderr, "  -selfgravity <0|1>  Include axisymmetric disk self-gravity in the rotation curve (default: 0 = false)\n");
-    fprintf(stderr, "  -backreaction <0|1>  Stationary mutual drag (lociso, single population, CIC; default: 0)\n");
+    fprintf(stderr, "  -selfgravity <0|1>  Self-gravity (disabled in 2.3.0)\n");
+    fprintf(stderr, "  -backreaction <0|1>  Mutual drag (disabled in 2.3.0)\n");
     fprintf(stderr, "  -photoevap <0|1>  Enable/disable photoevaporation globally (default: 0 = false)\n");
     fprintf(stderr, "  -photoevap_mode <string>  Model selection: 'Owen' or 'Picogna' (default: 'None')\n");
     fprintf(stderr, "  -xray_lumosity <val>         Stellar X-ray luminosity in erg/s (default: 1.0e30)\n");
@@ -195,7 +197,17 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
     bool flag_has_sigma0    = false;
 
     while (i < argc) {
-        if (strcmp(argv[i], "-thermal_model") == 0) {
+        if (strcmp(argv[i], "-stokes") == 0) {
+            if (++i >= argc) { LOG_ERROR("Missing value for -stokes.\n"); return 1; }
+            char *end;
+            double value = strtod(argv[i], &end);
+            if (end == argv[i] || *end != '\0' || !isfinite(value) || value <= 0.0) {
+                LOG_ERROR("-stokes requires a finite positive number.\n");
+                return 1;
+            }
+            opt->fixed_stokes = value;
+        }
+        else if (strcmp(argv[i], "-thermal_model") == 0) {
             if (++i >= argc) { LOG_ERROR("Missing value for -thermal_model.\n"); return 1; }
             if (strcmp(argv[i], "lociso") == 0 || strcmp(argv[i], "locally_isotherm") == 0) {
                 opt->thermodynamics_model = THERMODYNAMICS_LOCALLY_ISOTHERMAL;
@@ -456,10 +468,13 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
             opt->enable_backreaction = strcmp(argv[i], "1") == 0;
         }
         else if (strcmp(argv[i], "-selfgravity") == 0) {
-            i++;
-            if (i < argc) {
-                opt->enable_selfgravity = (atoi(argv[i]) != 0);
-            } else { LOG_ERROR("Missing value for -selfgravity.\n"); return 1; }
+            if (++i >= argc ||
+                (strcmp(argv[i], "0") != 0 && strcmp(argv[i], "1") != 0 &&
+                 strcmp(argv[i], "0.0") != 0 && strcmp(argv[i], "1.0") != 0)) {
+                LOG_ERROR("-selfgravity requires 0 or 1.\n");
+                return 1;
+            }
+            opt->enable_selfgravity = strcmp(argv[i], "1") == 0 || strcmp(argv[i], "1.0") == 0;
         }
         else if (strcmp(argv[i], "-photoevap") == 0) {
             i++;
@@ -600,6 +615,23 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
         i++;
     }
 
+
+    if (opt->enable_selfgravity || opt->enable_backreaction ||
+        opt->thermodynamics_model != THERMODYNAMICS_LOCALLY_ISOTHERMAL) {
+        LOG_ERROR("RAPID 2.3.0 disables self-gravity, backreaction and radiative/energy thermal models pending physical validation.\n");
+        return 1;
+    }
+    if (opt->fixed_stokes > 0.0 &&
+        (opt->option_for_dust_drift != 1 || opt->option_for_dust_growth != 0 ||
+         opt->option_for_dust_secondary_population != 0 || opt->onesize_val != 0 ||
+         opt->test_mode != TEST_MODE_NONE || opt->input_file != NULL)) {
+        LOG_ERROR("-stokes requires -drift 1 -growth 0 -twopop 0, no -largesize, input profile or benchmark mode.\n");
+        return 1;
+    }
+    if (opt->fixed_stokes > 0.0 && (!isfinite(opt->pdensity_val) || opt->pdensity_val <= 0)) {
+        LOG_ERROR("-stokes requires a finite positive particle density.\n");
+        return 1;
+    }
 
     if (opt->enable_backreaction &&
         (opt->thermodynamics_model != THERMODYNAMICS_LOCALLY_ISOTHERMAL ||

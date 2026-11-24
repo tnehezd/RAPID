@@ -22,12 +22,10 @@ Stay tuned for regular feature updates.
 
 ## Model Description
 
-Experimental opt-in [stationary dust backreaction](docs/backreaction.md) is
-available for evolved lociso gas with one CIC-mapped dust population.
-It retains viscous FTCS and adds a drag-only gas mass-flux correction,
-as well as coupled particle drift; see
-[the example configuration](configs/config_backreaction.yaml) and the documented
-restrictions before enabling it.
+In the 2.3.0 development version, self-gravity, dust backreaction and the
+radiative and energy-evolution thermal modes are disabled pending physical
+validation. Requests to enable them fail explicitly. Locally isothermal
+calculations remain available; the experimental code is retained.
 
 See [disk geometry and flaring](docs/geometry.md) for which geometry parameters
 are active in each thermal mode. Prescribed flaring is lociso-only.
@@ -45,6 +43,11 @@ RAPID is a trajectory-based Lagrangian model that tracks the motion of represent
 This approach offers computational efficiency due to its 1D nature while providing an effective approximation of particle trajectories. Using RAPID, we can conduct parameter studies to investigate dust mass growth, particle trajectories, and the evolution of feeding zones around pressure bumps, aiming to understand the conditions that facilitate planetesimal formation in protoplanetary disks.
 
 This work is based on the methods described in Regály et al. (2017) and Tarczay-Nehéz (2026).
+
+The fragmentation calibration factor (`-ffrag`, default 0.37) applies to both
+the turbulent and drift-induced fragmentation size barriers. Earlier versions
+did not apply this factor to the drift-induced barrier, so dust results from
+those versions are not necessarily reproducible with the current prescription.
 
 ## Building and Running the Simulation
 
@@ -87,6 +90,40 @@ python run_simulation.py
 Using command-line arguments:
 Alternatively, you can run the executable directly from the command line by specifying the parameters. A detailed list of all available command-line flags and their corresponding parameters will be provided here shortly.
 
+For an idealized single dust population with constant Stokes number, add
+`-stokes 0.1 -drift 1 -growth 0 -twopop 0` to a normal simulation command.
+Alternatively, set `dust_parameters.constant_stokes_number: 0.1` in YAML,
+with dust drift enabled and growth and two populations disabled. Do not set
+`one_size_particle_value_cm` simultaneously. The primary population contains
+all initial dust mass. Its equivalent grain radius changes with the local gas
+surface density according to RAPID's Epstein Stokes relation; the specified
+Stokes number, rather than a fixed physical grain size, controls the drift at
+every RK4 stage. This is not a grain growth model. The number must be positive
+and finite. Input profiles and benchmark modes are not supported in this mode.
+It is a new numerical option and has not yet been physically benchmarked.
+
+Dust particles are absorbed at the inner and outer radial boundaries: on exit,
+their position, size and represented mass are set to zero. The two dust
+populations are removed independently. Exact boundary points are included
+in the initial density mapping, then absorbed when particle transport starts.
+In two-population runs, coagulation does not transfer mass to an already
+absorbed primary particle.
+
+For example, in the YAML configuration:
+
+```yaml
+simulation_parameters:
+  enable_dust_drift: true
+  enable_dust_growth: false
+  enable_two_dust_populations: false
+dust_parameters:
+  constant_stokes_number: 0.1
+```
+
+HDF5 snapshots now write particle positions in AU, particle radii in cm and
+gas arrays on the physical grid (without the inner ghost cell). Older HDF5
+files were not corrected; regenerate affected snapshots.
+
 Gas profile snapshots (`LOGS/density_profile_*.dat`) write radius, surface density,
 pressure, and pressure gradient with 10 significant digits. Rebuild and rerun
 simulations to obtain this precision; existing snapshots are unchanged.
@@ -101,6 +138,8 @@ irradiation). Each uses 500 gas cells, 1000 particles when dust is active,
 4 OpenMP threads, 500,000 years and 10,000-year output cadence.
 Energy runs use outflow boundaries; other modes use zero-gradient boundaries,
 so these comparisons do not isolate numerical cost at identical physics.
+Cases requesting self-gravity or radiative thermal modes are rejected by the
+2.3.0 executable and are not runnable until those modes are re-enabled.
 
 ```bash
 python test_examples/generate_configs.py --generate-only

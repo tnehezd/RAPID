@@ -106,7 +106,9 @@ void applyCoagulationMassTransfer(ParticleData *particle_data,
         double M_mic_cell = 0.0;
         for (int k = 0; k < particle_number; k++) {
             int cell_idx = (int)particle_data->micron_dust_particle_mass_array[k][1];
-            if (cell_idx == i) {
+            double primary_radius = particle_data->particle_distance_array[k][0];
+            if (cell_idx == i && primary_radius > disk_params->r_min &&
+                primary_radius < disk_params->r_max) {
                 M_mic_cell += particle_data->massmicradial_grid[k];
             }
         }
@@ -117,7 +119,9 @@ void applyCoagulationMassTransfer(ParticleData *particle_data,
 
         for (int k = 0; k < particle_number; k++) {
             int cell_idx = (int)particle_data->micron_dust_particle_mass_array[k][1];
-            if (cell_idx != i) {
+            double primary_radius = particle_data->particle_distance_array[k][0];
+            if (cell_idx != i || primary_radius <= disk_params->r_min ||
+                primary_radius >= disk_params->r_max) {
                 continue;
             }
 
@@ -145,6 +149,29 @@ void applyCoagulationMassTransfer(ParticleData *particle_data,
 double calculateStokesNumber(double particle_radius, double gas_surfacedensity, const DiskParameters *disk_params) { 
 
     return disk_params->particle_density_dimensionless * particle_radius * M_PI / (2.0 * gas_surfacedensity);
+}
+
+void updateFixedStokesSizes(ParticleData *particles, int count, const DiskParameters *disk)
+{
+    if (disk->fixed_stokes <= 0.0) return;
+    for (int i = 0; i < count; ++i) {
+        double r = particles->particle_distance_array[i][0];
+        if (r == 0.0) continue;
+        if (!isfinite(r) || r < disk->r_min || r > disk->r_max) {
+            LOG_ERROR("Invalid particle radius for constant Stokes number: %.9g AU.\n", r);
+            exit(EXIT_FAILURE);
+        }
+        double sigma;
+        linearInterpolation(disk->gas_surface_density_vector, disk->radial_grid,
+                            r, &sigma, disk->delta_r, disk);
+        double size = 2.0 * disk->fixed_stokes * sigma /
+                      (M_PI * disk->particle_density_dimensionless);
+        if (!isfinite(sigma) || sigma <= 0.0 || !isfinite(size) || size <= 0.0) {
+            LOG_ERROR("Cannot maintain constant Stokes number at r=%.9g AU: invalid gas density or size.\n", r);
+            exit(EXIT_FAILURE);
+        }
+        particles->particle_distance_array[i][1] = size;
+    }
 }
 
 /*			BIRNSTIEL EL AL 2012			*/
@@ -187,7 +214,7 @@ double calculateDriftInducedFragmentationBarrier(double gas_surfacedensity, doub
     log_pressure_gradient = radial_distance / gas_pressure * pressure_gradient;
     keplerian_velocity = calculateKeplerianVelocity(radial_distance,disk_params);
 
-    drift_barrier_size = fragmentation_velocity * keplerian_velocity / fabs(log_pressure_gradient * local_soundspeed_squared * 0.5) * 2.0 * gas_surfacedensity_cgs / (M_PI * particle_density);
+    drift_barrier_size = disk_params->fragmentation_factor * fragmentation_velocity * keplerian_velocity / fabs(log_pressure_gradient * local_soundspeed_squared * 0.5) * 2.0 * gas_surfacedensity_cgs / (M_PI * particle_density);
 
     return drift_barrier_size;
 }
@@ -279,29 +306,33 @@ void calculateDustSurfaceDensity(const ParticleData *particle_data,
     int mode_type = simulation_options->dust_smoothing_mode;
     for (k = 0; k < particle_number; k++) {
         double r = particle_data->particle_distance_array[k][0];
-        if (disk_params->enable_backreaction &&
-            (r < disk_params->r_min || r > disk_params->r_max)) continue;
         double r_mic = 0.0;
         if (is_twopop) {
             r_mic = particle_data->micron_particle_distance_array[k][0];
         }
+        int primary_inside = r >= disk_params->r_min && r <= disk_params->r_max;
+        int micron_inside = is_twopop && r_mic >= disk_params->r_min && r_mic <= disk_params->r_max;
 
         if (mode_type == 1) { // NGP
-            int idx = findNearestDustGridIndex(r, disk_params);
-            if (idx >= 0 && idx < grid_n) particle_data->dust_surfacedensity[idx] += particle_data->dust_particle_mass_grid[k];
-            if (is_twopop) {
+            if (primary_inside) {
+                int idx = findNearestDustGridIndex(r, disk_params);
+                if (idx >= 0 && idx < grid_n) particle_data->dust_surfacedensity[idx] += particle_data->dust_particle_mass_grid[k];
+            }
+            if (micron_inside) {
                 int idx_m = findNearestDustGridIndex(r_mic, disk_params);
                 if (idx_m >= 0 && idx_m < grid_n) particle_data->micron_dust_surfacedensity[idx_m] += particle_data->massmicradial_grid[k];
             }
         } else { // CIC
-            double x;
-            int idx = findDustLeftCell(r, disk_params, &x);
-            if (idx >= 0 && idx < grid_n - 1) {
-                double m = particle_data->dust_particle_mass_grid[k];
-                particle_data->dust_surfacedensity[idx]   += m * (1.0 - x);
-                particle_data->dust_surfacedensity[idx+1] += m * x;
+            if (primary_inside) {
+                double x;
+                int idx = findDustLeftCell(r, disk_params, &x);
+                if (idx >= 0 && idx < grid_n - 1) {
+                    double m = particle_data->dust_particle_mass_grid[k];
+                    particle_data->dust_surfacedensity[idx]   += m * (1.0 - x);
+                    particle_data->dust_surfacedensity[idx+1] += m * x;
+                }
             }
-            if (is_twopop) {
+            if (micron_inside) {
                 double x_m;
                 int idx_m = findDustLeftCell(r_mic, disk_params, &x_m);
                 if (idx_m >= 0 && idx_m < grid_n - 1) {
@@ -455,59 +486,38 @@ void writeInitialDriftTimescales(const ParticleData *particles, int count,
     }
 }
 
+static void advanceDustPopulation(double position[2], double *mass, double mass_record[5],
+                                  double timestep, const DiskParameters *disk)
+{
+    double r = position[0], size = position[1];
+    if (r > disk->r_min && r < disk->r_max) {
+        integrateParticleRungeKutta4(size, timestep, r, &position[0], &position[1], disk);
+    } else {
+        position[0] = 0.0;
+        position[1] = 0.0;
+    }
+    if (position[0] == 0.0) {
+        if (mass) *mass = 0.0;
+        if (mass_record) mass_record[0] = 0.0;
+    }
+}
+
 void calculateDustDistance(const char *file_name, ParticleData *particle_data, double actual_timestep, double actual_time, int number_of_particles, const SimulationOptions *simulation_options, const DiskParameters *disk_params){
 
-    int i;
-    double particle_distance, particle_distance_new, particle_radius_new, particle_radius;
     (void)file_name;
     (void)actual_time;
 
-    #pragma omp parallel for private(particle_distance, particle_distance_new, particle_radius_new, particle_radius)
-
-    for (i = 0; i < number_of_particles; i++) {
-
-        if (particle_data->particle_distance_array[i][0] > disk_params->r_min && particle_data->particle_distance_array[i][0] < disk_params->r_max) {
-            
-            // 1. Elsődleges (cm-es) populáció integrálása
-            particle_distance = particle_data->particle_distance_array[i][0];
-            particle_radius = particle_data->particle_distance_array[i][1];
-
-            integrateParticleRungeKutta4(particle_radius, actual_timestep,
-                                        particle_distance, &particle_distance_new, &particle_radius_new, 
-                                        disk_params);
-
-            // 2. Másodlagos (mikronos) populáció integrálása, ha aktív
-            double micron_distance_new = 0.0;
-            double micron_radius_new = 0.0;
-            if (simulation_options->option_for_dust_secondary_population == 1) {
-                double mic_dist = particle_data->micron_particle_distance_array[i][0];
-                double mic_rad  = particle_data->micron_particle_distance_array[i][1];
-                
-                // Itt a mikronos sűrűség mezőt (micron_dust_surfacedensity) használjuk az integrációhoz
-                integrateParticleRungeKutta4(mic_rad, actual_timestep,
-                                            mic_dist, &micron_distance_new, &micron_radius_new, 
-                                            disk_params);
-            }
-
-            // 3. Frissítés
-            particle_data->particle_distance_array[i][1] = particle_radius_new;
-            particle_data->particle_distance_array[i][0] = particle_distance_new;
-
-            if (simulation_options->option_for_dust_secondary_population == 1) {
-                particle_data->micron_particle_distance_array[i][1] = micron_radius_new;
-                particle_data->micron_particle_distance_array[i][0] = micron_distance_new;
-            }
-            
-        } else {
-            // Alaphelyzetbe állítás, ha kikerül a tartományból
-            particle_data->particle_distance_array[i][0] = 0.0;
-            particle_data->particle_distance_array[i][1] = 0.0;
-            if (simulation_options->option_for_dust_secondary_population == 1) {
-                particle_data->micron_particle_distance_array[i][0] = 0.0;
-                particle_data->micron_particle_distance_array[i][1] = 0.0;
-            }
+    #pragma omp parallel for
+    for (int i = 0; i < number_of_particles; i++) {
+        advanceDustPopulation(particle_data->particle_distance_array[i],
+            particle_data->dust_particle_mass_grid ? &particle_data->dust_particle_mass_grid[i] : NULL,
+            particle_data->dust_particle_mass_array ? particle_data->dust_particle_mass_array[i] : NULL,
+            actual_timestep, disk_params);
+        if (simulation_options->option_for_dust_secondary_population == 1) {
+            advanceDustPopulation(particle_data->micron_particle_distance_array[i],
+                particle_data->massmicradial_grid ? &particle_data->massmicradial_grid[i] : NULL,
+                particle_data->micron_dust_particle_mass_array ? particle_data->micron_dust_particle_mass_array[i] : NULL,
+                actual_timestep, disk_params);
         }
-        
     }
-
 }

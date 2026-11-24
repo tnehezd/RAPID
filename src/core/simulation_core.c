@@ -32,7 +32,8 @@ void calculate1DDustDrift(double particle_radius, double pressure_gradient, doub
     }
     double local_pressure, local_pressure_scaleheight, local_pressure_gradient, stokes_number, local_soundspeed;
       
-    stokes_number = calculateStokesNumber(particle_radius,gas_surface_density,disk_params);
+    stokes_number = disk_params->fixed_stokes > 0.0 ? disk_params->fixed_stokes :
+        calculateStokesNumber(particle_radius,gas_surface_density,disk_params);
     local_pressure_scaleheight = calculatePressureScaleHeight(radial_distance,disk_params);   
     local_pressure = calculateEOS(gas_surface_density,radial_distance,disk_params);
     local_pressure_gradient = pressure_gradient;
@@ -475,6 +476,11 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
             exit(EXIT_FAILURE);
         }
         loadDustParticlesFromFile(&particle_data, sim_opts->dust_input_filename);
+        updateFixedStokesSizes(&particle_data, particle_number, disk_params);
+        if (disk_params->fixed_stokes > 0.0 && sim_opts->output_format == OUTPUT_HDF5) {
+            updateParticleGridIndices(&particle_data, 0, particle_number, disk_params, 0);
+            calculateDustSurfaceDensity(&particle_data, sim_opts, disk_params);
+        }
         if (disk_params->enable_backreaction) {
             updateParticleGridIndices(&particle_data, 0, particle_number, disk_params, 0);
             calculateDustSurfaceDensity(&particle_data, sim_opts, disk_params);
@@ -553,6 +559,13 @@ void timeIntegrationForTheSystem(SnapshotMode mode, DiskParameters *disk_params,
         }    
         step_counter++;
 
+        if (isDustEnabled(mode)) {
+            updateFixedStokesSizes(&particle_data, particle_number, disk_params);
+            if (disk_params->fixed_stokes > 0.0 && sim_opts->output_format == OUTPUT_HDF5) {
+                updateParticleGridIndices(&particle_data, t, particle_number, disk_params, 0);
+                calculateDustSurfaceDensity(&particle_data, sim_opts, disk_params);
+            }
+        }
         if (!final_snapshot_written && t >= t_integration_in_internal_units) {
             writeFinalSnapshot(t, &particle_data, particle_number, disk_params,
                                sim_opts, output_files, dens_name, dust_name,

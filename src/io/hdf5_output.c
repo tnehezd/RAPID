@@ -148,11 +148,11 @@ void writeHDF5SnapshotToFile(double time, hid_t file_id, const SimulationOptions
     hid_t dset_gas_vel = H5Dcreate2(file_id, "/gas_grid/radial_velocity", H5T_NATIVE_DOUBLE, space_gas,
                                     H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
-    H5Dwrite(dset_gas_grid, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, disk_params->radial_grid);
-    H5Dwrite(dset_gas_surface, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, disk_params->gas_surface_density_vector);
-    H5Dwrite(dset_gas_pressure, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, disk_params->gas_pressure_vector);
-    H5Dwrite(dset_gas_grad, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, disk_params->gas_pressure_gradient_vector);
-    H5Dwrite(dset_gas_vel, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, disk_params->gas_velocity_vector);
+    H5Dwrite(dset_gas_grid, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, disk_params->radial_grid + 1);
+    H5Dwrite(dset_gas_surface, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, disk_params->gas_surface_density_vector + 1);
+    H5Dwrite(dset_gas_pressure, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, disk_params->gas_pressure_vector + 1);
+    H5Dwrite(dset_gas_grad, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, disk_params->gas_pressure_gradient_vector + 1);
+    H5Dwrite(dset_gas_vel, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, disk_params->gas_velocity_vector + 1);
 
     H5Dclose(dset_gas_grid);
     H5Dclose(dset_gas_surface);
@@ -209,7 +209,7 @@ void writeHDF5SnapshotToFile(double time, hid_t file_id, const SimulationOptions
                                           H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
         double *positions = malloc(dims_particles[0] * sizeof(double));
         for (size_t i = 0; i < dims_particles[0]; i++) {
-            positions[i] = particle_data->particle_distance_array[i][1] * AU_IN_CM;
+            positions[i] = particle_data->particle_distance_array[i][0];
         }
         H5Dwrite(dset_positions, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, positions);
         H5Dclose(dset_positions);
@@ -219,7 +219,7 @@ void writeHDF5SnapshotToFile(double time, hid_t file_id, const SimulationOptions
                                      H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
         double *sizes = malloc(dims_particles[0] * sizeof(double));
         for (size_t i = 0; i < dims_particles[0]; i++) {
-            sizes[i] = particle_data->dust_particle_mass_array[i][1];
+            sizes[i] = particle_data->particle_distance_array[i][1] * AU_IN_CM;
         }
         H5Dwrite(dset_size, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, sizes);
         H5Dclose(dset_size);
@@ -311,4 +311,3 @@ void closeHDF5File(OutputFiles *output_files) {
         output_files->hdf5_file = NULL;
     }
 }
-

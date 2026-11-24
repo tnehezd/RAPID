@@ -67,6 +67,7 @@ typedef struct {
     double ratio_val;                                   /**< Ratio parameter for dust/gas. */
     double mic_val;                                     /**< Micron dust fraction. */
     double onesize_val;                                 /**< Single-size dust mode parameter. */
+    double fixed_stokes;                                /**< Constant Stokes number; zero disables this mode. */
     double pdensity_val;                                /**< Dust particle density. */
     int output_format;                                  /**< Output format selector (0 = ASCII, 1 = HDF5). */
     int dust_smoothing_mode;                            /**< Smoothing method for mapping Lagrangian dust surface density to Eulerian grid. */

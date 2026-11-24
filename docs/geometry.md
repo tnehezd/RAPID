@@ -1,5 +1,9 @@
 # Disk geometry and flaring
 
+In the 2.3.0 development version, radiative thermal models and self-gravity
+are disabled pending physical validation. Their descriptions below concern
+the retained experimental implementation.
+
 ## Locally isothermal disks
 
 In `lociso` (alias `locally_isotherm`), geometry is prescribed:

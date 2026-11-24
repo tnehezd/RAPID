@@ -1,5 +1,10 @@
 # Thermodynamics
 
+**2.3.0 development version:** radiative equilibrium and energy evolution are
+disabled pending physical validation. Only the locally isothermal model is
+available in the executable. The radiative configuration examples below
+describe the retained experimental implementation and are rejected.
+
 ## Configuration and running
 
 The optional YAML section `thermodynamics_parameters` selects the model.
