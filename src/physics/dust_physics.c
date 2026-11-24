@@ -84,18 +84,22 @@ void applyCoagulationMassTransfer(ParticleData *particle_data,
             continue;
         }
 
-        double gas_sigma   = disk_params->gas_surface_density_vector[i];
+        int gas_index = i + 1;
+        double gas_sigma   = disk_params->gas_surface_density_vector[gas_index];
         double dust_to_gas = (dust_sigma_cm + dust_sigma_mic) / gas_sigma;
 
-        double tau = calculateGrowthTimescale(disk_params->radial_grid[i],
+        double tau = calculateGrowthTimescale(disk_params->radial_grid[gas_index],
                                               dust_to_gas,
                                               disk_params);
 
         double sigma_dot = dust_sigma_mic / tau;
         double dSigma    = sigma_dot * dt;
 
-        double local_dr = disk_params->radial_grid[i + 1] - disk_params->radial_grid[i];
-        double area   = 2.0 * M_PI * disk_params->radial_grid[i] * local_dr;
+        double local_dr = disk_params->radial_grid[gas_index + 1] - disk_params->radial_grid[gas_index];
+        double area   = 2.0 * M_PI * disk_params->radial_grid[gas_index] * local_dr;
+        if (disk_params->enable_backreaction) {
+            area = backreactionCellArea(gas_index, disk_params);
+        }
 
         double dM_cell = dSigma * area;
 

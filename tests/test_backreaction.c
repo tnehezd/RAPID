@@ -3,6 +3,7 @@
 #include "dust_physics.h"
 #include "gas_physics.h"
 #include "simulation_core.h"
+#include "boundary_conditions.h"
 
 #include <assert.h>
 #include <math.h>
@@ -233,8 +234,48 @@ static double viscousContinuumError(int n, int logarithmic)
     return error / reference;
 }
 
+static void testPassiveGasGhostRefresh(int logarithmic)
+{
+    enum { N = 8 };
+    double r[N+2], sigma[N+2], pressure[N+2], gradient[N+2], sink[N+2] = {0};
+    DiskParameters disk = {
+        .grid_number = N, .stellar_mass = 1, .h_aspect_ratio = .05,
+        .alpha_parameter = .003, .alpha_parameter_modification = 1,
+        .dr_dze_i = 1, .dr_dze_o = 1, .density_floor = 1e-20,
+        .radial_grid = r, .gas_surface_density_vector = sigma,
+        .gas_pressure_vector = pressure, .gas_pressure_gradient_vector = gradient,
+        .sigma_dot_photoevap = sink
+    };
+    SimulationOptions options = {
+        .inner_boundary_condition_type = 0, .outer_boundary_condition_type = 1,
+        .user_defined_time_step = .01
+    };
+    for (int i = 0; i < N+2; ++i) {
+        r[i] = logarithmic ? pow(4., (i-1.)/(N-1)) : 1+(i-1.)*3/(N-1);
+        sigma[i] = 1e-5 / r[i];
+        pressure[i] = calculateEOS(sigma[i], r[i], &disk);
+    }
+    applySurfaceDensityBoundaryConditions(sigma, &disk, &options);
+    options.current_bc_target = 1;
+    applyBoundaryConditions(pressure, &disk, &options);
+    double old_inner = sigma[0];
+    for (int step = 0; step < 3; ++step) {
+        refreshGasSurfaceDensityPressurePressureGradient(&options, &disk);
+        double expected[N+2];
+        memcpy(expected, sigma, sizeof(expected));
+        applySurfaceDensityBoundaryConditions(expected, &disk, &options);
+        assert(sigma[0] == sigma[1]);
+        assert(fabs(sigma[N+1]-expected[N+1]) < 1e-18);
+        double expected_gradient = (pressure[2]-pressure[0])/(r[2]-r[0]);
+        assert(fabs(gradient[1]-expected_gradient) < 1e-18);
+    }
+    assert(sigma[0] != old_inner);
+}
+
 int main(void)
 {
+    testPassiveGasGhostRefresh(0);
+    testPassiveGasGhostRefresh(1);
     testDragBalance();
     for (int grid = 0; grid < 2; ++grid) {
         double coarse = viscousContinuumError(32, grid);

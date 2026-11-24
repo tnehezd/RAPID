@@ -217,7 +217,7 @@ void refreshGasSurfaceDensityPressurePressureGradient(SimulationOptions *sim_opt
     }
 
     // Commit the physical surface-density state and update gas pressure.
-    for (i = 1; i <= disk_params->grid_number; i++) {
+    for (i = 0; i <= disk_params->grid_number + 1; i++) {
         disk_params->gas_surface_density_vector[i] = gas_surface_density_temp[i];
 
         // Calculate the updated pressure vector using the synchronized density
@@ -227,9 +227,9 @@ void refreshGasSurfaceDensityPressurePressureGradient(SimulationOptions *sim_opt
     // =========================================================================
     // 4. UPDATE DERIVATIVES AND BOUNDARY CONDITIONS
     // =========================================================================
-    calculateGasPressureGradient(disk_params);
     sim_opts->current_bc_target = 1;
     applyBoundaryConditions(disk_params->gas_pressure_vector, disk_params, sim_opts);
+    calculateGasPressureGradient(disk_params);
     sim_opts->current_bc_target = 2;
     applyBoundaryConditions(disk_params->gas_pressure_gradient_vector, disk_params, sim_opts);
 

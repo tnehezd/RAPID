@@ -27,6 +27,18 @@ radiative and energy-evolution thermal modes are disabled pending physical
 validation. Requests to enable them fail explicitly. Locally isothermal
 calculations remain available; the experimental code is retained.
 
+The locally isothermal gas update now commits the refreshed surface-density
+ghost cells along with the physical cells, and applies pressure boundary
+conditions before calculating the pressure gradient. Earlier development
+builds retained stale density ghosts and used stale pressure ghosts in the
+edge stencil. Evolving-gas comparisons, particularly near the inner edge,
+must be rerun after this correction; replotting old outputs is insufficient.
+
+Coagulation mass transfer now associates dust cell `i` with physical gas cell
+`i+1`, accounting for the leading gas ghost cell in density, radius and cell
+area. Growing two-population runs from earlier development builds must be
+rerun to incorporate this correction.
+
 See [disk geometry and flaring](docs/geometry.md) for which geometry parameters
 are active in each thermal mode. Prescribed flaring is lociso-only.
 
@@ -86,6 +98,15 @@ The `run_simulation.py` Python3 wrapper script can be used to run a series of si
 ```Bash
 python run_simulation.py
 ```
+
+The YAML wrapper forwards `fragmentation_factor` to `-ffrag`. For example:
+
+```yaml
+simulation_parameters:
+  fragmentation_factor: 0.37
+```
+
+If omitted, the binary's default fragmentation factor (0.37) is retained.
 
 Using command-line arguments:
 Alternatively, you can run the executable directly from the command line by specifying the parameters. A detailed list of all available command-line flags and their corresponding parameters will be provided here shortly.

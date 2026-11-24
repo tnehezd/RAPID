@@ -302,8 +302,47 @@ static void testDustBoundaryMapping(void)
     particle_number = 0;
 }
 
+static void testCoagulationGasIndex(int logarithmic, int cell)
+{
+    enum { N = 8 };
+    double r[N+2], gas[N+2];
+    DiskParameters disk = {
+        .grid_number = N, .r_min = 1, .r_max = 4, .stellar_mass = 1,
+        .radial_grid = r, .gas_surface_density_vector = gas
+    };
+    for (int i = 0; i < N+2; ++i) {
+        r[i] = logarithmic ? pow(4., (i-1.)/(N-1)) : 1+(i-1.)*3/(N-1);
+        gas[i] = 1e-3*(i+1);
+    }
+    ParticleData particles;
+    assert(allocateParticleData(&particles, 1, N, 1) == 0);
+    SimulationOptions opts = {.option_for_dust_secondary_population = 1,
+                              .dust_smoothing_mode = 1};
+    particles.particle_distance_array[0][0] = 2;
+    particles.micron_particle_distance_array[0][0] = r[cell+1];
+    particles.dust_particle_mass_grid[0] = 1e-6;
+    particles.massmicradial_grid[0] = 2e-6;
+    particles.micron_dust_particle_mass_array[0][1] = cell;
+    particle_number = 1;
+    calculateDustSurfaceDensity(&particles, &opts, &disk);
+    double ratio = (particles.dust_surfacedensity[cell] +
+                    particles.micron_dust_surfacedensity[cell]) / gas[cell+1];
+    double dt = .01;
+    double tau = calculateGrowthTimescale(r[cell+1], ratio, &disk);
+    double expected = 2e-6*dt/tau;
+    applyCoagulationMassTransfer(&particles, &disk, &opts, dt);
+    assert(fabs((particles.dust_particle_mass_grid[0]-1e-6)-expected) < expected*1e-8);
+    assert(fabs(particles.dust_particle_mass_grid[0]+particles.massmicradial_grid[0]-3e-6) < 1e-20);
+    freeParticleData(&particles);
+}
+
 int main(void)
 {
+    for (int grid = 0; grid < 2; ++grid) {
+        testCoagulationGasIndex(grid, 0);
+        testCoagulationGasIndex(grid, 3);
+        testCoagulationGasIndex(grid, 7);
+    }
     testDriftFragmentationFactor();
     testDriftTimeStepSampling();
     testDustBoundaryMapping();
