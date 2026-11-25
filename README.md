@@ -16,13 +16,10 @@ Check that the documentation version matches the code used for your run.
 
 ## Development status
 
-The current development code identifies itself as 2.3.0. Two-population dust,
-self-gravity, dust
-backreaction and radiative/energy thermal modes are disabled pending physical
-validation; locally isothermal calculations remain available.
-Two-population dust is paused pending coagulation mass-transfer validation;
-single-population drift and growth remain available. Old two-population
-output can still be plotted.
+**RAPID is under active development.** The current development code identifies
+itself as **2.3.0**, but may differ from the published release with the same
+version number. Numerical methods and physical prescriptions continue to be
+tested and refined.
 
 Recent corrections affect gas evolution, dust transport, growth and output
 coordinates. Earlier results are not corrected retroactively: affected runs
@@ -78,11 +75,10 @@ python3 plot_output.py RUN_DIR -o overview.png
 python3 plot_output.py RUN_DIR --kind heatmap -o heatmap.png
 ```
 
-The standalone plotter requires NumPy and Matplotlib, plus h5py for HDF5.
-It detects available gas and dust populations. Use `--components gas dust micron`
-to select fields, `--no-particles` for densities only, and `--help` for other
-options. Gas-only runs produce a single gas panel. Current HDF5 files store
-small-grain density but not small-grain particle trajectories.
+The standalone plotter detects ASCII/HDF5 output and available gas/dust fields.
+It requires NumPy and Matplotlib, plus h5py for HDF5.
+For initial-density normalization and other options, see
+[Plotting results](https://rapiddocs.readthedocs.io/en/latest/plotting.html).
 
 ## References
 
