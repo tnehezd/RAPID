@@ -14,7 +14,7 @@ void createDefaultOptions(ParserOptions *opt) {
     opt->option_for_dust_drift                      = 1.;
     opt->option_for_dust_growth                     = 1.;
     opt->option_for_evolution                       = 1.;
-    opt->option_for_dust_secondary_population       = 1.;
+    opt->option_for_dust_secondary_population       = 0.;
     opt->fragmenatation_velocity                    = 1000.0;
     opt->fragmenatation_factor                      = 0.37;
     opt->number_of_grid_points                      = 2000;
@@ -61,7 +61,7 @@ void createDefaultOptions(ParserOptions *opt) {
     opt->maximum_simulation_time                    = 1.0e6;
     opt->output_frequency                           = 1000.0;
     opt->eps_val                                    = 0.01; 
-    opt->ratio_val                                  = 0.85;
+    opt->ratio_val                                  = 1.0;
     opt->mic_val                                    = 1e-4; 
     opt->onesize_val                                = 0.0; 
     opt->fixed_stokes                               = 0.0;
@@ -96,7 +96,7 @@ void printUsageToTerminal() {
     fprintf(stderr, "  -drift <val>   Enable/disable drift (0. or 1., default: 1.0)\n");
     fprintf(stderr, "  -growth <val>  Enable/disable growth (0. or 1., default: 1.0)\n");
     fprintf(stderr, "  -evol <val>    Enable/disable evolution (0. or 1., default: 1.0)\n");
-    fprintf(stderr, "  -twopop <val>  Enable/disable two dust populations (0. or 1., default: 1.0)\n");
+    fprintf(stderr, "  -twopop <val>  Temporarily disabled pending mass-transfer validation; only 0 accepted\n");
     fprintf(stderr, "  -stokes <val>  Constant positive Stokes number; requires -drift 1 -growth 0 -twopop 0\n");
     fprintf(stderr, "  -ufrag <val>   Fragmentation velocity (default: 1000.0)\n");
     fprintf(stderr, "  -ffrag <val>   Fragmentation factor (default: 0.37)\n");
@@ -136,7 +136,7 @@ void printUsageToTerminal() {
     fprintf(stderr, "  -drdzeo <val>  Outer dead zone transition width multiplier (default: 0.0)\n");
     fprintf(stderr, "  -amod <val>    Alpha viscosity multiplier in dead zone (default: 0.0)\n");
     fprintf(stderr, "  -eps <val>     Dust-to-gas ratio (default: 0.01)\n");
-    fprintf(stderr, "  -ratio <val>   Ratio of Pop1 dust mass to total dust mass (default: 0.85)\n");
+    fprintf(stderr, "  -ratio <val>   Primary dust mass fraction; only 1 accepted while two-pop is disabled (default: 1)\n");
     fprintf(stderr, "  -micsize <val>   Micro-sized particle radius (cm, default: 1e-4)\n");
     fprintf(stderr, "  -largesize <val>   Large-sized particle radius (cm, default: 1e-2)\n");
     fprintf(stderr, "  -ndust <val>   The number of the particles, default: 5000)\n");
@@ -616,6 +616,14 @@ int parseCLIOptions(int argc, const char **argv, ParserOptions *opt){
     }
 
 
+    if (opt->option_for_dust_secondary_population != 0.0) {
+        LOG_ERROR("Two-population dust is temporarily disabled pending coagulation mass-transfer validation; use -twopop 0.\n");
+        return 1;
+    }
+    if (opt->ratio_val != 1.0) {
+        LOG_ERROR("With two-population dust disabled, -ratio must be 1 (all initial dust mass in the primary population).\n");
+        return 1;
+    }
     if (opt->enable_selfgravity || opt->enable_backreaction ||
         opt->thermodynamics_model != THERMODYNAMICS_LOCALLY_ISOTHERMAL) {
         LOG_ERROR("RAPID 2.3.0 disables self-gravity, backreaction and radiative/energy thermal models pending physical validation.\n");

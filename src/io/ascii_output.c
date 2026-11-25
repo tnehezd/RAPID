@@ -69,9 +69,8 @@ int calculateNumbersOfParticles(const char *particle_data_file_name) {
 
 void loadDustParticlesFromFile(ParticleData *particle_data, const char *particle_data_file_name) {
     int i, particle_index;
-    double distance, particle_radius, micron_particle_radius;
+    double distance, particle_radius;
     long double representative_mass;
-    long double micron_representative_mass;
 
     load_dust_particles_file = fopen(particle_data_file_name, "r");
 
@@ -91,26 +90,19 @@ void loadDustParticlesFromFile(ParticleData *particle_data, const char *particle
     }
 
     for (i = 0; i < particle_number; i++) {
-        if (fscanf(load_dust_particles_file, "%d %lg %Lg %Lg %lg %lg", 
-                   &particle_index, &distance, &representative_mass, &micron_representative_mass, 
-                   &particle_radius, &micron_particle_radius) == 6) {
+        char extra;
+        if (fgets(line_buffer, sizeof(line_buffer), load_dust_particles_file) != NULL &&
+            sscanf(line_buffer, "%d %lg %Lg %lg %c",
+                   &particle_index, &distance, &representative_mass, &particle_radius, &extra) == 4) {
             
             // Primary population (always valid)
             particle_data->particle_distance_array[i][0] = distance;
             particle_data->particle_distance_array[i][1] = particle_radius / AU_IN_CM; 
             particle_data->dust_particle_mass_grid[i] = representative_mass;
 
-            // SAFE GUARD: Only write to secondary population if arrays are allocated
-            if (particle_data->micron_particle_distance_array != NULL) {
-                particle_data->micron_particle_distance_array[i][0] = distance;
-                particle_data->micron_particle_distance_array[i][1] = micron_particle_radius / AU_IN_CM; 
-            }
-            if (particle_data->massmicradial_grid != NULL) {
-                particle_data->massmicradial_grid[i] = micron_representative_mass;
-            }
             
         } else {
-            LOG_ERROR("Failed to read line %d from particle data file '%s'!\n", i, particle_data_file_name);
+            LOG_ERROR("Invalid particle row %d in '%s': expected four single-population columns (ID, radius_AU, mass_Msun, size_cm). Regenerate legacy two-population initial profiles.\n", i, particle_data_file_name);
             fclose(load_dust_particles_file);
             exit(EXIT_FAILURE);
         }
@@ -637,8 +629,8 @@ void printFileHeader(FILE *file, FileType_e file_type, const HeaderData *header_
                 fprintf(file, "# Particle distribution, Time: %e years\n", header_data ? header_data->current_time : 0.0);
             }
             fprintf(file, "#--------------------------------------------------------------------------\n");
-            fprintf(file, "# %-5s %-15s %-20s %-20s %-15s %-15s\n",
-                    "Index", "Radius_AU", "RepMass_Pop1_Msun", "RepMass_Pop2_Msun", "MaxPartSize_cm", "MicroSize_cm");
+            fprintf(file, "# %-5s %-15s %-20s %-15s\n",
+                    "Index", "Radius_AU", "RepMass_Msun", "PartSize_cm");
             fprintf(file, "#--------------------------------------------------------------------------\n");
             break;
 

@@ -1,4 +1,5 @@
 .DS_Store
+private_scripts/
 
 output/
 output_*/
@@ -49,6 +50,7 @@ plot_convergence_compare.py
 *.png
 
 plot_out*.py
+!plot_output.py
 plot_gas.py
 
 calculate_*.py

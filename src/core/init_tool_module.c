@@ -41,7 +41,7 @@ void initializeDefaultOptions(InitializeDefaultOptions *def) {
     def->dust_to_gas_ratio      = 0.01;
     def->total_disk_mass        = 0.01; // FIXED: Renamed from disk_mass_dust
     def->one_size_particle_cm   = 1.0;
-    def->two_pop_ratio          = 0.85; 
+    def->two_pop_ratio          = 1.0;
     def->micro_size_cm          = 1e-4; 
     def->drift_factor           = 1.0; 
     def->fragmentation_factor   = 1.0;
@@ -367,11 +367,8 @@ int runInitialization(InitializeDefaultOptions *default_options, DiskParameters 
                                                         ((default_options->r_outer - default_options->r_inner) / ((double)default_options->n_dust_particles - 1.0)) *
                                                         calculateDustSurfaceDensityInitTool(r_dust_particle_au, default_options, current_sigma0_gas);
 
-        long double repr_mass_pop1 = representative_mass_total_in_cell * default_options->two_pop_ratio;
-        long double repr_mass_pop2 = representative_mass_total_in_cell * (1.0 - default_options->two_pop_ratio);
-
-        fprintf(dust_ouputput_file, "%-5d %-15.6e %-20.12Lg %-20.12Lg %-15.6e %-15.6e\n",
-                i_loop, r_dust_particle_au, repr_mass_pop1, repr_mass_pop2, s_max_cm, default_options->micro_size_cm);
+        fprintf(dust_ouputput_file, "%-5d %-15.6e %-20.12Lg %-15.6e\n",
+                i_loop, r_dust_particle_au, representative_mass_total_in_cell, s_max_cm);
     }
 
     fflush(dust_ouputput_file);

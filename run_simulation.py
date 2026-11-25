@@ -247,6 +247,7 @@ def main():
         "one_size_particle_value_cm": "onesize_val",
         "constant_stokes_number": "fixed_stokes",
         "fragmentation_factor": "fragmentation_factor",
+        "fragmentation_velocity": "fragmentation_velocity",
         "dust_particle_density_g_cm3": "pdensity_val",
 
         "input_file_path": "input_file",
@@ -268,6 +269,13 @@ def main():
                     if yaml_key in yaml_params:
                         all_params[c_key] = yaml_params[yaml_key]
 
+    if all_params.get("twopop", 0) != 0:
+        raise ValueError("Two-population dust is temporarily disabled pending coagulation mass-transfer validation.")
+    all_params["twopop"] = 0
+    if all_params.get("ratio_val", 1) != 1:
+        raise ValueError("population_one_mass_ratio must be 1 while two-population dust is disabled.")
+    all_params["ratio_val"] = 1
+
     # C program argument mapping
     c_arg_mapping = {
         "drift": "-drift", "growth": "-growth", "evol": "-evol", "twopop": "-twopop",
@@ -287,6 +295,7 @@ def main():
         "eps_val": "-eps", "ratio_val": "-ratio", "mic_val": "-micsize", "onesize_val": "-largesize",
         "fixed_stokes": "-stokes",
         "fragmentation_factor": "-ffrag",
+        "fragmentation_velocity": "-ufrag",
         "pdensity_val": "-pdensity",
         "gaussian_smoothing_sigma_grid_units": "-gaussian_sigma_grid_units",
         "gaussian_smoothing_cutoff_sigma": "-gaussian_cutoff_sigma",

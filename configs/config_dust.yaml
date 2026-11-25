@@ -2,7 +2,7 @@ simulation_parameters:
   enable_dust_drift: true
   enable_dust_growth: true
   enable_gas_evolution: true
-  enable_two_dust_populations: true
+  enable_two_dust_populations: false # Temporarily disabled pending mass-transfer validation.
   fragmentation_velocity: 500.0
   fragmentation_factor: 0.37
   number_of_dust_particles: 1000
@@ -32,8 +32,6 @@ deadzone_parameters:
 
 dust_parameters:
   initial_dust_to_gas_ratio: 0.01
-  population_one_mass_ratio: 0.85
-  micro_particle_size_cm: 0.0001
   large_size_particle_value_cm: 1.0
   dust_particle_density_g_cm3: 1.6
   disk_mass_dust: 0.01

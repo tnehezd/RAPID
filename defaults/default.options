@@ -29,10 +29,10 @@ Gas evolution
   Info:      Enable (1) or disable (0) gas surface density evolution.
 
 Two-population dust model
-  CLI:       -twopop <0|1>
+  CLI:       -twopop 0
   YAML:      enable_two_dust_populations
-  Default:   1.0
-  Info:      Enable (1) or disable (0) the two-population dust model.
+  Default:   0.0
+  Info:      Temporarily disabled pending coagulation mass-transfer validation.
 
 Fragmentation velocity (cm/s)
   CLI:       -ufrag <val>
@@ -76,7 +76,7 @@ Gas surface density at 1 AU (M_sun/AU^2)
 
 Total disk mass (M_sun)
   CLI:       -disk_mass <val>
-  YAML:      disk_mass_gas
+  YAML:      disk_mass
   Default:   0.0
   Info:      Mutually exclusive with sigma0_init.
 
@@ -84,6 +84,7 @@ Surface density exponent p
   CLI:       -index_init <val>
   YAML:      sigma_profile_exponent
   Default:   0.5
+  Info:      Initialized profile is proportional to r^(-abs(p)).
 
 Alpha viscosity
   CLI:       -alpha_init <val>
@@ -125,15 +126,17 @@ Outer dead-zone radius (AU)
   YAML:      deadzone_outer_radius_au
   Default:   0.0
 
-Inner transition width multiplier
+Inner transition width (AU)
   CLI:       -drdzei <val>
   YAML:      deadzone_inner_transition_width_mult
   Default:   0.0
+  Info:      Legacy YAML key; value is forwarded directly, not multiplied by H.
 
-Outer transition width multiplier
+Outer transition width (AU)
   CLI:       -drdzeo <val>
   YAML:      deadzone_outer_transition_width_mult
   Default:   0.0
+  Info:      Legacy YAML key; value is forwarded directly, not multiplied by H.
 
 Alpha reduction inside dead zone
   CLI:       -amod <val>
@@ -155,20 +158,18 @@ Dust-to-gas ratio
   YAML:      initial_dust_to_gas_ratio
   Default:   0.01
 
-Population 1 mass ratio
-  CLI:       -ratio <val>
-  YAML:      population_one_mass_ratio
-  Default:   0.85
-
-Micro-grain size (cm)
-  CLI:       -micsize <val>
-  YAML:      micro_particle_size_cm
-  Default:   1e-4
-
 Large-grain size (cm)
   CLI:       -largesize <val>
   YAML:      one_size_particle_value_cm
   Default:   0.0
+  Info:      Omitted/zero uses barrier initialization; for fixed size disable growth.
+
+Constant Stokes number (development version)
+  CLI:       -stokes <positive finite value>
+  YAML:      constant_stokes_number
+  Default:   disabled (omit option)
+  Info:      Requires drift on, growth off and one population.
+             Cannot combine with nonzero -largesize, input or benchmark modes.
 
 Dust material density (g/cm^3)
   CLI:       -pdensity <val>
@@ -301,12 +302,12 @@ LOGGING & PANELS
 
 Verbose logging
   CLI:       -v (INFO), -vv (DEBUG)
-  YAML:      verbose
+  YAML:      info_level
   Default:   0
 
 Disable live terminal panels
   CLI:       -no_panels
-  YAML:      disable_panels
+  YAML:      disable_terminal_panels
   Default:   false
 
 

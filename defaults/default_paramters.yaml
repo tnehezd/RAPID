@@ -1,233 +1,73 @@
-###############################################################################
-# DEFAULT PARAMETERS — YAML REFERENCE (Documentation Only)
-#
-# IMPORTANT:
-#   • This file is NOT used by the C simulation engine.
-#   • This file is NOT used by the Python wrapper.
-#   • It is a human-readable file for documentation
-#
-# It describes:
-#   • all YAML keys the wrapper understands,
-#   • their default values,
-#   • what each parameter physically means,
-#   • and how they map to CLI flags in the C program.
-#
-# To run a simulation, create a separate YAML file and override only the
-# parameters you need. Do NOT use this file as an input config file.
-###############################################################################
+# YAML reference for the current RAPID development binary, not a runnable config.
+# Omitted parameters use the binary defaults. Choose either disk_mass or sigma0.
+# Two-population dust, self-gravity, backreaction and radiative/energy modes are temporarily unavailable
+# and deliberately omitted. The available thermal model is locally isothermal.
 
-
-###############################################################################
-# SIMULATION CONTROL OPTIONS
-###############################################################################
 simulation_parameters:
+  enable_dust_drift: true           # -drift
+  enable_dust_growth: true          # -growth
+  enable_gas_evolution: true        # -evol
+  enable_photoevaporation: false    # -photoevap
+  fragmentation_velocity: 1000.0   # -ufrag, cm/s
+  fragmentation_factor: 0.37       # -ffrag, dimensionless
+  # test_mode: mass_test           # -test; omitted by default
 
-  enable_dust_drift: true
-  # Physical meaning:
-  #   Enables radial drift of dust grains due to gas drag.
-  # CLI flag: -drift <0|1>
-
-  enable_dust_growth: true
-  # Physical meaning:
-  #   Enables dust coagulation and fragmentation.
-  # CLI flag: -growth <0|1>
-
-  enable_gas_evolution: true
-  # Physical meaning:
-  #   Enables viscous evolution of the gas surface density.
-  # CLI flag: -evol <0|1>
-
-  enable_two_dust_populations: true
-  # Physical meaning:
-  #   Enables the two-population dust model (Birnstiel+ 2012).
-  # CLI flag: -twopop <0|1>
-
-  enable_photoevaporation: false
-  # Physical meaning:
-  #   Enables photoevaporative mass-loss from the disk.
-  # CLI flag: -photoevap <0|1>
-
-  enable_selfgravity: false
-  # Physical meaning:
-  #   Adds the axisymmetric (radial) self-gravity of the gas disk to the
-  #   rotation curve used for dust dynamics: Omega^2 = Omega_K^2 + g_sg/r.
-  #   The same Omega enters the sound speed (c_s = Omega*H), hence viscosity and pressure.
-  # CLI flag: -selfgravity <0|1>
-
-  test_mode: none
-  # Physical meaning:
-  #   Activates internal benchmark modes (mass conservation, ring viscosity, etc.)
-  # CLI flag: -test <name>
-
-
-###############################################################################
-# DISK PARAMETERS
-###############################################################################
 disk_parameters:
+  number_of_grid_points: 2000      # -n, physical radial points
+  radial_grid_type: linear         # -grid_type: linear or logarithmic
+  inner_radius_au: 1.0             # -ri
+  outer_radius_au: 100.0           # -ro
+  # disk_mass: 0.01                # -disk_mass, M_sun; user-supplied normalization
+  # initial_gas_sigma0_msun_per_au2: 3.33e-5 # -sigma0_init, alternative normalization
+  sigma_profile_exponent: 0.5      # -index_init, initialized Sigma proportional to r^(-abs(p))
+  alpha_viscosity: 0.01            # -alpha_init
+  star_mass_msun: 1.0              # -stellar_mass
+  aspect_ratio_at_1au: 0.05        # -h_init
+  flaring_index: 0.0               # -flind_init
+  density_floor: 1.0e-12           # -density_floor, M_sun/AU^2
+  dust_density_floor: 1.0e-15      # -dust_density_floor, M_sun/AU^2
+  photoevaporation_mode: none      # -photoevap_mode: none, owen or picogna
+  xray_luminosity_erg_s: 1.0e30     # -xray_luminosity
+  use_cutoff_for_gas: false        # -cutoff
+  characteristic_cutoff_radius_au: 30.0 # -cutoff_radius
+  cutoff_sharpness_factor: 1.5      # -cutoff_sharpness
 
-  number_of_grid_points: 2000
-  # Number of radial grid cells.
-  # CLI: -n
-
-  radial_grid_type: logarithmic
-  # Type of radial grid: "linear" or "logarithmic".
-  # CLI: -grid_type
-
-  inner_radius_au: 1.0
-  # Inner boundary of the disk (AU).
-  # CLI: -ri
-
-  outer_radius_au: 100.0
-  # Outer boundary of the disk (AU).
-  # CLI: -ro
-
-  disk_mass: 0.0
-  # Total gas disk mass (M_sun). Mutually exclusive with sigma0_init.
-  # CLI: -disk_mass
-
-  initial_gas_sigma0_msun_per_au2: 0.0
-  # Gas surface density at 1 AU (M_sun/AU^2).
-  # CLI: -sigma0_init
-
-  sigma_profile_exponent: 0.5
-  # Exponent p in Σ(r) ∝ r^-p.
-  # CLI: -index_init
-
-  alpha_viscosity: 0.01
-  # Shakura–Sunyaev α viscosity parameter.
-  # CLI: -alpha_init
-
-  star_mass_msun: 1.0
-  # Mass of the central star (M_sun).
-  # CLI: -stellar_mass
-
-  aspect_ratio_at_1au: 0.05
-  # Disk scale height ratio H/R at 1 AU.
-  # CLI: -h_init
-
-  flaring_index: 0.0
-  # Exponent describing disk flaring.
-  # CLI: -flind_init
-
-  density_floor: 1e-12
-  # Minimum allowed gas surface density.
-  # CLI: -density_floor
-
-  dust_density_floor: 1e-15
-  # Minimum allowed dust surface density.
-  # CLI: -dust_density_floor
-
-
-###############################################################################
-# DEAD ZONE PARAMETERS
-###############################################################################
 deadzone_parameters:
+  deadzone_inner_radius_au: 0.0    # -rdzei, AU; zero disables the dead zone
+  deadzone_outer_radius_au: 0.0    # -rdzeo, AU
+  deadzone_inner_transition_width_mult: 0.0 # -drdzei, actual tanh width in AU
+  deadzone_outer_transition_width_mult: 0.0 # -drdzeo, actual tanh width in AU
+  # Legacy key names: the wrapper forwards widths directly, without multiplying H.
+  deadzone_alpha_reduction: 0.0    # -amod
 
-  deadzone_inner_radius_au: 0.0      # CLI: -rdzei
-  deadzone_outer_radius_au: 0.0      # CLI: -rdzeo
-  deadzone_inner_transition_width_mult: 0.0   # CLI: -drdzei
-  deadzone_outer_transition_width_mult: 0.0   # CLI: -drdzeo
-  deadzone_alpha_reduction: 0.0      # CLI: -amod
-
-  # Physical meaning:
-  #   These parameters control the radial extent and smoothness of the dead zone,
-  #   where turbulence (α) is reduced.
-
-
-###############################################################################
-# DUST PARAMETERS
-###############################################################################
 dust_parameters:
+  number_of_dust_particles: 5000   # -ndust
+  initial_dust_to_gas_ratio: 0.01   # -eps
+  # one_size_particle_value_cm: 0.1 # -largesize; fixed radius, disable growth
+  # constant_stokes_number: 0.1    # -stokes; alternative to fixed physical size
+  # Constant Stokes: enable drift, disable growth and two populations.
+  # No nonzero -largesize, input profile or benchmark mode; omit key to disable.
+  dust_particle_density_g_cm3: 1.6 # -pdensity
+  dust_smoothing_mode: cic         # -dust_smoothing: cic, ngp, tophat or gaussian
+  gaussian_smoothing_sigma_grid_units: 1.0 # -gaussian_sigma_grid_units
+  gaussian_smoothing_cutoff_sigma: 3.0     # -gaussian_cutoff_sigma
 
-  number_of_dust_particles: 5000     # CLI: -ndust
-  initial_dust_to_gas_ratio: 0.01    # CLI: -eps
-  population_one_mass_ratio: 0.85    # CLI: -ratio
-  micro_particle_size_cm: 1e-4       # CLI: -micsize
-  one_size_particle_value_cm: 0.0    # CLI: -largesize
-  dust_particle_density_g_cm3: 1.6   # CLI: -pdensity
-
-  dust_smoothing_mode: cic           # CLI: -dust_smoothing
-  gaussian_smoothing_sigma_grid_units: 1.0   # CLI: -gaussian_sigma_grid_units
-  gaussian_smoothing_cutoff_sigma: 3.0       # CLI: -gaussian_cutoff_sigma
-
-  # Physical meaning:
-  #   These parameters control how Lagrangian dust particles are mapped
-  #   onto the Eulerian gas grid.
-
-
-###############################################################################
-# BOUNDARY CONDITIONS
-###############################################################################
 boundary_conditions:
+  inner_boundary_condition: zero_gradient # -inner_bc
+  outer_boundary_condition: parabolic     # -outer_bc
+  # zero_gradient, parabolic, fixed_flux, absorbing, reflecting,
+  # linear_extrapolation or loggrid (gas fields; dust boundaries are absorbing).
 
-  inner_boundary_condition: zero_gradient
-  outer_boundary_condition: parabolic
-
-  # Available:
-  #   zero_gradient, parabolic, fixed_flux, absorbing,
-  #   reflecting, linear_extrapolation, loggrid
-  #
-  # CLI: -inner_bc <name>, -outer_bc <name>
-
-
-###############################################################################
-# OUTPUT PARAMETERS
-###############################################################################
 output_parameters:
+  # input_file_path: profile.dat   # -i; omitted by default
+  output_directory_name: output    # -o
+  output_format: ascii             # -output_format: ascii or hdf5
 
-  input_file_path: ""                # CLI: -i
-  output_directory_name: output      # CLI: -o
-  output_format: ascii               # CLI: -output_format <ascii|hdf5>
-
-  # Physical meaning:
-  #   Controls where and how simulation snapshots are written.
-
-
-###############################################################################
-# TIME PARAMETERS
-###############################################################################
 time_parameters:
+  fixed_time_step: 0.0             # -tStep, internal time units; zero is adaptive
+  total_simulation_time: 1000000.0  # -tmax, years
+  output_write_frequency: 1000.0   # -outfreq, years
 
-  fixed_time_step: 0.0               # CLI: -tStep
-  total_simulation_time: 1e6         # CLI: -tmax
-  output_write_frequency: 1000       # CLI: -outfreq
-
-  # Physical meaning:
-  #   Controls the temporal evolution and snapshot cadence.
-
-
-###############################################################################
-# LOGGING PARAMETERS
-###############################################################################
 log_parameters:
-
-  info_level: none                   # CLI: -v / -vv
-  disable_terminal_panels: false     # CLI: -no_panels
-
-  # Physical meaning:
-  #   Controls verbosity and whether the live terminal panel is shown.
-
-
-###############################################################################
-# PHOTOEVAPORATION
-###############################################################################
-photoevaporation_parameters:
-
-  photoevaporation_mode: None        # CLI: -photoevap_mode
-  xray_luminosity_erg_s: 1e30        # CLI: -xray_luminosity
-
-  # Physical meaning:
-  #   Controls photoevaporative mass-loss models (Owen, Picogna).
-
-
-###############################################################################
-# CUTOFF PROFILE PARAMETERS
-###############################################################################
-cutoff_profile_parameters:
-
-  use_cutoff_for_gas: false          # CLI: -cutoff
-  characteristic_cutoff_radius_au: 30.0      # CLI: -cutoff_radius
-  cutoff_sharpness_factor: 1.5               # CLI: -cutoff_sharpness
-
-  # Physical meaning:
-  #   Enables Anna’s self-similar exponential taper profile.
+  info_level: none                 # -v / -vv: none, info or debug
+  disable_terminal_panels: false   # -no_panels

@@ -30,6 +30,34 @@ def interpolate(x, xs, ys):
 
 
 class FixedStokesSimulationTests(unittest.TestCase):
+    def test_two_population_temporarily_disabled(self):
+        for value in ("1", "0.5", "nan"):
+            result = self.run_binary("-twopop", value)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("temporarily disabled", result.stdout)
+        result = self.run_binary("-ratio", ".85")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("-ratio must be 1", result.stdout)
+
+    def test_default_single_population_full_mass_and_four_columns(self):
+        with tempfile.TemporaryDirectory() as temp:
+            output = Path(temp) / "run"
+            result = self.run_binary(
+                "-n", 16, "-ndust", 16, "-ri", 5, "-ro", 10,
+                "-disk_mass", .01, "-eps", .01, "-growth", 0,
+                "-largesize", .1, "-tmax", 2, "-outfreq", 2,
+                "-no_panels", "-o", output,
+            )
+            self.assertEqual(result.returncode, 0, result.stdout)
+            initial = rows(output / "config" / "initial_dust_profile.dat")
+            gas = rows(output / "config" / "initial_gas_profile.dat")
+            self.assertTrue(all(len(row) == 4 for row in initial))
+            for particle, cell in zip(initial, gas):
+                expected = 2 * math.pi * particle[1] * (5 / 15) * .01 * cell[2]
+                self.assertAlmostEqual(particle[2] / expected, 1, delta=3e-6)
+            self.assertFalse(list((output / "LOGS").glob("*micron*")))
+            self.assertTrue(list((output / "LOGS").glob("dust_density_profile_*.dat")))
+
     def run_binary(self, *args):
         return subprocess.run(
             [str(BINARY), *map(str, args)], cwd=ROOT, text=True,
@@ -64,7 +92,7 @@ class FixedStokesSimulationTests(unittest.TestCase):
                 )
                 self.assertEqual(result.returncode, 0, result.stdout)
                 initial = rows(output / "config" / "initial_dust_profile.dat")
-                self.assertTrue(all(row[2] > 0 and row[3] == 0 for row in initial))
+                self.assertTrue(all(len(row) == 4 and row[2] > 0 and row[3] > 0 for row in initial))
                 diagnostic = rows(output / "drift_timecale.dat")
                 self.assertTrue(all(abs(row[4] - 0.1) < 1e-12 for row in diagnostic))
                 self.assertIn("Stokes number:     0.10000000000000001",
