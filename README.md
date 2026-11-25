@@ -84,6 +84,8 @@ For initial-density normalization and other options, see
 
 If you use RAPID in your research, cite:
 
+Machine-readable citation metadata is available in [CITATION.cff](CITATION.cff).
+
 - Regály, Juhász & Nehéz (2017), *Interpreting Brightness Asymmetries in
   Transition Disks: Vortex at Dead Zone or Planet-carved Gap Edges?*
   [doi:10.3847/1538-4357/aa9a3f](https://doi.org/10.3847/1538-4357/aa9a3f).

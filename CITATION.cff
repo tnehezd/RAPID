@@ -1,0 +1,39 @@
+cff-version: 1.2.0
+message: >-
+  If you use RAPID in your research, please cite the paper listed under
+  preferred-citation. For the physical background and dead-zone model,
+  also cite the paper listed under references. Record the software release
+  or commit used for your calculation.
+type: software
+title: "RAPID: Representative Approach for Particle-Integrated Disks"
+authors:
+  - family-names: "Tarczay-Nehéz"
+    given-names: "Dóra"
+repository-code: "https://github.com/tnehezd/RAPID"
+url: "https://rapiddocs.readthedocs.io/en/latest/"
+preferred-citation:
+  type: article
+  title: "Trajectory-based dust evolution in disks: first results from the RAPID simulation code"
+  authors:
+    - family-names: "Tarczay-Nehéz"
+      given-names: "Dóra"
+  journal: "Celestial Mechanics and Dynamical Astronomy"
+  year: 2026
+  volume: "138"
+  issue: "1"
+  doi: "10.1007/s10569-026-10278-2"
+references:
+  - type: article
+    title: "Interpreting Brightness Asymmetries in Transition Disks: Vortex at Dead Zone or Planet-carved Gap Edges?"
+    authors:
+      - family-names: "Regály"
+        given-names: "Zs."
+      - family-names: "Juhász"
+        given-names: "A."
+      - family-names: "Nehéz"
+        given-names: "D."
+    journal: "The Astrophysical Journal"
+    year: 2017
+    volume: "851"
+    issue: "2"
+    doi: "10.3847/1538-4357/aa9a3f"
